@@ -1,0 +1,18 @@
+#======================================#
+#     Lovelace Reminders Dashboard     #
+#======================================#
+
+# Include templates
+button_card_templates:
+  !include /config/lovelace/button_card_templates.yaml
+
+decluttering_templates:
+  !include /config/lovelace/decluttering_templates.yaml
+
+# Each view in its own file
+title: Reminders
+views:
+  - !include /config/lovelace/dash_reminders/views/office.yaml
+  - !include /config/lovelace/dash_reminders/views/maintenance.yaml
+  - !include /config/lovelace/dash_reminders/views/cleaning.yaml
+  - !include /config/lovelace/dash_reminders/views/yard.yaml

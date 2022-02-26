@@ -1,0 +1,97 @@
+#===============================================#
+#     Lighting & Automation/Script Controls     #
+#===============================================#
+
+# This mainly prevents lights turning on after I've gone to bed.
+nighttime:
+  name: Nighttime
+
+# This covers the window from going to bed until going to sleep.
+sleeptime:
+  name: Sleeptime
+
+# This allows the bedroom light to stay on if I need to use the bathroom during sleep time.
+bathroom:
+  name: Bathroom
+
+# This is used to control automatic light turn on. If true, it allows lights to be turned on when no one is home.
+extended_away_mode:
+  name: Extended Away Mode
+
+# This modifies some automations and scripts.
+grandchild_home:
+  name: Grandchild Home
+
+# This modifies some automations and scripts.
+christmas_mode:
+  name: Christmas Mode
+
+#============================#
+#     Kodi Movie Control     #
+#============================#
+
+# This is needed to keep input_text.current_feature from getting incorrectly set while the movie list is being
+# restored after a restart.
+kodi_movie_list_restoration:
+  name: Kodi Movie List Restoration
+
+#===================================#
+#     Amazon Smart Plug Control     #
+#===================================#
+
+# We don't know about the plug itself. This input boolean controls a binary sensor with the same name, 
+# defined as a garage door opener. Alexa has a routine that operates the plug based on the binary sensor 
+# (seen as a device in Alexa) being opened or closed.
+alexa_ha_plug:
+  name: Office Bookcase
+  icon: mdi:lightbulb-on-outline
+
+#=========================#
+#     Device Controls     #
+#=========================#
+
+# This is  needed to keep the treadmill_start automation from triggering multiple times if the treadmill is paused
+# during a workout. The automation triggers on the power rising above a threshold ... but a pause will cause the power
+# to drop below that threshold then rise above when resuming, thus triggering a second false start.
+treadmill_triggered:
+  name: Treadmill Triggered
+
+# This is set when the vacuum is started (once per week). It's used to detect if the vacuum did not run for some reason.
+vacuum_kicked_off:
+  name: Vacuum Kicked Off
+
+# This allows the family room AV to remain on late at night if desired.
+family_room_av_late_night_control:
+  name: Family Room AV Late Night Control
+
+# Dryer is running.
+dryer_running:
+  name: Dryer Running
+  icon: mdi:tumble-dryer
+
+#========================================================#
+#     Upstairs Ecobee Thermostat Preset Mode Control     #
+#========================================================#
+
+# This is  needed to keep the change_upstairs_ecobee_preset_mode automation from triggering unnecessarily.
+upstairs_ecobee_preset_mode_triggered:
+  name: Upstairs Ecobee Preset Mode Triggered
+
+#===================================#
+#     Timer Restoration Control     #
+#===================================#
+
+# This is used by the script that throttles mobile notifications. That script needs to check the state of a timer,
+# so must run after the timer restoration automation has completed.
+timers_restored:
+  name: Timers Restored
+  initial: false
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+zigbee2mqtt_force_remove:
+  name: Zigbee2MQTT Force Remove
+  initial: false
+  icon: mdi:alert-remove

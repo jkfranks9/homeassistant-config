@@ -1,0 +1,21 @@
+# NOTE: This file is not used - automations are contained in the automations directory.
+#       Anything in here is either included automatically or a result of tinkering with blueprints.
+
+- id: '1608298913447'
+  alias: Zone Notification
+  description: ''
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.jon
+      zone_entity: zone.home
+      notify_device: a9570941d9dcebbd74ecb611f829a0f2
+- id: '1628199776406'
+  alias: Motion-activated Light
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.guest_bath_motion_occupancy
+      light_target:
+        entity_id: light.guest_bath_light

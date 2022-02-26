@@ -1,0 +1,387 @@
+#========================#
+#     Utility Meter      #
+#========================#
+
+#-------------------------#
+#   -- Lights / Fans --   #
+#-------------------------#
+
+# Attic Light
+attic_light_daily_energy:
+  source: sensor.attic_light_energy
+  cycle: daily
+attic_light_monthly_energy:
+  source: sensor.attic_light_energy
+  cycle: monthly
+
+# Dining Room Hutch
+dining_room_hutch_daily_energy:
+  source: sensor.dining_room_hutch_energy
+  cycle: daily
+dining_room_hutch_monthly_energy:
+  source: sensor.dining_room_hutch_energy
+  cycle: monthly
+
+# Dining Room Lamps
+dining_room_lamps_daily_energy:
+  source: sensor.dining_room_lamps_energy
+  cycle: daily
+dining_room_lamps_monthly_energy:
+  source: sensor.dining_room_lamps_energy
+  cycle: monthly
+
+# Driveway Lights
+driveway_lights_daily_energy:
+  source: sensor.driveway_lights_energy
+  cycle: daily
+driveway_lights_monthly_energy:
+  source: sensor.driveway_lights_energy
+  cycle: monthly
+
+# Family Room Lamp
+family_room_lamp_daily_energy:
+  source: sensor.family_room_lamp_energy
+  cycle: daily
+family_room_lamp_monthly_energy:
+  source: sensor.family_room_lamp_energy
+  cycle: monthly
+
+# Foyer Hutch
+foyer_hutch_daily_energy:
+  source: sensor.foyer_hutch_energy
+  cycle: daily
+foyer_hutch_monthly_energy:
+  source: sensor.foyer_hutch_energy
+  cycle: monthly
+
+# Floor Fan
+floor_fan_daily_energy:
+  source: sensor.floor_fan_energy
+  cycle: daily
+floor_fan_monthly_energy:
+  source: sensor.floor_fan_energy
+  cycle: monthly
+
+# Front Floodlight
+front_floodlight_daily_energy:
+  source: sensor.front_floodlight_energy
+  cycle: daily
+front_floodlight_monthly_energy:
+  source: sensor.front_floodlight_energy
+  cycle: monthly
+
+# Garage Lights
+garage_lights_daily_energy:
+  source: sensor.garage_lights_energy
+  cycle: daily
+garage_lights_monthly_energy:
+  source: sensor.garage_lights_energy
+  cycle: monthly
+
+# Guest Bath Fan
+guest_bath_fan_daily_energy:
+  source: sensor.guest_bath_fan_energy
+  cycle: daily
+guest_bath_fan_monthly_energy:
+  source: sensor.guest_bath_fan_energy
+  cycle: monthly
+
+# Guest Bath Light
+guest_bath_light_daily_energy:
+  source: sensor.guest_bath_light_energy
+  cycle: daily
+guest_bath_light_monthly_energy:
+  source: sensor.guest_bath_light_energy
+  cycle: monthly
+
+# Guest Bedroom Lamp
+guest_bedroom_lamp_daily_energy:
+  source: sensor.guest_bedroom_lamp_energy
+  cycle: daily
+guest_bedroom_lamp_monthly_energy:
+  source: sensor.guest_bedroom_lamp_energy
+  cycle: monthly
+
+# Guest Bedroom Lamp 2
+guest_bedroom_lamp_2_daily_energy:
+  source: sensor.guest_bedroom_lamp_2_energy
+  cycle: daily
+guest_bedroom_lamp_2_monthly_energy:
+  source: sensor.guest_bedroom_lamp_2_energy
+  cycle: monthly
+
+# Hallway Lamp
+hallway_lamp_daily_energy:
+  source: sensor.hallway_lamp_energy
+  cycle: daily
+hallway_lamp_monthly_energy:
+  source: sensor.hallway_lamp_energy
+  cycle: monthly
+
+# Laundry Room Light
+laundry_room_light_daily_energy:
+  source: sensor.laundry_room_light_energy
+  cycle: daily
+laundry_room_light_monthly_energy:
+  source: sensor.laundry_room_light_energy
+  cycle: monthly
+
+# Master Bath Fan
+master_bath_fan_daily_energy:
+  source: sensor.master_bath_fan_energy
+  cycle: daily
+master_bath_fan_monthly_energy:
+  source: sensor.master_bath_fan_energy
+  cycle: monthly
+
+# Master Bath Light
+master_bath_light_daily_energy:
+  source: sensor.master_bath_light_energy
+  cycle: daily
+master_bath_light_monthly_energy:
+  source: sensor.master_bath_light_energy
+  cycle: monthly
+
+# Master Bedroom Lamp
+master_bedroom_lamp_daily_energy:
+  source: sensor.master_bedroom_lamp_energy
+  cycle: daily
+master_bedroom_lamp_monthly_energy:
+  source: sensor.master_bedroom_lamp_energy
+  cycle: monthly
+
+# Office Bookcase Light
+office_bookcase_light_daily_energy:
+  source: sensor.office_bookcase_light_energy
+  cycle: daily
+office_bookcase_light_monthly_energy:
+  source: sensor.office_bookcase_light_energy
+  cycle: monthly
+
+# Office Lamp
+office_lamp_daily_energy:
+  source: sensor.office_lamp_energy
+  cycle: daily
+office_lamp_monthly_energy:
+  source: sensor.office_lamp_energy
+  cycle: monthly
+
+# Porch Light
+porch_light_daily_energy:
+  source: sensor.porch_light_energy
+  cycle: daily
+porch_light_monthly_energy:
+  source: sensor.porch_light_energy
+  cycle: monthly
+
+# Snack Light
+snack_light_daily_energy:
+  source: sensor.snack_light_energy
+  cycle: daily
+snack_light_monthly_energy:
+  source: sensor.snack_light_energy
+  cycle: monthly
+
+# Stairway Light
+stairway_light_daily_energy:
+  source: sensor.stairway_light_energy
+  cycle: daily
+stairway_light_monthly_energy:
+  source: sensor.stairway_light_energy
+  cycle: monthly
+
+# Theater Ceiling
+theater_ceiling_daily_energy:
+  source: sensor.theater_ceiling_energy
+  cycle: daily
+theater_ceiling_monthly_energy:
+  source: sensor.theater_ceiling_energy
+  cycle: monthly
+
+# Theater Sconces
+theater_sconces_daily_energy:
+  source: sensor.theater_sconces_energy
+  cycle: daily
+theater_sconces_monthly_energy:
+  source: sensor.theater_sconces_energy
+  cycle: monthly
+
+# Upstairs Bedroom Light
+upstairs_bedroom_light_daily_energy:
+  source: sensor.upstairs_bedroom_light_energy
+  cycle: daily
+upstairs_bedroom_light_monthly_energy:
+  source: sensor.upstairs_bedroom_light_energy
+  cycle: monthly
+
+# Upstairs Bedroom Outlet
+upstairs_bedroom_outlet_daily_energy:
+  source: sensor.upstairs_bedroom_outlet_energy
+  cycle: daily
+upstairs_bedroom_outlet_monthly_energy:
+  source: sensor.upstairs_bedroom_outlet_energy
+  cycle: monthly
+
+# Upstairs Hallway Lights
+upstairs_hallway_lights_daily_energy:
+  source: sensor.upstairs_hallway_lights_energy
+  cycle: daily
+upstairs_hallway_lights_monthly_energy:
+  source: sensor.upstairs_hallway_lights_energy
+  cycle: monthly
+
+# Utility Light
+utility_light_daily_energy:
+  source: sensor.utility_light_energy
+  cycle: daily
+utility_light_monthly_energy:
+  source: sensor.utility_light_energy
+  cycle: monthly
+
+#-------------------#
+#   -- Devices --   #
+#-------------------#
+
+# Family Room AV
+sonoff_family_room_av_daily_energy:
+  source: sensor.sonoff_family_room_av_energy
+  cycle: daily
+sonoff_family_room_av_monthly_energy:
+  source: sensor.sonoff_family_room_av_energy
+  cycle: monthly
+
+# Fire TV
+fire_tv_daily_energy:
+  source: sensor.fire_tv_energy
+  cycle: daily
+fire_tv_monthly_energy:
+  source: sensor.fire_tv_energy
+  cycle: monthly
+
+# Microwave
+sonoff_microwave_daily_energy:
+  source: sensor.sonoff_microwave_energy
+  cycle: daily
+sonoff_microwave_monthly_energy:
+  source: sensor.sonoff_microwave_energy
+  cycle: monthly
+
+# Projector
+projector_daily_energy:
+  source: sensor.projector_energy
+  cycle: daily
+projector_monthly_energy:
+  source: sensor.projector_energy
+  cycle: monthly
+
+# Receiver
+receiver_daily_energy:
+  source: sensor.receiver_energy
+  cycle: daily
+receiver_monthly_energy:
+  source: sensor.receiver_energy
+  cycle: monthly
+
+# Refrigerator
+sonoff_refrigerator_daily_energy:
+  source: sensor.sonoff_refrigerator_energy
+  cycle: daily
+sonoff_refrigerator_monthly_energy:
+  source: sensor.sonoff_refrigerator_energy
+  cycle: monthly
+
+# Shield TV
+shield_tv_daily_energy:
+  source: sensor.shield_tv_energy
+  cycle: daily
+shield_tv_monthly_energy:
+  source: sensor.shield_tv_energy
+  cycle: monthly
+
+# Treadmill
+sonoff_treadmill_daily_energy:
+  source: sensor.sonoff_treadmill_energy
+  cycle: daily
+sonoff_treadmill_monthly_energy:
+  source: sensor.sonoff_treadmill_energy
+  cycle: monthly
+
+# Washer
+sonoff_washer_daily_energy:
+  source: sensor.sonoff_washer_energy
+  cycle: daily
+sonoff_washer_monthly_energy:
+  source: sensor.sonoff_washer_energy
+  cycle: monthly
+
+#----------------------#
+#   -- Treadmill  --   #
+#----------------------#
+
+treadmill_daily_calories:
+  source: input_number.treadmill_calories
+  cycle: daily
+treadmill_weekly_calories:
+  source: input_number.treadmill_calories
+  cycle: weekly
+treadmill_monthly_calories:
+  source: input_number.treadmill_calories
+  cycle: monthly
+
+treadmill_daily_time:
+  source: input_number.treadmill_time
+  cycle: daily
+treadmill_weekly_time:
+  source: input_number.treadmill_time
+  cycle: weekly
+treadmill_monthly_time:
+  source: input_number.treadmill_time
+  cycle: monthly
+
+#----------------------#
+#   -- Yard Work  --   #
+#----------------------#
+
+yard_work_daily_calories:
+  source: input_number.yard_work_calories
+  cycle: daily
+yard_work_weekly_calories:
+  source: input_number.yard_work_calories
+  cycle: weekly
+yard_work_monthly_calories:
+  source: input_number.yard_work_calories
+  cycle: monthly
+
+yard_work_daily_time:
+  source: input_number.yard_work_time
+  cycle: daily
+yard_work_weekly_time:
+  source: input_number.yard_work_time
+  cycle: weekly
+yard_work_monthly_time:
+  source: input_number.yard_work_time
+  cycle: monthly
+
+#----------------------------#
+#   -- Weight Training  --   #
+#----------------------------#
+
+weight_training_daily_calories:
+  source: input_number.weight_training_calories
+  cycle: daily
+weight_training_weekly_calories:
+  source: input_number.weight_training_calories
+  cycle: weekly
+weight_training_monthly_calories:
+  source: input_number.weight_training_calories
+  cycle: monthly
+
+weight_training_daily_time:
+  source: input_number.weight_training_time
+  cycle: daily
+weight_training_weekly_time:
+  source: input_number.weight_training_time
+  cycle: weekly
+weight_training_monthly_time:
+  source: input_number.weight_training_time
+  cycle: monthly

@@ -1,0 +1,217 @@
+#============================#
+#     Main Configuration     #
+#============================#
+
+# Default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Front end and themes
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /local/community/lovelace-card-mod/card-mod.js
+
+# Home zone
+zone:
+  - name: Home
+    latitude: !secret home_latitude
+    longitude: !secret home_longitude
+    radius: 100
+    icon: mdi:home
+
+# Browser mod
+browser_mod:
+  devices:
+    de079a8e_98edec58:
+      name: Computer
+    efafa6a3_e759f165:
+      name: Jon Phone
+
+#========================#
+#     Included Files     #
+#========================#
+
+alexa:          !include alexa.yaml
+automation:     !include_dir_merge_list automation
+binary_sensor:  !include binary_sensor.yaml
+cover:          !include covers.yaml
+group:          !include_dir_merge_named group
+history:        !include database/history.yaml
+influxdb:       !include influxdb.yaml
+input_boolean:  !include input_boolean.yaml
+input_datetime: !include input_datetime.yaml
+input_number:   !include input_number.yaml
+input_select:   !include input_select.yaml
+input_text:     !include input_text.yaml
+light:          !include light.yaml
+logbook:        !include database/logbook.yaml
+logger:         !include database/logger.yaml
+media_player:   !include media_player.yaml
+panel_custom:   !include panel_custom.yaml
+recorder:       !include database/recorder.yaml
+script:         !include_dir_merge_named script
+scene:          !include scenes.yaml
+sensor:         !include_dir_merge_list sensor
+template:       !include_dir_merge_list template
+timer:          !include timers.yaml
+utility_meter:  !include utility.yaml
+
+#=====================#
+#     Lovelace UI     #
+#=====================#
+
+lovelace:
+  mode: yaml
+  resources: !include lovelace/resources.yaml
+  dashboards:
+    
+    lovelace-admin:
+      mode: yaml
+      title: Overview
+      filename: lovelace_admin.yaml
+      show_in_sidebar: true
+      require_admin: false
+    
+    ovelace-reminders:
+      mode: yaml
+      title: Reminders
+      icon: mdi:reminder
+      filename: lovelace_reminders.yaml
+      show_in_sidebar: true
+      require_admin: true
+
+#==================#
+#     Presence     #
+#==================#
+
+device_tracker:
+  - platform: bluetooth_tracker
+    interval_seconds: 15
+    consider_home: 150
+    track_new_devices: yes
+
+# Life360
+life360:
+  accounts:
+    - username: !secret life360_username
+      password: !secret life360_password
+
+# Proximity
+proximity:
+  jon_home:
+    zone: home
+    #ignored_zones:
+    #  - dummy
+    devices:
+      - device_tracker.jon_galaxy
+      - device_tracker.life360_jon_franks
+    unit_of_measurement: m
+  mike_home:
+    zone: home
+    devices:
+      - device_tracker.mike_galaxy
+    unit_of_measurement: m
+  sarah_home:
+    zone: home
+    devices:
+      - device_tracker.pixel_4_xl
+    unit_of_measurement: m
+  david_home:
+    zone: home
+    devices:
+      - device_tracker.pixel_6_pro
+    unit_of_measurement: m
+
+#==========================#
+#     Computer Control     #
+#==========================#
+
+wake_on_lan:
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+switch:
+  - platform: mqtt
+    name: Zigbee2MQTT Permit Join
+    state_topic: "zigbee2mqtt/bridge/info"
+    value_template: "{{ value_json.permit_join | lower }}"
+    command_topic: "zigbee2mqtt/bridge/request/permit_join"
+    payload_on: "true"
+    payload_off: "false"
+
+#=================#
+#     Devices     #
+#=================#
+
+# Lutron Caseta hub
+lutron_caseta:
+  host:     !secret lutron_ip_addr
+  keyfile:  /ssl/lutron/caseta.key
+  certfile: /ssl/lutron/caseta.crt
+  ca_certs: /ssl/lutron/caseta-bridge.crt
+
+# Sonoff
+sonoff:
+  username: !secret sonoff_username
+  password: !secret sonoff_password
+  sensors: [power, current]
+  #mode: local
+  reload: always
+  force_update: [power]
+  scan_interval: '00:01:00'
+
+# Ecovacs DEEBOT
+ecovacs:
+  username: !secret ecovacs_user_id
+  password: !secret ecovacs_password
+  country: us
+  continent: na
+      
+#=========================#
+#     Thermal Comfort     #
+#=========================#
+
+thermal_comfort:
+  - sensor:
+      - name: Outdoor
+        unique_id: 'tc_outdoor'
+        temperature_sensor: sensor.porch_temperature
+        humidity_sensor: sensor.porch_humidity
+        sensor_types:
+          - heat_index
+          - dew_point
+
+#=======================#
+#     Miscellaneous     #
+#=======================#
+
+#HTTP, needed for NGINX
+http:
+  use_x_forwarded_for: true
+  trusted_proxies: 
+    - 172.30.33.0/24
+
+# System log error detection
+system_log:
+  fire_event: true
+
+counter:
+  kodi_errors:
+    name: Kodi Errors
+    initial: 0
+    restore: false
+
+# Shell commands
+shell_command:
+  backup_log:               python /config/python/backup_log.py
+  concat_log_files:         python /config/python/concat_log_files.py
+  copy_floorplan_christmas: python /config/python/copy_floorplan_christmas.py
+  copy_floorplan_normal:    python /config/python/copy_floorplan_normal.py
+  delete_junk_log_files:    'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
+
+# Google calendar API
+google:
+  client_id:     !secret google_client_id
+  client_secret: !secret google_client_secret

@@ -1,0 +1,52 @@
+#==================#
+#     InfluxDB     #
+#==================#
+
+host: !secret influx_ip_addr
+port: 8086
+database: home-assistant
+username: !secret influx_username
+password: !secret influx_password
+max_retries: 3
+default_measurement: state
+exclude:
+  
+  domains:
+    - automation
+    - binary_sensor
+    - button
+    - calendar
+    - counter
+    - cover
+    - group
+    - input_boolean
+    - input_datetime
+    - input_text
+    - media_player
+    - number
+    - persistent_notification
+    - proximity
+    - remote
+    - scene
+    - script
+    - sun
+    - timer
+    - zone
+  
+  entities:
+    - input_number.max_elevation
+    - input_number.med_elevation
+    - input_number.min_elevation
+    - input_number.treadmill_incline
+    - input_number.treadmill_speed
+    - input_number.user_weight
+    - input_number.zigbee2mqtt_join_minutes
+    - input_select.grandchild_sleepover_location
+    - input_select.kodi_movies
+    - input_select.rainbow_colors
+    - input_select.upstairs_ecobee_preset_modes
+    - input_select.weather_condition
+    - input_select.zigbee2mqtt_log_level
+  
+  entity_globs:
+    - input_number.calories*

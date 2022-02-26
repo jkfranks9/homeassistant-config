@@ -1,0 +1,91 @@
+#========================#
+#     Rainbow Colors     #
+#========================#
+
+rainbow_colors:
+  name: Rainbow Colors
+  options:
+    - red
+    - orange
+    - yellow
+    - green
+    - cyan
+    - blue
+    - violet
+
+#============================#
+#     Weather Conditions     #
+#============================#
+
+# This is a somewhat arbitrary distillation of the OpenWeather codes.
+weather_condition:
+  name: Weather Condition
+  options:
+    - clear
+    - hazy
+    - gloomy
+
+#==========================#
+#     Kodi Movies List     #
+#==========================#
+
+# This static definition is a placeholder; the real list is built dynamically
+# by the get_all_kodi_movies script.
+kodi_movies:
+  name: Kodi Movies
+  options:
+    - Select
+
+#========================================#
+#     Ecobee Thermostat Preset Modes     #
+#========================================#
+
+# Upstairs thermostat
+upstairs_ecobee_preset_modes:
+  name: Upstairs Ecobee Preset Modes
+  options:
+    - Away
+    - Home
+    - Sleep
+
+#=======================================#
+#     Grandchild Sleepover Location     #
+#=======================================#
+
+# This allows for alternate or changed lighting depending on grandchild sleeping
+# location.
+grandchild_sleepover_location:
+  name: Grandchild Sleepover Location
+  options:
+    - Guest
+    - Master
+
+#======================#
+#     Washer State     #
+#======================#
+
+washer_state:
+  name: Washer State
+  options:
+    - Stop
+    - Wash Fill
+    - Wash
+    - Wash Drain
+    - Rinse Fill
+    - Rinse
+    - Rinse Drain
+    - Unknown
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+zigbee2mqtt_log_level:
+  name: Zigbee2MQTT Log Level
+  options:
+    - debug
+    - info
+    - warn
+    - error
+  initial: info
+  icon: mdi:format-list-bulleted

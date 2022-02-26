@@ -1,0 +1,23 @@
+# An * ensures that everything will be ignored.
+*
+# Whitelist files/folders with !, these will not be ignored.
+!*.yaml
+!.gitignore
+!*.md
+
+# Ignore folders.
+.cloud
+.storage
+custom_components
+www
+zigbee2mqtt
+
+# Ignore files.
+.google.token
+.google_maps_location_sharing.cookies.darkeves_gmail_com
+
+# Ensure these YAML files are ignored.
+google_calendars.yaml
+ip_bans.yaml
+known_devices.yaml
+secrets.yaml

@@ -1,0 +1,243 @@
+#==========================#
+#     Global Constants     #
+#==========================#
+
+# Sun elevation angles used for lighting blueprints, automations and scripts.
+#
+# HEAVY SIGH. I created these to have one place to update if I want to change these values. However, they are used
+# in templates with the float filter, which now requires a default value, as in float(0). Since these are indeed
+# constants, the float values have been changed with the proper default, as in float(3). Which means I still have
+# to update them everywhere if they ever change. Waaaaaa!
+min_elevation:
+  name: Minimum Sun Elevation
+  initial: 3.0
+  min: 3.0
+  max: 3.01
+
+med_elevation:
+  name: Medium Sun Elevation
+  initial: 6.0
+  min: 6.0
+  max: 6.01
+
+max_elevation:
+  name: Maximum Sun Elevation
+  initial: 9.0
+  min: 9.0
+  max: 9.01
+  
+#===================#
+#     Treadmill     #
+#===================#
+
+# This keeps the time spent on the treadmill.
+treadmill_time:
+  name: Treadmill Time
+  initial: 0
+  min: 0
+  max: 60
+
+# This keeps the calories expended while on the treadmill.
+treadmill_calories:
+  name: Treadmill Calories
+  initial: 0
+  min: 0
+  max: 500
+
+# This lets the user input speed in MPH.
+treadmill_speed:
+  name: Treadmill Speed
+  min: 0
+  max: 5
+  step: 0.1
+
+# This lets the user input incline in degrees.
+treadmill_incline:
+  name: Treadmill Incline
+  min: 0
+  max: 5
+
+# This lets the user input weight in pounds.
+user_weight:
+  name: User Weight
+  min: 0
+  max: 200
+  mode: box
+
+#===================#
+#     Yard Work     #
+#===================#
+
+# This keeps the time spent on yard work.
+yard_work_time:
+  name: Yard Work Time
+  initial: 0
+  min: 0
+  max: 420
+  mode: box
+
+# This keeps the calories expended doing yard work.
+yard_work_calories:
+  name: Yard Work Calories
+  initial: 0
+  min: 0
+  max: 1750
+
+#=========================#
+#     Weight Training     #
+#=========================#
+
+# This keeps the time spent on weight training.
+weight_training_time:
+  name: Weight Training Time
+  initial: 0
+  min: 0
+  max: 120
+  mode: box
+
+# This keeps the calories expended doing weight training.
+weight_training_calories:
+  name: Weight Training Calories
+  initial: 0
+  min: 0
+  max: 500
+
+#==================#
+#     Calories     #
+#==================#
+
+# Monthly calories used for the current year.
+calories_curr_year_jan:
+  name: Calories Curr Year Jan
+  min: 0
+  max: 12000
+calories_curr_year_feb:
+  name: Calories Curr Year Feb
+  min: 0
+  max: 12000
+calories_curr_year_mar:
+  name: Calories Curr Year Mar
+  min: 0
+  max: 12000
+calories_curr_year_apr:
+  name: Calories Curr Year Apr
+  min: 0
+  max: 12000
+calories_curr_year_may:
+  name: Calories Curr Year May
+  min: 0
+  max: 12000
+calories_curr_year_jun:
+  name: Calories Curr Year Jun
+  min: 0
+  max: 12000
+calories_curr_year_jul:
+  name: Calories Curr Year Jul
+  min: 0
+  max: 12000
+calories_curr_year_aug:
+  name: Calories Curr Year Aug
+  min: 0
+  max: 12000
+calories_curr_year_sep:
+  name: Calories Curr Year Sep
+  min: 0
+  max: 12000
+calories_curr_year_oct:
+  name: Calories Curr Year Oct
+  min: 0
+  max: 12000
+calories_curr_year_nov:
+  name: Calories Curr Year Nov
+  min: 0
+  max: 12000
+calories_curr_year_dec:
+  name: Calories Curr Year Dec
+  min: 0
+  max: 12000
+
+# Monthly calories used for the previous year.
+calories_prev_year_jan:
+  name: Calories Prev Year Jan
+  min: 0
+  max: 12000
+calories_prev_year_feb:
+  name: Calories Prev Year Feb
+  min: 0
+  max: 12000
+calories_prev_year_mar:
+  name: Calories Prev Year Mar
+  min: 0
+  max: 12000
+calories_prev_year_apr:
+  name: Calories Prev Year Apr
+  min: 0
+  max: 12000
+calories_prev_year_may:
+  name: Calories Prev Year May
+  min: 0
+  max: 12000
+calories_prev_year_jun:
+  name: Calories Prev Year Jun
+  min: 0
+  max: 12000
+calories_prev_year_jul:
+  name: Calories Prev Year Jul
+  min: 0
+  max: 12000
+calories_prev_year_aug:
+  name: Calories Prev Year Aug
+  min: 0
+  max: 12000
+calories_prev_year_sep:
+  name: Calories Prev Year Sep
+  min: 0
+  max: 12000
+calories_prev_year_oct:
+  name: Calories Prev Year Oct
+  min: 0
+  max: 12000
+calories_prev_year_nov:
+  name: Calories Prev Year Nov
+  min: 0
+  max: 12000
+calories_prev_year_dec:
+  name: Calories Prev Year Dec
+  min: 0
+  max: 12000
+
+#=====================#
+#     Temperature     #
+#=====================#
+
+# Minimum / maximum attic temperature.
+min_attic_temp:
+  name: Minimum Attic Temperature
+  min: -25
+  max: 100
+max_attic_temp:
+  name: Maximum Attic Temperature
+  min: 0
+  max: 125
+
+# Minimum / maximum outdoor temperature.
+min_outdoor_temp:
+  name: Minimum Outdoor Temperature
+  min: -25
+  max: 100
+max_outdoor_temp:
+  name: Maximum Outdoor Temperature
+  min: 0
+  max: 125
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+zigbee2mqtt_join_minutes:
+  name: Zigbee2MQTT Join Minutes
+  initial: 2
+  min: 1
+  max: 5
+  step: 1
+  mode: slider

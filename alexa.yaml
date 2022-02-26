@@ -1,0 +1,69 @@
+#===========================#
+#     Alexa integration     #
+#===========================#
+ 
+smart_home:
+  endpoint: https://api.amazonalexa.com/v3/events
+  client_id: !secret alexa_client_id
+  client_secret: !secret alexa_client_secret
+  
+  filter:
+    
+    exclude_domains:
+      - automation
+      - brother
+      - input_boolean
+      - input_number
+      - group
+      - lutron_caseta
+      - media_player
+      - switch
+      - timer
+      - tplink
+    
+    exclude_entities:
+      - binary_sensor.archer_c2300_wan_status
+      - binary_sensor.cinema_projector
+      - binary_sensor.family_room_av
+      - binary_sensor.home_assistant_operating_system_update_available
+      - binary_sensor.protection_window
+      - binary_sensor.backups_stale
+      - scene.non_bedroom_lights_out
+      - scene.non_master_lights_out
+      - scene.theater_dark
+      - script.automate_lights_while_away
+      - script.change_lighting_per_weather
+      - script.concat_log_files
+      - script.copy_monthly_calories
+      - script.evaluate_weather_condition
+      - script.get_all_kodi_movies
+      - script.lock_pc
+      - script.start_activity
+      - script.throttle_mobile_notification
+      - script.turn_on_stairway_light
+      - script.watch_app
+    
+    exclude_entity_globs:
+      - binary_sensor.*_espresense_sensor
+      - binary_sensor.*_mirror
+      - binary_sensor.*_occupancy
+      - binary_sensor.espresense*
+      - binary_sensor.guest_bath_motion_detector_*
+      - binary_sensor.laundry_room_motion_detector_*
+      - binary_sensor.master_bath_motion_detector_*
+      - binary_sensor.pixel_6*
+      - binary_sensor.shelly1_garage_*_contact
+      - binary_sensor.shelly1_garage_*_firmware_update
+      - binary_sensor.updater*
+      - script.close_garage_door*
+      - script.set_datetime_offset*
+      - sensor.openweathermap*
+      - sensor.*_temp
+      - sensor.*_temperature
+      - sensor.*_temp_max
+      - sensor.*_temp_min
+      - sensor.*_temp_stats
+      - sensor.*_battery_temperature
+      - script.*_deep_sleep
+      - script.*_worker
+      - script.test*

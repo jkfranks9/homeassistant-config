@@ -1,0 +1,39 @@
+#====================#
+#     Lights Out     #
+#====================#
+
+- id: 'lights_out'
+  name: Lights Out
+  entities:
+    light.attic_light:          'off'
+    group.downstairs_lights:    'off'
+    light.garage_lights:        'off'
+    group.outdoor_lights:       'off'
+    group.upstairs_lights:      'off'
+
+#===============================#
+#     Non Master Lights Out     #
+#===============================#
+
+# Turn off all lights except the master bedroom, used when Jon goes to bed.
+- id: 'non_master_lights_out'
+  name: Non Master Lights Out
+  entities:
+    group.daytime_lights:       'off'
+    group.guest_bedroom_lights: 'off'
+    group.interior_lights:      'off'
+    group.misc_lights:          'off'
+    group.theater_lights:       'off'
+
+#================================#
+#     Non Bedroom Lights Out     #
+#================================#
+
+# Turn off all lights except any bedroom lights, used when Jon goes to bed but family members are home without grandchild.
+- id: 'non_bedroom_lights_out'
+  name: Non Bedroom Lights Out
+  entities:
+    group.daytime_lights:       'off'
+    group.interior_lights:      'off'
+    group.misc_lights:          'off'
+    group.theater_lights:       'off'
