@@ -1,9 +1,52 @@
 # An * ensures that everything will be ignored.
 *
+
 # Whitelist files/folders with !, these will not be ignored.
 !*.yaml
 !.gitignore
 !*.md
+!automation
+!blueprints/
+!blueprints/automation/
+!blueprints/automation/climate
+!blueprints/automation/devices
+!blueprints/automation/health
+!blueprints/automation/lighting
+!blueprints/automation/notification
+!blueprints/automation/theater
+!blueprints/script/
+!blueprints/script/notification
+!database
+!esphome
+!esphome/common/
+!group
+!lovelace/
+!lovelace/dash_overview/
+!lovelace/dash_overview/cards/
+!lovelace/dash_overview/cards/controls
+!lovelace/dash_overview/cards/devices
+!lovelace/dash_overview/cards/energy
+!lovelace/dash_overview/cards/environment
+!lovelace/dash_overview/cards/health
+!lovelace/dash_overview/cards/home
+!lovelace/dash_overview/cards/lighting
+!lovelace/dash_overview/cards/monitoring
+!lovelace/dash_overview/cards/office
+!lovelace/dash_overview/cards/theater
+!lovelace/dash_overview/cards/tracking
+!lovelace/dash_overview/views
+!lovelace/dash_reminders/
+!lovelace/dash_reminders/cards/
+!lovelace/dash_reminders/cards/cleaning
+!lovelace/dash_reminders/cards/maintenance
+!lovelace/dash_reminders/cards/office
+!lovelace/dash_reminders/cards/yard
+!lovelace/dash_reminders/views
+!script
+!sensor
+!template
+!
+!
 
 # Ignore folders.
 .cloud

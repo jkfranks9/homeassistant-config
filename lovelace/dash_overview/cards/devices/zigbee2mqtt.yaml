@@ -1,0 +1,24 @@
+#==========================#
+#     Zigbee2MQTT Card     #
+#==========================#
+
+type: entities
+title: Zigbee2MQTT
+show_header_toggle: false
+entities:
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.number_of_devices
+    name: Coordinator
+    state_header: Devices
+    entities:
+      - entity: sensor.zigbee2mqtt_bridge_state
+        name: Bridge
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.network_pan_id
+    name: Network
+    state_header: Pan ID
+    entities:
+      - entity: sensor.network_channel
+        name: Channel

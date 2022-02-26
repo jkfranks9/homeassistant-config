@@ -1,0 +1,108 @@
+#==================================#
+#     Cleaning Downstairs Card     #
+#==================================#
+
+type: custom:stack-in-card
+title: Downstairs
+keep:
+  margin: true
+cards:
+      
+  # Dining Room / Foyer
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_dining_foyer
+      - name: Dining / Foyer
+      - icon: silverware-variant
+      - interval: 6
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Family Room
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_family_room
+      - name: Family Room
+      - icon: sofa
+      - interval: 4
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Guest Bath
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_guest_bath
+      - name: Guest Bath
+      - icon: bathtub
+      - interval: 3
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Guest Bedroom
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_guest_bedroom
+      - name: Guest Bedroom
+      - icon: bed
+      - interval: 8
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Kitchen
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_kitchen
+      - name: Kitchen
+      - icon: fridge-industrial
+      - interval: 3
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Laundry Room
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_laundry_room
+      - name: Laundry Room
+      - icon: washing-machine
+      - interval: 7
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Master Bath
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_master_bath
+      - name: Master Bath
+      - icon: bathtub
+      - interval: 3
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Master Bedroom
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_guest_bedroom
+      - name: Master Bedroom
+      - icon: bed
+      - interval: 7
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Office
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_office
+      - name: Office
+      - icon: desk
+      - interval: 5
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks

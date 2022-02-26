@@ -1,0 +1,44 @@
+#==========================#
+#     Calories History     #
+#==========================#
+
+# Copy current year monthly calories used to previous year.
+copy_monthly_calories:
+  alias: Copy Monthly Calories
+  
+  variables:
+    months:
+      - jan
+      - feb
+      - mar
+      - apr
+      - may
+      - jun
+      - jul
+      - aug
+      - sep
+      - oct
+      - nov
+      - dec
+  
+  sequence:
+    
+    # Repeat for all months.
+    - repeat:
+        count: 12
+        
+        sequence:
+          
+          # Copy the current year value to the previous year for the corresponding month.
+          - service: input_number.set_value
+            target:
+              entity_id: "input_number.calories_prev_year_{{ months[repeat.index-1] }}"
+            data:
+              value: "{{ states('input_number.calories_curr_year_' + months[repeat.index-1]) }}"
+          
+          # Rest the current year value to zero.
+          - service: input_number.set_value
+            target:
+              entity_id: "input_number.calories_curr_year_{{ months[repeat.index-1] }}"
+            data:
+              value: 0

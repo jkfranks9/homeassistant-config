@@ -1,0 +1,83 @@
+#===========================#
+#     Calories History      #
+#===========================#
+
+# Save the monthly calories used to maintain a history for the front end.
+- alias: Save Monthly Calories
+  id: 'save_monthly_calories'
+  
+  # Trigger when the total monthly calories sensor is reset to zero, which should occur at the start
+  # of a new month (presumably at midnight). We then save the previous month's total in the history.
+  trigger:
+    - platform: template
+      value_template: "{{ is_state('sensor.total_monthly_calories', '0.0') }}"
+    
+  # This should ensure we are actually changing from a valid state, and not just triggering because
+  # the current value is 0.
+  condition:
+    - condition: template
+      value_template: "{{ trigger.from_state and trigger.from_state > 0.0 }}"
+  
+  # Determine the previous month using the 'from' state's last changed value.
+  variables:
+    month: "{{ as_timestamp(strptime(trigger.from_state.last_changed.strftime('%Y-%m-%d %H:%M:%S.%f'), '%Y-%m-%d %H:%M:%S.%f')) | timestamp_custom('%b') | lower() }}"
+  
+  action:
+    #- service: system_log.write
+    #  data:
+    #    message: "JKF: calories from state last changed: '{{ trigger.from_state.last_changed }}'"
+    #    level: info
+    
+    # Set the correct history value using the month variable to complete the target entity ID.
+    - service: input_number.set_value
+      target:
+        entity_id: "input_number.calories_curr_year_{{ month }}"
+      data:
+        value: "{{ trigger.from_state.state | float(0) }}"
+    
+    # If we've started a new year (previous month is December), copy the current year's history to the previous year.
+    # We only keep two year's worth of history.
+    - condition: "{{ month == 'dec' }}"
+    - service: script.copy_monthly_calories
+
+#==========================#
+#     Manual Exercise      #
+#==========================#
+
+# Reset manual exercise controls to zero early each day.
+- alias: Reset Manual Exercise Controls
+  id: 'reset_manual_exercise_controls'
+  trigger:
+    - platform:  time
+      at: '01:01:01'
+  action:
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.yard_work_time
+      data:
+        value: 0
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.weight_training_time
+      data:
+        value: 0
+
+# Set yard work calories.
+- alias: Set Yard Work Calories
+  id: 'set_yard_work_calories'
+  use_blueprint:
+    path: health/calories_calculator.yaml
+    input:
+      time_entity: input_number.yard_work_time
+      calories_entity: input_number.yard_work_calories
+      calorie_rate: 250
+
+# Set weight training calories.
+- alias: Set Weight Training Calories
+  id: 'set_weight_training_calories'
+  use_blueprint:
+    path: health/calories_calculator.yaml
+    input:
+      time_entity: input_number.weight_training_time
+      calories_entity: input_number.weight_training_calories
+      calorie_rate: 200

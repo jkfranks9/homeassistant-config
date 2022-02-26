@@ -1,0 +1,220 @@
+#================#
+#     Logger     #
+#================#
+
+default: info
+
+# Log levels for different components
+logs:
+  
+  # HA basic
+  homeassistant.loader: warning
+  homeassistant.setup:  warning
+
+  # HA automations
+  homeassistant.components.automation.change_upstairs_ecobee_preset_display:  warning
+  homeassistant.components.automation.delete_junk_log_files:                  warning
+  homeassistant.components.automation.disable_nighttime_sleeptime_modes:      warning
+  homeassistant.components.automation.enable_nighttime_mode:                  warning
+  homeassistant.components.automation.enable_sleeptime_mode:                  warning
+  homeassistant.components.automation.initialize_amazon_prime_volume:         warning
+  homeassistant.components.automation.initialize_bluray_volume:               warning
+  homeassistant.components.automation.initialize_disney_plus_volume:          warning
+  homeassistant.components.automation.initialize_hbo_max_volume:              warning
+  homeassistant.components.automation.initialize_kodi_volume:                 warning
+  homeassistant.components.automation.initialize_laserdisc_volume:            warning
+  homeassistant.components.automation.initialize_netflix_volume:              warning
+  homeassistant.components.automation.initialize_pandora_volume:              warning
+  homeassistant.components.automation.initialize_paramount_plus_volume:       warning
+  homeassistant.components.automation.initialize_peacock_volume:              warning
+  homeassistant.components.automation.initialize_youtube_tv_volume:           warning
+  homeassistant.components.automation.refresh_front_end:                      warning
+  homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
+  homeassistant.components.automation.reset_family_room_lamp:                 warning
+  homeassistant.components.automation.reset_manual_exercise_controls:         warning
+  homeassistant.components.automation.reset_master_bedroom_lamp:              warning
+  homeassistant.components.automation.reset_office_lamp:                      warning
+  homeassistant.components.automation.restore_movie_list_on_start:            warning
+  homeassistant.components.automation.restore_timers:                         warning
+  homeassistant.components.automation.run_guest_bath_motion_based_light:      warning
+  homeassistant.components.automation.run_laundry_room_motion_based_light:    warning
+  homeassistant.components.automation.run_master_bath_motion_based_light:     warning
+  homeassistant.components.automation.save_timers:                            warning
+  homeassistant.components.automation.set_maximum_attic_temperature:          warning
+  homeassistant.components.automation.set_minimum_attic_temperature:          warning
+  homeassistant.components.automation.set_maximum_outdoor_temperature:        warning
+  homeassistant.components.automation.set_minimum_outdoor_temperature:        warning
+  homeassistant.components.automation.toggle_adguard_for_paramount:           warning
+  homeassistant.components.automation.update_openuv:                          warning
+  homeassistant.components.automation.washer_operation:                       warning
+
+  # HA scripts
+  homeassistant.components.script.bedtime:                            warning
+  homeassistant.components.script.change_lighting_per_weather:        warning
+  homeassistant.components.script.change_lighting_per_weather_simple: warning
+  homeassistant.components.script.evaluate_weather_condition:         warning
+  homeassistant.components.script.start_activity:                     warning
+  homeassistant.components.script.set_theater_dark:                   warning
+  homeassistant.components.script.set_theater_dim:                    warning
+  homeassistant.components.script.set_theater_idle:                   warning
+  homeassistant.components.script.sleeptime:                          warning
+  homeassistant.components.script.throttle_mobile_notification:       warning
+  homeassistant.components.script.turn_on_adguard:                    warning
+  homeassistant.components.script.turn_on_bathroom_light:             warning
+  homeassistant.components.script.turn_on_stairway_light:             warning
+
+  # HA misc components
+  homeassistant.components.alexa:                         info
+  homeassistant.components.analytics:                     warning
+  homeassistant.components.androidtv.media_player:        info
+  homeassistant.components.automation:                    info
+  homeassistant.components.cover:                         warning
+  homeassistant.components.device_tracker:                info
+  homeassistant.components.ecovacs:                       info
+  homeassistant.components.esphome:                       warning
+  homeassistant.components.fan:                           warning
+  homeassistant.components.history:                       info
+  homeassistant.components.http.view:                     info
+  homeassistant.components.kodi.media_player:             warning
+  homeassistant.components.lutron_caseta:                 info
+  homeassistant.components.media_player:                  info
+  homeassistant.components.mqtt:                          warning
+  homeassistant.components.proximity:                     warning
+  homeassistant.components.scene:                         warning
+  homeassistant.components.shell_command:                 info
+  homeassistant.components.system_log.external:           info # This is for logs in automations and scripts.
+  homeassistant.components.webhook:                       info
+  homeassistant.components.websocket_api:                 info
+  homeassistant.components.websocket_api.http.connection: info
+
+  # Custom components
+  custom_components.browser_mod:                       info
+  custom_components.hacs:                              warning
+  custom_components.kodi.media_player:                 debug
+  custom_components.epson_projector:                   info
+  #custom_components.proximity:                         debug
+  custom_components.pyscript.file.populate_all_movies: info
+  custom_components.pyscript.file.restore_all_movies:  info
+  custom_components.sonoff.sonoff_cloud:               info
+  custom_components.thermal_comfort:                   info
+
+  # Other
+  aioesphomeapi.connection:                warning
+  androidtv.adb_manager.adb_manager_async: info
+  googleapiclient.discovery:               warning
+  hangups.channel:                         warning
+  my_debug:                                debug
+  pylutron_caseta:                         info
+  sucks:                                   info
+  kasa:                                    info
+
+  sleekxmppfs.xmlstream.xmlstream: info
+  sleekxmppfs.stanza.rootstanza:   info
+  sleekxmppfs.basexmpp:            info
+
+# Filters ... these remove annoying or useless information.
+filters:
+
+  ##################################################################
+  # NOTE: These should be commented out when Christmas mode is on. 
+  homeassistant.helpers.service:
+    - "Unable to find referenced entities switch.kitchen_christmas_tree"
+    - "Unable to find referenced entities switch.mantle_bookcase"
+    - "Unable to find referenced entities switch.stair_railing"
+  
+  homeassistant.components.switch.reproduce_state:
+    - "Unable to find entity switch.kitchen_christmas_tree"
+    - "Unable to find entity switch.mantle_bookcase"
+    - "Unable to find entity switch.stair_railing"
+  ##################################################################
+  
+  custom_components.androidtv.config_flow:
+    - "Host .* already configured. This yaml configuration has already been imported. Please remove it"
+  
+  custom_components.watchman:
+    - "Watchman sensors updated"
+  
+  homeassistant.bootstrap:
+    - "Waiting on integrations to complete setup"
+
+  homeassistant.components.alexa.state_report:
+    - "Timeout sending report to Alexa"
+
+  homeassistant.components.automation:
+    - "Error evaluating condition in 'Restore Notifications':"
+
+  #homeassistant.components.automation.log_notifications:
+  #- ".* Already running"
+
+  #homeassistant.components.automation.removed_saved_notifications_on_dismiss:
+  #- ".* Already running"
+
+  #homeassistant.components.automation.restore_notifications:
+  #- ".* Already running"
+
+  #homeassistant.components.automation.save_notifications_on_create:
+  #- ".* Already running"
+
+  homeassistant.components.binary_sensor:
+    - "Setup of binary_sensor platform .* is taking over 10 seconds"
+    - "Not adding entity .* because it's disabled"
+
+  homeassistant.components.input_select:
+    - "Current option: Select no longer valid"
+
+  homeassistant.components.light:
+    - "Setup of light platform .* is taking over 10 seconds"
+    - "Updating .* took longer than the scheduled update interval .*"
+
+  homeassistant.components.media_player:
+    - "Setup of media_player platform .* is taking over 10 seconds"
+    - "Updating .* took longer than the scheduled update interval .*"
+
+  homeassistant.components.openuv:
+    - "Skipping update due to missing data: from_time"
+  
+  homeassistant.components.scene:
+    - "Setup of scene platform .* is taking over 10 seconds"
+
+  #homeassistant.components.script.change_lighting_per_weather:
+  #- ".* Already running"
+
+  #homeassistant.components.script.evaluate_weather_condition:
+  #- ".* Already running"
+
+  homeassistant.components.sensor:
+    - "Setup of sensor platform .* is taking over 10 seconds"
+    - "Not adding entity .* because it's disabled"
+
+  homeassistant.components.shelly:
+    - "Timeout fetching shelly1.* data"
+
+  homeassistant.components.switch:
+    - "Setup of switch platform .* is taking over 10 seconds"
+
+  homeassistant.components.vacuum:
+    - "Setup of vacuum platform .* is taking over 10 seconds"
+  
+  homeassistant.components.webhook:
+    - "Received message for unregistered webhook"
+
+  homeassistant.config_entries:
+    - "Config entry .* for .* integration not ready yet: Timeout during device setup; Retrying in background"
+
+  homeassistant.helpers.entity:
+    - "Update of .* is taking over 10 seconds"
+
+  homeassistant.helpers.template:
+    - "Template variable error: 'dict object' has no attribute 'payload_json' when rendering"
+
+  homeassistant.setup:
+    - "Setup of .* is taking over 10 seconds"
+
+  oauth2client.client:
+    - "Refreshing access_token"
+  
+  oauth2client.transport:
+    - "Refreshing due to a 401"
+
+  sleekxmppfs.basexmpp:
+    - "fulljid property deprecated. Use boundjid.resource"

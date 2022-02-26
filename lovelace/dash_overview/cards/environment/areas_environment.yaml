@@ -1,0 +1,27 @@
+#=====================================#
+#     Environmental Areas Cards 1     #
+#=====================================#
+
+type: custom:stack-in-card
+mode: horizontal
+cards:
+      
+  # Office
+  - type: custom:decluttering-card
+    template: temperature_entity_4
+    variables:
+      - entity_0: sensor.office_temperature
+      - name_0:  'Office'
+      - entity_1: sensor.office_temp_min
+      - entity_2: sensor.office_temp_max
+      - entity_3: sensor.office_humidity
+
+  # Garage
+  - type: custom:decluttering-card
+    template: temperature_entity_4
+    variables:
+      - entity_0: sensor.garage_temperature
+      - name_0:  'Garage'
+      - entity_1: sensor.garage_temp_min
+      - entity_2: sensor.garage_temp_max
+      - entity_3: sensor.garage_humidity

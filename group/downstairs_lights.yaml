@@ -1,0 +1,12 @@
+#===========================#
+#     Downstairs Lights     #
+#===========================#
+
+Downstairs Lights:
+  entities:
+    - group.interior_lights
+    - group.daytime_lights
+    
+    - light.guest_bedroom_lamp
+    - light.guest_bedroom_lamp_2
+    - light.master_bedroom_lamp

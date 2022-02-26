@@ -1,0 +1,14 @@
+#=========================#
+#     Theater Sensors     #
+#=========================#
+
+- sensor:
+
+    #--------------------------------#
+    #   -- Average Viewing Time --   #
+    #--------------------------------#
+    
+    - name: 'Average Daily Viewing Time'
+      unique_id: average_daily_viewing_time
+      unit_of_measurement: 'h'
+      state: "{{ ((states('sensor.cinema_last_7_days') | float(0) + states('sensor.tv_last_7_days') | float(0)) / 7) | round(2)}}"

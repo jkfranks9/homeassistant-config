@@ -1,0 +1,24 @@
+#==================#
+#     Yard Tab     #
+#==================#
+
+title: Yard
+icon: mdi:flower
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - type: conditional
+        conditions:
+          - entity: sensor.warm_weather
+            state: true
+        card:
+          - !include /config/lovelace/dash_reminders/cards/yard/spraying.yaml
+      - type: conditional
+        conditions:
+          - entity: sensor.warm_weather
+            state: true
+        card:
+          - type: custom:layout-break
+      - !include /config/lovelace/dash_reminders/cards/yard/trimming.yaml

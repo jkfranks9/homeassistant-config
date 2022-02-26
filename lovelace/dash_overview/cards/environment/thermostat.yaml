@@ -1,0 +1,12 @@
+#=========================#
+#     Thermostat Card     #
+#=========================#
+
+type: custom:simple-thermostat
+entity: climate.upstairs
+header:
+  name: Upstairs Thermostat
+  icon: mdi:thermostat
+step_size: 1.0
+control:
+  - preset

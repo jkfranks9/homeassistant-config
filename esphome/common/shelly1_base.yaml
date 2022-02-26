@@ -1,0 +1,5 @@
+# Core configuration for a Shelly 1 relay
+esphome:
+  name: $device_name
+  platform: ESP8266
+  board: esp01_1m

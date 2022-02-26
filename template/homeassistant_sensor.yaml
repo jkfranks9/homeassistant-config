@@ -1,0 +1,208 @@
+#================================#
+#     Home Assistant Sensors     #
+#================================#
+
+- sensor:
+
+    #--------------------------#
+    #   -- Nighttime Mode --   #
+    #--------------------------#
+    
+    # Convert nighttime boolean for lovelace
+    - name: 'Nighttime'
+      unique_id: nighttime
+      state: "{{ iif(is_state('input_boolean.nighttime', 'on'), 1, 0) }}"
+
+    #----------------------#
+    #   -- Statistics --   #
+    #----------------------#
+    
+    - name: 'Count Automations'
+      unique_id: count_automations
+      state: "{{ states.automation | count }}"
+    
+    - name: 'Count Binary Sensors'
+      unique_id: count_binary_sensors
+      state: "{{ states.binary_sensor| count }}"
+    
+    - name: 'Count Device Trackers'
+      unique_id: count_device_trackers
+      state: "{{ states.device_tracker | count }}"
+    
+    - name: 'Count Groups'
+      unique_id: count_groups
+      state: "{{ states.group| count }}"
+    
+    - name: 'Count Input Booleans'
+      unique_id: count_input_booleans
+      state: "{{ states.input_boolean | count }}"
+    
+    - name: 'Count Input Datetimes'
+      unique_id: count_input_datetimes
+      state: "{{ states.input_datetime | count }}"
+    
+    - name: 'Count Input Numbers'
+      unique_id: count_input_numbers
+      state: "{{ states.input_number | count }}"
+    
+    - name: 'Count Lights'
+      unique_id: count_lights
+      state: "{{ states.light | count }}"
+    
+    - name: 'Count Scripts'
+      unique_id: count_scripts
+      state: "{{ states.script| count }}"
+    
+    - name: 'Count Sensors'
+      unique_id: count_sensors
+      state: "{{ states.sensor | count }}"
+    
+    - name: 'Count Switches'
+      unique_id: count_switches
+      state: "{{ states.switch | count }}"
+    
+    - name: 'Count Timers'
+      unique_id: count_timers
+      state: "{{ states.timer | count }}"
+
+    #---------------------------#
+    #   -- Boot / Up Times --   #
+    #---------------------------#
+    
+    # Home Assistant uptime    
+    - name: 'HA Uptime'
+      unique_id: ha_uptime
+      state: >
+        {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.uptime')) %}
+
+        {% set minutes = (up_time // 60) | int(0) %}
+        {% set hours = (minutes // 60) %}
+        {% set days = (hours // 24) %}
+        {% set weeks = (days // 7) %}
+
+        {% set minutes = (minutes % 60) %}
+        {% set hours =  (hours % 24) %}
+        {% set days = (days % 7) %}
+
+        {% macro phrase(value, name) %}
+                  {%- set value = value %}
+                  {%- set end = 's' if value > 1 else '' %}
+                  {{- '{} {}{}'.format(value, name, end) if value | int(0) > 0 else '' }}
+        {%- endmacro %}
+                    
+        {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
+        {% set last_comma = text.rfind(',') %}
+        {% if last_comma != -1 %}
+          {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
+        {% endif %}
+          
+        {{ text }}
+
+    # Raspberry Pi last boot date and time       
+    - name: 'Last Boot Date Time'
+      unique_id: last_boot_date_time
+      state: >
+        {% set date = as_timestamp(states('sensor.last_boot')) | timestamp_custom('%d') %}
+        {% set date = '{:01}'.format(date | int(0)) %}
+        {% if date in ('1', '21', '31') %}
+          {% set date = date ~ 'st' %}
+        {% elif date in ('2', '22') %}
+          {% set date = date ~ 'nd' %}
+        {% elif date in ('3', '23') %}
+          {% set date = date ~ 'rd' %}
+        {% else %}
+          {% set date = date ~ 'th' %}
+        {% endif %}
+
+        {{ as_timestamp(states('sensor.last_boot')) | timestamp_custom('%H:%M on %a') }} {{ date }} {{ as_timestamp(states('sensor.last_boot')) | timestamp_custom('%b %Y') }}
+
+    # Raspberry Pi up time
+    - name: 'RPi Uptime'
+      unique_id: rpi_uptime
+      state: >
+        {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) %}
+
+        {% set minutes = (up_time // 60) | int(0) %}
+        {% set hours = (minutes // 60) %}
+        {% set days = (hours // 24) %}
+        {% set weeks = (days // 7) %}
+
+        {% set minutes = (minutes % 60) %}
+        {% set hours =  (hours % 24) %}
+        {% set days = (days % 7) %}
+
+        {% macro phrase(value, name) %}
+                  {%- set value = value %}
+                  {%- set end = 's' if value > 1 else '' %}
+                  {{- '{} {}{}'.format(value, name, end) if value | int(0) > 0 else '' }}
+        {%- endmacro %}
+                    
+        {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
+        {% set last_comma = text.rfind(',') %}
+        {% if last_comma != -1 %}
+          {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
+        {% endif %}
+          
+        {{ text }}
+
+    # PC last boot date and time       
+    #- name: 'PC Boot Date Time'
+    #  unique_id: pc_boot_date_time
+    #  state: >
+    #    {% set date = as_timestamp(states('sensor.legion_t530_system_boot_time')) | timestamp_custom('%d') %}
+    #    {% set date = '{:01}'.format(date | int(0)) %}
+    #    {% if date in ('1', '21', '31') %}
+    #      {% set date = date ~ 'st' %}
+    #    {% elif date in ('2', '22') %}
+    #      {% set date = date ~ 'nd' %}
+    #    {% elif date in ('3', '23') %}
+    #      {% set date = date ~ 'rd' %}
+    #    {% else %}
+    #      {% set date = date ~ 'th' %}
+    #    {% endif %}
+
+    #    {{ as_timestamp(states('sensor.legion_t530_system_boot_time')) | timestamp_custom('%H:%M on %a') }} {{ date }} {{ as_timestamp(states('sensor.legion_t530_system_boot_time')) | timestamp_custom('%b %Y') }}
+
+    # PC up time
+    #- name: 'PC Uptime'
+    #  unique_id: pc_uptime
+    #  state: >
+    #    {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.legion_t530_system_boot_time')) %}
+
+    #    {% set minutes = (up_time // 60) | int(0) %}
+    #    {% set hours = (minutes // 60) %}
+    #    {% set days = (hours // 24) %}
+    #    {% set weeks = (days // 7) %}
+
+    #    {% set minutes = (minutes % 60) %}
+    #    {% set hours =  (hours % 24) %}
+    #    {% set days = (days % 7) %}
+
+    #    {% macro phrase(value, name) %}
+    #              {%- set value = value %}
+    #              {%- set end = 's' if value > 1 else '' %}
+    #              {{- '{} {}{}'.format(value, name, end) if value | int(0) > 0 else '' }}
+    #    {%- endmacro %}
+                    
+    #    {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
+    #    {% set last_comma = text.rfind(',') %}
+    #    {% if last_comma != -1 %}
+    #      {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
+    #    {% endif %}
+          
+    #    {{ text }}
+
+    #----------------#
+    #   -- Misc --   #
+    #----------------#
+    
+    - name: 'PC RAM free GB'
+      unique_id: pc_ram_free_gb
+      unit_of_measurement: 'GB'
+      state: "{{ states('sensor.legion_t530_memory_total') }}"
+      
+    - name: 'Warm Weather'
+      unique_id: warm_weather
+      state: >
+        {% set n = now() %}
+        {{ n.month > 2 and n.month < 11 }}

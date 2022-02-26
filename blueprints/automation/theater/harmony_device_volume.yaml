@@ -1,0 +1,53 @@
+# Initialize the receiver volume based on the Harmony device in use.
+# The device name and normal volume are inputs. If a grandchild is home, the 
+# volume level is reduced by a small amount.
+
+blueprint:
+  name: Harmony Device Volume Initializer
+  description: Initialize the volume for a Harmony device.
+  domain: automation
+  
+  input:
+    device_name:
+      name: Harmony Device Name
+      description: The name of the Harmony device, for example 'BD Player'.
+    
+    volume:
+      name: Volume Level
+      description: The volume level as a percentage, for example 0.61 for 61%.
+      selector:
+        number:  # This is the minimum and maximum volume currently supported ... coordinate with automations in theater.yaml
+          min: 0.48
+          max: 0.64
+          mode: slider
+
+# The !input tag cannot be used in templates, so assign variables to the inputs.
+variables:
+  input_device_name: !input device_name
+  input_volume: !input volume
+
+# Sigh. It seems that the trigger is evaluated before variables are assigned, so just trigger on the 
+# Harmony activity changing, and check the device name in a condition.
+trigger:
+  - platform: state
+    entity_id: sensor.harmony_hub
+
+condition:
+  - condition: template
+    value_template: "{{ trigger.to_state.state == input_device_name }}"
+
+action:
+  - service: system_log.write
+    data:
+      message: "Setting volume for {{ input_device_name }} to {{ input_volume }}"
+      level: debug
+  - service: media_player.volume_set
+    data:
+      entity_id: media_player.marantz_sr7012
+      volume_level: >
+        {% set soft_volume = (input_volume | float(0) - 0.05) | round(2) %}
+        {% if is_state('input_boolean.grandchild_home', 'on') %}
+          {{ soft_volume | float(0) }}
+        {% else %}
+          {{ input_volume | float(0) }}
+        {% endif %}

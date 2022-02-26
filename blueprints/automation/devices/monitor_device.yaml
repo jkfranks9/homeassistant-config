@@ -1,0 +1,82 @@
+# Monitor a device to ensure it remains powered on.
+
+blueprint:
+  name: Monitor Device Power
+  description: Monitor a device to ensure it remains powered on.
+  domain: automation
+  
+  input:
+    device_entity:
+      name: Device Entity
+      description: Device entity to be monitored.
+      selector:
+        entity:
+    
+    notification_entity:
+      name: Notification Entity
+      description: Entity to be notified if the device is not powered on.
+      selector:
+        entity:
+          domain: notify
+    
+    component_name:
+      name: Component Name
+      description: Name of the component, so it can be monitored for loading.
+    
+    device_name:
+      name: Device Name
+      description: Name of the device, for example "Refrigerator".
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_device_entity: !input device_entity
+  input_device_name: !input device_name
+
+# Trigger on any change to the device entity, or when the component is loaded.
+trigger:
+  - platform: state
+    entity_id: !input device_entity
+    to:
+  - platform: event
+    event_type: component_loaded
+    event_data:
+      component: !input component_name
+
+# Continue if the device is not on. We deliberately do not use off state in case the state is
+# some weird value, like unknown.
+condition:
+  - condition: template
+    value_template: "{{ not is_state(input_device_entity, 'on') }}"
+
+action:
+    
+  # Send a warning notification that the device is being turned on.
+  - service: !input notification_entity
+    data:
+      title: 'Warning:'
+      message: "{{ input_device_name }} off, turning it back on."
+      data:
+        channel: Home Assistant
+    
+  # Turn the device back on.
+  - service: homeassistant.turn_on
+    target:
+      entity_id: !input device_entity
+    
+  # Wait a bit.
+  - delay: '00:10:00'
+    
+  # Confirm that the device is on. If so, we're done.
+  - condition: template
+    value_template: "{{ not is_state(input_device_entity, 'on') }}"
+    
+  # The device did not turn on, so send a high priority notification.
+  - service: !input notification_entity
+    data:
+      title: 'Action required:'
+      message: "{{ input_device_name }} did not turn on."
+      data:
+        channel: Home Assistant
+        importance: high
+        persistent: true
+        tag: 'persistent'

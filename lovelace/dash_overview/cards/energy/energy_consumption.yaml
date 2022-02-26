@@ -1,0 +1,50 @@
+#=================================#
+#     Energy Consumption Card     #
+#=================================#
+
+type: custom:stack-in-card
+title: Energy Consumption
+cards:
+  - type: entities
+    entities:
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.first_floor_calculated_monthly_energy
+        name: First Floor Calculated
+        state_header: Monthly
+        entities:
+          - entity: sensor.first_floor_calculated_daily_energy
+            name: Daily
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.second_floor_calculated_monthly_energy
+        name: Second Floor Calculated
+        state_header: Monthly
+        entities:
+          - entity: sensor.second_floor_calculated_daily_energy
+            name: Daily
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.first_floor_measured_monthly_energy
+        name: First Floor Measured
+        state_header: Monthly
+        entities:
+          - entity: sensor.first_floor_measured_daily_energy
+            name: Daily
+      
+      #- type: custom:multiple-entity-row
+      #  entity: sensor.second_floor_measured_monthly_energy
+      #  name: Second Floor Measured
+      #  state_header: Monthly
+      #  entities:
+      #    - entity: sensor.second_floor_measured_daily_energy
+      #      name: Daily
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.total_monthly_energy
+        name: Total
+        icon: mdi:sigma
+        state_header: Monthly
+        entities:
+          - entity: sensor.total_daily_energy
+            name: Daily

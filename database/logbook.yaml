@@ -1,0 +1,12 @@
+#=================#
+#     Logbook     #
+#=================#
+
+exclude:
+
+  domains:
+    - binary_sensor
+    - climate
+    - group
+    - input_number
+    - sensor

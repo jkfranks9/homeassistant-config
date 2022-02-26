@@ -1,0 +1,14 @@
+#======================#
+#     Cleaning Tab     #
+#======================#
+
+title: Cleaning
+icon: mdi:vacuum
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/lovelace/dash_reminders/cards/cleaning/downstairs.yaml
+      - type: custom:layout-break
+      - !include /config/lovelace/dash_reminders/cards/cleaning/upstairs.yaml

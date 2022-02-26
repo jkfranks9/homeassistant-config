@@ -1,0 +1,72 @@
+#================================#
+#     Interior Lighting Card     #
+#================================#
+
+type: custom:stack-in-card
+title: Interior
+mode: vertical
+cards:
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards: 
+      - type: 'custom:button-card'
+        template: light_button
+        name: DR Lamps
+        entity: light.dining_room_lamps
+  
+      - type: 'custom:button-card'
+        template: light_button
+        name: Office
+        entity: light.office_lamp
+      
+      - type: 'custom:button-card'
+        template: light_button
+        name: Laundry
+        entity: light.laundry_room_light
+      
+      - type: 'custom:button-card'
+        template: light_button
+        name: Bookcase
+        entity: input_boolean.alexa_ha_plug
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+      - type: 'custom:button-card'
+        template: light_button
+        name: Stairway
+        entity: light.stairway_light
+      
+      - type: 'custom:button-card'
+        template: light_button
+        name: Guest Bath
+        entity: light.guest_bath_light
+      
+      - type: 'custom:button-card'
+        template: light_button
+        name: Master Bath
+        entity: light.master_bath_light
+      
+      - type: 'custom:button-card'
+        template: light_button
+        name: Master Vanity
+        icon: mdi:lamp
+        entity: switch.sonoff_s31_zb
+  
+  - type: conditional
+    conditions:
+      - entity: input_boolean.christmas_mode
+        state: 'off'
+    card:
+      type: custom:stack-in-card
+      mode: horizontal
+      cards:     
+        - type: 'custom:button-card'
+          template: light_button
+          name: DR Hutch
+          entity: light.dining_room_hutch
+      
+        - type: 'custom:button-card'
+          template: light_button
+          name: Foyer Hutch
+          entity: light.foyer_hutch

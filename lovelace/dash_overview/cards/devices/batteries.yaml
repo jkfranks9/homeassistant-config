@@ -1,0 +1,26 @@
+#=============================#
+#     Battery Levels Card     #
+#=============================#
+
+type: custom:stack-in-card
+title: Battery Levels
+mode: vertical
+cards:
+  - type: custom:battery-state-card
+    entities:
+      - entity: sensor.jon_galaxy_battery_level
+        name: Galaxy S10
+      - entity: sensor.lenovo_tablet_battery_level
+        name: Lenovo Tablet
+      - entity: sensor.ecovacs_battery
+        name: Ecovacs DEEBOT
+      - entity: sensor.porch_battery_level
+        name: Porch Sensor
+      - entity: sensor.guest_bath_motion_detector_battery
+        name: Guest Bath Motion Detector
+      - entity: sensor.laundry_room_motion_detector_battery
+        name: Laundry Room Motion Detector
+      - entity: sensor.master_bath_motion_detector_battery
+        name: Master Bath Motion Detector
+      - entity: sensor.blue_charm_battery_level
+        name: Blue Charm Beacon

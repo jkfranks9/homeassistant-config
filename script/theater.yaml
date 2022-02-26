@@ -1,0 +1,619 @@
+#===========================#
+#     Cinema Open/Close     #
+#===========================#
+
+# Open the cinema to turn on some lights and warm up the projector and receiver.
+open_cinema:
+  alias: Open Cinema
+  sequence:
+    
+    # Turn on the necessary devices.
+    - service: switch.turn_on
+      entity_id: switch.harmony_hub_open_cinema
+    
+    # Turn on some lights.
+    - service: script.turn_on
+      entity_id: script.set_theater_idle
+    
+    # Set the upstairs Ecobee to home mode if it's not there already. Note that the mode could be lower case if
+    # we're in smart home mode.
+    - condition: template
+      value_template: >
+        {% set mode = state_attr('climate.upstairs', 'preset_mode') | title %}
+        {{ mode != 'Home' }}
+    - service: climate.set_preset_mode
+      target:
+        entity_id: climate.upstairs
+      data:
+        preset_mode: 'Home'
+
+# Close the cinema by turning off the current harmony activity, and relevant lights after a delay.
+#
+# NOTE: We're also called by the close_cinema automation ... some steps taken here are superfluous
+#       in that context, such as turning the remote off, but should do no harm.
+close_cinema:
+  alias: Close Cinema
+  sequence:
+    
+    # Turn on some lights.
+    - service: script.turn_on
+      entity_id: script.set_theater_idle
+    
+    # Turn off the Kodi media player (it might not be on but that's OK).
+    - service: media_player.turn_off
+      data:
+        entity_id: media_player.kodi
+    
+    # Turn off all devices.
+    - delay: '00:00:02'
+    - service: remote.turn_off
+      entity_id: remote.harmony_hub
+    
+    # Set the upstairs Ecobee to away or sleep mode, depending on the time of day.
+    - choose:
+      - conditions:
+        - condition: time
+          after:  '18:30:00'
+          before: '23:30:00'
+        sequence:
+          - service: climate.set_preset_mode
+            target:
+              entity_id: climate.upstairs
+            data:
+              preset_mode: 'Sleep'
+      default:
+        - service: climate.set_preset_mode
+          target:
+            entity_id: climate.upstairs
+          data:
+            preset_mode: 'Away'
+    
+    # Turn Adguard protection on in case it was turned off (for example for Paramount Plus).
+    - service: script.turn_on_adguard
+    
+    # Turn off all lights.
+    - delay: '00:05:00'
+    - service: script.turn_on
+      entity_id: script.set_theater_dark
+
+#===========================#
+#     Theater Lighting      #
+#===========================#
+
+# Make the theater dark. Note that this uses the Lutron scene, since that dims the lights slowly.
+set_theater_dark:
+  alias: Set Theater Dark
+  sequence:
+    - service: light.turn_off
+      entity_id: light.utility_light
+    - service: light.turn_off
+      entity_id: light.stairway_light
+    - service: light.turn_off
+      entity_id: light.snack_light
+    - scene: scene.theater_dark
+
+# Make the theater dim.
+set_theater_dim:
+  alias: Set Theater Dim
+  sequence:
+    - service: light.turn_off
+      entity_id: light.theater_ceiling
+      data:
+        transition: 2
+    - service: light.turn_on
+      entity_id: light.theater_sconces
+      data:
+        brightness_pct: 75
+        transition: 2
+    - service: light.turn_off
+      entity_id: light.upstairs_hallway_lights
+    - service: light.turn_off
+      entity_id: light.utility_light
+    - service: light.turn_off
+      entity_id: light.stairway_light
+    - service: light.turn_off
+      entity_id: light.snack_light
+
+# Make the theater bright.
+set_theater_bright:
+  alias: Set Theater Bright
+  sequence:
+    - service: light.turn_on
+      entity_id: light.theater_ceiling
+      data:
+        brightness_pct: 100
+        transition: 2
+    - service: light.turn_off
+      entity_id: light.theater_sconces
+      data:
+        transition: 2
+    - service: light.turn_on
+      entity_id: light.upstairs_hallway_lights
+    - service: light.turn_off
+      entity_id: light.utility_light
+    - service: script.turn_on
+      entity_id: script.turn_on_stairway_light
+    - service: light.turn_off
+      entity_id: light.snack_light
+
+# Make the theater idle, meaning it's on but we need lights to see.
+set_theater_idle:
+  alias: Set Theater Idle
+  sequence:
+    - service: light.turn_off
+      entity_id: light.theater_ceiling
+      data:
+        transition: 2
+    - service: light.turn_on
+      entity_id: light.theater_sconces
+      data:
+        brightness_pct: 100
+        transition: 2
+    - service: light.turn_off
+      entity_id: light.upstairs_hallway_lights
+    - service: light.turn_off
+      entity_id: light.utility_light
+    - service: script.turn_on
+      entity_id: script.turn_on_stairway_light
+    - service: light.turn_on
+      entity_id: light.snack_light
+
+# Turn on the stairway light if it's dark enough. This is used by the open/close cinema scripts,
+# and the 'take a break' automation, because the stairs are (or might be) used at these times.
+turn_on_stairway_light:
+  alias: Turn On Stairway Light
+  sequence:
+    - condition: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 4.0
+    - service: light.turn_on
+      entity_id: light.stairway_light
+
+#==============================#
+#     Watch Shield TV App      #
+#==============================#
+
+# Template script that does the work.
+watch_app:
+  alias: Watch Application
+  fields:
+    component:
+      description: 'The component name of the target Shield TV application. These are obtained by querying the Shield TV box.'
+      example: 'com.netflix.ninja/.MainActivity'
+  
+  sequence:
+  
+    # First, turn on the harmony activity that ensures the projector, receiver and Shield TV are powered on. The receiver at this 
+    # point is switched to an unused input so the screen will be dark.
+    - service: switch.turn_on
+      entity_id: switch.harmony_hub_enable_streaming
+    
+    # After a short delay, bring up the target application on the Shield TV.
+    - delay: '00:00:03'
+    - service: androidtv.adb_command
+      data:
+        entity_id: media_player.shield_tv
+        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n {{ component }}"
+  
+    # Now switch the receiver to the proper input so the application can be viewed on screen.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'InputCbl/Sat'
+        device: Marantz Receiver
+  
+    # Finally, make the theater dark after a delay.
+    - delay: '00:00:12'
+    - service: script.turn_on
+      entity_id: script.set_theater_dark
+
+#------------------------#
+#   -- Applications --   #
+#------------------------#
+
+# Amazon Prime
+watch_amazon_prime:
+  alias: Watch Amazon Prime
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.amazon.amazonvideo.livingroom/com.amazon.ignition.IgnitionActivity'
+
+# Disney Plus
+watch_disney_plus:
+  alias: Watch Disney Plus
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.disney.disneyplus/com.bamtechmedia.dominguez.main.MainActivity'
+
+# HBO Max
+watch_hbo_max:
+  alias: Watch HBO Max
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.hbo.hbonow/com.hbo.go.LaunchActivity'
+
+# Kodi
+watch_kodi:
+  alias: Watch Kodi
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'org.xbmc.kodi/.Splash'
+
+# Netflix
+watch_netflix:
+  alias: Watch Netflix
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.netflix.ninja/.MainActivity'
+
+# Pandora
+watch_pandora:
+  alias: Watch Pandora
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.pandora.android.atv/com.pandora.android.MainActivity'
+
+# Paramount Plus
+watch_paramount_plus:
+  alias: Watch Paramount Plus
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.cbs.ott/com.cbs.app.tv.ui.activity.SplashActivity'
+
+# Peacock
+watch_peacock:
+  alias: Watch Peacock
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.peacocktv.peacockandroid/com.peacock.peacocktv.GoogleMainActivity'
+
+# Youtube TV
+watch_youtube_tv:
+  alias: Watch Youtube TV
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.google.android.youtube.tvunplugged/com.google.android.apps.youtube.tvunplugged.activity.MainActivity'
+
+#=============================#
+#     Harmony Activities      #
+#=============================#
+
+# Template script that does the work.
+start_activity:
+  alias: Start Activity
+  fields:
+    activity:
+      description: 'The Harmony activity name to be started.'
+      example: 'BD Player'
+    lighting:
+      description: 'Script or scene that establishes the desired lighting.'
+      example: 'script.set_theater_dark'
+  
+  sequence:
+  
+    # Turn on the target activity.
+    - service: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: "{{ activity }}"
+  
+    # Establish the target lighting after a delay.
+    - delay: '00:00:15'
+    - service: "{{ lighting }}"
+
+#----------------------#
+#   -- Activities --   #
+#----------------------#
+
+# Shield TV (streaming)
+start_streaming:
+  alias: Start Streaming
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'Stream Player'
+        lighting: 'script.set_theater_dark'
+
+# Blu-ray
+start_bluray:
+  alias: Start Bluray
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'BD Player'
+        lighting: 'script.set_theater_dark'
+
+# Laserdisc
+start_laserdisc:
+  alias: Start Laserdisc
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'LD Player'
+        lighting: 'script.set_theater_dark'
+
+# Turntable
+start_turntable:
+  alias: Start Turntable
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'LP Player'
+        lighting: 'script.set_theater_dim'
+
+#=======================#
+#     Pause/Resume      #
+#=======================#
+
+# Pause the current harmony activity and turn on some lights.
+
+# Worker script
+pause_worker:
+  alias: Pause Worker
+  fields:
+    device:
+      description: 'The Harmony device name to be paused.'
+      example: 'NVIDIA Shield TV'
+  
+  sequence:
+  
+    # Establish 'idle' theater lighting.
+    - service: script.turn_on
+      entity_id: script.set_theater_idle
+  
+    # Send the pause command to the target device.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: Pause
+        device: "{{ device }}"
+
+# Call the worker script with the appropriate device based on the Harmony activity.
+# Note: The turntable cannot be controlled, so all we do is turn on some lights.
+pause_cinema:
+  alias: Pause Cinema
+  sequence:
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: >
+            {{ is_state('sensor.harmony_hub', 'Stream Player') or
+               is_state('sensor.harmony_hub', 'Enable Streaming') }}
+        sequence:
+          - service: script.pause_worker
+            data:
+              device: 'NVIDIA Shield TV'
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('sensor.harmony_hub', 'BD Player') }}"
+        sequence:
+          - service: script.pause_worker
+            data:
+              device: 'Sony DVD/Blu-ray Player'
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('sensor.harmony_hub', 'LD Player') }}"
+        sequence:
+          - service: script.pause_worker
+            data:
+              device: 'Panasonic Laserdisc Player'
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('sensor.harmony_hub', 'LP Player') }}"
+        sequence:
+          - service: script.turn_on
+            entity_id: script.set_theater_idle
+      default:
+        - service: system_log.write
+          data:
+            message: Current activity does not support pause command.
+            level: warning
+
+# Resume the current harmony activity and restore the lighting.
+
+# Worker script
+resume_worker:
+  alias: Resume Worker
+  fields:
+    device:
+      description: 'The Harmony device name to be resumed.'
+      example: 'Sony DVD/Blu-ray Player'
+  
+  sequence:
+  
+    # Send the play command to the target device.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: Play
+        device: "{{ device }}"
+  
+    # Establish 'dark' theater lighting.
+    - service: script.turn_on
+      entity_id: script.set_theater_dark
+
+# Call the worker script with the appropriate device based on the Harmony activity.
+# Note: The turntable cannot be controlled, so all we do is turn on some lights.
+resume_cinema:
+  alias: Resume Cinema
+  sequence:
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: >
+            {{ is_state('sensor.harmony_hub', 'Stream Player') or
+               is_state('sensor.harmony_hub', 'Enable Streaming') }}
+        sequence:
+          - service: script.resume_worker
+            data:
+              device: 'NVIDIA Shield TV'
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('sensor.harmony_hub', 'BD Player') }}"
+        sequence:
+          - service: script.resume_worker
+            data:
+              device: 'Sony DVD/Blu-ray Player'
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('sensor.harmony_hub', 'LD Player') }}"
+        sequence:
+          - service: script.resume_worker
+            data:
+              device: 'Panasonic Laserdisc Player'
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('sensor.harmony_hub', 'LP Player') }}"
+        sequence:
+          - service: script.turn_on
+            entity_id: script.set_theater_dim
+      default:
+        - service: system_log.write
+          data:
+            message: Current activity does not support resume command.
+            level: warning
+
+#============================#
+#     Kodi Movie Control     #
+#============================#
+
+# Get the list of all movies known by Kodi.
+# This script is only needed when the Kodi movie library is updated, and the Shield TV is off (we don't want
+# to randomly switch apps if the media player is in use).
+get_all_kodi_movies:
+  alias: Get All Kodi Movies
+  sequence:
+    - condition: state
+      entity_id: media_player.shield_tv
+      state: 'off'
+  
+    # Turn on the Shield TV so we can host the Kodi application.
+    - service: media_player.turn_on
+      data:
+        entity_id: media_player.shield_tv
+    - delay: '00:00:03'
+  
+    # Start Kodi on the Shield TV.
+    - service: androidtv.adb_command
+      data:
+        entity_id: media_player.shield_tv
+        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n 'org.xbmc.kodi/.Splash'"
+    - delay: '00:00:02'
+  
+    # Send the 'get movies' command to Kodi.
+    - service: kodi.call_method
+      data:
+        entity_id: media_player.kodi
+        method: VideoLibrary.GetMovies
+    
+    # Wait a bit for a good 'get movies' result, but quit if it times out.
+    - wait_for_trigger:
+        - platform: event
+          event_type: kodi_call_method_result
+          event_data:
+            result_ok: 'True'
+            input:
+              method: VideoLibrary.GetMovies
+      timeout: 10
+      continue_on_timeout: false
+    
+    # Call the python script to populate the input select.
+    - service: pyscript.populate_all_movies
+      data:
+        entity: input_select.kodi_movies
+        result: "{{ trigger.event.data.result }}"
+  
+    # Exit the Kodi application.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'Home'
+        device: NVIDIA Shield TV
+    - delay: '00:00:02'
+  
+    # Turn the Shield TV off again.
+    - service: media_player.turn_off
+      data:
+        entity_id: media_player.shield_tv
+
+#===========================#
+#     Kodi Play Feature     #
+#===========================#
+
+# Play feature movie! 
+play_feature_movie:
+  alias: Play Feature Movie
+  sequence:
+    
+    # Turn on some lights.
+    - service: script.set_theater_idle
+  
+    # Start the 'enable streaming' Harmony activity, which ensures the correct devices are on and the screen is dark.
+    - service: switch.turn_on
+      entity_id: switch.harmony_hub_enable_streaming
+    - delay: '00:00:05'
+  
+    # Start Kodi on the Shield TV.
+    - service: androidtv.adb_command
+      data:
+        entity_id: media_player.shield_tv
+        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n 'org.xbmc.kodi/.Splash'"
+    - delay: '00:00:02'
+  
+    # Send the 'get movies' command to Kodi, with the target movie name.
+    - service: kodi.call_method
+      data:
+        entity_id: media_player.kodi
+        method: VideoLibrary.GetMovies
+        filter:
+          field: title
+          operator: is
+          value: "{{ states('input_select.kodi_movies') }}"
+        limits:
+          end: 1
+          start: 0
+    
+    # Wait a bit for a good 'get movies' result, but quit if it times out.
+    - wait_for_trigger:
+        - platform: event
+          event_type: kodi_call_method_result
+          event_data:
+            result_ok: 'True'
+            input:
+              method: VideoLibrary.GetMovies
+      timeout: 10
+      continue_on_timeout: false
+    
+    # Pick up the movie ID.
+    - variables:
+        movieid: "{{ trigger.event.data.result.movies.0.movieid }}"
+  
+    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'InputCbl/Sat'
+        device: Marantz Receiver
+  
+    # Tell Kodi to play the feature.
+    - service: kodi.call_method
+      data_template:
+        entity_id: media_player.kodi
+        method: Player.Open
+        item:
+          movieid: "{{ movieid }}"
+    - delay: '00:00:12'
+  
+    # Darken the theater.
+    - service: script.turn_on
+      entity_id: script.set_theater_dark

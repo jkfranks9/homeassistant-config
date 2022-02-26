@@ -1,0 +1,31 @@
+#===========================#
+#     HVAC Filters Card     #
+#===========================#
+
+type: custom:stack-in-card
+title: HVAC Filters
+keep:
+  margin: true
+cards:
+      
+  # Downstairs
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_hvac_filters_downstairs
+      - name: Downstairs
+      - icon: air-filter
+      - interval: 4
+      - period: 'months'
+      - service: script.set_datetime_offset_months
+      
+  # Upstairs
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_hvac_filters_upstairs
+      - name: Upstairs
+      - icon: air-filter
+      - interval: 6
+      - period: 'months'
+      - service: script.set_datetime_offset_months

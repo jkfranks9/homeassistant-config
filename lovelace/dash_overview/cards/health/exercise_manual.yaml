@@ -1,0 +1,12 @@
+#==============================#
+#     Manual Exercise Card     #
+#==============================#
+
+type: custom:stack-in-card
+title: Exercise
+cards:
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: input_number.yard_work_time
+      - entity: input_number.weight_training_time

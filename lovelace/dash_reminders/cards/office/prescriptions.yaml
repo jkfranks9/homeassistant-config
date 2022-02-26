@@ -1,0 +1,53 @@
+#============================#
+#     Prescriptions Card     #
+#============================#
+
+type: custom:stack-in-card
+title: Prescriptions
+keep:
+  margin: true
+cards:
+      
+  # Eliquis
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_prescription_eliquis
+      - name: Eliquis
+      - icon: pill
+      - interval: 90
+      - period: 'days'
+      - service: script.set_datetime_offset_days
+      
+  # Gabapentin
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_prescription_gabapentin
+      - name: Gabapentin
+      - icon: pill
+      - interval: 90
+      - period: 'days'
+      - service: script.set_datetime_offset_days
+      
+  # Metoprolol
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_prescription_metoprolol
+      - name: Metoprolol
+      - icon: pill
+      - interval: 90
+      - period: 'days'
+      - service: script.set_datetime_offset_days
+      
+  # Rosuvastatin
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_prescription_rosuvastatin
+      - name: Rosuvastatin
+      - icon: pill
+      - interval: 90
+      - period: 'days'
+      - service: script.set_datetime_offset_days

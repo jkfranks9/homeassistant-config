@@ -1,0 +1,11 @@
+#========================#
+#     Theater Lights     #
+#========================#
+
+Theater Lights:
+  entities:
+    - light.snack_light
+    - light.theater_ceiling
+    - light.theater_sconces
+    - light.upstairs_hallway_lights
+    - light.utility_light

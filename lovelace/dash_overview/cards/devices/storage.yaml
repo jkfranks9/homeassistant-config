@@ -1,0 +1,14 @@
+#====================================#
+#     Mobile Device Storage Card     #
+#====================================#
+
+type: custom:stack-in-card
+title: Mobile Device Free Storage
+mode: horizontal
+cards:
+  - type: gauge
+    name: Galaxy S10
+    entity: sensor.jon_galaxy_internal_storage
+  - type: gauge
+    name: Lenovo Tablet
+    entity: sensor.lenovo_tablet_internal_storage

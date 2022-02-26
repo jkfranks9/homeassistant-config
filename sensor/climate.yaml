@@ -1,0 +1,59 @@
+#================================#
+#     Temperature Statistics     #
+#================================#
+
+#=== Office temperature min/max
+
+- platform: statistics
+  entity_id: sensor.office_temperature
+  name: Office Temp Min
+  state_characteristic: value_min
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours
+
+- platform: statistics
+  entity_id: sensor.office_temperature
+  name: Office Temp Max
+  state_characteristic: value_max
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours
+
+#=== Porch temperature min/max
+
+- platform: statistics
+  entity_id: sensor.porch_temperature
+  name: Porch Temp Min
+  state_characteristic: value_min
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours
+
+- platform: statistics
+  entity_id: sensor.porch_temperature
+  name: Porch Temp Max
+  state_characteristic: value_max
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours
+
+#=== Attic temperature min/max
+
+- platform: statistics
+  entity_id: sensor.attic_temperature
+  name: Attic Temp Min
+  state_characteristic: value_min
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours
+
+- platform: statistics
+  entity_id: sensor.attic_temperature
+  name: Attic Temp Max
+  state_characteristic: value_max
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours
+
+#=== Garage temperature min/max
+
+- platform: statistics
+  entity_id: sensor.garage_temperature
+  name: Garage Temp Min
+  state_characteristic: value_min
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours
+
+- platform: statistics
+  entity_id: sensor.garage_temperature
+  name: Garage Temp Max
+  state_characteristic: value_max
+  sampling_size: 144 # sensor updates every 10 minutes, so this sampling size covers 24 hours

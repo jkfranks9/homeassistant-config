@@ -1,0 +1,32 @@
+# BME280 temperature, humidity and pressure sensor
+sensor:
+  - platform: bme280
+    address: 0x76
+    update_interval: $window_interval
+    temperature:
+      name: ${friendly_name} Temperature
+      id: ${prefix}_temperature
+      unit_of_measurement: "°F"
+      filters:
+        - calibrate_linear:
+            # Map 0.0 (from sensor) to 0.0 (true value)
+            - 0.0 -> 0.0
+            - $calibrate_measured -> $calibrate_truth
+        - lambda: return x * (9.0/5.0) + 32.0;
+        - sliding_window_moving_average:
+            window_size: $window_size
+            send_every:  $window_size
+    pressure:
+      name: ${friendly_name} Pressure
+      id: ${prefix}_pressure
+      filters:
+        - sliding_window_moving_average:
+            window_size: $window_size
+            send_every:  $window_size
+    humidity:
+      name: ${friendly_name} Humidity
+      id: ${prefix}_humidity
+      filters:
+        - sliding_window_moving_average:
+            window_size: $window_size
+            send_every:  $window_size

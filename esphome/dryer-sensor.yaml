@@ -1,0 +1,19 @@
+# Device specific information
+substitutions:
+  device_name:        dryer-sensor
+  friendly_name:      Dryer
+  loglevel:           DEBUG
+  update_interval:    60s
+  window_interval:    5s
+  window_size:        "1"
+  calibrate_measured: "72.0"
+  calibrate_truth:    "72.0"
+
+# Pull in common configuration
+packages:
+  nodemcu_base: !include common/nodemcu_base.yaml
+  wifi:         !include common/wifi.yaml
+  dht_sensor:   !include common/dht_sensor.yaml
+
+# Enable Home Assistant API
+api:

@@ -1,0 +1,15 @@
+#=======================#
+#     Switches Card     #
+#=======================#
+
+type: custom:stack-in-card
+title: Switches
+cards:
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: input_boolean.grandchild_home
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: input_boolean.christmas_mode

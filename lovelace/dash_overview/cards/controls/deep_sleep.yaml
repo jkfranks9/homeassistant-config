@@ -1,0 +1,9 @@
+#=========================#
+#     Deep Sleep Card     #
+#=========================#
+
+type: entities
+title: Sensor Battery Deep Sleep Control
+entities:
+  - entity: script.suspend_deep_sleep
+  - entity: script.resume_deep_sleep

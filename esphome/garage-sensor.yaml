@@ -1,0 +1,26 @@
+# Device specific information
+substitutions:
+  device_name:        garage-sensor
+  friendly_name:      Garage
+  prefix:             garage
+  loglevel:           DEBUG
+  update_interval:    600s
+  window_interval:    60s
+  window_size:        "10"
+  calibrate_measured: "72.0"
+  calibrate_truth:    "72.0"
+
+# Pull in common configuration
+packages:
+  nodemcu_base:  !include common/nodemcu_base.yaml
+  wifi:          !include common/wifi.yaml
+  bme280_sensor: !include common/bme280_sensor.yaml
+
+# Enable Home Assistant API
+api:
+
+# Enable I2C, needed for the BME280 sensor
+i2c:
+  sda: D2
+  scl: D1
+  scan: True

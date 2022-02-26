@@ -1,0 +1,117 @@
+#========================#
+#     Device Sensors     #
+#========================#
+
+- sensor:
+
+    #--------------------------#
+    #   -- CP UPS Runtime --   #
+    #--------------------------#
+    
+    - name: 'CP UPS Runtime Hours'
+      unique_id: cp_ups_runtime_hours
+      unit_of_measurement: 'h'
+      state: "{{ '%.2f' | format(states('sensor.cyber1_battery_runtime') | float(0) / 3600) }}"
+
+    #-----------------------#
+    #   -- Harmony Hub --   #
+    #-----------------------#
+    
+    - name: 'Harmony Hub'
+      unique_id: harmony_hub
+      state: "{{ state_attr('remote.harmony_hub', 'current_activity') }}"
+
+    #---------------------------------#
+    #   -- Shield TV Application --   #
+    #---------------------------------#
+    
+    - name: 'Shield TV App'
+      unique_id: shield_tv_app
+      state: "{{ state_attr('media_player.shield_tv', 'app_name') }}"
+
+    #--------------------------#
+    #   -- Ecovacs DEEBOT --   #
+    #--------------------------#
+    
+    - name: 'Ecovacs Battery'
+      unique_id: ecovacs_battery
+      unit_of_measurement: '%'
+      state: "{{ state_attr('vacuum.ecovacs_deebot', 'battery_level') }}"
+
+    - name: 'Ecovacs Main Brush Remaining Life'
+      unique_id: ecovacs_main_brush_remaining_life
+      unit_of_measurement: '%'
+      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_main_brush') }}"
+
+    - name: 'Ecovacs Side Brush Remaining Life'
+      unique_id: ecovacs_side_brush_remaining_life
+      unit_of_measurement: '%'
+      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_side_brush') }}"
+
+    - name: 'Ecovacs Filter Remaining Life'
+      unique_id: ecovacs_filter_remaining_life
+      unit_of_measurement: '%'
+      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_filter') }}"
+
+    #---------------------------#
+    #   -- Epson Projector --   #
+    #---------------------------#
+    
+    - name: 'Epson Lamp Hours'
+      unique_id: epson_lamp_hours
+      state: "{{ state_attr('media_player.epson_projector', 'lamp_hours') }}"
+
+    #------------------------------#
+    #   -- MQTT Room Presence --   #
+    #------------------------------#
+    
+    # This sensor uses the appropriate battery level sensor, based on the state of the beacon.
+    - name: 'Blue Charm Battery Level'
+      unique_id: blue_charm_battery_level
+      state: >
+        {% if states('sensor.blue_charm_beacon') == 'garage' %}
+          {{ states('sensor.blue_charm_battery_level_garage') }}
+        {% elif states('sensor.blue_charm_beacon') == 'house' %}
+          {{ states('sensor.blue_charm_battery_level_house') }}
+        {% else %}
+          {{ 'unknown' }}
+        {% endif %}
+
+    #------------------------------#
+    #   -- Washer Power State --   #
+    #------------------------------#
+    
+    # Washer power states, determined via the power level:
+    #
+    # - stop        <-- stopped/off
+    # - pause       <-- brief pause between wash and rinse
+    # - fill        <-- filling
+    # - drop        <-- power dip
+    # - raise       <-- power spike
+    - name: 'Washer Power State'
+      unique_id: washer_power_state
+      state: >
+        {# --Set variables-- #}
+        {% set s = states('sensor.washer_power_state') %}
+        {% set p = states('sensor.sonoff_washer_power') | float(0) %}
+          
+        {# --Power level indicates stopped-- #}
+        {% if p < 3 %} stop
+          
+        {# --Power level indicates paused--  #}
+        {% elif 4 <= p <= 7.20 %} pause
+          
+        {# --Power level indicates filling if the current state is stopped or paused--  #}
+        {% elif 7.40 <= p <= 11 %}
+          {{ 'fill' if s in ['stop', 'pause', 'unknown'] else s }}
+        
+        {# --Power level indicates a drop to a lower level--  #}
+        {% elif 20 <= p <= 80 %}
+          {{ 'drop' if s in ['raise'] else s }}
+          
+        {# --Power level indicates a raise to a higher level-- #}
+        {% elif p > 330 %} raise
+          
+        {# --Power level outside the above ranges, so keep the current state #}
+        {% else %} {{ s }}
+        {% endif %}

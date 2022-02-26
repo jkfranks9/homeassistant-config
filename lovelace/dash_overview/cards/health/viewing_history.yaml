@@ -1,0 +1,29 @@
+#==============================#
+#     Viewing History Card     #
+#==============================#
+
+type: custom:stack-in-card
+title: Viewing History
+cards:
+  - type: entities
+    entities:
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.cinema_last_7_days
+        name: Cinema
+        icon: mdi:theater
+        state_header: Last 7 Days
+        entities:
+          - entity: sensor.cinema_yesterday
+            name: Yesterday
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.tv_last_7_days
+        name: TV
+        icon: mdi:television-classic
+        state_header: Last 7 Days
+        entities:
+          - entity: sensor.tv_yesterday
+            name: Yesterday
+      
+      - sensor.average_daily_viewing_time

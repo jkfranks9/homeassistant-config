@@ -1,0 +1,10 @@
+# Core configuration for a D1 Mini board
+esphome:
+  name: $device_name
+  platform: ESP8266
+  board: d1_mini
+
+# Enable logging
+logger:
+  level: $loglevel
+  esp8266_store_log_strings_in_flash: false

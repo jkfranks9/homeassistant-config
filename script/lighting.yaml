@@ -1,0 +1,448 @@
+#==========================#
+#     Sleep Start/Stop     #
+#==========================#
+
+# Prepare for bedtime.
+bedtime:
+  alias: Bedtime
+  sequence:
+    
+    # Turn on the master bedroom lamp.
+    - service: light.turn_on
+      entity_id: light.master_bedroom_lamp
+      data:
+        kelvin: 2700
+        brightness_pct: 100
+    
+    # Turn on nighttime mode.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+    
+    # Lock the PC.
+    - service: script.turn_on
+      entity_id: script.lock_pc
+      
+    # Turn off appropriate lights.
+    - service: script.turn_off_bedtime_lights
+  
+# Going to sleep now.
+sleeptime:
+  alias: Sleeptime
+  sequence:
+    
+    # Only works during night time.
+    - condition: state
+      entity_id: input_boolean.nighttime
+      state: 'on'
+    
+    # Turn on sleeptime mode.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.sleeptime
+      
+    # Turn off appropriate lights.
+    - service: script.turn_off_bedtime_lights
+    
+    # Also, turn off the master bedroom lamp.
+    - service: light.turn_off
+      entity_id: light.master_bedroom_lamp
+
+# Turn on the bathroom light during the night.
+turn_on_bathroom_light:
+  alias: Turn On Bathroom Light
+  sequence:
+    
+    # Only works during sleep time.
+    - condition: state
+      entity_id: input_boolean.sleeptime
+      state: 'on'
+    
+    # Turn on bathroom flag.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.bathroom
+    
+    # Turn on master bedroom lamp.
+    - service: light.turn_on
+      entity_id: light.master_bedroom_lamp
+      data:
+        kelvin: 2700
+        brightness_pct: 20
+    
+    # Turn on bath light.
+    - service: light.turn_on
+      target:
+        entity_id: light.master_bath_light
+    
+    # Wait a few minutes then turn off the bathroom flag.
+    - delay: '00:05:00'
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.bathroom
+  
+# Awake but still in bed.
+awake:
+  alias: Awake
+  sequence:
+    
+    # Turn off sleeptime mode.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.sleeptime
+      
+    # Turn on master bedroom lamp if needed.
+    - service: script.change_lighting_per_weather
+      data:
+        light_entity: light.master_bedroom_lamp
+        wakeup: true
+
+# I have awoken.
+wakeup:
+  alias: Wakeup
+  sequence:
+    
+    # Turn off the master bedroom and bath lights.
+    - service: light.turn_off
+      entity_id: light.master_bedroom_lamp    
+    - service: light.turn_off
+      entity_id: light.master_bath_light
+    
+    # Turn off nighttime and sleeptime modes.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.nighttime    
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.sleeptime
+    
+    # Turn on family room lamp if needed.
+    - service: script.change_lighting_per_weather
+      data:
+        light_entity: light.family_room_lamp
+        wakeup: true
+
+# Turn off appropriate lights at bedtime.
+turn_off_bedtime_lights:
+  alias: Turn Off Bedtime Lights
+  sequence:
+    
+    # Choose which lights to turn off.
+    - choose:
+      
+      # Grandchild home with parent: don't mess with the guest bedroom lights, and turn off the family room lamp.
+      - conditions:
+          - condition: template
+            value_template: "{{ is_state('person.sarah', 'home') and is_state('input_boolean.grandchild_home', 'on') }}"
+        sequence:
+          - service: scene.apply
+            data:
+              entities:
+                light.family_room_lamp: 'off'
+                group.theater_lights: 'off'
+                group.interior_lights: 'off'
+                group.misc_lights: 'off'
+      
+      # Grandchild home without parent: leave some lights on, depending on location..
+      - conditions:
+          - condition: template
+            value_template: "{{ is_state('person.sarah', 'not_home') and is_state('input_boolean.grandchild_home', 'on') }}"
+        sequence:
+          - choose:
+            
+            # Grandchild sleeping in guest room: leave/turn daytime lights on.
+            - conditions:
+                - condition: template
+                  value_template: "{{ is_state('input_select.grandchild_sleepover_location', 'Guest') }}"
+              sequence:
+                - service: scene.apply
+                  data:
+                    entities:
+                      light.family_room_lamp: 'on'
+                      group.guest_bedroom_lights: 'off'
+                      group.theater_lights: 'off'
+                      group.interior_lights: 'off'
+                      group.misc_lights: 'off'
+            
+            # Grandchild sleeping in master: turn master bath light on.
+            default:
+              - scene: scene.non_master_lights_out
+              - service: light.turn_on
+                entity_id: light.master_bath_light
+      
+      # Grandchild not home, but family members are: turn off everything except bedroom lights.
+      - conditions:
+          - condition: template
+            value_template: "{{ is_state('group.family_members', 'home') }}"
+        sequence:
+          - scene: scene.non_bedroom_lights_out
+      
+      # Just me home: turn off everything except the master bedroom lamp.
+      default:
+        - scene: scene.non_master_lights_out
+
+#================================================#
+#     Modify Lighting Per Weather Conditions     #
+#================================================#
+
+# The following scripts turn lights on or off near sunrise or sunset based on weather conditions, 
+# which obviously affect indoor lighting levels. See the comments for the change_daytime_lights
+# automation for more details.
+#
+# This script contains the overall logic:
+#
+# - If the sun is rising, handle sunrise tasks:
+#   - If called from the wakeup script, turn lights on if needed
+#   - Else, turn lights off as needed
+# - Else handle sunset tasks:
+#   - Turn lights on as needed
+change_lighting_per_weather:
+  alias: Change Lighting Per Weather
+  fields:
+    light_entity:
+      description: 'The entity ID of the target lights.'
+      example: 'group.daytime_lights'
+    
+    wakeup:
+      description: 'Whether or not the caller is the wakeup script.'
+      example: false
+    
+  sequence:
+    
+    # Evaluate the weather condition and set the result in an input_select.
+    - service: script.evaluate_weather_condition
+    
+    # Perform the appropriate actions based on the caller, sun rising state and weather.
+    - choose:
+        
+      # Sun rising
+      - conditions:
+        - condition: template
+          value_template: "{{ state_attr('sun.sun', 'rising') == true }}"
+        sequence:
+          - choose:
+                
+            # Called for wakeup
+            - conditions:
+              - condition: template
+                value_template: "{{ wakeup == true }}"
+              sequence:
+                - condition: template
+                  value_template: >
+                    {{  state_attr('sun.sun', 'elevation') <= (states('input_number.min_elevation') | float(3)) or 
+                       (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+                        states('input_select.weather_condition') != 'clear') or
+                       (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+                        state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+                        states('input_select.weather_condition') == 'gloomy') }}
+                - service: homeassistant.turn_on
+                  data_template:
+                    entity_id: "{{ light_entity }}"
+              
+            # Not called for wakeup
+            default:
+              - condition: template
+                value_template: >
+                  {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+                      states('input_select.weather_condition') == 'clear') or
+                     (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+                      states('input_select.weather_condition') == 'hazy') or
+                      state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+              - service: homeassistant.turn_off
+                data_template:
+                  entity_id: "{{ light_entity }}"
+      
+      # Sun setting
+      default:
+        - condition: template
+          value_template: >
+            {{ (state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+                states('input_select.weather_condition') == 'gloomy') or
+               (state_attr('sun.sun', 'elevation') < (states('input_number.med_elevation') | float(6)) and
+                states('input_select.weather_condition') == 'hazy') or
+                state_attr('sun.sun', 'elevation') < (states('input_number.min_elevation') | float(3)) }}
+        - service: homeassistant.turn_on
+          data_template:
+            entity_id: "{{ light_entity }}"
+
+#===================================================#
+#     Turn On/Off Lights Per Weather Conditions     #
+#===================================================#
+
+# This is similar to the above script, but simpler. The idea is to modify 
+# lights only if needed based on sun elevation and weather conditions.
+change_lighting_per_weather_simple:
+  alias: Change Lighting Per Weather Simple
+  fields:
+    light_entity:
+      description: 'The entity ID of the target lights.'
+      example: 'group.daytime_lights'
+    
+    turn_on:
+      description: 'True if the lights should be turned on.'
+      example: false
+    
+  sequence:
+    
+    # Evaluate the weather condition and set the result in an input_select.
+    - service: script.evaluate_weather_condition
+    
+    # Perform the appropriate action based on turning on or off, sun rising state and weather.
+    - choose:
+      
+      # Turn on lighting.
+      - conditions:
+        - condition: template
+          value_template: "{{ turn_on == true }}"
+        sequence:
+          - condition: template
+            value_template: >
+              {{ (state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+                  states('input_select.weather_condition') == 'gloomy') or
+                 (state_attr('sun.sun', 'elevation') < (states('input_number.med_elevation') | float(6)) and
+                  states('input_select.weather_condition') == 'hazy') or
+                  state_attr('sun.sun', 'elevation') < (states('input_number.min_elevation') | float(3)) }}
+          - service: homeassistant.turn_on
+            data_template:
+              entity_id: "{{ light_entity }}"
+      
+      # Turn off lighting.
+      default:
+          - condition: template
+            value_template: >
+              {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+                  states('input_select.weather_condition') == 'clear') or
+                 (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+                  states('input_select.weather_condition') == 'hazy') or
+                  state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+          - service: homeassistant.turn_off
+            data_template:
+              entity_id: "{{ light_entity }}"
+    
+
+#==============================#
+#     Extended Away Lights     #
+#==============================#
+
+# Randomly turn certain lights on/off during extended away mode, between ~sunset and nighttime start, and
+# between nighttime end and ~sunrise (only occurs during winter-ish months).
+#
+# This is driven by an automation with the same conditions as the 'until' clause, so coordinate changes to both.
+automate_lights_while_away:
+  alias: Automate Lights While Away
+  sequence:
+    
+    # Repeat until the conditions are no longer met.
+    repeat:
+      sequence:
+        - variables:
+            group_id: 'group.away_lights'
+            max_on: 3
+            lights_on_count: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | list | length }}"
+            lights_on_entities: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | map(attribute = 'entity_id') | list }}"
+            group_lights_entities: "{{ expand(group_id) | map(attribute = 'entity_id') | list }}"
+            toggle_entity: >
+              {% if lights_on_count > max_on %}
+                {{ lights_on_entities | random }}
+              {% else %}
+                {{ group_lights_entities | random }}
+              {% endif %}
+        
+        # Log information needed to debug.
+        - service: system_log.write
+          data:
+            message: "Extended away lights on: {{lights_on_entities}}, next to be toggled: {{toggle_entity}}"
+            level: debug
+        
+        # Toggle a random light from the away group. We picked an entity above as follows:
+        #
+        # - If the number of lights currently on exceeds the maximum, pick an entity from those that are already on.
+        # - Otherwise, pick any entity from the away group.
+        - service: homeassistant.toggle
+          data:
+            entity_id: "{{ toggle_entity }}"
+     
+        # Delay for a random number of minutes.
+        - delay: 
+            minutes: "{{ range(10, 60) | random }}"
+      
+      # Conditions that cause us to end the repeat sequence.
+      until:
+        - condition: template
+          value_template: >
+            {{ is_state('input_boolean.extended_away_mode', 'off') or
+               is_state('input_boolean.nighttime', 'on') or
+               states('sun.sun') == 'above_horizon' }}
+
+#============================#
+#     Family Room Normal     #
+#============================#
+
+# Normal family room light attributes. This can be used to ensure the correct lighting.
+turn_on_family_room_normal:
+  alias: Turn On Family Room Normal
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.family_room_lamp
+      data:
+        kelvin: 3125
+        brightness_pct: 50
+
+#==================================#
+#     Family Room Lamp Rainbow     #
+#==================================#
+
+# Ridiculous demo that I'm keeping because my granddaughter might like it :)
+start_rainbow:
+  alias: Start Rainbow
+  sequence:
+    - alias: Repeat Rainbow
+      repeat:
+        while:
+          - condition: template
+            value_template: "{{ repeat.index <= 30 }}"
+        sequence:
+          - service: input_select.select_next
+            entity_id: input_select.rainbow_colors
+          - service: light.turn_on
+            entity_id: light.family_room_lamp
+            data_template:
+              brightness_pct: 100
+              color_name: "{{ states('input_select.rainbow_colors') }}"
+          - delay: '00:00:02'
+    - service: script.turn_on_family_room_normal
+    - service: light.turn_off
+      entity_id: light.family_room_lamp
+
+#==============================================#
+#     Grandchild Sleepover Location Change     #
+#==============================================#
+
+# Modify lighting when grandchild moves sleep location.
+switch_grandchild_sleep_location:
+  alias: Switch Grandchild Sleep Location
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: light.master_bath_light
+    - service: light.turn_off
+      target:
+        entity_id: group.daytime_lights
+
+#==========================#
+#     Christmas Lights     #
+#==========================#
+
+turn_on_christmas_lights:
+  alias: Turn On Christmas Lights
+  sequence:
+    - condition: state
+      entity_id: input_boolean.christmas_mode
+      state: 'on'
+    - service: homeassistant.turn_on
+      target:
+        entity_id: group.christmas_lights
+
+turn_off_christmas_lights:
+  alias: Turn Off Christmas Lights
+  sequence:
+    - condition: state
+      entity_id: input_boolean.christmas_mode
+      state: 'on'
+    - service: homeassistant.turn_off
+      target:
+        entity_id: group.christmas_lights

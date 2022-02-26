@@ -1,0 +1,55 @@
+#========================================#
+#     Home Assistant Statistics Card     #
+#========================================#
+
+type: glance
+title: Home Assistant Statistics
+columns: 3
+entities:
+  - entity: sensor.count_automations
+    name: Automations
+    icon: mdi:robot
+  
+  - entity: sensor.count_scripts
+    name: Scripts
+    icon: mdi:script-text-outline
+  
+  - entity: sensor.count_timers
+    name: Timers
+    icon: mdi:timer
+  
+  - entity: sensor.count_binary_sensors
+    name: Binary Sensors
+    icon: mdi:power-cycle
+  
+  - entity: sensor.count_sensors
+    name: Sensors
+    icon: mdi:chart-box-outline
+  
+  - entity: sensor.count_device_trackers
+    name: Device Trackers
+    icon: mdi:map-marker
+  
+  - entity: sensor.count_lights
+    name: Lights
+    icon: mdi:lightbulb-outline
+  
+  - entity: sensor.count_switches
+    name: Switches
+    icon: mdi:light-switch
+  
+  - entity: sensor.count_groups
+    name: Groups
+    icon: mdi:account-group
+  
+  - entity: sensor.count_input_booleans
+    name: Input Booleans
+    icon: mdi:toggle-switch
+  
+  - entity: sensor.count_input_datetimes
+    name: Input Datetimes
+    icon: mdi:calendar-month
+  
+  - entity: sensor.count_input_numbers
+    name: Input Numbers
+    icon: mdi:numeric-7-box

@@ -1,0 +1,40 @@
+#===================#
+#     WiFi Card     #
+#===================#
+
+type: custom:stack-in-card
+title: Signal Levels
+mode: vertical
+cards:
+  
+  - type: custom:battery-state-card
+    icon: mdi:signal
+    unit: rssi
+    entities:
+      - entity: sensor.porch_wifi_signal
+        name: Porch Sensor
+      - entity: sensor.attic_wifi_signal
+        name: Attic Sensor
+      - entity: sensor.garage_wifi_signal
+        name: Garage Sensor
+      - entity: sensor.shelly1_garage_north_rssi
+        name: Garage North
+      - entity: sensor.shelly1_garage_south_rssi
+        name: Garage South
+  
+  - type: custom:battery-state-card
+    icon: mdi:signal
+    unit: lqi
+    entities:
+      - entity: sensor.guest_bath_motion_detector_linkquality
+        name: Guest Bath Motion Detector
+        attribute: linkquality
+      - entity: sensor.laundry_room_motion_detector_linkquality
+        name: Laundry Room Motion Detector
+        attribute: linkquality
+      - entity: sensor.master_bath_motion_detector_linkquality
+        name: Master Bath Motion Detector
+        attribute: linkquality
+      - entity: switch.sonoff_s31_zb
+        name: Sonoff Router
+        attribute: linkquality

@@ -1,0 +1,38 @@
+#=================================#
+#     Christmas Lighting Card     #
+#=================================#
+
+type: conditional
+conditions:
+  - entity: input_boolean.christmas_mode
+    state: 'on'
+card:
+  type: custom:stack-in-card
+  title: Christmas
+  mode: horizontal
+  style: |
+    ha-card {
+      color: darkred;
+      background: darkgreen;
+    }
+  cards:
+    - type: 'custom:button-card'
+      template: light_button
+      name: DR Hutch
+      entity: light.dining_room_hutch
+    - type: 'custom:button-card'
+      template: light_button
+      name: Foyer Hutch
+      entity: light.foyer_hutch
+    - type: 'custom:button-card'
+      template: light_button
+      name: Kitchen Tree
+      entity: switch.kitchen_christmas_tree
+    - type: 'custom:button-card'
+      template: light_button
+      name: Tree / Mantle
+      entity: switch.mantle_bookcase
+    - type: 'custom:button-card'
+      template: light_button
+      name: Stair Railing
+      entity: switch.stair_railing

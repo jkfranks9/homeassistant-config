@@ -1,0 +1,10 @@
+# MQTT broker
+mqtt:
+  broker:        !secret mqtt_broker_ip_addr
+  username:      !secret mqtt_username
+  password:      !secret mqtt_password
+  discovery:     true
+  client_id:     $device_name
+  topic_prefix:  $device_name
+  birth_message:
+  will_message:

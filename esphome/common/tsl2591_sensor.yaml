@@ -1,0 +1,12 @@
+# Adafruit TSL2591 ambient light sensor
+sensor:
+  - platform: tsl2591
+    integration_time: 600ms
+    gain: medium
+    update_interval: $window_interval
+    power_save_mode: false
+    visible:
+      name: ${friendly_name} Ambient Light
+      unit_of_measurement: lux
+      filters:
+        - filter_out: 65535

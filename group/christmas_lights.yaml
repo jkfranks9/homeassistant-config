@@ -1,0 +1,11 @@
+#==========================#
+#     Christmas Lights     #
+#==========================#
+
+Christmas Lights:
+  entities:
+    - light.dining_room_hutch
+    - light.foyer_hutch
+    - switch.mantle_bookcase
+    - switch.kitchen_christmas_tree
+    - switch.stair_railing

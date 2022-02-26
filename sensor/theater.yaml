@@ -1,0 +1,43 @@
+#===============================#
+#     Viewing History Stats     #
+#===============================#
+
+# Cinema Usage Yesterday
+- platform: history_stats
+  name: Cinema Yesterday
+  entity_id: binary_sensor.cinema_projector
+  state: 'on'
+  type: time
+  end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+  duration:
+    hours: 24
+
+# Cinema Usage Last 7 Days
+- platform: history_stats
+  name: Cinema Last 7 Days
+  entity_id: binary_sensor.cinema_projector
+  state: 'on'
+  type: time
+  end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+  duration:
+    days: 7
+
+# TV Usage Yesterday
+- platform: history_stats
+  name: TV Yesterday
+  entity_id: binary_sensor.family_room_av
+  state: 'on'
+  type: time
+  end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+  duration:
+    hours: 24
+
+# TV Usage Last 7 Days
+- platform: history_stats
+  name: TV Last 7 Days
+  entity_id: binary_sensor.family_room_av
+  state: 'on'
+  type: time
+  end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+  duration:
+    days: 7

@@ -1,0 +1,34 @@
+#==========================#
+#     Shield Apps Card     #
+#==========================#
+
+type: entities
+title: Shield TV Apps
+entities:
+  - entity: script.watch_amazon_prime
+    name: Amazon Prime
+    action_name: Watch
+  - entity: script.watch_disney_plus
+    name: Disney Plus
+    action_name: Watch
+  - entity: script.watch_hbo_max
+    name: HBO Max
+    action_name: Watch
+  - entity: script.watch_kodi
+    name: Kodi
+    action_name: Watch
+  - entity: script.watch_netflix
+    name: Netflix
+    action_name: Watch
+  - entity: script.watch_pandora
+    name: Pandora
+    action_name: Watch
+  - entity: script.watch_paramount_plus
+    name: Paramount Plus
+    action_name: Watch
+  - entity: script.watch_peacock
+    name: Peacock
+    action_name: Watch
+  - entity: script.watch_youtube_tv
+    name: Youtube TV
+    action_name: Watch

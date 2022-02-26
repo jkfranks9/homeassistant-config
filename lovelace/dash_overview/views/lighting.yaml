@@ -1,0 +1,37 @@
+#======================#
+#     Lighting Tab     #
+#======================#
+
+title: Lighting
+icon: mdi:lightbulb
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - type: conditional
+        conditions:
+          - entity: input_boolean.christmas_mode
+            state: 'off'
+        card:
+          !include /config/lovelace/dash_overview/cards/lighting/groups_1.yaml
+      - type: conditional
+        conditions:
+          - entity: input_boolean.christmas_mode
+            state: 'on'
+        card:
+          !include /config/lovelace/dash_overview/cards/lighting/groups_2.yaml
+      
+      - type: custom:layout-break
+      - type: custom:stack-in-card
+        cards:
+          - !include /config/lovelace/dash_overview/cards/lighting/interior.yaml
+          - !include /config/lovelace/dash_overview/cards/lighting/bedroom.yaml
+          - !include /config/lovelace/dash_overview/cards/lighting/theater.yaml
+      
+      - type: custom:layout-break
+      - type: custom:stack-in-card
+        cards:
+          - !include /config/lovelace/dash_overview/cards/lighting/misc.yaml
+          - !include /config/lovelace/dash_overview/cards/lighting/daytime.yaml          
+          - !include /config/lovelace/dash_overview/cards/lighting/christmas.yaml

@@ -1,0 +1,17 @@
+#=================================#
+#     Ecovacs Components Card     #
+#=================================#
+
+type: custom:stack-in-card
+title: Ecovacs Component Lifespans
+mode: horizontal
+cards:
+  - type: gauge
+    name: Main Brush
+    entity: sensor.ecovacs_main_brush_remaining_life
+  - type: gauge
+    name: Side Brush
+    entity: sensor.ecovacs_side_brush_remaining_life
+  - type: gauge
+    name: Filter
+    entity: sensor.ecovacs_filter_remaining_life

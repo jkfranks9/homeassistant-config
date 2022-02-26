@@ -1,0 +1,19 @@
+#=======================#
+#     Presence Card     #
+#=======================#
+
+type: custom:stack-in-card
+title: Presence Detection
+cards:
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: binary_sensor.garage_espresense_sensor
+        name: Garage Espresense Sensor
+      - entity: binary_sensor.house_espresense_sensor
+        name: House Espresense Sensor
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: sensor.blue_charm_beacon
+        name: Blue Charm Beacon

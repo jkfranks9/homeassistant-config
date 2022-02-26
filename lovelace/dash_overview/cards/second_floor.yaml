@@ -1,0 +1,139 @@
+#===========================#
+#     Second Floor Plan     #
+#===========================#
+
+type: 'custom:floorplan-card'
+full_height: true
+config:
+  image:
+    location: /local/floorplan/home/second_floor.svg
+    #cache: true
+  stylesheet: /local/floorplan/home/home.css
+  #log_level: debug
+  #console_log_level: info
+  defaults:
+    hover_action: hover-info
+    tap_action: toggle
+  rules:
+    
+    # Lights and switches
+    - entities:
+        - light.theater_ceiling
+        - light.theater_sconces
+        - switch.attic_light
+        - switch.snack_light
+        - switch.stairway_light
+        - switch.upstairs_bedroom_light
+        - switch.upstairs_bedroom_outlet
+        - switch.upstairs_hallway_lights
+        - switch.utility_light
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Light mirrors - these allow additional elements to be tied to a light
+    - entity: binary_sensor.snack_light_mirror
+      tap_action:
+        action: call-service
+        service: light.toggle
+        service_data:
+          entity_id: light.snack_light
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    - entity: binary_sensor.theater_ceiling_mirror
+      tap_action:
+        action: call-service
+        service: light.toggle
+        service_data:
+          entity_id: light.theater_ceiling
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    - entity: binary_sensor.theater_sconces_mirror
+      tap_action:
+        action: call-service
+        service: light.toggle
+        service_data:
+          entity_id: light.theater_sconces
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    - entity: binary_sensor.upstairs_bedroom_light_mirror
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data:
+          entity_id: switch.upstairs_bedroom_light
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    - entity: binary_sensor.upstairs_hallway_lights_mirror
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data:
+          entity_id: switch.upstairs_hallway_lights
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Media players
+    - entities:
+        - media_player.epson_projector
+        - media_player.marantz_sr7012
+        - media_player.shield_tv
+      tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Temperatures
+    - entities:
+        - sensor.attic_temperature
+        - sensor.theater_temperature
+      state_action:
+        - service: floorplan.text_set
+          service_data: "${(entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown'}"
+        - service: floorplan.class_set
+          service_data:
+            class: 'static-temp'
+    
+    # Thermostat
+    - entity: climate.upstairs
+      tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data:
+          class: |
+            >
+            switch (entity.attributes.preset_mode.toLowerCase()) {
+              case 'away':
+                return 'thermostat-away';
+              
+              case 'home':
+                return 'thermostat-home';
+              
+              default:
+                return 'thermostat-sleep';
+            }
+    
+    # Vacuum
+    - entity: vacuum.ecovacs_deebot
+      #tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"

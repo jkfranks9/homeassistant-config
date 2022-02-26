@@ -1,0 +1,16 @@
+# Test something (change as needed)
+test_washer_cycle:
+  alias: Test Washer Cycle
+  
+  sequence:
+    - variables:
+        pow: [2.5, 8, 400, 200, 126, 155, 230, 190, 275, 321, 77, 120, 160, 180, 155, 77, 41, 43, 4.8, 11, 10, 380, 200, 195, 305, 280, 250, 420, 150, 110, 33, 39, 35, 204, 70, 66, 321, 160, 190, 230, 42, 8, 5.4, 2.5]
+    - repeat:
+        count: "{{ pow | length }}"
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.washer_test_power
+            data:
+              value: "{{ pow[repeat.index-1] }}"
+          - delay: '00:00:05'

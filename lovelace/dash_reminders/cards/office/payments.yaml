@@ -1,0 +1,67 @@
+#=======================#
+#     Payments Card     #
+#=======================#
+
+type: custom:stack-in-card
+title: Payments
+keep:
+  margin: true
+cards:
+      
+  # Amazon VISA
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_payment_amazon
+      - name: Amazon VISA
+      - icon: card-account-details
+      - interval: 1
+      - period: 'month'
+      - amount: '(320)'
+      - service: script.set_datetime_offset_months
+      
+  # CU VISA
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_payment_credit_union
+      - name: CU VISA
+      - icon: card-account-details
+      - interval: 1
+      - period: 'month'
+      - amount: '(372)'
+      - service: script.set_datetime_offset_months
+      
+  # Mortgage
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_payment_mortgage
+      - name: Mortgage
+      - icon: home-account
+      - interval: 1
+      - period: 'month'
+      - service: script.set_datetime_offset_months
+      
+  # Randolph
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_payment_randolph
+      - name: Randolph
+      - icon: card-account-phone
+      - interval: 1
+      - period: 'month'
+      - service: script.set_datetime_offset_months
+      
+  # Wells Fargo
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_payment_wells_fargo
+      - name: Wells Fargo
+      - icon: card-account-details
+      - interval: 1
+      - period: 'month'
+      - amount: '(158)'
+      - service: script.set_datetime_offset_months

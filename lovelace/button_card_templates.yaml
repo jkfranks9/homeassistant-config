@@ -1,0 +1,104 @@
+#============================#
+#     Person Button Card     #
+#============================#
+
+person_button:
+  show_state: true
+  #show_icon: false
+  show_entity_picture: true
+  size: 90%
+  styles:
+    card:
+      - height: 140px
+      - width: 120px
+
+#=================================#
+#     Garage Door Button Card     #
+#=================================#
+
+garage_door_button:
+  variables:
+    var_entity: switch.shelly1_garage_north
+    var_name_open: North open
+    var_name_closed: North closed
+  show_icon: true
+  show_name: true
+  icon: 'hass:garage'
+  tap_action:
+    action: call-service
+    service: switch.turn_on
+    service_data:
+      entity_id: '[[[ return variables.var_entity ]]]'
+  state:
+    - value: 'off'
+      name: '[[[ return variables.var_name_open ]]]'
+      icon: 'hass:garage-open'
+      color: '#ffee58'
+    - value: 'on'
+      name: '[[[ return variables.var_name_closed ]]]'
+      color: 'green'
+
+#=================================#
+#     Light Group Button Card     #
+#=================================#
+
+light_group_button:
+  show_icon: true
+  show_name: false
+  tap_action:
+    action: >
+      [[[
+        if (entity.state == 'on')
+          return 'toggle'
+        else
+          return 'none'
+      ]]]
+  state:
+    - value: 'on'
+      icon: mdi:home-lightbulb
+      color: '#ffee58'
+    - value: 'off'
+      icon: mdi:home-lightbulb-outline
+
+light_group_button_name:
+  show_icon: true
+  show_name: true
+  tap_action:
+    action: >
+      [[[
+        if (entity.state == 'on')
+          return 'toggle'
+        else
+          return 'none'
+      ]]]
+  state:
+    - value: 'on'
+      icon: mdi:home-lightbulb
+      color: '#ffee58'
+    - value: 'off'
+      icon: mdi:home-lightbulb-outline
+
+#===========================#
+#     Light Button Card     #
+#===========================#
+
+light_button:
+  show_icon: true
+  show_name: true
+  tap_action:
+    action: 'toggle'
+  state:
+    - value: 'on'
+      color: '#ffee58'
+    - value: 'off'
+
+#=================================#
+#     Temperature Button Card     #
+#=================================#
+
+temperature_button:
+  show_icon: false
+  show_name: false
+  show_state: true
+  tap_action:
+    action: 'none'

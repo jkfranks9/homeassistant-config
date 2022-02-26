@@ -1,0 +1,45 @@
+# Shelly 1 relay configuration
+
+# The door contact sensor that is attached to SW on the 
+# Shelly 1. Not exposed to HA, instead used to set the 
+# state of the cover.
+binary_sensor:
+  - platform: gpio
+    pin: GPIO5
+    name: ${friendly_name} Contact Sensor
+    id: contact_sensor
+    internal: true
+    filters:
+      - invert:
+
+# The relay in the Shelly 1 that will deliver the pulse to
+# the garage door opener (not exposed to HA).
+switch:
+  - platform: gpio
+    pin: GPIO4
+    name: ${friendly_name} Relay
+    id: relay
+    internal: true
+
+# This creates the actual garage door in HA. The state is based
+# on the contact sensor. Opening/closing the garage door simply
+# turns the relay on/off with a 0.5s delay in between.
+cover:
+  - platform: template
+    device_class: garage
+    name: $friendly_name
+    id: template_cov
+    lambda: |-
+      if (id(contact_sensor).state) {
+        return COVER_OPEN;
+      } else {
+        return COVER_CLOSED;
+      }
+    open_action:
+      - switch.turn_on: relay
+      - delay: 0.5s
+      - switch.turn_off: relay
+    close_action:
+      - switch.turn_on: relay
+      - delay: 0.5s
+      - switch.turn_off: relay

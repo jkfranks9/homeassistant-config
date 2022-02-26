@@ -1,0 +1,13 @@
+# WiFi
+wifi:
+  ssid:     !secret wifi_ssid
+  password: !secret wifi_password
+
+# Enable over the air updates
+ota:
+
+# WiFi signal sensor
+sensor:
+  - platform: wifi_signal
+    name: ${friendly_name} WiFi Signal
+    update_interval: $update_interval

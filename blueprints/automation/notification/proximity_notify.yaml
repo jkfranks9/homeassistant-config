@@ -1,0 +1,58 @@
+# Notify when anyone using a device tracker is nearing home. This uses the proximity value associated with
+# the device tracker.
+
+blueprint:
+  name: Proximity Notification
+  description: Notify when someone is getting close to home (approximately 10 minutes away).
+  domain: automation
+  
+  input:
+    proximity_entity:
+      name: Proximity Entity
+      description: Proximity entity to be checked.
+      selector:
+        entity:
+          domain: proximity
+    
+    proximity_meters:
+      name: Proximity Meters
+      description: Distance in meters below which the automation will trigger.
+      selector:
+        number:
+          min: 10000
+          max: 30000
+          unit_of_measurement: kilometers
+    
+    person_name:
+      name: Person Name
+      description: Name of the person associated with the proximity entity.
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_proximity_entity: !input proximity_entity
+  input_person_name: !input person_name
+
+# Trigger when the person is getting close to home, using their proximity value (in meters).
+trigger:
+  - platform: numeric_state
+    entity_id: !input proximity_entity
+    below: !input proximity_meters
+
+# Continue only if the person is traveling towards home.
+condition:
+  - condition: template
+    value_template: "{{ is_state_attr(input_proximity_entity, 'dir_of_travel', 'towards') }}"
+
+# Write a log message, and announce using all Alexa media players.
+action:
+  - service: system_log.write
+    data:
+      message: "{{ input_person_name }} will be arriving soon"
+      level: info
+  - service: notify.alexa_media
+    data:
+      target:
+        - media_player.everywhere
+      data:
+        type: announce
+      message: "{{ input_person_name }} will be arriving soon"

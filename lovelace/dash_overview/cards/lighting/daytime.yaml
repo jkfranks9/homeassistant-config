@@ -1,0 +1,17 @@
+#===============================#
+#     Daytime Lighting Card     #
+#===============================#
+
+type: custom:stack-in-card
+title: Daytime
+mode: horizontal
+cards:
+  - type: 'custom:button-card'
+    template: light_button
+    name: Family Room
+    entity: light.family_room_lamp
+      
+  - type: 'custom:button-card'
+    template: light_button
+    name: Hallway
+    entity: light.hallway_lamp

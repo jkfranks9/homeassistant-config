@@ -1,0 +1,600 @@
+#=====================================#
+#     Nighttime / Sleeptime Modes     #
+#=====================================#
+
+# The Nighttime flag indicates I've gone to bed. The main usage is to prevent certain automations 
+# (like turning on lights) from running at an inappropriate time.
+#
+# The Sleeptime flag covers the period from going to bed and going to sleep. Normally I'm reading,
+# so don't want the light turning off unexpectedly.
+#
+# These flags are usually managed by the bedtime, sleeptime and wakeup scripts. But if those
+# are forgotten to be triggered, also manage the flags here using failsafe times.
+
+# Set Nighttime true at a failsafe time (should be in bed).
+- alias: Enable Nighttime Mode
+  id: 'enable_nighttime_mode'
+  trigger:
+    - platform: time
+      at: '23:00:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '23:00:00'
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+
+# Set Sleeptime true at a failsafe time (should be asleep).
+- alias: Enable Sleeptime Mode
+  id: 'enable_sleeptime_mode'
+  trigger:
+    - platform: time
+      at: '01:00:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '01:00:00'
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.sleeptime
+
+# Set Nighttime and Sleeptime false at a failsafe time (should be out of bed).
+- alias: Disable Nighttime & Sleeptime Modes
+  id: 'disable_nighttime_sleeptime_modes'
+  trigger:
+    - platform: time
+      at: '07:30:00'
+    - platform: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      above: 2.0
+    - platform: homeassistant
+      event: start
+  condition:
+    condition: or
+    conditions:
+      - condition: time
+        after: '07:30:00'
+      - condition: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        above: 2.0
+  action:
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.sleeptime
+
+#=============================#
+#     Grandchild Home Mode    #
+#=============================#
+
+# Manage grandchild home mode based on status of the parents. Note that grandchild home mode can also be set
+# using the front end.
+- alias: Enable Grandchild Home Mode
+  id: 'enable_grandchild_home_mode'
+  trigger:
+    - platform: state
+      entity_id: group.device_tracker_sarah
+      from: 'not_home'
+      to: 'home'
+    - platform: state
+      entity_id: group.device_tracker_david
+      from: 'not_home'
+      to: 'home'
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.grandchild_home
+
+- alias: Disable Grandchild Home Mode
+  id: 'disable_grandchild_home_mode'
+  trigger:
+    - platform: state
+      entity_id: group.device_tracker_sarah
+      from: 'home'
+      to: 'not_home'
+    - platform: state
+      entity_id: group.device_tracker_david
+      from: 'home'
+      to: 'not_home'
+  condition:
+    - condition: state
+      entity_id: group.device_tracker_sarah
+      state: 'not_home'
+    - condition: state
+      entity_id: group.device_tracker_david
+      state: 'not_home'
+  action:
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.grandchild_home
+
+#======================================#
+#     Grandchild Sleepover Location    #
+#======================================#
+
+# Default the grandchild sleep location.
+- alias: Set Default Grandchild Sleepover Location
+  id: 'set_default_grandchild_sleepover_location'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.grandchild_home
+      from: 'off'
+      to: 'on'
+    - platform: time
+      at: '07:00:00'
+  condition:
+    - condition: state
+      entity_id: input_boolean.grandchild_home
+      state: 'on'
+  action:
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.grandchild_sleepover_location
+      data: 
+        option: 'Guest'
+
+#===================#
+#     Button Up     #
+#===================#
+
+# Button up the house when needed.
+- alias: 'Button Up House'
+  id: button_up_house
+  trigger:
+    - platform: sun
+      event: sunset
+    - platform: template
+      value_template: >
+        {{ is_state('group.device_tracker_jon', 'not_home') and
+           is_state('group.family_members', 'not_home') }}
+  
+  action:
+  
+    # Garage doors ... run the scripts in parallel because they contain a 30 minute delay.
+    - service: script.turn_on
+      target:
+        entity_id: script.close_garage_door_north
+    - service:  script.turn_on
+      target:
+        entity_id: script.close_garage_door_south
+    
+    # Light domains
+    - service: homeassistant.turn_off
+      data:
+        entity_id: light.attic_light
+    - service: homeassistant.turn_off
+      data:
+        entity_id: light.garage_lights
+    - service: homeassistant.turn_off
+      data:
+        entity_id: group.outdoor_lights
+
+#==================#
+#     Log File     #
+#==================#
+
+# Backup the current log file on shutdown, so we don't lose possible debugging information.
+- alias: Backup Log On Shutdown
+  id: backup_log_on_shutdown
+  trigger:
+    - platform: homeassistant
+      event: shutdown
+  action:
+    - service: shell_command.backup_log
+
+# Delete junk log files left over from the above automation.
+- alias: Delete Junk Log Files
+  id: delete_junk_log_files
+  trigger:
+    - platform: homeassistant
+      event: start
+  action:
+    - service: shell_command.delete_junk_log_files
+
+#===================#
+#     Front End     #
+#===================#
+
+# Refresh the front end ... this is to make sure the HACS icon exists in the sidebar.
+- alias: Refresh Front End
+  id: refresh_fron_end
+  trigger:
+    - platform: homeassistant
+      event: start
+  action:
+    - service: browser_mod.lovelace_reload
+ 
+#============================#
+#     Kodi Movie Control     #
+#============================#
+ 
+# We have an input select that represents the list of Kodi movies. This is dynamically set using the 
+# get_all_kodi_movies script. However, when HA restarts, the input select gets restored to the yaml value
+# instead of the dynamically set value. So this automation restores the dynamic list on HA start.
+#
+# The actual list should exist in a file that was saved at get_all_kodi_movies time, and the feature
+# movie name (input select state value) exists in input_text.current_feature.
+- alias: Restore Movie List On Start
+  id: restore_movie_list_on_start
+  trigger:
+    - platform: homeassistant
+      event: start
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    
+    # Turn on a flag to prevent any other automations or scripts mucking with the feature movie name until
+    # restoration is complete.
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.kodi_movie_list_restoration
+    
+    # Call a pyscript module to restore the movie list.
+    - service: pyscript.restore_all_movies
+      data:
+        entity: input_select.kodi_movies
+    
+    # Wait until the list is restored (state not equal to the static yaml value).
+    - wait_template: "{{ not is_state('input_select.kodi_movies', 'Select') }}"
+      timeout: '00:00:10'
+    
+    # Set the current feature movie as the selected option in the list.
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.kodi_movies
+        option: "{{ states('input_text.current_feature') }}"
+    
+    # Turn off the restoration flag.
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.kodi_movie_list_restoration
+
+#===================================#
+#     Kodi Media Player Logging     #
+#===================================#
+     
+# The Kodi media player has a tendency to fill the log with useless error messages, because the player can't
+# be contacted on an async_update(), which happens every 10 seconds. Count these events so we can restart HA if 
+# the situation persists for ~5 minutes.
+- alias: Detect Kodi Error Loop
+  id: detect_kodi_error_loop
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        name: 'homeassistant.components.kodi.media_player'
+        level: 'ERROR'
+  #condition:
+  #  - condition: template
+  #    value_template: "{{ trigger.event.data.message[:70] == 'Error calling async_update on entity media_player.kodi: TransportError' }}"
+  action:
+    - service: counter.increment
+      data:
+        entity_id: counter.kodi_errors
+
+# Restart HA if the kodi error loop situation exists (see above).
+- alias: Handle Kodi Error Loop
+  id: handle_kodi_error_loop
+  trigger:
+    - platform: state
+      entity_id: counter.kodi_errors
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state | int(0) >= 30 }}"
+  action:
+    - service: persistent_notification.create
+      data:
+        title: 'Home Assistant Restarted'
+        notification_id: 'kodi_error_loop'
+        message: 'Home Assistant was restarted due to excessive Kodi media player errors.'
+    - service: homeassistant.restart
+
+# Reset the counter after a few minutes since we're not interested in occasional sporadic errors.
+- alias: Reset Kodi Error Counter
+  id: reset_kodi_error_counter
+  trigger:
+    - platform: time_pattern
+      minutes: '/7'
+  condition:
+    - condition: template
+      value_template: "{{ states('counter.kodi_errors')|int(0) > 0 }}"      
+  action:
+    - service: counter.reset
+      entity_id: counter.kodi_errors
+
+#===========================#
+#     Timer Restoration     #
+#===========================#
+
+# Save all active and paused timers so they can be restored after HA restarts if needed.
+#
+# NOTE: All defined timers must be added to the trigger and 'timers' variable.
+- alias: 'Save Timers'
+  id: save_timers
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id:
+        - timer.vac
+        - timer.n00
+        - timer.n01
+        - timer.n02
+        - timer.n03
+        - timer.n04
+        - timer.n05
+        - timer.n06
+        - timer.n07
+        - timer.n08
+        - timer.n09
+        - timer.n10
+        - timer.n11
+        - timer.n12
+        - timer.n13
+        - timer.n14
+        - timer.n15
+        - timer.n16
+        - timer.n17
+        - timer.n18
+        - timer.n19
+        - timer.n20
+        - timer.z2m
+  variables:
+    timers:
+      - timer.vac
+      - timer.n00
+      - timer.n01
+      - timer.n02
+      - timer.n03
+      - timer.n04
+      - timer.n05
+      - timer.n06
+      - timer.n07
+      - timer.n08
+      - timer.n09
+      - timer.n10
+      - timer.n11
+      - timer.n12
+      - timer.n13
+      - timer.n14
+      - timer.n15
+      - timer.n16
+      - timer.n17
+      - timer.n18
+      - timer.n19
+      - timer.n20
+      - timer.z2m
+    modes:
+      - active
+      - paused
+  action:
+    - repeat:
+        count: 2
+        sequence:
+        - variables:
+            mode: "{{ modes[repeat.index-1] }}"
+        - service: input_text.set_value
+          data:
+            entity_id: "input_text.timers_{{ mode }}"
+            value: >
+              {% set ns = namespace(timers = []) %}
+              {% for t in expand(timers) | selectattr('state', 'eq', mode) | list  %}
+                {% set d = t.attributes.remaining.split(':') | map('int') | list %}
+                {% set s = d[0]*3600 + d[1]*60 + d[2] + (t.last_changed.timestamp()|int if mode == 'active' else 0) %}
+                {% set ns.timers = ns.timers + ['{} {}'.format(t.object_id, s)] %}
+              {% endfor %}
+              {{ ns.timers | join(',')}}
+
+# Restore all active and paused timers after HA restarts.
+- alias: 'Restore Timers'
+  id: restore_timers
+  mode: single
+  trigger:
+    - platform: homeassistant
+      event: start
+  variables:
+    modes:
+      - active
+      - paused
+  action:
+    - repeat:
+        count: 2
+        sequence:
+        - variables:
+            mode: "{{ modes[repeat.index-1] }}"
+            timers_text: "{{ states('input_text.timers_' ~ mode) }}"
+        - choose:
+          - conditions: "{{ timers_text | length > 0 }}"
+            sequence:
+            - variables:
+                timers: "{{ timers_text.split(',') }}"
+            - repeat:
+                count: "{{ timers | count }}"
+                sequence:
+                - variables:
+                    t: "{{ timers[repeat.index-1].split() }}"
+                    id: "timer.{{t[0]}}"
+                    d: "{{ t[1]|int(0) - (now().timestamp()|int(0) if mode == 'active' else 0) }}"
+                - condition: "{{ d > 0 }}"
+                - service: timer.start
+                  data:
+                    entity_id: "{{ id }}"
+                    duration: "{{ d }}"
+                - condition: "{{ mode == 'paused' }}"
+                - service: timer.pause
+                  data:
+                    entity_id: "{{ id }}"
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.timers_restored
+
+#==================================#
+#     Persistent Notifications     #
+#==================================#
+
+# NOTE: This was originally obtained as a package (I forget where). But I've had to debug it and
+#       make changes, so it's now just included with all the other automations instead of a package.
+
+# Save notifications to MQTT when they are created.
+- id: save_notifications_on_create
+  alias: Save Notifications On Create
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: call_service
+      event_data:
+        domain: persistent_notification
+        service: create
+  condition:
+    - condition: template
+      value_template: >-
+        {{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}
+  action:
+    - service: mqtt.publish
+      data_template:
+        topic: "home-assistant/notifications/{{ trigger.event.data.service_data.notification_id }}"
+        payload: >-
+          {
+            'notification_id' : "{{ trigger.event.data.service_data.notification_id }}",
+            'title' : "{{ trigger.event.data.service_data.title }}",
+            'message' : "{{ trigger.event.data.service_data.message }}"
+          }
+        retain: true
+
+# Remove saved notifications from MQTT when they are dismissed.
+- id: remove_saved_notifications_on_dismiss
+  alias: Removed Saved Notifications On Dismiss
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: call_service
+      event_data:
+        domain: persistent_notification
+        service: dismiss
+  condition:
+    - condition: template
+      value_template: >-
+        {{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}
+  action:
+    - service: mqtt.publish
+      data_template:
+        topic: "home-assistant/notifications/{{ trigger.event.data.service_data.notification_id }}"
+        retain: true
+
+# Restore persistent notifications (the whole point).
+#
+# This one is tricky:
+#   - It's triggered by the above save_notification_create automation, since that one publishes an MQTT message.
+#   - The condition compares the triggered message with the entity ID 'persistent_notification.[notification ID]':
+#       - This entity is created to represent the retained MQTT message
+#       - This sometimes (usually?) creates an error in the log indicating the MQTT message has no payload_json attribute.
+#         I've used the log_notifications automation below to try and debug, but it shows the payload_json attribute is
+#         present. Not really sure what is going on, since all this stuff does indeed work - I suspect some sort of timing
+#         problem.
+#   - If the comparison is true then the message has changed since it was originally issued, and the action then creates
+#     a new persistent notification to replace the original, thus driving save_notification_create, which in turn re-drives
+#     this, but the condition should be false on the redrive.
+#   - Note that dashes in the notification ID are changed to underscores, presumably to prevent some problem.
+- id: restore_notifications
+  alias: Restore Notifications
+  initial_state: 'on'
+  trigger:
+    - platform: mqtt
+      topic: home-assistant/notifications/+
+  condition:
+    - condition: template
+      value_template: >-
+        {{ trigger.payload != '' and state_attr('persistent_notification.' + trigger.payload_json.notification_id | replace('-','_'),'message') != trigger.payload_json.message }}
+  action:
+    - service: persistent_notification.create
+      data_template:
+        title: >-
+          {{ trigger.payload_json.title }}
+        message: >-
+          {{ trigger.payload_json.message }}
+        notification_id: >-
+          {{ trigger.payload_json.notification_id }}
+
+# Log the published MQTT message for debugging purposes (normally turned off).
+- id: log_notifications
+  alias: Log Notifications
+  trigger:
+    - platform: mqtt
+      topic: home-assistant/notifications/+
+  action:
+    - service: system_log.write
+      data:
+        message: "JKF: notification: '{{ trigger.payload }}'"
+        level: info
+
+#=================#
+#     Open UV     #
+#=================#
+
+# Update OpenUV once per hour during daylight.
+- alias: Update OpenUV
+  id: 'update_openuv'
+  trigger:
+    - platform: time_pattern
+      minutes: 19
+  condition:
+    - condition: state
+      entity_id: sun.sun
+      state: above_horizon
+  action:
+    - service: openuv.update_data
+
+#========================#
+#     Christmas Mode     #
+#========================#
+
+# I want to only show certain elements on the floorplan at Christmas time. This requires two different
+# floorplan image and lovelace files. When Christmas mode changes, copy the appropriate files.
+- alias: Trigger Floorplan Christmas Elements
+  id: 'trigger_floorplan_christmas_elements'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.christmas_mode
+  action:
+    - choose:
+      - conditions: "{{ is_state('input_boolean.christmas_mode', 'on') }}"          
+        sequence:
+          - service: shell_command.copy_floorplan_christmas
+      default:
+        - service: shell_command.copy_floorplan_normal
+
+#=========================#
+#     TEMPORARY DEBUG     #
+#=========================#
+
+# Proximity debug starts as debug, to catch a bug. Turn it off once HA starts to avoid log spamming.
+#- alias: Debug Proximity
+#  id: 'debug_proximity'
+#  trigger:
+#    - platform: homeassistant
+#      event: start
+#  action:
+#    - service: logger.set_level
+#      data:
+#        custom_components.proximity: info
+
+# Detect the bug we're after and notify.
+#- alias: Detect Proximity Bug
+#  id: 'detect_proximity_bug'
+#  trigger:
+#    - platform: event
+#      event_type: system_log_event
+#      event_data:
+#        name: 'custom_components.proximity'
+#        level: 'ERROR'
+#  condition:
+#    - condition: template
+#      value_template: "{{ 'device_state is none' in trigger.event.data.message }}"
+#  action:
+#    - service: persistent_notification.create
+#      data:
+#        title: 'Proximity Bug Detected'
+#        notification_id: 'proximity_bug'
+#        message: 'Check the log.'

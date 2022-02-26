@@ -1,0 +1,16 @@
+#==================================#
+#     Treadmill Variables Card     #
+#==================================#
+
+type: custom:stack-in-card
+title: Treadmill Variables
+mode: horizontal
+cards:
+  - type: entity
+    entity: input_number.treadmill_speed
+    name: Speed
+  - type: entity
+    entity: input_number.treadmill_incline
+    name: Incline
+  - type: entity
+    entity: input_number.user_weight

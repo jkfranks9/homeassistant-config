@@ -1,0 +1,19 @@
+#======================#
+#     Printer Card     #
+#======================#
+
+type: custom:stack-in-card
+title: Printer Status
+mode: horizontal
+cards:
+  - type: gauge
+    name: Toner Remaining
+    entity: sensor.brother_printer_black_toner_remaining
+  - type: gauge
+    name: Drum Life Remaining
+    entity: sensor.brother_printer_drum_remaining_life
+  - type: gauge
+    name: Pages Printed
+    min: 100
+    max: 500
+    entity: sensor.brother_printer_page_counter

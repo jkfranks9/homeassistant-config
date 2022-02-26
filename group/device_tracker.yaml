@@ -1,0 +1,22 @@
+#=========================#
+#     Device Trackers     #
+#=========================#
+
+Device Tracker Jon:
+  entities:
+    - device_tracker.galaxy_s10                # Bluetooth
+    - device_tracker.jon_galaxy                # HA app
+    - device_tracker.life360_jon_franks        # Life360
+
+Device Tracker Mike:
+  entities:
+    #- device_tracker.mike_galaxy               # HA app
+    - device_tracker.life360_michael_franks    # Life360
+
+Device Tracker Sarah:
+  entities:
+    - device_tracker.pixel_4_xl                # HA app
+
+Device Tracker David:
+  entities:
+    - device_tracker.pixel_6_pro               # HA app

@@ -1,0 +1,31 @@
+#============================#
+#     Min/Max Temps Card     #
+#============================#
+
+type: custom:stack-in-card
+title: Lifetime Limits
+cards:
+  - type: entities
+    entities:
+      
+      - type: custom:multiple-entity-row
+        entity: input_number.max_outdoor_temp
+        name: Porch
+        unit: '°F'
+        icon: mdi:thermometer
+        state_header: Maximum
+        entities:
+          - entity: input_number.min_outdoor_temp
+            name: Minimum
+            unit: '°F'
+      
+      - type: custom:multiple-entity-row
+        entity: input_number.max_attic_temp
+        name: Attic
+        unit: '°F'
+        icon: mdi:thermometer
+        state_header: Maximum
+        entities:
+          - entity: input_number.min_attic_temp
+            name: Minimum
+            unit: '°F'

@@ -1,0 +1,21 @@
+#=====================#
+#     Theater Tab     #
+#=====================#
+
+title: Theater
+icon: mdi:theater
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - type: vertical-stack
+        cards:
+          - !include /config/lovelace/dash_overview/cards/theater/theater_lighting.yaml
+          - !include /config/lovelace/dash_overview/cards/theater/epson_projector.yaml
+          - !include /config/lovelace/dash_overview/cards/theater/media_players.yaml
+      - type: custom:layout-break
+      - !include /config/lovelace/dash_overview/cards/theater/equipment_controls.yaml
+      - !include /config/lovelace/dash_overview/cards/theater/kodi_movies.yaml
+      - type: custom:layout-break
+      - !include /config/lovelace/dash_overview/cards/theater/shield_apps.yaml

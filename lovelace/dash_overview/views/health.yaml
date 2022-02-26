@@ -1,0 +1,22 @@
+#====================#
+#     Health Tab     #
+#====================#
+
+title: Health
+icon: mdi:run
+panel: true
+visible:
+  - user: f02fbce66df546fa90f8f3d03283b55e
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/lovelace/dash_overview/cards/health/calories_burned.yaml
+      - !include /config/lovelace/dash_overview/cards/health/exercise_time.yaml
+      - !include /config/lovelace/dash_overview/cards/health/exercise_manual.yaml
+      - type: custom:layout-break
+      - !include /config/lovelace/dash_overview/cards/health/daily_calories.yaml
+      - !include /config/lovelace/dash_overview/cards/health/daily_time.yaml
+      - !include /config/lovelace/dash_overview/cards/health/calories_history.yaml
+      - type: custom:layout-break
+      - !include /config/lovelace/dash_overview/cards/health/viewing_history.yaml

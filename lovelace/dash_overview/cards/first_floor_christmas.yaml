@@ -1,0 +1,134 @@
+#==========================#
+#     First Floor Plan     #
+#==========================#
+
+type: 'custom:floorplan-card'
+full_height: true
+config:
+  image:
+    location: /local/floorplan/home/first_floor_christmas.svg
+    #cache: true
+  stylesheet: /local/floorplan/home/home.css
+  #log_level: debug
+  #console_log_level: info
+  defaults:
+    hover_action: hover-info
+    tap_action: toggle
+  rules:
+    
+    # Lights and switches
+    - entities:
+        - input_boolean.alexa_ha_plug
+        - light.family_room_lamp
+        - light.master_bedroom_lamp
+        - light.office_lamp
+        - switch.dining_room_hutch
+        - switch.dining_room_lamps
+        - switch.driveway_lights
+        - switch.fire_tv
+        - switch.foyer_hutch
+        - switch.front_floodlight
+        - switch.garage_lights
+        - switch.guest_bath_fan
+        - switch.guest_bath_light
+        - switch.guest_bedroom_lamp
+        - switch.guest_bedroom_lamp_2
+        - switch.hallway_lamp
+        - switch.laundry_room_light
+        - switch.master_bath_fan
+        - switch.master_bath_light
+        - switch.porch_light
+        - switch.sonoff_family_room_av
+        - switch.sonoff_s31_zb  # zigbee router; can move if needed
+        - switch.sonoff_treadmill
+        - switch.stairway_light
+        
+        # These are shown when Christmas mode is on.
+        - switch.kitchen_christmas_tree
+        - switch.mantle_bookcase
+        - switch.stair_railing
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Light mirrors - these allow additional elements to be tied to a light
+    - entity: binary_sensor.driveway_lights_mirror
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data:
+          entity_id: switch.driveway_lights
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+        
+    - entity: binary_sensor.garage_lights_mirror
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data:
+          entity_id: switch.garage_lights
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+        
+    - entity: binary_sensor.mantle_bookcase_mirror
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data:
+          entity_id: switch.mantle_bookcase
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Temperatures
+    - entities:
+        - sensor.garage_temperature
+        - sensor.office_temperature
+        - sensor.porch_temperature
+      state_action:
+        - service: floorplan.text_set
+          service_data: "${(entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown'}"
+        - service: floorplan.class_set
+          service_data:
+            class: 'static-temp'
+    
+    # Appliances
+    - entities:
+        - switch.sonoff_microwave
+        - switch.sonoff_refrigerator
+        - switch.sonoff_washer
+      tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Garage door north
+    - entity: binary_sensor.shelly1_garage_north_contact
+      tap_action:
+        action: call-service
+        service: switch.turn_on
+        service_data:
+          entity_id: switch.shelly1_garage_north
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'door-closed' : 'door-open' }"
+    
+    # Garage door south
+    - entity: binary_sensor.shelly1_garage_south_contact
+      tap_action:
+        action: call-service
+        service: switch.turn_on
+        service_data:
+          entity_id: switch.shelly1_garage_south
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'door-closed' : 'door-open' }"

@@ -1,0 +1,36 @@
+#======================#
+#     PC Info Card     #
+#======================#
+
+type: entities
+title: PC Info
+show_header_toggle: false
+entities:
+
+  - entity: sensor.legion_t530_system_boot_time
+    name: Last Boot Time
+    icon: mdi:calendar
+  - entity: sensor.legion_t530_system_uptime
+    name: Uptime
+    icon: mdi:clock-start
+  - entity: sensor.pc_ram_free_gb
+    name: Total Memory
+    icon: mdi:memory
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.legion_t530_storage_c_total_storage
+    name: C Drive
+    icon: mdi:home-assistant
+    state_header: Size
+    entities:
+      - entity: sensor.legion_t530_storage_c_label
+        name: Label
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.legion_t530_storage_e_total_storage
+    name: E Drive
+    icon: mdi:home-assistant
+    state_header: Size
+    entities:
+      - entity: sensor.legion_t530_storage_e_label
+        name: Label

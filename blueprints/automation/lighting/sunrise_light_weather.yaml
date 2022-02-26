@@ -1,0 +1,115 @@
+# Change the state of lighting near sunrise, according to weather conditions, which affect indoor
+# light levels. This calls a script to do the work, and is used only as a trigger for different 
+# sun elevations.
+#
+# For example:
+#   Check at 3 degrees above the horizon ... light not changed because it's raining and therefore gloomy indoors
+#   Chect at 6 degrees above the horizon ... light changed because now it's clear and therefore light enough indoors
+
+blueprint:
+  name: Weather Based Light At Sunrise
+  description: Change lighting state near sunrise based on weather conditions.
+  domain: automation
+  
+  input:
+    elevation:
+      name: Sun Elevation
+      description: The sun elevation angle on which to trigger.
+      selector:
+        number:
+          min: 3.0
+          max: 9.01
+          mode: slider
+    
+    light_entity:
+      name: Light Entity
+      description: Light or group to be changed.
+      selector:
+        entity:
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_elevation: !input elevation
+
+# Trigger when the sun elevation changes above the given threshold.
+# Also trigger on Home Assistant start, to cover the case where the elevation threshold crossing occurs during a restart.
+trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: !input elevation
+  - platform: homeassistant
+    event: start
+    id: 'ha_start'
+
+# Continue only if the sun is rising and we're not in a nighttime situation.
+# The first condition covers the case where the elevation threshold crossing occurs during a restart.
+condition:
+  - condition: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: !input elevation
+  - condition: template
+    value_template: "{{ state_attr('sun.sun', 'rising') == true }}"
+  - condition: state
+    entity_id: input_boolean.nighttime
+    state: 'off'
+
+# Call the script with the given light/group entity.
+action:
+
+  - choose:
+    
+    # Triggered for Home Assistant start. We only want to call the script for one of the possible
+    # input elevation values: the one closest to, but not above, the actual sun elevation. For example,
+    # if the sun elevation is between the max and medium values, we want to use the medium value.
+    - conditions:
+      - condition: trigger
+        id: 'ha_start'
+      sequence:
+        
+        # Pick one invocation on which to take action. Each stanza below corresponds to one of the
+        # possible input elevations. The second condition in each stanza (or only one for the default)
+        # ensures that we only take action when the chosen stanza elevation matches the one with
+        # which we're called. I'm sure there's an easier way to do this :(
+        - choose:
+          
+          # Use the maximum elevation value.
+          - conditions:
+            - condition: template
+              value_template: "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.max_elevation') | float(9)) }}"
+            - condition: template
+              value_template: "{{ input_elevation == (states('input_number.max_elevation') | float(9)) }}"
+            sequence:
+              - service: script.change_lighting_per_weather
+                data:
+                  light_entity: !input light_entity
+                  wakeup: false
+          
+          # Use the medium elevation value.
+          - conditions:
+            - condition: template
+              value_template: "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.med_elevation') | float(6)) }}"
+            - condition: template
+              value_template: "{{ input_elevation == (states('input_number.med_elevation') | float(6)) }}"
+            sequence:
+              - service: script.change_lighting_per_weather
+                data:
+                  light_entity: !input light_entity
+                  wakeup: false
+          
+          # Use the minimum elevation value by default.
+          default:
+            - condition: template
+              value_template: "{{ input_elevation == (states('input_number.min_elevation') | float(3)) }}"
+            - service: script.change_lighting_per_weather
+              data:
+                light_entity: !input light_entity
+                wakeup: false
+    
+    # Triggered for normal elevation threshold crossing.
+    default:
+      - service: script.change_lighting_per_weather
+        data:
+          light_entity: !input light_entity
+          wakeup: false

@@ -1,0 +1,451 @@
+#=======================#
+#     Power Sensors     #
+#=======================#
+
+- sensor:
+
+    #--------------------------------------------#
+    #   -- Calculated Power - Lights / Fans --   #
+    #--------------------------------------------#
+    
+    - name: 'Attic Light Power'
+      unique_id: attic_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.attic_light', 'on'), 53, 0) }}"
+    
+    - name: 'Dining Room Hutch Power'
+      unique_id: dining_room_hutch_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.dining_room_hutch', 'on'), 5, 0) }}"
+    
+    - name: 'Dining Room Lamps Power'
+      unique_id: dining_room_lamps_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.dining_room_lamps', 'on'), 20, 0) }}"
+
+    - name: 'Driveway Lights Power'
+      unique_id: driveway_lights_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.driveway_lights', 'on'), 33, 0) }}"
+
+    - name: 'Foyer Hutch Power'
+      unique_id: foyer_hutch_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.foyer_hutch', 'on'), 11, 0) }}"
+
+    - name: 'Floor Fan Power'
+      unique_id: floor_fan_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.general_plug_1', 'on'), 120, 0) }}"
+
+    - name: 'Front Floodlight Power'
+      unique_id: front_floodlight_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.front_floodlight', 'on'), 180, 0) }}"
+
+    - name: 'Garage Lights Power'
+      unique_id: garage_lights_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.garage_lights', 'on'), 27, 0) }}"
+
+    - name: 'Guest Bath Fan Power'
+      unique_id: guest_bath_fan_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.guest_bath_fan', 'on'), 40, 0) }}"
+
+    - name: 'Guest Bath Light Power'
+      unique_id: guest_bath_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.guest_bath_light', 'on'), 25, 0) }}"
+
+    - name: 'Guest Bedroom Lamp Power'
+      unique_id: guest_bedroom_lamp_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.guest_bedroom_lamp', 'on'), 12, 0) }}"
+
+    - name: 'Guest Bedroom Lamp 2 Power'
+      unique_id: guest_bedroom_lamp_2_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.guest_bedroom_lamp_2', 'on'), 12, 0) }}"
+
+    - name: 'Hallway Lamp Power'
+      unique_id: hallway_lamp_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.hallway_lamp', 'on'), 8.5, 0) }}"
+
+    - name: 'Laundry Room Light Power'
+      unique_id: laundry_room_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.laundry_room_light', 'on'), 12, 0) }}"
+
+    - name: 'Master Bath Fan Power'
+      unique_id: master_bath_fan_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.master_bath_fan', 'on'), 40, 0) }}"
+
+    - name: 'Master Bath Light Power'
+      unique_id: master_bath_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.master_bath_light', 'on'), 12, 0) }}"
+
+    - name: 'Office Bookcase Light Power'
+      unique_id: office_bookcase_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('input_boolean.alexa_ha_plug', 'on'), 6, 0) }}"
+
+    - name: 'Porch Light Power'
+      unique_id: porch_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.porch_light', 'on'), 100, 0) }}"
+
+    - name: 'Snack Light Power'
+      unique_id: snack_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.snack_light', 'on'), 16, 0) }}"
+
+    - name: 'Stairway Light Power'
+      unique_id: stairway_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.stairway_light', 'on'), 8, 0) }}"
+
+    - name: 'Theater Ceiling Power'
+      unique_id: theater_ceiling_power
+      unit_of_measurement: 'W'
+      state: >
+        {% if is_state('light.theater_ceiling', 'on') %}
+          {% set brightness = states.light.theater_ceiling.attributes.brightness | float(255)  %}
+          {{ 48 * (brightness | float(255) / 255) | round(2) }}
+        {% else %}
+          0
+        {% endif %}
+
+    - name: 'Theater Sconces Power'
+      unique_id: theater_sconces_power
+      unit_of_measurement: 'W'
+      state: >
+        {% if is_state('light.theater_sconces', 'on') %}
+          {% set brightness = states.light.theater_sconces.attributes.brightness | float(255)  %}
+          {{ 32 * (brightness | float(255) / 255) | round(2) }}
+        {% else %}
+          0
+        {% endif %}
+
+    - name: 'Upstairs Bedroom Light Power'
+      unique_id: upstairs_bedroom_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.upstairs_bedroom_light', 'on'), 40, 0) }}"
+
+    - name: 'Upstairs Bedroom Outlet Power'
+      unique_id: upstairs_bedroom_outlet_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.upstairs_bedroom_outlet', 'on'), 7.5, 0) }}"
+
+    - name: 'Upstairs Hallway Lights Power'
+      unique_id: upstairs_hallway_lights_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.upstairs_hallway_lights', 'on'), 75, 0) }}"
+
+    - name: 'Utility Light Power'
+      unique_id: utility_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.utility_light', 'on'), 25, 0) }}"
+
+    #--------------------------------------#
+    #   -- Calculated Power - Devices --   #
+    #--------------------------------------#
+
+    - name: 'Fire TV Power'
+      unique_id: fire_tv_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.fire_tv', 'on'), 4, 0) }}"
+    
+    - name: 'Projector Power'
+      unique_id: projector_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('media_player.epson_projector', 'on'), 264, 0) }}"
+
+    - name: 'Receiver Power'
+      unique_id: receiver_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('media_player.marantz_sr7012', 'on'), 125, 0) }}"
+
+    - name: 'Shield TV Power'
+      unique_id: shield_tv_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('media_player.shield_tv', 'on'), 7, 0) }}"
+
+    #-----------------------------------------------#
+    #   -- First Floor Lights Group Calculated --   #
+    #-----------------------------------------------#
+
+    - name: 'First Floor Lights Calculated Power'
+      unique_id: first_floor_lights_calculated_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.dining_room_hutch_power') | float(0) +
+                  states('sensor.dining_room_lamps_power') | float(0) +
+                  states('sensor.driveway_lights_power') | float(0) +
+                  states('sensor.foyer_hutch_power') | float(0) +
+                  states('sensor.front_floodlight_power') | float(0) +
+                  states('sensor.garage_lights_power') | float(0) +
+                  states('sensor.guest_bath_light_power') | float(0) +
+                  states('sensor.guest_bedroom_lamp_power') | float(0) +
+                  states('sensor.guest_bedroom_lamp_2_power') | float(0) +
+                  states('sensor.hallway_lamp_power') | float(0) +
+                  states('sensor.laundry_room_light_power') | float(0) +
+                  states('sensor.master_bath_light_power') | float(0) +
+                  states('sensor.office_bookcase_light_power') | float(0) +
+                  states('sensor.porch_light_power') | float(0) +
+                  states('sensor.stairway_light_power') | float(0)) | round(2) }}"
+
+    #---------------------------------------------#
+    #   -- First Floor Fans Group Calculated --   #
+    #---------------------------------------------#
+
+    - name: 'First Floor Fans Calculated Power'
+      unique_id: first_floor_fans_calculated_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.floor_fan_power') | float(0) +
+                  states('sensor.guest_bath_fan_power') | float(0) +
+                  states('sensor.master_bath_fan_power') | float(0)) | round(2) }}"
+
+    #------------------------------------------------#
+    #   -- Second Floor Lights Group Calculated --   #
+    #------------------------------------------------#
+
+    - name: 'Second Floor Lights Calculated Power'
+      unique_id: second_floor_lights_calculated_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.attic_light_power') | float(0) +
+                  states('sensor.snack_light_power') | float(0) +
+                  states('sensor.theater_ceiling_power') | float(0) +
+                  states('sensor.theater_sconces_power') | float(0) +
+                  states('sensor.upstairs_bedroom_light_power') | float(0) +
+                  states('sensor.upstairs_bedroom_outlet_power') | float(0) +
+                  states('sensor.upstairs_hallway_lights_power') | float(0) +
+                  states('sensor.utility_light_power') | float(0)) | round(2) }}"
+
+    #--------------------------------------------#
+    #   -- Second Floor AV Group Calculated --   #
+    #--------------------------------------------#
+
+    - name: 'Second Floor AV Calculated Power'
+      unique_id: second_floor_av_calculated_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.projector_power') | float(0) +
+                  states('sensor.receiver_power') | float(0) +
+                  states('sensor.shield_tv_power') | float(0)) | round(2) }}"
+
+    #---------------------------------------------#
+    #   -- First Floor Lights Group Measured --   #
+    #---------------------------------------------#
+
+    - name: 'First Floor Lights Measured Power'
+      unique_id: first_floor_lights_measured_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.family_room_lamp_current_consumption') | float(0) +
+                  states('sensor.master_bedroom_lamp_current_consumption') | float(0) +
+                  states('sensor.office_lamp_current_consumption') | float(0)) | round(2) }}"
+
+    #-------------------------------------------------#
+    #   -- First Floor Appliances Group Measured --   #
+    #-------------------------------------------------#
+
+    - name: 'First Floor Appliances Measured Power'
+      unique_id: first_floor_appliances_measured_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.sonoff_microwave_power') | float(0) +
+                  states('sensor.sonoff_refrigerator_power') | float(0) +
+                  states('sensor.sonoff_treadmill_power') | float(0) +
+                  states('sensor.sonoff_washer_power') | float(0)) | round(2) }}"
+
+    #-----------------------------------#
+    #   -- Total Power Calculation --   #
+    #-----------------------------------#
+
+    - name: 'First Floor Calculated Power'
+      unique_id: first_floor_calculated_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.first_floor_lights_calculated_power') | float(0) +
+                  states('sensor.first_floor_fans_calculated_power') | float(0) +
+                  states('sensor.fire_tv_power') | float(0)) | round(2) }}"
+    
+    - name: 'Second Floor Calculated Power'
+      unique_id: second_floor_calculated_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.second_floor_lights_calculated_power') | float(0) +
+                  states('sensor.second_floor_av_calculated_power') | float(0)) | round(2) }}"
+    
+    - name: 'First Floor Measured Power'
+      unique_id: first_floor_measured_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.first_floor_lights_measured_power') | float(0) +
+                  states('sensor.first_floor_appliances_measured_power') | float(0) +
+                  states('sensor.sonoff_family_room_av_power') | float(0)) | round(2) }}"
+    
+    - name: 'Second Floor Measured Power'
+      unique_id: second_floor_measured_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ 0 }}"
+    
+    - name: 'Total Power'
+      unique_id: total_power
+      unit_of_measurement: 'W'
+      icon: mdi:flash
+      state: "{{ (states('sensor.first_floor_calculated_power') | float(0) +
+                  states('sensor.second_floor_calculated_power') | float(0) +
+                  states('sensor.first_floor_measured_power') | float(0) +
+                  states('sensor.second_floor_measured_power') | float(0)) | round(2) }}"
+
+    #------------------------------------------#
+    #   -- Total Daily Energy Calculation --   #
+    #------------------------------------------#
+
+    - name: 'First Floor Calculated Daily Energy'
+      unique_id: first_floor_calculated_daily_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.dining_room_hutch_daily_energy') | float(0) +
+                  states('sensor.dining_room_lamps_daily_energy') | float(0) +   
+                  states('sensor.driveway_lights_daily_energy') | float(0) +                       
+                  states('sensor.fire_tv_daily_energy') | float(0) +                       
+                  states('sensor.floor_fan_daily_energy') | float(0) +
+                  states('sensor.foyer_hutch_daily_energy') | float(0) +                       
+                  states('sensor.front_floodlight_daily_energy') | float(0) +
+                  states('sensor.garage_lights_daily_energy') | float(0) +
+                  states('sensor.guest_bath_fan_daily_energy') | float(0) +
+                  states('sensor.guest_bath_light_daily_energy') | float(0) +
+                  states('sensor.guest_bedroom_lamp_daily_energy') | float(0) +
+                  states('sensor.guest_bedroom_lamp_2_daily_energy') | float(0) +
+                  states('sensor.hallway_lamp_daily_energy') | float(0) +
+                  states('sensor.laundry_room_light_daily_energy') | float(0) +
+                  states('sensor.master_bath_fan_daily_energy') | float(0) +
+                  states('sensor.master_bath_light_daily_energy') | float(0) +
+                  states('sensor.office_bookcase_light_daily_energy') | float(0) +                       
+                  states('sensor.porch_light_daily_energy') | float(0) +
+                  states('sensor.stairway_light_daily_energy') | float(0)) | round(2) }}"
+    
+    - name: 'Second Floor Calculated Daily Energy'
+      unique_id: second_floor_calculated_daily_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.attic_light_daily_energy') | float(0) +
+                  states('sensor.theater_ceiling_daily_energy') | float(0) + 
+                  states('sensor.theater_sconces_daily_energy') | float(0) + 
+                  states('sensor.upstairs_bedroom_light_daily_energy') | float(0) +
+                  states('sensor.upstairs_bedroom_outlet_daily_energy') | float(0) +
+                  states('sensor.upstairs_hallway_lights_daily_energy') | float(0) +
+                  states('sensor.utility_light_daily_energy') | float(0) +
+                  states('sensor.projector_daily_energy') | float(0) +
+                  states('sensor.receiver_daily_energy') | float(0) +
+                  states('sensor.shield_tv_daily_energy') | float(0) +                  
+                  states('sensor.snack_light_daily_energy') | float(0)) | round(2) }}"
+    
+    - name: 'First Floor Measured Daily Energy'
+      unique_id: first_floor_measured_daily_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.family_room_lamp_daily_energy') | float(0) +
+                  states('sensor.master_bedroom_lamp_daily_energy') | float(0) +
+                  states('sensor.office_lamp_daily_energy') | float(0) +
+                  states('sensor.sonoff_family_room_av_daily_energy') | float(0) +
+                  states('sensor.sonoff_microwave_daily_energy') | float(0) +
+                  states('sensor.sonoff_refrigerator_daily_energy') | float(0) +
+                  states('sensor.sonoff_treadmill_daily_energy') | float(0) +
+                  states('sensor.sonoff_washer_daily_energy') | float(0)) | round(2) }}"
+    
+    - name: 'Second Floor Measured Daily Energy'
+      unique_id: second_floor_measured_daily_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ 0 }}"
+    
+    - name: 'Total Daily Energy'
+      unique_id: total_daily_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.first_floor_calculated_daily_energy') | float(0) +
+                  states('sensor.second_floor_calculated_daily_energy') | float(0) +
+                  states('sensor.first_floor_measured_daily_energy') | float(0) +
+                  states('sensor.second_floor_measured_daily_energy') | float(0)) | round(2) }}"
+
+    #--------------------------------------------#
+    #   -- Total Monthly Energy Calculation --   #
+    #--------------------------------------------#
+
+    - name: 'First Floor Calculated Monthly Energy'
+      unique_id: first_floor_calculated_monthly_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.dining_room_hutch_monthly_energy') | float(0) +
+                  states('sensor.dining_room_lamps_monthly_energy') | float(0) +
+                  states('sensor.driveway_lights_monthly_energy') | float(0) +
+                  states('sensor.fire_tv_monthly_energy') | float(0) +
+                  states('sensor.floor_fan_monthly_energy') | float(0) +
+                  states('sensor.foyer_hutch_monthly_energy') | float(0) +
+                  states('sensor.front_floodlight_monthly_energy') | float(0) +
+                  states('sensor.garage_lights_monthly_energy') | float(0) +
+                  states('sensor.guest_bath_fan_monthly_energy') | float(0) +
+                  states('sensor.guest_bath_light_monthly_energy') | float(0) +
+                  states('sensor.guest_bedroom_lamp_monthly_energy') | float(0) +
+                  states('sensor.guest_bedroom_lamp_2_monthly_energy') | float(0) +
+                  states('sensor.hallway_lamp_monthly_energy') | float(0) +
+                  states('sensor.laundry_room_light_monthly_energy') | float(0) +
+                  states('sensor.master_bath_fan_monthly_energy') | float(0) +
+                  states('sensor.master_bath_light_monthly_energy') | float(0) +
+                  states('sensor.office_bookcase_light_monthly_energy') | float(0) +
+                  states('sensor.porch_light_monthly_energy') | float(0) +
+                  states('sensor.stairway_light_monthly_energy') | float(0)) | round(2) }}"
+    
+    - name: 'Second Floor Calculated Monthly Energy'
+      unique_id: second_floor_calculated_monthly_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.attic_light_monthly_energy') | float(0) +
+                  states('sensor.theater_ceiling_monthly_energy') | float(0) + 
+                  states('sensor.theater_sconces_monthly_energy') | float(0) + 
+                  states('sensor.upstairs_bedroom_light_monthly_energy') | float(0) +
+                  states('sensor.upstairs_bedroom_outlet_monthly_energy') | float(0) +
+                  states('sensor.upstairs_hallway_lights_monthly_energy') | float(0) +
+                  states('sensor.utility_light_monthly_energy') | float(0) +
+                  states('sensor.projector_monthly_energy') | float(0) +
+                  states('sensor.receiver_monthly_energy') | float(0) +
+                  states('sensor.shield_tv_monthly_energy') | float(0) +
+                  states('sensor.snack_light_monthly_energy') | float(0)) | round(2) }}"
+    
+    - name: 'First Floor Measured Monthly Energy'
+      unique_id: first_floor_measured_monthly_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.family_room_lamp_monthly_energy') | float(0) +
+                  states('sensor.master_bedroom_lamp_monthly_energy') | float(0) +
+                  states('sensor.office_lamp_monthly_energy') | float(0) +
+                  states('sensor.sonoff_family_room_av_monthly_energy') | float(0) +
+                  states('sensor.sonoff_microwave_monthly_energy') | float(0) +
+                  states('sensor.sonoff_refrigerator_monthly_energy') | float(0) +
+                  states('sensor.sonoff_treadmill_monthly_energy') | float(0) +
+                  states('sensor.sonoff_washer_monthly_energy') | float(0)) | round(2) }}"
+    
+    - name: 'Second Floor Measured Monthly Energy'
+      unique_id: second_floor_measured_monthly_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ 0 }}"
+    
+    - name: 'Total Monthly Energy'
+      unique_id: total_monthly_energy
+      unit_of_measurement: 'kWh'
+      icon: mdi:flash
+      state: "{{ (states('sensor.first_floor_calculated_monthly_energy') | float(0) +
+                  states('sensor.second_floor_calculated_monthly_energy') | float(0) +
+                  states('sensor.first_floor_measured_monthly_energy') | float(0) +
+                  states('sensor.second_floor_measured_monthly_energy') | float(0)) | round(2) }}"

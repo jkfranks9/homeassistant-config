@@ -1,0 +1,135 @@
+# Control a motion-activated light and fan in a bathroom.
+
+blueprint:
+  name: Motion-activated Bathroom Light
+  description: Control a bathroom light when motion is detected, with delays based on fan usage.
+  domain: automation
+  
+  input:
+    motion_entity:
+      name: Motion Sensor Entity
+      description: The motion sensor that controls the light.
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: motion
+    
+    light_entity:
+      name: Light Entity
+      description: The target light to be controlled.
+      selector:
+        entity:
+          domain: light
+    
+    fan_entity:
+      name: Fan Entity
+      description: The bathroom fan that determines the turn off wait time.
+      selector:
+        entity:
+          domain: switch
+    
+    no_motion_wait_fan_off:
+      name: Fan Off Delay Time
+      description: Time to leave the light on after last motion is detected, when the fan is off.
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+    
+    no_motion_wait_fan_on:
+      name: Fan On Delay Time
+      description: Time to leave the light on after last motion is detected, when the fan is on.
+      default: 300
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+    
+    additional_fan_wait:
+      name: Fan Turn Off Time
+      description: Time to leave the fan on after the light is turned off.
+      default: 300
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+    
+    windowed:
+      name: Window Existence
+      description: Does a window exist? This helps to determine if the light needs to be turned on at all.
+      selector:
+        boolean:
+
+# If motion is detected within a delay, we restart.
+mode: restart
+max_exceeded: silent
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_windowed: !input windowed
+
+trigger:
+  platform: state
+  entity_id: !input motion_entity
+  from: "off"
+  to: "on"
+
+action:
+
+  # Determine if the light needs to be turned on.
+  - choose:
+    
+    # The room is windowless, so always turn on the light.
+    - conditions:
+      - condition: template
+        value_template: "{{ input_windowed == false }}"
+      
+      sequence:
+        # Turn on the light.
+        - service: light.turn_on
+          entity_id: !input light_entity
+    
+    # The room has a window, so use the sun elevation and weather conditions to decide.
+    default:
+      - service: script.change_lighting_per_weather_simple
+        data:
+          light_entity: !input light_entity
+          turn_on: true  
+  
+  # Wait for no motion detected.
+  - wait_for_trigger:
+      platform: state
+      entity_id: !input motion_entity
+      from: "on"
+      to: "off"
+  
+  # Turn off the light (and fan) based on fan usage.
+  - choose:
+    
+    # The fan is on.
+    - conditions:
+      - condition: state
+        entity_id: !input fan_entity
+        state: 'on'
+      
+      sequence:
+        - delay: !input no_motion_wait_fan_on
+        
+        - service: light.turn_off
+          entity_id: !input light_entity
+        
+        - delay: !input additional_fan_wait
+        
+        - service: homeassistant.turn_off
+          entity_id: !input fan_entity
+    
+    # The fan is off.
+    default:
+      - delay: !input no_motion_wait_fan_off
+      
+      - service: light.turn_off
+        entity_id: !input light_entity

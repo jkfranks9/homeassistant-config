@@ -1,0 +1,415 @@
+#===============================#
+#     Change Daytime Lights     #
+#===============================#
+
+# Turn the daytime lights on or off near sunrise or sunset. This is accomplished with a set of scripts,
+# and triggers when the sun elevation is somewhat near the horizon. The goals are:
+#
+# 1) Turn the lights on when the wakeup script is triggered and it's dark enough inside. Note that this 
+#    goal is triggered by the wakeup script, not these automations, but included in this description for
+#    completeness.
+# 2) Turn the lights off when it becomes light enough inside after sunrise.
+# 3) Turn the lights on when it becomes dark enough inside before sunset.
+#
+# NOTE: The elevations used here must match those in change_lighting_per_weather in script/time.yaml,
+#       and in the used blueprints.
+
+# Sunrise ...
+
+# Check at a minimum sun elevation.
+- alias: Check Daytime Lights Sunrise Minimum
+  id: 'check_daytime_lights_sunrise_minimum'
+  use_blueprint:
+    path: lighting/sunrise_light_weather.yaml
+    input:
+      elevation: input_number.min_elevation
+      light_entity: group.daytime_lights
+
+# Check at a medium sun elevation.
+- alias: Check Daytime Lights Sunrise Medium
+  id: 'check_daytime_lights_sunrise_medium'
+  use_blueprint:
+    path: lighting/sunrise_light_weather.yaml
+    input:
+      elevation: input_number.med_elevation
+      light_entity: group.daytime_lights
+
+# Check at a maximum sun elevation.
+- alias: Check Daytime Lights Sunrise Maximum
+  id: 'check_daytime_lights_sunrise_maximum'
+  use_blueprint:
+    path: lighting/sunrise_light_weather.yaml
+    input:
+      elevation: input_number.max_elevation
+      light_entity: group.daytime_lights
+
+# Sunset ...
+
+# Check at a maximum sun elevation.
+- alias: Check Daytime Lights Sunset Maximum
+  id: 'check_daytime_lights_sunset_maximum'
+  use_blueprint:
+    path: lighting/sunset_light_weather.yaml
+    input:
+      elevation: input_number.max_elevation
+      light_entity: >
+        {% if is_state('input_boolean.christmas_mode', 'off') %}
+          group.daytime_lights
+        {% else %}
+          group.daytime_lights_christmas
+        {% endif %}
+
+# Check at a medium sun elevation.
+- alias: Check Daytime Lights Sunset Medium
+  id: 'check_daytime_lights_sunset_medium'
+  use_blueprint:
+    path: lighting/sunset_light_weather.yaml
+    input:
+      elevation: input_number.med_elevation
+      light_entity: >
+        {% if is_state('input_boolean.christmas_mode', 'off') %}
+          group.daytime_lights
+        {% else %}
+          group.daytime_lights_christmas
+        {% endif %}
+
+# Check at a minimum sun elevation.
+- alias: Check Daytime Lights Sunset Minimum
+  id: 'check_daytime_lights_sunset_minimum'
+  use_blueprint:
+    path: lighting/sunset_light_weather.yaml
+    input:
+      elevation: input_number.min_elevation
+      light_entity: >
+        {% if is_state('input_boolean.christmas_mode', 'off') %}
+          group.daytime_lights
+        {% else %}
+          group.daytime_lights_christmas
+        {% endif %}
+
+#======================#
+#     Lux Sensors      #
+#======================#
+
+# Turn on office light based on ambient lux level.
+- alias: Turn On Office Light
+  id: 'turn_on_office_light'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.office_ambient_light
+      below: 120
+      for: '00:02:00'
+    - platform: state
+      entity_id: input_boolean.nighttime
+      from: 'on'
+      to: 'off'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: state
+      entity_id: input_boolean.nighttime
+      state: 'off'
+    - condition: numeric_state
+      entity_id: sensor.office_ambient_light
+      below: 120
+    - condition: state
+      entity_id: input_boolean.extended_away_mode
+      state: 'off'
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    - service: light.turn_on
+      entity_id: light.office_lamp
+
+# Turn off office light based on ambient lux level.
+- alias: Turn Off Office Light
+  id: 'turn_off_office_light'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.office_ambient_light
+      above: 300
+      for: '00:02:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.office_ambient_light
+      above: 300
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    - service: light.turn_off
+      entity_id: light.office_lamp
+
+#========================#
+#     Daytime Lights     #
+#========================#
+
+# Turn on daytime lights when Jon arrives home in darkness or near darkness.
+- alias: Arrive Home Daytime Lights
+  id: 'arrive_home_daytime_lights'
+  trigger:
+    - platform: state
+      entity_id: group.device_tracker_jon
+      from: 'not_home'
+      to: 'home'
+  condition:
+    - condition: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 6.0
+  action:
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('input_boolean.christmas_mode', 'on') }}"
+        sequence:
+          - service: homeassistant.turn_on
+            entity_id: group.daytime_lights_christmas
+          - service: light.turn_on
+            entity_id: light.office_lamp
+      default:
+        - service: homeassistant.turn_on
+          entity_id: group.daytime_lights
+        - service: light.turn_on
+          entity_id: light.office_lamp
+
+#==============================#
+#     Extended Away Lights     #
+#==============================#
+
+# Randomly turn certain lights on/off during extended away mode, between ~sunset and nighttime start, and
+# between nighttime end and ~sunrise (only occurs during winter-ish months).
+
+- alias: Run Extended Away Lights
+  id: run_extended_away_lights
+  trigger:
+    - platform: state
+      entity_id: input_boolean.extended_away_mode
+      to: 'on'
+    - platform: state
+      entity_id: input_boolean.nighttime
+      to: 'off'
+    - platform: state
+      entity_id: sun.sun
+      to: below_horizon
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: state
+      entity_id: input_boolean.extended_away_mode
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.nighttime
+      state: 'off'
+    - condition: state
+      entity_id: sun.sun
+      state: below_horizon
+  action:
+    
+    # The script randomly toggles lights in the away group until the above conditions are
+    # no longer met. We wait here until that happens.
+    - service: script.automate_lights_while_away
+    
+    # The conditions are no longer true, so turn off all of the away lights.
+    - service: homeassistant.turn_off
+      entity_id: group.away_lights
+
+#=========================#
+#     Motion Sensors      #
+#=========================#
+
+- alias: Run Guest Bath Motion Based Light
+  id: 'run_guest_bath_motion_based_light'
+  use_blueprint:
+    path: lighting/motion_light_with_fan.yaml
+    input:
+      motion_entity: binary_sensor.guest_bath_motion_detector_occupancy
+      light_entity: light.guest_bath_light
+      fan_entity: switch.guest_bath_fan
+      no_motion_wait_fan_off: 120
+      no_motion_wait_fan_on:  420
+      additional_fan_wait:    300
+      windowed: false
+
+- alias: Run Laundry Room Motion Based Light
+  id: 'run_laundry_room_motion_based_light'
+  use_blueprint:
+    path: lighting/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.laundry_room_motion_detector_occupancy
+      light_target: 
+        entity_id: light.laundry_room_light
+      no_motion_wait: 180
+
+- alias: Run Master Bath Motion Based Light
+  id: 'run_master_bath_motion_based_light'
+  use_blueprint:
+    path: lighting/motion_light_with_fan.yaml
+    input:
+      motion_entity: binary_sensor.master_bath_motion_detector_occupancy
+      light_entity: light.master_bath_light
+      fan_entity: switch.master_bath_fan
+      no_motion_wait_fan_off: 240
+      no_motion_wait_fan_on:  420
+      additional_fan_wait:    300
+      windowed: true
+
+#======================#
+#     Guest Lights     #
+#======================#
+
+# Turn off guest lights when grandchildren leave home.
+- alias: Turn Off Guest Lights
+  id: 'turn_off_guest_lights'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.grandchild_home
+      to: 'off'
+  action:
+    - service: light.turn_off
+      entity_id: light.guest_bedroom_lamp_2
+
+# Turn on guest lights near sunset when grandchildren arrive or are already home.
+- alias: Turn On Guest Lights Sunset
+  id: 'turn_on_guest_lights_sunset'
+  trigger:
+    - platform: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 4.0
+    - platform: state
+      entity_id: input_boolean.grandchild_home
+      to: 'on'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 4.0
+    - condition: state
+      entity_id: input_boolean.grandchild_home
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.nighttime
+      state: 'off'
+  action:
+    - service: light.turn_on
+      entity_id: light.guest_bedroom_lamp_2
+    - service: light.turn_on
+      entity_id: light.hallway_lamp
+
+# Turn off guest bedroom lights after bedtime when grandchildren are home.
+- alias: Turn Off Guest Bedroom Lights Bedtime
+  id: 'turn_off_guest_bedroom_lights_bedtime'
+  trigger:
+    - platform: time
+      at: '22:30:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '22:30:00'
+    - condition: template
+      value_template: "{{ is_state('device_tracker.pixel_4_xl', 'not_home') and is_state('input_boolean.grandchild_home', 'on') }}"
+  action:
+    - service: light.turn_off
+      entity_id: light.guest_bedroom_lamp
+    - service: light.turn_off
+      entity_id: light.guest_bedroom_lamp_2
+
+#=====================#
+#     Smart Bulbs     #
+#=====================#
+
+# Turn off all smart bulbs occasionally if needed. This is to cover a power outage, where such
+# bulbs (at least Kasa) turn on when power is restored.
+- alias: Reset Family Room Lamp
+  id: reset_family_room_lamp
+  use_blueprint:
+    path: lighting/smart_bulb_reset.yaml
+    input:
+      light_entity: light.family_room_lamp
+      reset_condition: 'Sky Conditions'
+      
+      # Defaults don't seem to work; these are unused.
+      lux_entity: sensor.office_ambient_light
+      lux_value: 300
+
+- alias: Reset Master Bedroom Lamp
+  id: reset_master_bedroom_lamp
+  use_blueprint:
+    path: lighting/smart_bulb_reset.yaml
+    input:
+      light_entity: light.master_bedroom_lamp
+      reset_condition: 'Nighttime'
+      
+      # Defaults don't seem to work; these are unused.
+      lux_entity: sensor.office_ambient_light
+      lux_value: 300
+
+- alias: Reset Office Lamp
+  id: reset_office_lamp
+  use_blueprint:
+    path: lighting/smart_bulb_reset.yaml
+    input:
+      light_entity: light.office_lamp
+      reset_condition: 'Lux Sensor'
+      lux_entity: sensor.office_ambient_light
+      lux_value: 300
+
+#==========================#
+#     Christmas Lights     #
+#==========================#
+
+# Turn on Christmas lights in the morning on certain Christmas-y days.
+- alias: Turn On Christmas Lights
+  id: 'turn_on_christmas_lights'
+  trigger:
+    - platform: time
+      at: '08:00:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '08:00:00'
+    - condition: time
+      before: '22:00:00'
+    - condition: state
+      entity_id: group.device_tracker_jon
+      state: 'home'
+    - condition: template
+      value_template: >
+        {{ now().strftime('%m-%d') == '12-24' or
+           now().strftime('%m-%d') == '12-25' or
+           now().strftime('%m-%d') == '12-26' or
+           now().strftime('%m-%d') == '12-31' or
+           now().strftime('%m-%d') == '01-01' }}
+  action:
+    - service: homeassistant.turn_on
+      entity_id: group.christmas_lights
+
+# Turn off Christmas lights at night on certain Christmas-y days.
+- alias: Turn Off Christmas Lights
+  id: 'turn_off_christmas_lights'
+  trigger:
+    - platform: time
+      at: '22:00:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '22:00:00'
+    - condition: time
+      before: '08:00:00'
+    - condition: template
+      value_template: >
+        {{ now().strftime('%m-%d') == '12-24' or
+           now().strftime('%m-%d') == '12-25' or
+           now().strftime('%m-%d') == '12-26' or
+           now().strftime('%m-%d') == '12-31' or
+           now().strftime('%m-%d') == '01-01' }}
+  action:
+    - service: homeassistant.turn_off
+      entity_id: group.christmas_lights

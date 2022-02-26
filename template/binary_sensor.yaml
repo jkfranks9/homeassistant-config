@@ -1,0 +1,95 @@
+#========================#
+#     Binary Sensors     #
+#========================#
+
+- binary_sensor:
+
+    #-----------------------------#
+    #   -- Amazon Smart Plug --   #
+    #-----------------------------#
+    
+    # See the input boolean of the same name for details on how this works.
+    - name: 'Alexa HA - Office Bookcase'
+      unique_id: alexa_ha_plug
+      device_class: garage_door
+      state: "{{ is_state('input_boolean.alexa_ha_plug', 'on') }}"
+
+    #-----------------------------#
+    #   -- Floorplan Mirrors --   #
+    #-----------------------------#
+
+    # These sensors are used to create mirror entities to items on the floorplan. For example,
+    # there are four wall sconces in the theater, but the floorplan card only allows one element
+    # in the SVG file with a given entity ID. By having sensors that mirror that one entity's
+    # state, we can then place elements in the SVG file using those sensor IDs.    
+    - name: 'Driveway Lights Mirror'
+      unique_id: driveway_lights_mirror
+      device_class: light
+      state: "{{ is_state('switch.driveway_lights', 'on') }}"
+    
+    - name: 'Garage Lights Mirror'
+      unique_id: garage_lights_mirror
+      device_class: light
+      state: "{{ is_state('switch.garage_lights', 'on') }}"
+    
+    - name: 'Mantle Bookcase Mirror'
+      unique_id: mantle_bookcase_mirror
+      device_class: light
+      state: "{{ is_state('switch.mantle_bookcase', 'on') }}"
+    
+    - name: 'Snack Light Mirror'
+      unique_id: snack_light_mirror
+      device_class: light
+      state: "{{ is_state('switch.snack_light', 'on') }}"
+      
+    - name: 'Theater Sconces Mirror'
+      unique_id: theater_sconces_mirror
+      device_class: light
+      state: "{{ is_state('light.theater_sconces', 'on') }}"
+    
+    - name: 'Theater Ceiling Mirror'
+      unique_id: theater_ceiling_mirror
+      device_class: light
+      state: "{{ is_state('light.theater_ceiling', 'on') }}"
+    
+    - name: 'Upstairs Bedroom Light Mirror'
+      unique_id: upstairs_bedroom_light_mirror
+      device_class: light
+      state: "{{ is_state('switch.upstairs_bedroom_light', 'on') }}"
+    
+    - name: 'Upstairs Hallway Lights Mirror'
+      unique_id: upstairs_hallway_lights_mirror
+      device_class: light
+      state: "{{ is_state('switch.upstairs_hallway_lights', 'on') }}"
+
+    #-------------------------#
+    #   -- History Stats --   #
+    #-------------------------#
+    
+    # These sensors are used to support history stats. They are true if the associated device(s) are
+    # drawing power.
+    - name: 'Family Room AV'
+      unique_id: family_room_av
+      state: "{{ states('sensor.sonoff_family_room_av_power') | float(0) > 10 }}"
+    
+    - name: 'Cinema Projector'
+      unique_id: cinema_projector
+      state: "{{ states('sensor.projector_power') | float(0) > 0 }}"
+
+    #----------------------------#
+    #   -- Software Updates --   #
+    #----------------------------#
+
+    # Update sensors for HACS, supervisor and addons, similar to the one for HA itself.
+    - name: 'Updater - HACS'
+      unique_id: updater_hacs
+      state: "{{ states('sensor.hacs') | int(0) > 0 }}"
+    
+    - name: 'Updater - Supervisor'
+      unique_id: updater_supervisor
+      state: "{{ state_attr('sensor.supervisor_updates', 'update_available') }}"
+      availability: "{{ (states('sensor.supervisor_updates') | int(-1)) > -1 }}"
+
+    - name: 'Updater - Addons'
+      unique_id: updater_addons
+      state: "{{ states('sensor.supervisor_updates') | int(0) > 0 }}"

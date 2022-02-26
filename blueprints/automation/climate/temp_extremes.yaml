@@ -1,0 +1,84 @@
+# Set the minimum or maximum temperature for an area monitored with a temperature sensor.
+
+blueprint:
+  name: Set Temperature Extremes
+  description: Set the minimum or maximum temperature for a temperature sensor.
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Sensor Entity
+      description: Temperature sensor.
+      selector:
+        entity:
+          domain: sensor
+    
+    result_entity:
+      name: Result Entity
+      description: Input number in which to place the updated result.
+      selector:
+        entity:
+          domain: input_number
+    
+    type:
+      name: Calculation Type
+      description: Type of calculation to perform.
+      selector:
+        select:
+          options:
+            - Min
+            - Max
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_type: !input type
+  input_result_entity: !input result_entity
+
+# Trigger on any change to the temperature sensor.
+trigger:
+  - platform: state
+    entity_id: !input sensor_entity
+
+# It's possible that the temperature sensor can't be contacted, resulting (I believe) in the entity having a state
+# of 0.0, so ignore such a value and just wait for the next sensor update.
+condition:
+  - condition: template
+    value_template: "{{ trigger.to_state.state | float(0) != 0.0 }}"
+
+action:
+  
+  # Proceed according to the requested calculation type.
+  - choose:
+    
+    # Min calculation.
+    - conditions:
+      - condition: template
+        value_template: "{{ input_type == 'Min' }}"
+      sequence:
+    
+        # Set the (possible) new minimum value.
+        - service: input_number.set_value
+          target:
+            entity_id: !input result_entity
+          data:
+            value: "{{ min(trigger.to_state.state | float(0), states(input_result_entity) | float(0)) }}"
+    
+    # Max calculation.
+    - conditions:
+      - condition: template
+        value_template: "{{ input_type == 'Max' }}"
+      sequence:
+    
+        # Set the (possible) new maximum value.
+        - service: input_number.set_value
+          target:
+            entity_id: !input result_entity
+          data:
+            value: "{{ max(trigger.to_state.state | float(0), states(input_result_entity) | float(0)) }}"
+    
+    # Invalid type, log it.
+    default:
+      - service: system_log.write
+        data:
+          message: "Invalid calculation type {{ input_type }} specified"
+          level: error

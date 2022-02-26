@@ -1,0 +1,53 @@
+#============================#
+#     Exercise Time Card     #
+#============================#
+
+type: custom:stack-in-card
+title: Exercise Time
+cards:
+  - type: entities
+    entities:
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.treadmill_monthly_time
+        name: Treadmill
+        icon: mdi:walk
+        state_header: Monthly
+        entities:
+          - entity: sensor.treadmill_daily_time
+            name: Daily
+          - entity: sensor.treadmill_weekly_time
+            name: Weekly
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.yard_work_monthly_time
+        name: Yard Work
+        icon: mdi:shovel
+        state_header: Monthly
+        entities:
+          - entity: sensor.yard_work_daily_time
+            name: Daily
+          - entity: sensor.yard_work_weekly_time
+            name: Weekly
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.weight_training_monthly_time
+        name: Weight Training
+        icon: mdi:weight-lifter
+        state_header: Monthly
+        entities:
+          - entity: sensor.weight_training_daily_time
+            name: Daily
+          - entity: sensor.weight_training_weekly_time
+            name: Weekly
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.total_monthly_time
+        name: Total
+        icon: mdi:sigma
+        state_header: Monthly
+        entities:
+          - entity: sensor.total_daily_time
+            name: Daily
+          - entity: sensor.total_weekly_time
+            name: Weekly

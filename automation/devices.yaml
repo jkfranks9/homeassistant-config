@@ -1,0 +1,701 @@
+#==================#
+#     Home Off     #
+#==================#
+
+# Ensure the house is shutdown when Jon leaves home and no family members are home.
+- alias: Leave Home
+  id: 'leave_home'
+  trigger:
+    - platform: state
+      entity_id: group.device_tracker_jon
+      from: 'home'
+      to: 'not_home'
+  condition:
+    - condition: state
+      entity_id: group.family_members
+      state: 'not_home'
+  action:
+    - scene: scene.lights_out
+    - service: script.turn_on
+      entity_id: script.lock_pc
+
+#=============#
+#     UPS     #
+#=============#
+
+# Handle a power outage, preserving UPS time for critical resources (HA, NUT server & internet).
+- alias: Handle Power Outage
+  id: 'handle_power_outage'
+  
+  # Trigger if the battery is discharging for a short time. I want to ignore the frequent short power glitches,
+  # but not leave the PC on too long.
+  trigger:
+    - platform: state
+      entity_id: sensor.cyber1_status_data
+      to: 'OB DISCHRG'
+      for: '00:01:00'
+  action:
+    
+    # Send a notification.
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        title: 'Action required:'
+        message: 'Power is out, shutting down PC.'
+        data:
+          channel: Security
+          importance: high
+          persistent: true
+          tag: 'persistent'
+    
+    # The recorder database lives on the PC, so disable it before we shutdown.
+    - service: recorder.disable
+    
+    # Shut down the PC.
+    - service: script.turn_off_pc
+
+# Shut down the host if UPS runtime reaches critical level.
+- alias: Handle UPS Critical
+  id: 'handle_ups_critical'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.cyber1_battery_runtime
+      below: 420
+  action:
+    
+    # Send a notification.
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        title: 'Action required:'
+        message: 'UPS battery is critical, shutting down RPi.'
+        data:
+          channel: Security
+          importance: high
+          persistent: true
+          tag: 'persistent'
+    
+    # Goodbye.
+    - service: hassio.host_shutdown
+
+# Turn the PC back on if power is restored.
+- alias: Handle Power Restoration
+  id: 'handle_power_restoration'
+  trigger:
+    - platform: state
+      entity_id: sensor.cyber1_status_data
+      to: 'OL CHRG'
+      for: '00:02:00'
+  action:
+    
+    # Send a notification.
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        title: 'Action required:'
+        message: 'Power is restored, turning on the PC.'
+        data:
+          channel: Security
+          importance: high
+          persistent: true
+          tag: 'persistent'
+    
+    # Send a magic packet to power on the PC.
+    - service: wake_on_lan.send_magic_packet
+      data:
+        mac: 98-EE-CB-A6-80-EA
+    
+    # Enable the recorder after a short delay.
+    - delay: '00:02:00'
+    - service: recorder.enable
+    
+
+#============================#
+#     Extended Away Mode     #
+#============================#
+
+# Triggered on the start of an extended away period.
+- alias: Enable Extended Away Mode
+  id: enable_extended_away_mode
+  trigger:
+    - platform: time
+      at: input_datetime.extended_away_start
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.extended_away_mode
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
+    - service: input_select.set_options
+      target:
+        entity_id: input_select.upstairs_ecobee_preset_modes
+      data:
+        options: ['Away', 'Home', 'Sleep', 'Vacation']
+    - service: ecobee.create_vacation
+      data_template:
+        entity_id: climate.upstairs
+        # NOTE: name is limited to 12 characters
+        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
+        end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
+        end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
+        heat_temp: 59
+        cool_temp: 83
+    - delay: '00:00:01'
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
+
+# Triggered on the end of an extended away period.
+- alias: Disable Extended Away Mode
+  id: disable_extended_away_mode
+  trigger:
+    - platform: time
+      at: input_datetime.extended_away_end
+  action:
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.extended_away_mode
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
+    - service: ecobee.delete_vacation
+      data_template:
+        entity_id: climate.upstairs
+        # NOTE: name is limited to 12 characters
+        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+    - service: input_select.set_options
+      target:
+        entity_id: input_select.upstairs_ecobee_preset_modes
+      data:
+        options: ['Away', 'Home', 'Sleep']
+    - delay: '00:00:01'
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
+
+#========================#
+#     Family Room AV     #
+#========================#
+
+# Turn on the Family Room AV during the day, depending on the presence of a grandchild.
+- alias: Enable Family Room AV
+  id: 'enable_family_room_av'
+  trigger:
+    - platform: time
+      at: '07:00:00'
+      id: 'morning'
+    - platform: time
+      at: '16:00:00'
+      id: 'afternoon'
+  condition:
+    condition: or
+    conditions:
+      - condition: and
+        conditions:
+          - condition: state
+            entity_id: input_boolean.grandchild_home
+            state: 'on'
+          - condition: trigger
+            id: 'morning'
+      - condition: trigger
+        id: 'afternoon'
+  action:
+    - condition: state
+      entity_id: input_boolean.extended_away_mode
+      state: 'off'
+    - service: script.enable_family_room_av
+
+# Turn off the Family Room AV at night.
+- alias: Disable Family Room AV
+  id: 'disable_family_room_av'
+  trigger:
+    - platform: time
+      at: '23:00:10'
+    - platform: state
+      entity_id: input_boolean.nighttime
+      from: 'off'
+      to: 'on'
+  action:
+    - choose:
+      
+      # If the system is off, just remove power.
+      - conditions:
+        - condition: numeric_state
+          entity_id: sensor.sonoff_family_room_av_power
+          below: 10.0
+        sequence:
+          - service: script.disable_family_room_av
+      
+      # The system is currently on.
+      default:
+        
+        # Turn off the late night control. This can be turned on by a script to allow the AV system to remain on.
+        - service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.family_room_av_late_night_control
+        
+        
+        # Repeat a few times while the system is still on, unless the late night control is activated.
+        - repeat:            
+            while:
+              - condition: numeric_state
+                entity_id: sensor.sonoff_family_room_av_power
+                above: 10.0
+              - condition: state
+                entity_id: input_boolean.family_room_av_late_night_control
+                state: 'off'
+              - condition: template
+                value_template: "{{ repeat.index <= 3 }}"
+            
+            # Ask someone to turn off the system so power can be removed.
+            sequence:
+              - service: notify.alexa_media
+                data:
+                  target:
+                    - media_player.everywhere
+                  data:
+                    type: announce
+                  message: 'Family room AV system in use. Please turn it off so power can be removed.'
+              - delay: '00:01:00'
+        
+        # Remove power, unless the late night control was activated.
+        - condition: state
+          entity_id: input_boolean.family_room_av_late_night_control
+          state: 'off'
+        - service: script.disable_family_room_av
+
+#===================#
+#     Treadmill     #
+#===================#
+
+# Treadmill start
+- alias: Start Treadmill
+  id: 'start_treadmill'
+  
+  # Trigger when the power usage of the treadmill rises above a threshold that indicates typical usage.
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.sonoff_treadmill_power
+      above: 200
+  
+  # If the treadmill is paused during a workout, the power usage drops below the above threshold then rises again.
+  # This re-triggers this automation, so this condition prevents overwriting the start time.
+  condition:
+    - condition: state
+      entity_id: input_boolean.treadmill_triggered
+      state: 'off'
+  
+  action:
+    
+    # We use the utility meter to create different period sensors for the time and calories. Utility meter needs the values to 
+    # change in order to set the sensors. So reset them to 0 before the workout in order to register value changes.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.treadmill_time
+      data:
+        value: 0
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.treadmill_calories
+      data:
+        value: 0
+    
+    # Set the treadmill start time.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.treadmill_start
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Set the flag used in the above condition that prevents re-triggers on pause.
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.treadmill_triggered
+
+# Treadmill stop
+- alias: Stop Treadmill
+  id: 'stop_treadmill'
+  
+  # Trigger when the power usage of the treadmill indicates it's been turned off.
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.sonoff_treadmill_power
+      below: 7
+  
+  # Only continue if the start automation was previously triggered.
+  condition:
+    - condition: state
+      entity_id: input_boolean.treadmill_triggered
+      state: 'on'
+  
+  action:    
+    
+    # Reset the triggered flag.
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.treadmill_triggered
+    
+    # Turn off the treadmill power to conserve energy (a few watts are used for an illuminated power toggle).
+    - service: switch.turn_off
+      target:
+        entity_id: switch.sonoff_treadmill
+    
+    # Calculate the amount of time spent walking. I always walk some multiple of 5 minutes with a 1 minute cooldown, so round
+    # down to the nearest 5 minutes (there could be an extra minute or two during a workout pause). The cooldown period
+    # is accounted for in the next step.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.treadmill_time
+      data:
+        value: >
+          {% set start = as_timestamp(strptime(states('input_datetime.treadmill_start'), '%Y-%m-%d %H:%M:%S')) %}
+          {% set num = (now().timestamp() - start) // 60 %}
+          {% set minutes = (num - (num % 5)) %}
+          {{ minutes }}
+    
+    # Calculate calories burned. This is stolen from shapesense.com ... the formula is (for example 0 degree incline):
+    #   CB = [0.0215 x KPH³ - 0.1765 x KPH² + 0.8710 x KPH + 1.4577] x WKG x T
+    #
+    #     CB = Calorie burn (in calories)
+    #     KPH = Walking speed (in kilometres per hour)
+    #     WKG = Weight (in kilograms)
+    #     T = Time (in hours)
+    #
+    # NOTES:
+    #   - The above formula only works for 0-5 degree incline ... more work needed here if I ever do higher inclines.
+    #   - My cooldown period is always 1 minute at 2.0 MPH (ctime and ckph variables).
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.treadmill_calories
+      data:
+        value: >
+          {% set weight  = states('input_number.user_weight') | int(0) %}
+          {% set speed   = states('input_number.treadmill_speed') | float(0) %}
+          {% set incline = states('input_number.treadmill_incline') | int(0) %}
+          {% set time    = states('input_number.treadmill_time')| int(0) / 60 %}
+          {% set ctime   = 1/60 %}
+          {% set kph     = speed * 1.609344 %}
+          {% set ckph    = 2.0   * 1.609344 %}
+          {% set wkg     = weight * 0.45359237 %}
+          {% if states('input_number.treadmill_incline') | int(0) == 0 %}
+            {% set cooldown = (((ckph**3 * 0.0215) - (ckph**2 * 0.1765) + (ckph * 0.8710) + 1.4577) * wkg * ctime) | int(0) %}
+            {{ cooldown     + (( (kph**3 * 0.0215) -  (kph**2 * 0.1765) +  (kph * 0.8710) + 1.4577) * wkg *  time) | int(0) }}
+          {% elif states('input_number.treadmill_incline') | int(0) == 1 %}
+            {% set cooldown = (((ckph**3 * 0.0171) - (ckph**2 * 0.1062) + (ckph * 0.6080) + 1.8600) * wkg * ctime) | int(0) %}
+            {{ cooldown     + (( (kph**3 * 0.0171) -  (kph**2 * 0.1062) +  (kph * 0.6080) + 1.8600) * wkg *  time) | int(0) }}
+          {% elif states('input_number.treadmill_incline') | int(0) == 2 %}
+            {% set cooldown = (((ckph**3 * 0.0184) - (ckph**2 * 0.1134) + (ckph * 0.6566) + 1.9200) * wkg * ctime) | int(0) %}
+            {{ cooldown     + (( (kph**3 * 0.0184) -  (kph**2 * 0.1134) +  (kph * 0.6566) + 1.9200) * wkg *  time) | int(0) }}
+          {% elif states('input_number.treadmill_incline') | int(0) == 3 %}
+            {% set cooldown = (((ckph**3 * 0.0196) - (ckph**2 * 0.1205) + (ckph * 0.7053) + 1.9800) * wkg * ctime) | int(0) %}
+            {{ cooldown     + (( (kph**3 * 0.0196) -  (kph**2 * 0.1205) +  (kph * 0.7053) + 1.9800) * wkg *  time) | int(0) }}
+          {% elif states('input_number.treadmill_incline') | int(0) == 4 %}
+            {% set cooldown = (((ckph**3 * 0.0208) - (ckph**2 * 0.1277) + (ckph * 0.7539) + 2.0400) * wkg * ctime) | int(0) %}
+            {{ cooldown     + (( (kph**3 * 0.0208) -  (kph**2 * 0.1277) +  (kph * 0.7539) + 2.0400) * wkg *  time) | int(0) }}
+          {% elif states('input_number.treadmill_incline') | int(0) == 5 %}
+            {% set cooldown = (((ckph**3 * 0.0221) - (ckph**2 * 0.1349) + (ckph * 0.8025) + 2.1000) * wkg * ctime) | int(0) %}
+            {{ cooldown     + (( (kph**3 * 0.0221) -  (kph**2 * 0.1349) +  (kph * 0.8025) + 2.1000) * wkg *  time) | int(0) }}
+          {% endif %}
+
+#======================#
+#     Garage Doors     #
+#======================#
+
+# Open garage door when family member(s) arrive home, and I'm home.
+- alias: Open Garage Door For Family
+  id: 'open_garage_door_for_family'
+  trigger:
+    - platform: state
+      entity_id: group.family_members
+      from: 'not_home'
+      to: 'home'
+    #- platform: state
+    #  entity_id: sensor.blue_charm_beacon
+    #  from: 'not_home'
+    #  to: 'garage'
+    #- platform: state
+    #  entity_id: sensor.blue_charm_beacon
+    #  from: 'not_home'
+    #  to: 'house'
+  condition:
+    - condition: state
+      entity_id: group.device_tracker_jon
+      state: 'home'
+    - condition: template
+      value_template: "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.shelly1_garage_north
+
+#====================#
+#     Appliances     #
+#====================#
+
+# Check if the refrigerator is somehow off.
+- alias: Check Refrigerator Off
+  id: check_refrigerator_off
+  use_blueprint:
+    path: devices/monitor_device.yaml
+    input:
+      device_entity: switch.sonoff_refrigerator
+      notification_entity: notify.mobile_app_jon_galaxy
+      component_name: sonoff
+      device_name: Refrigerator
+
+# Check if the microwave is somehow off.
+- alias: Check Microwave Off
+  id: check_microwave_off
+  use_blueprint:
+    path: devices/monitor_device.yaml
+    input:
+      device_entity: switch.sonoff_microwave
+      notification_entity: notify.mobile_app_jon_galaxy
+      component_name: sonoff
+      device_name: Microwave
+
+#======================#
+#     Robot Vacuum     #
+#======================#
+
+# Launch the vacuum.
+- alias: Start Vacuum
+  id: 'start_vacuum'
+  trigger:
+    - platform: time
+      at: '03:19:00'
+      #at: '08:00:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '03:19:00'
+      #after: '08:00:00'
+    - condition: time
+      before: '04:19:00'
+      #before: '09:00:00'
+    - condition: time
+      weekday:
+        - mon
+        #- sun
+    - condition: state
+      entity_id: timer.vac
+      state: 'idle'
+  action:
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.vacuum_kicked_off
+    - service: vacuum.turn_on
+      entity_id: vacuum.ecovacs_deebot
+    - service: timer.start
+      data:
+        entity_id: timer.vac
+        duration: '01:00:00'
+
+# Land the vacuum.
+- alias: Stop Vacuum
+  id: 'stop_vacuum'
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.vac
+    - platform: numeric_state
+      entity_id: sensor.ecovacs_battery
+      below: 20
+  condition:
+    - condition: time
+      weekday:
+        - mon
+  action:
+    - service: vacuum.turn_off
+      entity_id: vacuum.ecovacs_deebot
+
+# Detect the vacuum running - we use the battery dropping below a threshold as the trigger.
+- alias: Detect Vacuum Running
+  id: 'detect_vacuum_running'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ecovacs_battery
+      below: 90
+  condition:
+    - condition: time
+      weekday:
+        - mon
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.vacuum_kicked_off
+
+#================#
+#     Washer     #
+#================#
+
+# Washer operation control. The normal cycle as reflected in the washer power state sensor proceeds as follows:
+#
+# - stop
+# - fill    <-- filling
+# - raise   <-- start agitating
+# - drop    <-- stop agitating
+# - pause   <-- short pause
+# - fill    <-- filling
+#   raise   <-- optional fabric softener injection
+#   drop    <-- optional fabric softener injection
+#   fill    <-- optional fabric softener injection
+# - raise   <-- start agitating
+# - drop    <-- stop agitating
+# - pause   <-- short pause
+# - stop
+#
+# This should result in the following input select transitions:
+#
+# - Stop
+# - Wash Fill
+# - Wash
+# - Wash Drain
+# - Rinse Fill
+# - Rinse
+# - Rinse Drain
+# - Stop
+- alias: Washer Operation
+  id: 'washer_operation'
+  trigger:
+    - platform: state 
+      entity_id: sensor.washer_power_state
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.washer_state
+        option: >
+          {# --Set variables-- #}
+          {% set s = states('input_select.washer_state') %}
+          {% set fr = trigger.from_state.state %}
+          {% set to = trigger.to_state.state %}
+          
+          {# --Transition to new state based on current state and washer power state sensor change-- #}
+          {% if   fr in ['stop', 'unknown'] and to == 'fill' %}                                    Wash Fill
+          {% elif fr == 'fill'              and to == 'raise'   and s == 'Wash Fill' %}            Wash
+          {% elif fr == 'raise'             and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
+          {% elif fr == 'pause'             and to == 'fill' %}                                    Rinse Fill
+          {% elif fr == 'fill'              and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
+          {% elif fr == 'raise'             and to == 'drop'    and s == 'Rinse' %}                Rinse Drain     
+          
+          {# --Some washer power state sensor changes just remain in the current state-- #}
+          {% elif fr == 'drop'  and to in ['fill', 'raise', 'pause'] %} {{ s }}
+          {% elif fr == 'fill'  and to in ['pause', 'drop', 'raise'] %} {{ s }}
+          {% elif fr == 'raise' and to == 'drop' %}                     {{ s }}
+          
+          {# --Catch-all, default to Stop-- #}
+          {% else %} Stop
+          {% endif %}
+
+#===============#
+#     Dryer     #
+#===============#
+
+- alias: Turn On Dryer Running
+  id: turn_on_dryer_running
+  trigger:
+    - platform: template
+      value_template: "{{ states('sensor.dryer_temperature') | int(0) > (states('sensor.office_temperature') | int(0) + 10) }}"
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.dryer_running
+
+- alias: Turn Off Dryer Running
+  id: turn_off_dryer_running
+  trigger:
+    - platform: template
+      value_template: "{{ states('sensor.dryer_humidity_falling') and states('sensor.dryer_temperature_falling') }}"
+  action:
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.dryer_running
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+# Send MQTT message to change log level in response to UI change.
+- alias: Zigbee2MQTT Set Log Level
+  id: 'zigbee2mqtt_set_log_level'
+  trigger:
+    platform: state
+    entity_id: input_select.zigbee2mqtt_log_level
+  action:
+    - service: mqtt.publish
+      data:
+        payload_template: "{{ states('input_select.zigbee2mqtt_log_level') }}"
+        topic: zigbee2mqtt/bridge/request/config/log_level
+
+# Start timer when enable join is turned on in the UI.
+- alias: Zigbee2MQTT Enable Join
+  id: 'zigbee2mqtt_enable_join'
+  trigger:
+    platform: state
+    entity_id: switch.zigbee2mqtt_permit_join
+    to: 'on'
+  action:
+    - service: timer.start
+      entity_id: timer.z2m
+      data_template:
+        duration: "{{ '00:0%i:00' % (states('input_number.zigbee2mqtt_join_minutes') | int(0) ) }}"
+
+# Stop timer and turn off enable join when the timer is finished.
+- alias: Zigbee2MQTT Disable Join
+  id: 'zigbee2mqtt_disable_join'
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.z2m
+    - platform: state
+      entity_id: switch.zigbee2mqtt_permit_join
+      to: 'off'
+  action:
+    - service: timer.cancel
+      data:
+        entity_id: timer.z2m
+    - service: switch.turn_off
+      entity_id: switch.zigbee2mqtt_permit_join
+
+#=======================#
+#     General Plugs     #
+#=======================#
+
+# Control the treadmill fan based on temperature.
+- alias: Turn On Treadmill Fan
+  id: 'turn_on_treadmill_fan'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.treadmill_triggered
+      to: 'on'
+  action:
+    - choose:
+      - conditions:
+        - condition: numeric_state
+          entity_id: sensor.office_temperature
+          below: 70.0
+        sequence:
+          - delay: '00:10:00'
+          - service: switch.turn_on
+            entity_id: switch.general_plug_1
+      
+      - conditions:
+        - condition: numeric_state
+          entity_id: sensor.office_temperature
+          below: 75.0
+        sequence:
+          - delay: '00:05:00'
+          - service: switch.turn_on
+            entity_id: switch.general_plug_1
+      
+      default:
+        - service: switch.turn_on
+          entity_id: switch.general_plug_1
+
+- alias: Turn Off Treadmill Fan
+  id: 'turn_off_treadmill_fan'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.treadmill_triggered
+      to: 'off'
+  action:
+    - delay: '00:02:00'
+    - service: switch.turn_off
+      entity_id: switch.general_plug_1

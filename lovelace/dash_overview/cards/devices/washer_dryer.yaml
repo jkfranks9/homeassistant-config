@@ -1,0 +1,29 @@
+#=============================#
+#     Washer / Dryer Card     #
+#=============================#
+
+type: entities
+title: Washer / Dryer
+show_header_toggle: false
+entities:
+  
+  - type: custom:multiple-entity-row
+    entity: input_boolean.dryer_running
+    name: Laundry State
+    state_header: Dryer
+    entities:
+      - entity: input_select.washer_state
+        name: Washer
+  
+  - type: conditional
+    conditions:
+      - entity: input_boolean.dryer_running
+        state: 'on'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Dryer State
+      state_header: Humidity
+      entities:
+        - entity: sensor.dryer_temperature
+          name: Temperature

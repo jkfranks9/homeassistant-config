@@ -1,0 +1,103 @@
+#===========================#
+#     Weather Condition     #
+#===========================#
+
+# Distill the OpenWeather code into an approximation of the available light level.
+#
+# Openweather Codes:
+#   2xx - Thunderstorm
+#   3xx - Drizzle
+#   5xx - Rain
+#   6xx - Snow
+#   7xx - Atmosphere
+#   800 - Clear
+#   801 - 11% to 25% clouds
+#   802 - 26% to 50% clouds
+#   803 - 51% to 84% clouds
+#   804 - 85% to 100% clouds
+evaluate_weather_condition:
+  alias: Evaluate Weather Condition
+  
+  # Allow multiple independent runs.
+  mode: parallel
+  
+  sequence:
+    - choose:
+      
+      # Clear or light clouds
+      - conditions:
+        - condition: template
+          value_template: >
+            {{  states('sensor.openweathermap_weather_code') | int(0) == 800 or
+                states('sensor.openweathermap_weather_code') | int(0) == 801 }}
+        sequence:
+          - service: input_select.select_option
+            entity_id: input_select.weather_condition
+            data:
+              option: 'clear'
+      
+      # Drizzle, atmospheric haze or moderate clouds
+      - conditions:
+        - condition: template
+          value_template: >
+            {{ (states('sensor.openweathermap_weather_code') | int(0) >= 300 and
+                states('sensor.openweathermap_weather_code') | int(0) <  400) or
+               (states('sensor.openweathermap_weather_code') | int(0) >= 700 and
+                states('sensor.openweathermap_weather_code') | int(0) <  800) or
+                states('sensor.openweathermap_weather_code') | int(0) == 802 }}
+        sequence:
+          - service: input_select.select_option
+            entity_id: input_select.weather_condition
+            data:
+              option: 'hazy'
+      
+      # Thunderstorm, rain, snow or heavy clouds
+      - conditions:
+        - condition: template
+          value_template: >
+            {{ (states('sensor.openweathermap_weather_code') | int(0) >= 200 and
+                states('sensor.openweathermap_weather_code') | int(0) <  300) or
+               (states('sensor.openweathermap_weather_code') | int(0) >= 500 and
+                states('sensor.openweathermap_weather_code') | int(0) <  700) or
+                states('sensor.openweathermap_weather_code') | int(0) == 803  or
+                states('sensor.openweathermap_weather_code') | int(0) == 804 }}
+        sequence:
+          - service: input_select.select_option
+            entity_id: input_select.weather_condition
+            data:
+              option: 'gloomy'
+      
+      # This should never happen, log a warning but choose clear.
+      default:
+        - service: system_log.write
+          data:
+            message: Unexpected weather code {{ sensor.openweathermap_weather_code }}
+            level: warning
+        - service: input_select.select_option
+          entity_id: input_select.weather_condition
+          data:
+            option: 'clear'
+
+#=====================================#
+#     Ecobee Thermostat Home Mode     #
+#=====================================#
+
+# Turn on home mode upstairs.
+turn_on_upstairs_home_mode:
+  alias: Turn On Upstairs Home Mode
+  sequence:
+    - service: climate.set_preset_mode
+      target:
+        entity_id: climate.upstairs
+      data:
+        preset_mode: 'Home'
+
+# Turn on away mode upstairs.
+turn_on_upstairs_away_mode:
+  alias: Turn On Upstairs Away Mode
+  sequence:
+    - service: climate.set_preset_mode
+      target:
+        entity_id: climate.upstairs
+      data:
+        preset_mode: 'Away'

@@ -1,0 +1,144 @@
+#===============================================#
+#     Ecobee Thermostat Preset Mode Control     #
+#===============================================#
+
+# Ecobee climate/preset modes:
+#
+#   - climate_mode: This is the mode as determined by the schedule for the thermostat (first character always uppercase).
+#                   For example
+#                     - 'Sleep' 11:00 PM -  7:30 AM
+#                     - 'Away'   7:30 AM -  5:00 PM
+#                     - 'Home'   5:00 PM - 11:00 PM
+#   - preset_mode:  This is normally the same value as climate_mode. But in Smart Home and Smart Away conditions,
+#                   it changes to 'home' or 'away' (first character lowercase). Confusingly, it also can be 'Vacation' for
+#                   a scheduled vacation, even though that value cannot be assigned as a climate or preset mode.
+
+#===== Change the thermostat mode in response to the front end mode changing =====#
+
+# Change the Upstairs Ecobee thermostat preset mode.
+- alias: Change Upstairs Ecobee Preset Mode
+  id: change_upstairs_ecobee_preset_mode
+  trigger:
+    - platform: state
+      entity_id: input_select.upstairs_ecobee_preset_modes
+  condition:
+    - condition: state
+      entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
+      state: 'off'
+    - condition: template
+      value_template: >
+        {{ states('input_select.upstairs_ecobee_preset_modes') != 'Vacation' }}
+  action:
+    - service: system_log.write
+      data:
+        message: "Changing upstairs ecobee preset mode to {{ trigger.to_state.state }}"
+        level: debug
+    - service: climate.set_preset_mode
+      target:
+        entity_id: climate.upstairs
+      data_template:
+        preset_mode: "{{ ( trigger.to_state.state ) }}"
+
+#===== Change the front end mode in response to the thermostat mode changing =====#
+
+# Change the Upstairs Ecobee thermostat front end display.
+# This runs in response to the thermostat changing its mode. However, it is also triggered when the 
+# front end mode changes, so we use a condition to avoid unnecessarily changing the front end display
+# to the same value it already is. 
+- alias: Change Upstairs Ecobee Preset Display
+  id: change_upstairs_ecobee_preset_display
+  trigger:
+    - platform: state
+      entity_id: climate.upstairs
+  condition:
+    - condition: template
+      value_template: >
+        {{ trigger.from_state and
+           trigger.to_state.attributes.preset_mode | title !=
+           trigger.from_state.attributes.preset_mode | title }}
+    - condition: template
+      value_template: >
+        {{ trigger.to_state.attributes.preset_mode | title !=
+           states('input_select.upstairs_ecobee_preset_modes') and
+           trigger.to_state.attributes.preset_mode | title != 'Temp' }}
+  action:
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
+    - service: system_log.write
+      data:
+        message: "Changing upstairs ecobee preset mode display to {{ trigger.to_state.attributes.preset_mode | title }}"
+        level: debug
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.upstairs_ecobee_preset_modes
+      data_template: 
+        option: "{{ trigger.to_state.attributes.preset_mode | title }}"
+    - delay: '00:00:01'
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
+
+#===== Transition from Home to Sleep mode if the cinema is not in use =====#
+
+# Transition to Sleep mode.
+- alias: Transition To Sleep Mode
+  id: transition_to_sleep_mode
+  trigger:
+    - platform: time
+      at: '20:00:00'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.cinema_projector
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.extended_away_mode
+      state: 'off'
+  action:
+    - service: climate.set_preset_mode
+      target:
+        entity_id: climate.upstairs
+      data:
+        preset_mode: 'Sleep'
+
+#============================================#
+#     Temperature High / Low Water Marks     #
+#============================================#
+
+# Attic temperatures.
+- alias: Set Minimum Attic Temperature
+  id: set_minimum_attic_temperature
+  use_blueprint:
+    path: climate/temp_extremes.yaml
+    input:
+      sensor_entity: sensor.attic_temp_min
+      result_entity: input_number.min_attic_temp
+      type: Min
+
+- alias: Set Maximum Attic Temperature
+  id: set_maximum_attic_temperature
+  use_blueprint:
+    path: climate/temp_extremes.yaml
+    input:
+      sensor_entity: sensor.attic_temp_max
+      result_entity: input_number.max_attic_temp
+      type: Max
+
+# Outdoor temperatures.
+- alias: Set Minimum Outdoor Temperature
+  id: set_minimum_outdoor_temperature
+  use_blueprint:
+    path: climate/temp_extremes.yaml
+    input:
+      sensor_entity: sensor.porch_temp_min
+      result_entity: input_number.min_outdoor_temp
+      type: Min
+
+- alias: Set Maximum Outdoor Temperature
+  id: set_maximum_outdoor_temperature
+  use_blueprint:
+    path: climate/temp_extremes.yaml
+    input:
+      sensor_entity: sensor.porch_temp_max
+      result_entity: input_number.max_outdoor_temp
+      type: Max

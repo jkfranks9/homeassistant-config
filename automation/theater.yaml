@@ -1,0 +1,249 @@
+#=======================#
+#     Cinema Resume     #
+#=======================#
+
+# Make the theater dark when the Shield TV resumes.    
+- alias: Resume Cinema
+  id: resume_cinema
+  trigger:
+    - platform: state
+      entity_id: media_player.shield_tv
+      from: 'paused'
+      to: 'playing'
+      for: 00:00:02
+    - platform: state
+      entity_id: media_player.shield_tv
+      from: 'standby'
+      to: 'playing'
+      for: 00:00:02
+  action:
+    - service: script.turn_on
+      entity_id: script.set_theater_dark
+
+#======================#
+#     Cinema Close     #
+#======================#
+
+# Close the cinema when the Harmony is powered off.   
+- alias: Close Cinema
+  id: close_cinema
+  trigger:
+    - platform: state
+      entity_id: remote.harmony_hub
+      attribute: current_activity
+      to: 'PowerOff'
+  action:
+    - service: script.close_cinema
+
+#==================================#
+#     Automatic Volume Control     #
+#==================================#
+
+# Initialize the theater volume for Shield TV apps and other input devices.
+#
+# NOTE: The volume levels in the map below must be coordinated with the *_volume blueprints.
+#
+# Mapping of db levels to percentages:
+#
+# -16 db = 64%
+# -17 db = 63%
+# -18 db = 62%
+# -19 db = 61%
+# -20 db = 60%
+# -21 db = 59%
+# -22 db = 58%
+# -23 db = 57%
+# -24 db = 56%
+# -25 db = 55%
+# -26 db = 54%
+# -27 db = 53%
+# -28 db = 52%
+# -29 db = 51%
+# -30 db = 50%
+# -31 db = 49%
+# -32 db = 48%
+
+# NOTES:
+#   1) The Shield TV app names used here must match those defined in media_player.yaml for the androidtv platform.
+#   2) The Harmony activity names used here must match those defined in harmony_nnn.conf.
+
+#   -- Shield TV Apps --   #
+
+# Amazon Prime
+- alias: Initialize Amazon Prime Volume
+  id: initialize_amazon_prime_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Amazon Prime
+      volume: 0.58
+
+# Disney Plus
+- alias: Initialize Disney Plus Volume
+  id: initialize_disney_plus_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Disney+
+      volume: 0.64
+
+# ESPN
+- alias: Initialize ESPN Volume
+  id: initialize_espn_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: ESPN
+      volume: 0.58
+
+# HBO Max
+- alias: Initialize HBO Max Volume
+  id: initialize_hbo_max_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: HBO Max
+      volume: 0.62
+
+# Kodi
+- alias: Initialize Kodi Volume
+  id: initialize_kodi_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Kodi
+      volume: 0.63
+
+# Netflix
+- alias: Initialize Netflix Volume
+  id: initialize_netflix_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Netflix
+      volume: 0.62
+
+# Pandora
+- alias: Initialize Pandora Volume
+  id: initialize_pandora_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Pandora
+      volume: 0.54
+
+# Paramount Plus
+- alias: Initialize Paramount Plus Volume
+  id: initialize_paramount_plus_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Paramount+
+      volume: 0.62
+
+# Peacock
+- alias: Initialize Peacock Volume
+  id: initialize_peacock_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Peacock
+      volume: 0.62
+
+# Youtube TV
+- alias: Initialize Youtube TV Volume
+  id: initialize_youtube_tv_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Youtube TV
+      volume: 0.61
+
+#   -- Harmony Activities --   #
+
+# Blu-ray Player
+- alias: Initialize Bluray Volume
+  id: initialize_bluray_volume
+  use_blueprint:
+    path: theater/harmony_device_volume.yaml
+    input:
+      device_name: BD Player
+      volume: 0.63
+
+# Laserdisc Player
+- alias: Initialize Laserdisc Volume
+  id: initialize_laserdisc_volume
+  use_blueprint:
+    path: theater/harmony_device_volume.yaml
+    input:
+      device_name: LD Player
+      volume: 0.63
+
+#============================#
+#     Kodi Movie Control     #
+#============================#
+
+# Save the feature movie name when a new movie is selected in the front end.
+# This is needed to restore the selected value in the corresponding list of movies on HA restart, because on restart
+# that gets restored to the single yaml value ('Select') instead of the list of movies that was dynamically set.
+- alias: Save Feature Movie Name
+  id: save_feature_movie_name
+  trigger:
+    - platform: state
+      entity_id: input_select.kodi_movies
+  condition:
+    - condition: state
+      entity_id: input_boolean.kodi_movie_list_restoration
+      state: 'off'
+    - condition: template
+      value_template: "{{ ( trigger.to_state.state ) != ( 'Select' ) }}"
+  action:
+    - service: input_text.set_value
+      data_template:
+        entity_id: input_text.current_feature
+        value: "{{ ( trigger.to_state.state ) }}"
+
+#=======================#
+#     Miscellaneous     #
+#=======================#
+
+#  Turn on dim lighting for Pandora since it's (mostly) audio only.
+- alias: Turn On Pandora Dim Lighting
+  id: turn_on_pandora_dim_lighting
+  trigger: 
+    - platform: template
+      value_template: "{{ is_state_attr('media_player.shield_tv', 'app_name', 'Pandora') }}"
+  action:
+    - service: script.turn_on
+      entity_id: script.set_theater_dim
+
+#============================================#
+#     Adguard Control For Paramount Plus     #
+#============================================#
+
+# Paramount Plus cannot function if Adguard protection is turned on.
+- alias: Toggle Adguard For Paramount
+  id: toggle_adguard_for_paramount
+  
+  # Trigger on the Shield application name changing.
+  trigger:
+    - platform: state
+      entity_id: media_player.shield_tv
+      attribute: app_name
+  
+  action:
+    
+    # Take action based on the application name.
+    - choose:
+      
+      # Turn off Adguard if the application is Paramount.
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state_attr('media_player.shield_tv', 'app_name', 'Paramount+') }}"
+        sequence:
+          - service: script.turn_off_adguard
+      
+      # Turn on Adguard for all other applications. Note that it's also turned on when the cinema
+      # is closed, in case Paramount was the last application used.
+      default:
+        - service: script.turn_on_adguard       

@@ -1,0 +1,24 @@
+#=========================#
+#     Interior Lights     #
+#=========================#
+
+# These groups are somewhat counter-intuitive. The first group contains lights when
+# Christmas mode is off, while the second group is for Christmas mode on (in which case
+# the Christmas lights are in their own separate group).
+Interior Lights:
+  entities:
+    - group.interior_lights_christmas
+    - group.christmas_lights
+
+Interior Lights Christmas:
+  entities:
+    - input_boolean.alexa_ha_plug
+    
+    - light.dining_room_lamps
+    - light.guest_bath_light
+    - light.laundry_room_light
+    - light.master_bath_light
+    - light.office_lamp
+    - light.stairway_light
+
+    - switch.sonoff_s31_zb

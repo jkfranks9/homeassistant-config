@@ -1,0 +1,27 @@
+#=====================================#
+#     Environmental Areas Cards 2     #
+#=====================================#
+
+type: custom:stack-in-card
+mode: horizontal
+cards:
+      
+  # Porch
+  - type: custom:decluttering-card
+    template: temperature_entity_4
+    variables:
+      - entity_0: sensor.porch_temperature
+      - name_0:  'Porch'
+      - entity_1: sensor.porch_temp_min
+      - entity_2: sensor.porch_temp_max
+      - entity_3: sensor.porch_humidity
+  
+  # Attic
+  - type: custom:decluttering-card
+    template: temperature_entity_4
+    variables:
+      - entity_0: sensor.attic_temperature
+      - name_0:  'Attic'
+      - entity_1: sensor.attic_temp_min
+      - entity_2: sensor.attic_temp_max
+      - entity_3: sensor.attic_humidity

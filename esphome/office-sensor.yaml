@@ -1,0 +1,27 @@
+# Device specific information
+substitutions:
+  device_name:        office-sensor
+  friendly_name:      Office
+  prefix:             office
+  loglevel:           DEBUG
+  update_interval:    600s
+  window_interval:    60s
+  window_size:        "10"
+  calibrate_measured: "71.0"
+  calibrate_truth:    "65.0"
+
+# Pull in common configuration
+packages:
+  nodemcu_base:   !include common/nodemcu_base.yaml
+  wifi:           !include common/wifi.yaml
+  bme280_sensor:  !include common/bme280_sensor.yaml
+  tsl2591_sensor: !include common/tsl2591_sensor.yaml
+
+# Enable Home Assistant API
+api:
+
+# Enable I2C, needed for the BME280 and TSL2591 sensors
+i2c:
+  sda: D2
+  scl: D1
+  scan: True

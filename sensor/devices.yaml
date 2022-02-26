@@ -1,0 +1,75 @@
+#============================#
+#     MQTT Room Presence     #
+#============================#
+
+# Blue Charm beacon state sensor, updated via ESPresence scanners.
+- platform: mqtt_room
+  device_id: 'iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949'
+  name: 'Blue Charm Beacon'
+  state_topic: 'espresense/devices/iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949'
+  timeout: 60
+  away_timeout: 120
+
+# Unfortunately, the MQTT topic for beacon devices includes the name of the scanner closest to the beacon,
+# so we have to have a sensor for each scanner state topic ...
+
+# ... garage scanner.
+- platform: mqtt
+  name: 'Blue Charm Battery Level Garage'
+  state_topic: 'espresense/devices/iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949/garage'
+  unit_of_measurement: '%'
+  value_template: >
+    {% set pct = ((value_json.mV / 1000) / 3.00 * 100) | float(0) | round(0) %}
+    {% if pct > 100 %}
+      {% set pct = 100 %}
+    {% endif %}    
+    {{ pct }}
+
+# ... house scanner.
+- platform: mqtt
+  name: 'Blue Charm Battery Level House'
+  state_topic: 'espresense/devices/iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949/house'
+  unit_of_measurement: '%'
+  value_template: >
+    {% set pct = ((value_json.mV / 1000) / 3.00 * 100) | float(0) | round(0) %}
+    {% if pct > 100 %}
+      {% set pct = 100 %}
+    {% endif %}    
+    {{ pct }}
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+- platform: mqtt
+  name: Zigbee2MQTT Bridge state
+  state_topic: "zigbee2mqtt/bridge/state"
+  icon: mdi:router-wireless
+
+- platform: mqtt
+  name: Number Of Devices
+  state_topic: "zigbee2mqtt/bridge/devices"
+  value_template: "{{ value_json | length() - 1 }}"
+  icon: mdi:counter
+
+- platform: mqtt
+  name: Network Channel
+  state_topic: "zigbee2mqtt/bridge/info"
+  value_template: "{{ value_json.network.channel }}"
+  icon: mdi:access-point
+
+- platform: mqtt
+  name: Network PAN ID
+  state_topic: "zigbee2mqtt/bridge/info"
+  value_template: "{{ value_json.network.pan_id }}"
+  icon: mdi:identifier
+
+- platform: mqtt
+  name: Zigbee2mqtt Networkmap
+  # if you change base_topic of Zigbee2mqtt, change state_topic accordingly
+  state_topic: zigbee2mqtt/bridge/response/networkmap
+  value_template: >-
+    {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+  # again, if you change base_topic of Zigbee2mqtt, change json_attributes_topic accordingly
+  json_attributes_topic: zigbee2mqtt/bridge/response/networkmap
+  json_attributes_template: "{{ value_json.data.value | tojson }}"

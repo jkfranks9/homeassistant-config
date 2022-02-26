@@ -1,0 +1,10 @@
+# Core configuration for a NodeMCU board
+esphome:
+  name: $device_name
+  platform: ESP8266
+  board: nodemcuv2
+
+# Enable logging
+logger:
+  level: $loglevel
+  esp8266_store_log_strings_in_flash: false

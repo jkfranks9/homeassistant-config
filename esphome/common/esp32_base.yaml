@@ -1,0 +1,9 @@
+# Core configuration for an ESP32 board
+esphome:
+  name: $device_name
+  platform: ESP32
+  board: nodemcu-32s
+
+# Enable logging
+logger:
+  level: $loglevel

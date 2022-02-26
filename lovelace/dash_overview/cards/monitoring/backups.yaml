@@ -1,0 +1,33 @@
+#================================#
+#     Backup Statistics Card     #
+#================================#
+
+type: entities
+title: Backups
+show_header_toggle: false
+entities:
+  - type: attribute
+    entity: sensor.backup_state
+    attribute: last_backup
+    name: Last Backup
+    icon: mdi:calendar
+  - type: attribute
+    entity: sensor.backup_state
+    attribute: backups_in_google_drive
+    name: Drive Backups
+    icon: mdi:counter
+  - type: attribute
+    entity: sensor.backup_state
+    attribute: size_in_google_drive
+    name: Drive Size
+    icon: mdi:harddisk
+  - type: attribute
+    entity: sensor.backup_state
+    attribute: backups_in_home_assistant
+    name: Home Assistant Backups
+    icon: mdi:counter
+  - type: attribute
+    entity: sensor.backup_state
+    attribute: size_in_home_assistant
+    name: Home Assistant Size
+    icon: mdi:harddisk

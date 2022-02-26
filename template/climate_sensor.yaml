@@ -1,0 +1,99 @@
+#=========================#
+#     Climate Sensors     #
+#=========================#
+
+- sensor:
+
+    #-----------------------------------#
+    #   -- Openweathermap Forecast --   #
+    #-----------------------------------#
+    
+    # Conditions
+    
+    - name: 'Forecast Condition 1'
+      unique_id: forecast_condition_1
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[0].condition }}"
+    - name: 'Forecast Condition 2'
+      unique_id: forecast_condition_2
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[1].condition }}"
+    - name: 'Forecast Condition 3'
+      unique_id: forecast_condition_3
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[2].condition }}"
+    - name: 'Forecast Condition 4'
+      unique_id: forecast_condition_4
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[3].condition }}"
+    - name: 'Forecast Condition 5'
+      unique_id: forecast_condition_5
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[4].condition }}"
+    
+    # High temperature
+    
+    - name: 'Forecast Temp High 1'
+      unique_id: forecast_temp_high_1
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[0].temperature }}"
+    - name: 'Forecast Temp High 2'
+      unique_id: forecast_temp_high_2
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[1].temperature }}"
+    - name: 'Forecast Temp High 3'
+      unique_id: forecast_temp_high_3
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[2].temperature }}"
+    - name: 'Forecast Temp High 4'
+      unique_id: forecast_temp_high_4
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[3].temperature }}"
+    - name: 'Forecast Temp High 5'
+      unique_id: forecast_temp_high_5
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[4].temperature }}"
+    
+    # Low temperature
+    
+    - name: 'Forecast Temp Low 1'
+      unique_id: forecast_temp_low_1
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[0].templow }}"
+    - name: 'Forecast Temp Low 2'
+      unique_id: forecast_temp_low_2
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[1].templow }}"
+    - name: 'Forecast Temp Low 3'
+      unique_id: forecast_temp_low_3
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[2].templow }}"
+    - name: 'Forecast Temp Low 4'
+      unique_id: forecast_temp_low_4
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[3].templow }}"
+    - name: 'Forecast Temp Low 5'
+      unique_id: forecast_temp_low_5
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[4].templow }}"
+    
+    # Precipitation probability
+    
+    - name: 'Forecast Precip Prob 1'
+      unique_id: forecast_precip_prob_1
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[0].precipitation_probability }}"
+    - name: 'Forecast Precip Prob 2'
+      unique_id: forecast_precip_prob_2
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[1].precipitation_probability }}"
+    - name: 'Forecast Precip Prob 3'
+      unique_id: forecast_precip_prob_3
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[2].precipitation_probability }}"
+    - name: 'Forecast Precip Prob 4'
+      unique_id: forecast_precip_prob_4
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[3].precipitation_probability }}"
+    - name: 'Forecast Precip Prob 5'
+      unique_id: forecast_precip_prob_5
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[4].precipitation_probability }}"
+    
+    # Precipitation intensity
+    
+    - name: 'Forecast Precip Intensity 1'
+      unique_id: forecast_precip_intensity_1
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[0].precipitation }}"
+    - name: 'Forecast Precip Intensity 2'
+      unique_id: forecast_precip_intensity_2
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[1].precipitation }}"
+    - name: 'Forecast Precip Intensity 3'
+      unique_id: forecast_precip_intensity_3
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[2].precipitation }}"
+    - name: 'Forecast Precip Intensity 4'
+      unique_id: forecast_precip_intensity_4
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[3].precipitation }}"
+    - name: 'Forecast Precip Intensity 5'
+      unique_id: forecast_precip_intensity_5
+      state: "{{ state_attr('weather.openweathermap', 'forecast')[4].precipitation }}"

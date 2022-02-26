@@ -1,0 +1,10 @@
+wifi:
+  networks:
+  ap:
+    ssid: ${device_name}
+
+# Enable the captive portal for inital WiFi setup
+captive_portal:
+
+# Enable over the air updates
+ota:

@@ -1,0 +1,216 @@
+#==========================#
+#     Computer Control     #
+#==========================#
+
+# Lock the PC
+lock_pc:
+  alias: Lock PC
+  sequence:
+  - service: mqtt.publish
+    data:
+      topic: "iotlink/workgroup/legion-t530/commands/lock"
+      payload: ""
+
+# Turn off the PC
+turn_off_pc:
+  alias: Turn Off PC
+  sequence:
+  - service: mqtt.publish
+    data:
+      topic: "iotlink/workgroup/legion-t530/commands/shutdown"
+      payload: ""
+
+#=======================#
+#     Fire TV Stick     #
+#=======================#
+
+# Restart Fire TV stick.
+restart_fire_tv:
+  alias: Restart Fire TV
+  sequence:
+    - service: switch.turn_off
+      entity_id: switch.fire_tv
+    - delay: '00:00:05'
+    - service: switch.turn_on
+      entity_id: switch.fire_tv
+
+#===================#
+#     Shield TV     #
+#===================#
+
+# Restart Shield TV.
+restart_shield_tv:
+  alias: Restart Shield TV
+  sequence:
+    - service: switch.turn_off
+      entity_id: switch.shield_tv
+    - delay: '00:00:05'
+    - service: switch.turn_on
+      entity_id: switch.shield_tv
+
+#========================#
+#     Family Room AV     #
+#========================#
+
+# Turn on family room AV.
+enable_family_room_av:
+  alias: Enable Family Room AV
+  sequence:
+    - service: switch.turn_on
+      entity_id: switch.fire_tv
+    - service: switch.turn_on
+      entity_id: switch.sonoff_family_room_av
+
+# Turn off family room AV.
+disable_family_room_av:
+  alias: Disable Family Room AV
+  sequence:
+    - service: switch.turn_off
+      entity_id: switch.fire_tv
+    - service: switch.turn_off
+      entity_id: switch.sonoff_family_room_av
+
+# Allow the family room AV to be used late at night.
+allow_late_family_room_av:
+  alias: Allow Late Family Room AV
+  sequence:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.family_room_av_late_night_control
+
+#===========================#
+#     Garage Door Close     #
+#===========================#
+
+# Template script that does the work.
+close_garage_door:
+  alias: Close Garage Door
+  mode: parallel
+  
+  fields:
+    name:
+      description: 'The garage door user friendly name.'
+      example: 'my door'
+    
+    contact:
+      description: 'The garage door contact sensor entity.'
+      example: 'binary_sensor.shelly1_garage_north_contact'
+    
+    switch:
+      description: 'The switch to operate the garage door.'
+      example: 'switch.shelly1_garage_north'
+  
+  sequence:
+  
+    # Action is only required if the door is currently open.
+    - condition: "{{ is_state(contact, 'off') }}"
+    
+    # Send an informational notification that the door is about to be closed.
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        title: 'Information:'
+        message: "Closing garage door {{ name }}."
+        data:
+          channel: Security
+    
+    # Close the door.
+    - service: switch.turn_on
+      target:
+        entity_id: "{{ switch }}"
+    
+    # Wait for the door to close.
+    - delay: '00:30:00'
+    
+    # Confirm that the door is closed. If so, we're done.
+    - condition: "{{ is_state(contact, 'off') }}"
+    
+    # The door did not close, so send another notification.
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        title: 'Action required:'
+        message: "Garage door {{ name }} did not close."
+        data:
+          channel: Security
+          importance: high
+          persistent: true
+          tag: 'persistent'
+
+#----------------------#
+#     Garage Doors     #
+#----------------------#
+
+# Garage door north
+close_garage_door_north:
+  alias: Close Garage Door North
+  sequence:
+    - service: script.close_garage_door
+      data:
+        name:    'north'
+        contact: 'binary_sensor.shelly1_garage_north_contact'
+        switch:  'switch.shelly1_garage_north'
+
+# Garage door south
+close_garage_door_south:
+  alias: Close Garage Door South
+  sequence:
+    - service: script.close_garage_door
+      data:
+        name:    'south'
+        contact: 'binary_sensor.shelly1_garage_south_contact'
+        switch:  'switch.shelly1_garage_south'
+
+#============================#
+#     Deep Sleep Control     #
+#============================#
+
+# Suspend deep sleep on ESPHome devices so we can update the firmware using OTA
+suspend_deep_sleep:
+  alias: Suspend Deep Sleep
+  sequence:
+  - service: mqtt.publish
+    data:
+      topic:   porch-sensor/ota_mode
+      payload: 'ON'
+      retain: true
+
+# Resume deep sleep on ESPHome devices
+resume_deep_sleep:
+  alias: Resume Deep Sleep
+  sequence:
+  - service: mqtt.publish
+    data:
+      topic:   porch-sensor/ota_mode
+      payload: 'OFF'
+  - service: mqtt.publish
+    data:
+      topic:   porch-sensor/ota_mode
+      payload: ''
+      retain: true
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+zigbee2mqtt_rename:
+  alias: Zigbee2MQTT Rename
+  sequence:
+    service: mqtt.publish
+    data_template:
+      topic: zigbee2mqtt/bridge/request/device/rename
+      payload_template: >-
+        {
+          "from": "{{ states.input_text.zigbee2mqtt_old_name.state | string }}",
+          "to": "{{ states.input_text.zigbee2mqtt_new_name.state | string }}"
+        }
+
+zigbee2mqtt_remove:
+  alias: Zigbee2MQTT Remove
+  sequence:
+    service: mqtt.publish
+    data_template:
+      topic: zigbee2mqtt/bridge/request/device/remove
+      payload_template: >-
+        {
+          "id": "{{ states.input_text.zigbee2mqtt_remove_name.state | string }}",
+          "force": {% if states.input_boolean.zigbee2mqtt_force_remove.state == "off" %}false{% else %}true{% endif %}
+        }
