@@ -193,19 +193,6 @@
       event: start
   action:
     - service: shell_command.delete_junk_log_files
-
-#===================#
-#     Front End     #
-#===================#
-
-# Refresh the front end ... this is to make sure the HACS icon exists in the sidebar.
-- alias: Refresh Front End
-  id: refresh_fron_end
-  trigger:
-    - platform: homeassistant
-      event: start
-  action:
-    - service: browser_mod.lovelace_reload
  
 #============================#
 #     Kodi Movie Control     #
@@ -565,36 +552,51 @@
       default:
         - service: shell_command.copy_floorplan_normal
 
-#=========================#
-#     TEMPORARY DEBUG     #
-#=========================#
+#===============#
+#     Theme     #
+#===============#
 
-# Proximity debug starts as debug, to catch a bug. Turn it off once HA starts to avoid log spamming.
-#- alias: Debug Proximity
-#  id: 'debug_proximity'
-#  trigger:
-#    - platform: homeassistant
-#      event: start
-#  action:
-#    - service: logger.set_level
-#      data:
-#        custom_components.proximity: info
-
-# Detect the bug we're after and notify.
-#- alias: Detect Proximity Bug
-#  id: 'detect_proximity_bug'
-#  trigger:
-#    - platform: event
-#      event_type: system_log_event
-#      event_data:
-#        name: 'custom_components.proximity'
-#        level: 'ERROR'
-#  condition:
-#    - condition: template
-#      value_template: "{{ 'device_state is none' in trigger.event.data.message }}"
-#  action:
-#    - service: persistent_notification.create
-#      data:
-#        title: 'Proximity Bug Detected'
-#        notification_id: 'proximity_bug'
-#        message: 'Check the log.'
+# Set the theme from the front end.
+# Also, the domains card has a label row that (annoyingly) flashes. So we set an input text to
+# contain the background color from the theme, which is then used on the card, making the flashes
+# invisible.
+#
+# The theme names and appropriate colors are hard coded, since I can't find a way to get them dynamically.
+- alias: Change Frontend Theme
+  id: 'change_frontend_theme'
+  trigger:
+    - platform: state
+      entity_id: input_select.theme_list
+  action:
+    - service: frontend.set_theme
+      data_template:
+        name: "{{ states('input_select.theme_list') }}"
+        mode: dark
+    - choose:
+      - conditions: "{{ is_state('input_select.theme_list', 'Google Dark Theme') }}"          
+        sequence:
+          - service: input_text.set_value
+            data:
+              entity_id: input_text.theme_background_color
+              value: 'rgb(32, 33, 36)'
+      
+      - conditions: "{{ is_state('input_select.theme_list', 'Midnight Teal') }}"          
+        sequence:
+          - service: input_text.set_value
+            data:
+              entity_id: input_text.theme_background_color
+              value: 'rgb(13, 63, 70)'
+            
+      - conditions: "{{ is_state('input_select.theme_list', 'synthwave') }}"          
+        sequence:
+          - service: input_text.set_value
+            data:
+              entity_id: input_text.theme_background_color
+              value: 'rgb(52, 41, 79)'
+            
+      - conditions: "{{ is_state('input_select.theme_list', 'sweetpink') }}"          
+        sequence:
+          - service: input_text.set_value
+            data:
+              entity_id: input_text.theme_background_color
+              value: 'rgb(17, 17, 29)'

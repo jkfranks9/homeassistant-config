@@ -88,7 +88,6 @@ logs:
   homeassistant.components.websocket_api.http.connection: info
 
   # Custom components
-  custom_components.browser_mod:                       info
   custom_components.hacs:                              warning
   custom_components.kodi.media_player:                 debug
   custom_components.epson_projector:                   info

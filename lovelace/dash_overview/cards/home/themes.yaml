@@ -1,0 +1,11 @@
+#=========================#
+#     Theme List Card     #
+#=========================#
+
+type: 'custom:select-list-card'
+entity: input_select.theme_list
+title: Theme
+icon: mdi:palette
+show_toggle: true
+max_options: 4
+        

@@ -53,26 +53,36 @@ reminder_payment_wells_fargo:
   name: Payment Wells Fargo
   has_date: true
 
-#----- (Office) Prescriptions -----#
+#----- (Office) Medications -----#
 
-# Prescription Eliquis
-reminder_prescription_eliquis:
-  name: Prescription Eliquis
+# Medication Eliquis
+reminder_medication_eliquis:
+  name: Medication Eliquis
   has_date: true
 
-# Prescription Gabapentin
-reminder_prescription_gabapentin:
-  name: Prescription Gabapentin
+# Medication Gabapentin
+reminder_medication_gabapentin:
+  name: Medication Gabapentin
   has_date: true
 
-# Prescription Metoprolol
-reminder_prescription_metoprolol:
-  name: Prescription Metoprolol
+# Medication Metoprolol
+reminder_medication_metoprolol:
+  name: Medication Metoprolol
   has_date: true
 
-# Prescription Rosuvastatin
-reminder_prescription_rosuvastatin:
-  name: Prescription Rosuvastatin
+# Medication Rosuvastatin
+reminder_medication_rosuvastatin:
+  name: Medication Rosuvastatin
+  has_date: true
+
+# Medication Blood Builder Minis
+reminder_medication_blood_builder_minis:
+  name: Medication Blood Builder Minis
+  has_date: true
+
+# Medication Methyl B12
+reminder_medication_methyl_b12:
+  name: Medication Methyl B12
   has_date: true
 
 #----- (Cleaning) Downstairs -----#

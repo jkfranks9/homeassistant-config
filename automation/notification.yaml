@@ -435,14 +435,14 @@
   id: 'notify_home_assistant_updated'
   trigger:
     - platform: state
-      entity_id: binary_sensor.updater
+      entity_id: binary_sensor.latest_available_version_update_available
       from: 'off'
       to: 'on'
     - platform: homeassistant
       event: start
   condition:
     - condition: state
-      entity_id: binary_sensor.updater
+      entity_id: binary_sensor.latest_available_version_update_available
       state: 'on'
   action:
     - delay:
@@ -451,7 +451,7 @@
       data_template:
         title: 'Home Assistant Updated'
         notification_id: 'ha_update'
-        message: "New version is {{ state_attr('binary_sensor.updater', 'newest_version') }}, currently on {{ states('sensor.installed_version') }}"
+        message: "New version is {{ states('sensor.latest_available_version') }}, currently on {{ states('sensor.installed_version') }}"
 
 # Supervisor update
 - alias: Notify Supervisor Updated
@@ -697,28 +697,38 @@
         message: 'Payment(s) due.'
         channel: Home Assistant
 
-# Prescription reorder
-- alias: Notify Prescription Reorder Reminder
-  id: 'notify_prescription_reorder_reminder'
+# Medication reorder
+- alias: Notify Medication Reorder Reminder
+  id: 'notify_medication_reorder_reminder'
   trigger:
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_prescription_eliquis')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_eliquis')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_prescription_gabapentin')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_gabapentin')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_prescription_metoprolol')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_metoprolol')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_prescription_rosuvastatin')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_rosuvastatin')))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {{ entity_date <= now_date }}
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_blood_builder_minis')))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {{ entity_date <= now_date }}
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_methyl_b12')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
   action:
@@ -726,7 +736,7 @@
       data:
         timer_entity: timer.n13
         title: 'Action required:'
-        message: 'Prescription(s) due for reorder.'
+        message: 'Medication(s) due for reorder.'
         channel: Home Assistant
 
 #================================#

@@ -11,10 +11,6 @@ card:
   title: Christmas
   mode: horizontal
   style: |
-    ha-card {
-      color: darkred;
-      background: darkgreen;
-    }
   cards:
     - type: 'custom:button-card'
       template: light_button

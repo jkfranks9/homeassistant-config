@@ -11,22 +11,27 @@ cards:
     cards:
       - type: 'custom:button-card'
         color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
         name: Downstairs
       
       - type: 'custom:button-card'
         color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
         name: Upstairs
       
       - type: 'custom:button-card'
         color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
         name: Garage
       
       - type: 'custom:button-card'
         color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
         name: Attic
       
       - type: 'custom:button-card'
         color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
         name: Outdoor
   
   - type: custom:stack-in-card

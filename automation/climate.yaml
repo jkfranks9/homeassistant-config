@@ -13,73 +13,7 @@
 #                   it changes to 'home' or 'away' (first character lowercase). Confusingly, it also can be 'Vacation' for
 #                   a scheduled vacation, even though that value cannot be assigned as a climate or preset mode.
 
-#===== Change the thermostat mode in response to the front end mode changing =====#
-
-# Change the Upstairs Ecobee thermostat preset mode.
-- alias: Change Upstairs Ecobee Preset Mode
-  id: change_upstairs_ecobee_preset_mode
-  trigger:
-    - platform: state
-      entity_id: input_select.upstairs_ecobee_preset_modes
-  condition:
-    - condition: state
-      entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
-      state: 'off'
-    - condition: template
-      value_template: >
-        {{ states('input_select.upstairs_ecobee_preset_modes') != 'Vacation' }}
-  action:
-    - service: system_log.write
-      data:
-        message: "Changing upstairs ecobee preset mode to {{ trigger.to_state.state }}"
-        level: debug
-    - service: climate.set_preset_mode
-      target:
-        entity_id: climate.upstairs
-      data_template:
-        preset_mode: "{{ ( trigger.to_state.state ) }}"
-
-#===== Change the front end mode in response to the thermostat mode changing =====#
-
-# Change the Upstairs Ecobee thermostat front end display.
-# This runs in response to the thermostat changing its mode. However, it is also triggered when the 
-# front end mode changes, so we use a condition to avoid unnecessarily changing the front end display
-# to the same value it already is. 
-- alias: Change Upstairs Ecobee Preset Display
-  id: change_upstairs_ecobee_preset_display
-  trigger:
-    - platform: state
-      entity_id: climate.upstairs
-  condition:
-    - condition: template
-      value_template: >
-        {{ trigger.from_state and
-           trigger.to_state.attributes.preset_mode | title !=
-           trigger.from_state.attributes.preset_mode | title }}
-    - condition: template
-      value_template: >
-        {{ trigger.to_state.attributes.preset_mode | title !=
-           states('input_select.upstairs_ecobee_preset_modes') and
-           trigger.to_state.attributes.preset_mode | title != 'Temp' }}
-  action:
-    - service: input_boolean.turn_on
-      data:
-        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
-    - service: system_log.write
-      data:
-        message: "Changing upstairs ecobee preset mode display to {{ trigger.to_state.attributes.preset_mode | title }}"
-        level: debug
-    - service: input_select.select_option
-      target:
-        entity_id: input_select.upstairs_ecobee_preset_modes
-      data_template: 
-        option: "{{ trigger.to_state.attributes.preset_mode | title }}"
-    - delay: '00:00:01'
-    - service: input_boolean.turn_off
-      data:
-        entity_id: input_boolean.upstairs_ecobee_preset_mode_triggered
-
-#===== Transition from Home to Sleep mode if the cinema is not in use =====#
+#===== Transition from Home to Sleep mode upstairs if the cinema is not in use =====#
 
 # Transition to Sleep mode.
 - alias: Transition To Sleep Mode
@@ -100,6 +34,64 @@
         entity_id: climate.upstairs
       data:
         preset_mode: 'Sleep'
+
+#============================#
+#     Extended Away Mode     #
+#============================#
+
+# Triggered on the start of an extended away period.
+- alias: Enable Extended Away Mode
+  id: enable_extended_away_mode
+  
+  trigger:
+    - platform: time
+      at: input_datetime.extended_away_start
+  
+  action:
+    
+    # Turn on extended away mode.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.extended_away_mode
+    
+    # Create thermostat vacations.
+    - service: script.create_thermostat_vacation
+      data:
+        thermostat_entity: climate.downstairs
+        frontend_entity: input_select.downstairs_ecobee_preset_mode
+        control_flag: input_boolean.downstairs_ecobee_preset_mode_triggered
+    
+    - service: script.create_thermostat_vacation
+      data:
+        thermostat_entity: climate.upstairs
+        frontend_entity: input_select.upstairs_ecobee_preset_mode
+        control_flag: input_boolean.upstairs_ecobee_preset_mode_triggered
+
+# Triggered on the end of an extended away period.
+- alias: Disable Extended Away Mode
+  id: disable_extended_away_mode
+  
+  trigger:
+    - platform: time
+      at: input_datetime.extended_away_end
+  
+  action:
+    
+    # Turn off extended away mode.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.extended_away_mode
+    
+    # Remove thermostat vacations.
+    - service: script.remove_thermostat_vacation
+      data:
+        thermostat_entity: climate.downstairs
+        frontend_entity: input_select.downstairs_ecobee_preset_mode
+        control_flag: input_boolean.downstairs_ecobee_preset_mode_triggered
+    
+    - service: script.remove_thermostat_vacation
+      data:
+        thermostat_entity: climate.upstairs
+        frontend_entity: input_select.upstairs_ecobee_preset_mode
+        control_flag: input_boolean.upstairs_ecobee_preset_mode_triggered
 
 #============================================#
 #     Temperature High / Low Water Marks     #

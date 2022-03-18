@@ -21,7 +21,7 @@ entities:
     state_adaptive_color: false
   - entity: sensor.nighttime
     name: Night
-    color: gray
+    color: var(--accent-color)
     show_line: false
     show_points: false
     show_legend: false

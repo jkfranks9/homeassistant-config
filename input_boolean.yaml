@@ -69,11 +69,14 @@ dryer_running:
   name: Dryer Running
   icon: mdi:tumble-dryer
 
-#========================================================#
-#     Upstairs Ecobee Thermostat Preset Mode Control     #
-#========================================================#
+#===============================================#
+#     Ecobee Thermostat Preset Mode Control     #
+#===============================================#
 
-# This is  needed to keep the change_upstairs_ecobee_preset_mode automation from triggering unnecessarily.
+# These are  needed to keep the change_..._ecobee_preset_mode automations from triggering unnecessarily.
+downstairs_ecobee_preset_mode_triggered:
+  name: Downstairs Ecobee Preset Mode Triggered
+  
 upstairs_ecobee_preset_mode_triggered:
   name: Upstairs Ecobee Preset Mode Triggered
 

@@ -2,11 +2,26 @@
 #     Thermostat Card     #
 #=========================#
 
-type: custom:simple-thermostat
-entity: climate.upstairs
-header:
-  name: Upstairs Thermostat
-  icon: mdi:thermostat
-step_size: 1.0
-control:
-  - preset
+type: custom:stack-in-card
+mode: vertical
+keep:
+  box_shadow: true
+cards:
+
+  - type: custom:simple-thermostat
+    entity: climate.downstairs
+    header:
+      name: Downstairs Thermostat
+      icon: mdi:thermostat
+    step_size: 1.0
+    control:
+      - preset
+
+  - type: custom:simple-thermostat
+    entity: climate.upstairs
+    header:
+      name: Upstairs Thermostat
+      icon: mdi:thermostat
+    step_size: 1.0
+    control:
+      - preset

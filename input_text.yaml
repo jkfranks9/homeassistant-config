@@ -31,3 +31,13 @@ zigbee2mqtt_new_name:
 zigbee2mqtt_remove_name:
   name: Zigbee2MQTT Remove Name
   initial: ""
+
+#=====================================#
+#     Theme Card Background Color     #
+#=====================================#
+
+# This is the RGB color for the theme card background. We use this to set the label background
+# on the lighting domains card, so I don't see the weird flashing effect that's used on the 
+# custom button card.
+theme_background_color:
+  name: Theme Background Color

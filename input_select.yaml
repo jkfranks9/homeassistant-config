@@ -40,9 +40,17 @@ kodi_movies:
 #     Ecobee Thermostat Preset Modes     #
 #========================================#
 
+# Downstairs thermostat
+downstairs_ecobee_preset_mode:
+  name: Downstairs Ecobee Preset Mode
+  options:
+    - Away
+    - Home
+    - Sleep
+
 # Upstairs thermostat
-upstairs_ecobee_preset_modes:
-  name: Upstairs Ecobee Preset Modes
+upstairs_ecobee_preset_mode:
+  name: Upstairs Ecobee Preset Mode
   options:
     - Away
     - Home
@@ -89,3 +97,15 @@ zigbee2mqtt_log_level:
     - error
   initial: info
   icon: mdi:format-list-bulleted
+
+#================#
+#     Themes     #
+#================#
+
+theme_list:
+  name: Theme List
+  options:
+    - Pink
+    - Teal
+    - Google Dark Theme
+    - synthwave

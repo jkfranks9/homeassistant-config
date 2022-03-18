@@ -20,43 +20,8 @@ cards:
         temperature: sensor.porch_temperature
         humidity: sensor.porch_humidity
         pressure: sensor.porch_pressure
-        wind_bearing: sensor.openweathermap_wind_bearing
-        wind_speed: sensor.openweathermap_wind_speed
         precipitation: sensor.openweathermap_precipitation_kind
-        forecast: true
-      
-      # Forecast data
-      forecast:
-        icons:
-          day_1: sensor.forecast_condition_1
-          day_2: sensor.forecast_condition_2
-          day_3: sensor.forecast_condition_3
-          day_4: sensor.forecast_condition_4
-          day_5: sensor.forecast_condition_5
-        temperature_high:
-          day_1: sensor.forecast_temp_high_1
-          day_2: sensor.forecast_temp_high_2
-          day_3: sensor.forecast_temp_high_3
-          day_4: sensor.forecast_temp_high_4
-          day_5: sensor.forecast_temp_high_5
-        temperature_low:
-          day_1: sensor.forecast_temp_low_1
-          day_2: sensor.forecast_temp_low_2
-          day_3: sensor.forecast_temp_low_3
-          day_4: sensor.forecast_temp_low_4
-          day_5: sensor.forecast_temp_low_5
-        precipitation_probability:
-          day_1: sensor.forecast_precip_prob_1
-          day_2: sensor.forecast_precip_prob_2
-          day_3: sensor.forecast_precip_prob_3
-          day_4: sensor.forecast_precip_prob_4
-          day_5: sensor.forecast_precip_prob_5
-        precipitation_intensity:
-          day_1: sensor.forecast_precip_intensity_1
-          day_2: sensor.forecast_precip_intensity_2
-          day_3: sensor.forecast_precip_intensity_3
-          day_4: sensor.forecast_precip_intensity_4
-          day_5: sensor.forecast_precip_intensity_5
+        forecast: false
     
     # UV data
     uv:
@@ -65,12 +30,6 @@ cards:
       uv_index: sensor.current_uv_index
       uv_level: sensor.current_uv_level
       max_uv_index: sensor.max_uv_index
-      set_skin_type_1: sensor.skin_type_1_safe_exposure_time
-      set_skin_type_2: sensor.skin_type_2_safe_exposure_time
-      set_skin_type_3: sensor.skin_type_3_safe_exposure_time
-      set_skin_type_4: sensor.skin_type_4_safe_exposure_time
-      set_skin_type_5: sensor.skin_type_5_safe_exposure_time
-      set_skin_type_6: sensor.skin_type_6_safe_exposure_time
   
   # Thermal comfort values
   - type: custom:multiple-entity-row

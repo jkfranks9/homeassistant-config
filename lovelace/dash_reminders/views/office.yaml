@@ -13,4 +13,4 @@ cards:
     cards:
       - !include /config/lovelace/dash_reminders/cards/office/payments.yaml
       - type: custom:layout-break
-      - !include /config/lovelace/dash_reminders/cards/office/prescriptions.yaml
+      - !include /config/lovelace/dash_reminders/cards/office/medications.yaml

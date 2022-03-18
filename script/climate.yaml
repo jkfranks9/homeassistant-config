@@ -78,26 +78,96 @@ evaluate_weather_condition:
           data:
             option: 'clear'
 
-#=====================================#
-#     Ecobee Thermostat Home Mode     #
-#=====================================#
+#=============================#
+#     Thermostat Vacation     #
+#=============================#
 
-# Turn on home mode upstairs.
-turn_on_upstairs_home_mode:
-  alias: Turn On Upstairs Home Mode
+# Create a vacation for a given thermostat.
+create_thermostat_vacation:
+  alias: Create Thermostat Vacation
+  
+  fields:
+    thermostat_entity:
+      description: The thermostat on which to create a vacation.
+    
+    frontend_entity:
+      description: The frontend entity containing the displayed preset modes.
+    
+    control_flag:
+      description: Input boolean flag to control automation(s) from triggering unnecessarily.
+  
   sequence:
-    - service: climate.set_preset_mode
-      target:
-        entity_id: climate.upstairs
+    
+    # Turn on the control flag.
+    - service: input_boolean.turn_on
       data:
-        preset_mode: 'Home'
+        entity_id: "{{ control_flag }}"
+    
+    # Add 'Vacation' to the frontend preset mode display options.
+    - service: input_select.set_options
+      target:
+        entity_id: "{{ frontend_entity }}"
+      data:
+        options: ['Away', 'Home', 'Sleep', 'Vacation']
+    
+    # Create the vacation on the thermostat. Note that the name is limited to 12 characters.
+    - service: ecobee.create_vacation
+      data_template:
+        entity_id: "{{ thermostat_entity }}"
+        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
+        end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
+        end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
+        heat_temp: 59
+        cool_temp: 83
+    
+    # Short delay.
+    - delay: '00:00:01'
+    
+    # Turn off the control flag.
+    - service: input_boolean.turn_off
+      data:
+        entity_id: "{{ control_flag }}"
 
-# Turn on away mode upstairs.
-turn_on_upstairs_away_mode:
-  alias: Turn On Upstairs Away Mode
+# Remove a vacation for a given thermostat.
+remove_thermostat_vacation:
+  alias: Remove Thermostat Vacation
+  
+  fields:
+    thermostat_entity:
+      description: The thermostat on which to remove a vacation.
+    
+    frontend_entity:
+      description: The frontend entity containing the displayed preset modes.
+    
+    control_flag:
+      description: Input boolean flag to control automation(s) from triggering unnecessarily.
+  
   sequence:
-    - service: climate.set_preset_mode
-      target:
-        entity_id: climate.upstairs
+    
+    # Turn on the control flag.
+    - service: input_boolean.turn_on
       data:
-        preset_mode: 'Away'
+        entity_id: "{{ control_flag }}"
+    
+    # Remove the vacation on the thermostat. Note that the name is limited to 12 characters.
+    - service: ecobee.delete_vacation
+      data_template:
+        entity_id: "{{ thermostat_entity }}"
+        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+    
+    # Remove 'Vacation' from the frontend preset mode display options.
+    - service: input_select.set_options
+      target:
+        entity_id: "{{ frontend_entity }}"
+      data:
+        options: ['Away', 'Home', 'Sleep']
+    
+    # Short delay.
+    - delay: '00:00:01'
+    
+    # Turn off the control flag.
+    - service: input_boolean.turn_off
+      data:
+        entity_id: "{{ control_flag }}"

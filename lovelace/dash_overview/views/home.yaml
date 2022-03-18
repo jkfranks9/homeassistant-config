@@ -12,8 +12,9 @@ cards:
     cards:
       - !include /config/lovelace/dash_overview/cards/home/persons.yaml
       - !include /config/lovelace/dash_overview/cards/home/garage.yaml
-      - !include /config/lovelace/dash_overview/cards/home/lighting_domains.yaml
+      - !include /config/lovelace/dash_overview/cards/home/themes.yaml
       - type: custom:layout-break
+      - !include /config/lovelace/dash_overview/cards/home/lighting_domains.yaml
       - !include /config/lovelace/dash_overview/cards/home/adguard.yaml
       - !include /config/lovelace/dash_overview/cards/home/ups.yaml
       - type: custom:layout-break
