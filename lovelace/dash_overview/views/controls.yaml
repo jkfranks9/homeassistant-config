@@ -12,6 +12,7 @@ cards:
     layout_type: custom:vertical-layout
     cards:
       - !include /config/lovelace/dash_overview/cards/controls/treadmill.yaml
+      - !include /config/lovelace/dash_overview/cards/controls/echo_mute_duration.yaml
       - !include /config/lovelace/dash_overview/cards/controls/switches.yaml
       - !include /config/lovelace/dash_overview/cards/controls/grandchild_sleep.yaml
       - type: custom:layout-break

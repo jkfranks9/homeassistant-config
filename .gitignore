@@ -15,6 +15,7 @@
 !blueprints/automation/notification
 !blueprints/automation/theater
 !blueprints/script/
+!blueprints/script/devices
 !blueprints/script/notification
 !database
 !esphome
@@ -29,6 +30,7 @@
 !lovelace/dash_overview/cards/environment
 !lovelace/dash_overview/cards/health
 !lovelace/dash_overview/cards/home
+!lovelace/dash_overview/cards/levels
 !lovelace/dash_overview/cards/lighting
 !lovelace/dash_overview/cards/monitoring
 !lovelace/dash_overview/cards/office

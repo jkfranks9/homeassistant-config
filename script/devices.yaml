@@ -78,6 +78,26 @@ allow_late_family_room_av:
       target:
         entity_id: input_boolean.family_room_av_late_night_control
 
+#======================#
+#     Echo Devices     #
+#======================#
+
+mute_guest_bedroom_echo:
+  alias: Mute Guest Bedroom Echo
+  use_blueprint:
+    path: devices/echo_do_not_disturb.yaml
+    input:
+      switch_entity: switch.guest_bedroom_echo_do_not_disturb_switch
+      mute_duration_entity: input_number.guest_bedroom_echo_mute_duration
+
+mute_upstairs_bedroom_echo:
+  alias: Mute Upstairs Bedroom Echo
+  use_blueprint:
+    path: devices/echo_do_not_disturb.yaml
+    input:
+      switch_entity: switch.upstairs_bedroom_echo_do_not_disturb_switch
+      mute_duration_entity: input_number.upstairs_bedroom_echo_mute_duration
+
 #===========================#
 #     Garage Door Close     #
 #===========================#
@@ -214,3 +234,74 @@ zigbee2mqtt_remove:
           "id": "{{ states.input_text.zigbee2mqtt_remove_name.state | string }}",
           "force": {% if states.input_boolean.zigbee2mqtt_force_remove.state == "off" %}false{% else %}true{% endif %}
         }
+
+#====================#
+#     HVAC Vents     #
+#====================#
+
+# Template script that does the work.
+position_hvac_vent:
+  alias: Position HVAC Vent
+  
+  fields:
+    vent:
+      description: 'The target vent friendly name.'
+      example: 'Upstairs BR Vent 1'
+    
+    position:
+      description: 'The target vent desired position.'
+      example: 42
+  
+  sequence:
+    - service: mqtt.publish
+      data_template:
+        topic: "zigbee2mqtt/{{ vent }}/set"
+        payload_template: "{\"position\": {{ position }}}"
+
+# Toggle vents.
+
+toggle_upstairs_br_vent:
+  alias: Toggle Upstairs BR Vent
+  
+  fields:
+    vent_entity: 
+      description: 'The vent entity to be toggled.'
+      example: 'cover.upstairs_br_vent_1'
+  
+  sequence:
+    - service: system_log.write
+      data:
+        message: "vent_entity: {{vent_entity}}"
+        level: debug
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: "{{ state_attr(vent_entity, 'current_position') == 0 }}"
+        sequence:
+          - service: script.position_hvac_vent
+            data:
+              vent: "{{ state_attr(vent_entity, 'friendly_name') }}"
+              position: 100
+      default:
+        - service: script.position_hvac_vent
+          data:
+            vent: "{{ state_attr(vent_entity, 'friendly_name') }}"
+            position: 0
+
+# Open vents to a given percentage (position).
+
+position_upstairs_br_vent_1:
+  alias: Position Upstairs BR Vent 1
+  sequence:
+    - service: script.position_hvac_vent
+      data:
+        vent: "{{ state_attr('cover.upstairs_br_vent_1', 'friendly_name') }}"
+        position: "{{ states('input_number.upstairs_bedroom_vent_1_position') }}"
+
+position_upstairs_br_vent_2:
+  alias: Position Upstairs BR Vent 2
+  sequence:
+    - service: script.position_hvac_vent
+      data:
+        vent: "{{ state_attr('cover.upstairs_br_vent_2', 'friendly_name') }}"
+        position: "{{ states('input_number.upstairs_bedroom_vent_2_position') }}"

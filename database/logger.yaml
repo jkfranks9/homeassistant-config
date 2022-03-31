@@ -34,7 +34,7 @@ logs:
   homeassistant.components.automation.reset_manual_exercise_controls:         warning
   homeassistant.components.automation.reset_master_bedroom_lamp:              warning
   homeassistant.components.automation.reset_office_lamp:                      warning
-  homeassistant.components.automation.restore_movie_list_on_start:            warning
+  homeassistant.components.automation.restore_movie_list_on_start:            info
   homeassistant.components.automation.restore_timers:                         warning
   homeassistant.components.automation.run_guest_bath_motion_based_light:      warning
   homeassistant.components.automation.run_laundry_room_motion_based_light:    warning
@@ -82,7 +82,7 @@ logs:
   homeassistant.components.proximity:                     warning
   homeassistant.components.scene:                         warning
   homeassistant.components.shell_command:                 info
-  homeassistant.components.system_log.external:           info # This is for logs in automations and scripts.
+  homeassistant.components.system_log.external:           debug # This is for logs in automations and scripts.
   homeassistant.components.webhook:                       info
   homeassistant.components.websocket_api:                 info
   homeassistant.components.websocket_api.http.connection: info
@@ -93,7 +93,7 @@ logs:
   custom_components.epson_projector:                   info
   #custom_components.proximity:                         debug
   custom_components.pyscript.file.populate_all_movies: info
-  custom_components.pyscript.file.restore_all_movies:  info
+  custom_components.pyscript.file.restore_all_movies:  debug
   custom_components.sonoff.sonoff_cloud:               info
   custom_components.thermal_comfort:                   info
 
@@ -142,24 +142,20 @@ filters:
   homeassistant.components.automation:
     - "Error evaluating condition in 'Restore Notifications':"
 
-  #homeassistant.components.automation.log_notifications:
-  #- ".* Already running"
-
-  #homeassistant.components.automation.removed_saved_notifications_on_dismiss:
-  #- ".* Already running"
-
-  #homeassistant.components.automation.restore_notifications:
-  #- ".* Already running"
-
-  #homeassistant.components.automation.save_notifications_on_create:
-  #- ".* Already running"
-
   homeassistant.components.binary_sensor:
     - "Setup of binary_sensor platform .* is taking over 10 seconds"
     - "Not adding entity .* because it's disabled"
 
+  homeassistant.components.calendar:
+    - "Setup of calendar platform .* is taking over 10 seconds"
+  
   homeassistant.components.input_select:
     - "Current option: Select no longer valid"
+  
+  homeassistant.components.life360.device_tracker:
+    - "get_circles: .* Max retries exceeded"
+    - "Suppressing further errors until OK"
+    - "get_circles: OK again"
 
   homeassistant.components.light:
     - "Setup of light platform .* is taking over 10 seconds"
@@ -175,12 +171,6 @@ filters:
   homeassistant.components.scene:
     - "Setup of scene platform .* is taking over 10 seconds"
 
-  #homeassistant.components.script.change_lighting_per_weather:
-  #- ".* Already running"
-
-  #homeassistant.components.script.evaluate_weather_condition:
-  #- ".* Already running"
-
   homeassistant.components.sensor:
     - "Setup of sensor platform .* is taking over 10 seconds"
     - "Not adding entity .* because it's disabled"
@@ -190,15 +180,19 @@ filters:
 
   homeassistant.components.switch:
     - "Setup of switch platform .* is taking over 10 seconds"
+    - "Updating .* took longer than the scheduled update interval .*"
 
   homeassistant.components.vacuum:
     - "Setup of vacuum platform .* is taking over 10 seconds"
   
   homeassistant.components.webhook:
     - "Received message for unregistered webhook"
+  
+  homeassistant.components.weather:
+    - "Setup of weather platform .* is taking over 10 seconds"
 
   homeassistant.config_entries:
-    - "Config entry .* for .* integration not ready yet: Timeout during device setup; Retrying in background"
+    - "Config entry .* for .* integration not ready yet:"
 
   homeassistant.helpers.entity:
     - "Update of .* is taking over 10 seconds"

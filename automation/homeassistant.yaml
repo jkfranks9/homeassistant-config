@@ -256,8 +256,12 @@
         level: 'ERROR'
   #condition:
   #  - condition: template
-  #    value_template: "{{ trigger.event.data.message[:70] == 'Error calling async_update on entity media_player.kodi: TransportError' }}"
+  #    value_template: "{{ 'Error calling async_update on entity media_player.kodi: TransportError' in trigger.event.data.message }}"
   action:
+    - service: system_log.write
+      data:
+        message: "message: '{{ trigger.event.data.message }}'"
+        level: debug
     - service: counter.increment
       data:
         entity_id: counter.kodi_errors
@@ -306,6 +310,8 @@
     - platform: state
       entity_id:
         - timer.vac
+        - timer.wsh
+        - timer.z2m
         - timer.n00
         - timer.n01
         - timer.n02
@@ -327,10 +333,12 @@
         - timer.n18
         - timer.n19
         - timer.n20
-        - timer.z2m
+        - timer.n21
   variables:
     timers:
       - timer.vac
+      - timer.wsh
+      - timer.z2m
       - timer.n00
       - timer.n01
       - timer.n02
@@ -352,7 +360,7 @@
       - timer.n18
       - timer.n19
       - timer.n20
-      - timer.z2m
+      - timer.n21
     modes:
       - active
       - paused
@@ -452,7 +460,7 @@
 
 # Remove saved notifications from MQTT when they are dismissed.
 - id: remove_saved_notifications_on_dismiss
-  alias: Removed Saved Notifications On Dismiss
+  alias: Remove Saved Notifications On Dismiss
   initial_state: 'on'
   trigger:
     - platform: event
@@ -473,15 +481,15 @@
 # Restore persistent notifications (the whole point).
 #
 # This one is tricky:
-#   - It's triggered by the above save_notification_create automation, since that one publishes an MQTT message.
+#   - It's triggered by the above save_notifications_on_create automation, since that one publishes an MQTT message.
 #   - The condition compares the triggered message with the entity ID 'persistent_notification.[notification ID]':
 #       - This entity is created to represent the retained MQTT message
-#       - This sometimes (usually?) creates an error in the log indicating the MQTT message has no payload_json attribute.
+#       - This sometimes creates an error in the log indicating the MQTT message has no payload_json attribute.
 #         I've used the log_notifications automation below to try and debug, but it shows the payload_json attribute is
 #         present. Not really sure what is going on, since all this stuff does indeed work - I suspect some sort of timing
 #         problem.
 #   - If the comparison is true then the message has changed since it was originally issued, and the action then creates
-#     a new persistent notification to replace the original, thus driving save_notification_create, which in turn re-drives
+#     a new persistent notification to replace the original, thus driving save_notifications_on_create, which in turn re-drives
 #     this, but the condition should be false on the redrive.
 #   - Note that dashes in the notification ID are changed to underscores, presumably to prevent some problem.
 - id: restore_notifications
@@ -513,7 +521,7 @@
   action:
     - service: system_log.write
       data:
-        message: "JKF: notification: '{{ trigger.payload }}'"
+        message: "notification: '{{ trigger.payload }}'"
         level: info
 
 #=================#

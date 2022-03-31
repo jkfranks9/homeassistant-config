@@ -22,5 +22,9 @@ cards:
         name: Laundry Room Motion Detector
       - entity: sensor.master_bath_motion_detector_battery
         name: Master Bath Motion Detector
-      - entity: sensor.blue_charm_battery_level
-        name: Blue Charm Beacon
+      #- entity: sensor.blue_charm_battery_level
+      #  name: Blue Charm Beacon
+      - entity: sensor.upstairs_br_vent_1_battery
+        name: Upstairs BR Vent 1
+      - entity: sensor.upstairs_br_vent_2_battery
+        name: Upstairs BR Vent 2

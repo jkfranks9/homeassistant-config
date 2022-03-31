@@ -23,10 +23,10 @@
     month: "{{ as_timestamp(strptime(trigger.from_state.last_changed.strftime('%Y-%m-%d %H:%M:%S.%f'), '%Y-%m-%d %H:%M:%S.%f')) | timestamp_custom('%b') | lower() }}"
   
   action:
-    #- service: system_log.write
-    #  data:
-    #    message: "JKF: calories from state last changed: '{{ trigger.from_state.last_changed }}'"
-    #    level: info
+    - service: system_log.write
+      data:
+        message: "calories from state last changed: '{{ trigger.from_state.last_changed }}'"
+        level: debug
     
     # Set the correct history value using the month variable to complete the target entity ID.
     - service: input_number.set_value

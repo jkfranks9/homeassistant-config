@@ -38,12 +38,12 @@
 - platform: trend
   sensors:
     
-    # Measures humidity falling by 50 over 20 minutes.
+    # Measures humidity falling by 40 over 22 minutes.
     dryer_humidity_falling:
       entity_id: sensor.dryer_humidity
-      sample_duration: 1200   # 20m * 60s
-      max_samples: 240        # 1200 / 5 (sampling interval)
-      min_gradient: -0.04167  # -50 / 1200
+      sample_duration: 1320   # 22m * 60s
+      max_samples: 264        # 1320 / 5 (sampling interval)
+      min_gradient: -0.03030  # -40 / 1200
     
     # Measures temperature falling by 20 over 8 minutes.
     dryer_temperature_falling:

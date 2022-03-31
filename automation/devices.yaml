@@ -474,20 +474,129 @@
 #     Washer     #
 #================#
 
+# Set the washer start time, based on the power state changing from stop to fill (or a potential unknown to fill).
+- alias: Start Washer
+  id: 'start_washer'
+  trigger:
+    - platform: state 
+      entity_id: sensor.washer_power_state
+      from: 'stop'
+      to: 'fill'
+    - platform: state 
+      entity_id: sensor.washer_power_state
+      from: 'unknown'
+      to: 'fill'
+  
+  action:
+    
+    # Set the washer start time.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.washer_start
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+# Set the washer load size, based on the amount of time spent on the initial fill. This is triggered only
+# when the power state changes from fill to raise, and the washer state is Wash Fill.
+- alias: Set Washer Load Size
+  id: 'set_washer_load_size'
+  trigger:
+    - platform: state
+      entity_id: sensor.washer_power_state
+      from: 'fill'
+      to: 'raise'
+  
+  condition:
+    - condition: state
+      entity_id: input_select.washer_state
+      state: 'Wash Fill'
+  
+  action:
+    
+    # Set the washer load size.
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.washer_load_size
+      data:
+        value: >
+          {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
+          {% set seconds = (now().timestamp() - start) %}
+          {% if   seconds >= 240 and seconds < 350 %} Small
+          {% elif seconds >= 350 and seconds < 500 %} Medium
+          {% elif seconds >= 500  %}                  Large
+          {% endif %}
+
+# Start the washer rinse fill blackout timer. This is used to ignore the fabric softener injection
+# during the rinse fill, which otherwise wreaks havoc on the operation control algorithm.
+- alias: Start Washer Rinse Fill Blackout Timer
+  id: 'start_washer_rinse_fill_blackout_timer'
+  trigger:
+    - platform: state 
+      entity_id: input_select.washer_state
+      from: 'Wash Drain'
+      to: 'Rinse Fill'
+  
+  action:
+    
+    # The timer amount is based on the washer load size.
+    - choose:
+      
+      # Small
+      - conditions:
+        - condition: state
+          entity_id: input_select.washer_load_size
+          state: 'Small'
+        sequence:
+          - service: timer.start
+            data:
+              entity_id: timer.wsh
+              duration: '00:03:00'
+        
+      # Medium
+      - conditions:
+        - condition: state
+          entity_id: input_select.washer_load_size
+          state: 'Medium'
+        sequence:
+          - service: timer.start
+            data:
+              entity_id: timer.wsh
+              duration: '00:04:00'
+        
+      # Large
+      - conditions:
+        - condition: state
+          entity_id: input_select.washer_load_size
+          state: 'Large'
+        sequence:
+          - service: timer.start
+            data:
+              entity_id: timer.wsh
+              duration: '00:05:00'
+      
+      # Invalid load size, log it. Then use the medium value and hope for the best.
+      default:
+        - service: system_log.write
+          data:
+            message: "Invalid washer load size {{ states('input_select.washer_load_size') }} specified"
+            level: error
+        - service: timer.start
+          data:
+            entity_id: timer.wsh
+            duration: '00:04:00'
+
 # Washer operation control. The normal cycle as reflected in the washer power state sensor proceeds as follows:
 #
 # - stop
-# - fill    <-- filling
-# - raise   <-- start agitating
-# - drop    <-- stop agitating
-# - pause   <-- short pause
-# - fill    <-- filling
-#   raise   <-- optional fabric softener injection
-#   drop    <-- optional fabric softener injection
-#   fill    <-- optional fabric softener injection
-# - raise   <-- start agitating
-# - drop    <-- stop agitating
-# - pause   <-- short pause
+# - fill      <-- filling
+# - raise     <-- start agitating
+# - drop      <-- stop agitating
+# - pause     <-- short pause
+# - fill      <-- filling
+# - [various] <-- optional fabric softener injection
+# - raise     <-- start agitating
+# - drop      <-- stop agitating
+# - pause     <-- short pause
 # - stop
 #
 # This should result in the following input select transitions:
@@ -500,12 +609,17 @@
 # - Rinse
 # - Rinse Drain
 # - Stop
-- alias: Washer Operation
-  id: 'washer_operation'
+- alias: Set Washer Operation
+  id: 'set_washer_operation'
   trigger:
     - platform: state 
       entity_id: sensor.washer_power_state
   action:
+    
+    # Delay one second so automations (above) that determine the load size have a chance to run before we do.
+    - delay: '00:00:01'
+    
+    # Determine the washer state.
     - service: input_select.select_option
       data:
         entity_id: input_select.washer_state
@@ -514,9 +628,13 @@
           {% set s = states('input_select.washer_state') %}
           {% set fr = trigger.from_state.state %}
           {% set to = trigger.to_state.state %}
+          {% set t = states('timer.wsh') %}
+          
+          {# --Ignore everything if the rinse fill blackout timer is running-- #}
+          {% if t == 'active' %} {{ s }}
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
-          {% if   fr in ['stop', 'unknown'] and to == 'fill' %}                                    Wash Fill
+          {% elif fr in ['stop', 'unknown'] and to == 'fill' %}                                    Wash Fill
           {% elif fr == 'fill'              and to == 'raise'   and s == 'Wash Fill' %}            Wash
           {% elif fr == 'raise'             and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
           {% elif fr == 'pause'             and to == 'fill' %}                                    Rinse Fill
@@ -527,6 +645,7 @@
           {% elif fr == 'drop'  and to in ['fill', 'raise', 'pause'] %} {{ s }}
           {% elif fr == 'fill'  and to in ['pause', 'drop', 'raise'] %} {{ s }}
           {% elif fr == 'raise' and to == 'drop' %}                     {{ s }}
+          {% elif fr == 'pause' and to in ['drop', 'raise'] %}          {{ s }}
           
           {# --Catch-all, default to Stop-- #}
           {% else %} Stop
@@ -549,7 +668,7 @@
   id: turn_off_dryer_running
   trigger:
     - platform: template
-      value_template: "{{ states('sensor.dryer_humidity_falling') and states('sensor.dryer_temperature_falling') }}"
+      value_template: "{{ is_state('binary_sensor.dryer_humidity_falling', 'on') and is_state('binary_sensor.dryer_temperature_falling', 'on') }}"
   action:
     - service: input_boolean.turn_off
       entity_id: input_boolean.dryer_running

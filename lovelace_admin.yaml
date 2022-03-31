@@ -20,6 +20,7 @@ views:
   - !include /config/lovelace/dash_overview/views/theater.yaml
   - !include /config/lovelace/dash_overview/views/office.yaml
   - !include /config/lovelace/dash_overview/views/devices.yaml
+  - !include /config/lovelace/dash_overview/views/levels.yaml
   - !include /config/lovelace/dash_overview/views/monitoring.yaml
   - !include /config/lovelace/dash_overview/views/controls.yaml
   - !include /config/lovelace/dash_overview/views/tracking.yaml

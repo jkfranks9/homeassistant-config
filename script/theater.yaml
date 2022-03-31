@@ -351,73 +351,9 @@ start_turntable:
         activity: 'LP Player'
         lighting: 'script.set_theater_dim'
 
-#=======================#
-#     Pause/Resume      #
-#=======================#
-
-# Pause the current harmony activity and turn on some lights.
-
-# Worker script
-pause_worker:
-  alias: Pause Worker
-  fields:
-    device:
-      description: 'The Harmony device name to be paused.'
-      example: 'NVIDIA Shield TV'
-  
-  sequence:
-  
-    # Establish 'idle' theater lighting.
-    - service: script.turn_on
-      entity_id: script.set_theater_idle
-  
-    # Send the pause command to the target device.
-    - service: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: Pause
-        device: "{{ device }}"
-
-# Call the worker script with the appropriate device based on the Harmony activity.
-# Note: The turntable cannot be controlled, so all we do is turn on some lights.
-pause_cinema:
-  alias: Pause Cinema
-  sequence:
-    - choose:
-      - conditions:
-        - condition: template
-          value_template: >
-            {{ is_state('sensor.harmony_hub', 'Stream Player') or
-               is_state('sensor.harmony_hub', 'Enable Streaming') }}
-        sequence:
-          - service: script.pause_worker
-            data:
-              device: 'NVIDIA Shield TV'
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('sensor.harmony_hub', 'BD Player') }}"
-        sequence:
-          - service: script.pause_worker
-            data:
-              device: 'Sony DVD/Blu-ray Player'
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('sensor.harmony_hub', 'LD Player') }}"
-        sequence:
-          - service: script.pause_worker
-            data:
-              device: 'Panasonic Laserdisc Player'
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('sensor.harmony_hub', 'LP Player') }}"
-        sequence:
-          - service: script.turn_on
-            entity_id: script.set_theater_idle
-      default:
-        - service: system_log.write
-          data:
-            message: Current activity does not support pause command.
-            level: warning
+#========================#
+#     Cinema Resume      #
+#========================#
 
 # Resume the current harmony activity and restore the lighting.
 

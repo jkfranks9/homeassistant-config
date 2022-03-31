@@ -30,10 +30,8 @@ cards:
   
   - type: conditional
     conditions:
-      - entity: media_player.shield_tv
+      - entity: media_player.kodi
         state_not: 'off'
-      - entity: sensor.shield_tv_app
-        state: 'Kodi'
     card:  
       type: custom:mini-media-player
       entity: media_player.kodi
@@ -41,4 +39,4 @@ cards:
       hide:
         volume: true
         mute: true
-        power: true
+        power_state: false

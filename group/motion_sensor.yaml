@@ -1,0 +1,16 @@
+#========================#
+#     Motion Sensors     #
+#========================#
+
+Downstairs Motion:
+  entities:
+    - binary_sensor.downstairs_occupancy                     # ecobee thermostat
+    - binary_sensor.main_floor_occupancy                     # ecobee room sensor
+    - binary_sensor.laundry_room_motion_detector_occupancy   # Linkind
+    - binary_sensor.guest_bath_motion_detector_occupancy     # Linkind
+    - binary_sensor.master_bath_motion_detector_occupancy    # Linkind
+
+Upstairs Motion:
+  entities:
+    - binary_sensor.upstairs_occupancy                       # ecobee thermostat
+    - binary_sensor.theater_occupancy                        # ecobee room sensor

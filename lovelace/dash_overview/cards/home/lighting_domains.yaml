@@ -61,6 +61,26 @@ cards:
     mode: horizontal
     cards:
       - type: 'custom:button-card'
+        template: motion_button
+        entity: group.downstairs_motion
+        
+      - type: 'custom:button-card'
+        template: motion_button
+        entity: group.upstairs_motion
+      
+      - type: 'custom:button-card'
+        template: blank_button
+      
+      - type: 'custom:button-card'
+        template: blank_button
+      
+      - type: 'custom:button-card'
+        template: blank_button
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+      - type: 'custom:button-card'
         template: temperature_button
         entity: sensor.office_temperature
       

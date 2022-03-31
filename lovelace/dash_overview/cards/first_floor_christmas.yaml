@@ -98,6 +98,26 @@ config:
           service_data:
             class: 'static-temp'
     
+    # Thermostat
+    - entity: climate.downstairs
+      tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data:
+          class: |
+            >
+            switch (entity.attributes.preset_mode.toLowerCase()) {
+              case 'away':
+                return 'thermostat-away';
+              
+              case 'home':
+                return 'thermostat-home';
+              
+              default:
+                return 'thermostat-sleep';
+            }
+    
     # Appliances
     - entities:
         - switch.sonoff_microwave

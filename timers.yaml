@@ -19,7 +19,22 @@
 #================#
 
 vac:
-  name: 'Vacuum Timer'  
+  name: 'Vacuum Timer'
+
+#================#
+#     Washer     #
+#================#
+
+wsh:
+  name: 'Washer Rinse Fill Blackout'
+
+#=====================#
+#     Zigbee2MQTT     #
+#=====================#
+
+z2m:
+  name: Zigbee2MQTT Join Minutes Remaining
+  duration: 120
 
 #=======================#
 #     Notifications     #
@@ -88,10 +103,5 @@ n19:
 n20:
   name: 'Dryer Done Notification'
 
-#=====================#
-#     Zigbee2MQTT     #
-#=====================#
-
-z2m:
-  name: Zigbee2MQTT Join Minutes Remaining
-  duration: 120
+n21:
+  name: 'Vacuum Needs Maintenance Motification'

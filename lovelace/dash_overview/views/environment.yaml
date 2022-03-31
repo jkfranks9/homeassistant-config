@@ -10,8 +10,10 @@ cards:
     layout_type: custom:vertical-layout
     cards:
       - !include /config/lovelace/dash_overview/cards/environment/thermostat.yaml
+      - type: custom:layout-break
+      - !include /config/lovelace/dash_overview/cards/environment/hvac_vents.yaml
       
-      - type: custom:layout-break      
+      - type: custom:layout-break
       - type: custom:stack-in-card
         title: Area Temperatures
         cards:

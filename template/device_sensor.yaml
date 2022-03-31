@@ -21,14 +21,6 @@
       unique_id: harmony_hub
       state: "{{ state_attr('remote.harmony_hub', 'current_activity') }}"
 
-    #---------------------------------#
-    #   -- Shield TV Application --   #
-    #---------------------------------#
-    
-    - name: 'Shield TV App'
-      unique_id: shield_tv_app
-      state: "{{ state_attr('media_player.shield_tv', 'app_name') }}"
-
     #--------------------------#
     #   -- Ecovacs DEEBOT --   #
     #--------------------------#

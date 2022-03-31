@@ -80,7 +80,7 @@ device_tracker:
   - platform: bluetooth_tracker
     interval_seconds: 15
     consider_home: 150
-    track_new_devices: yes
+    track_new_devices: true
 
 # Life360
 life360:
@@ -101,7 +101,8 @@ proximity:
   mike_home:
     zone: home
     devices:
-      - device_tracker.mike_galaxy
+      #- device_tracker.mike_galaxy
+      - device_tracker.life360_michael_franks
     unit_of_measurement: m
   sarah_home:
     zone: home
@@ -202,7 +203,7 @@ shell_command:
   copy_floorplan_christmas: python /config/python/copy_floorplan_christmas.py
   copy_floorplan_normal:    python /config/python/copy_floorplan_normal.py
   delete_junk_log_files:    'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
-  reboot_nut_service:       ssh -i /config/ssh/id_rsa -o 'StrictHostKeyChecking=no' pi@{{ nut_server }} '~/reboot_nut_service'
+  reboot_nut_service:       "ssh -i /config/ssh/id_rsa -o 'StrictHostKeyChecking=no' pi@{{ nut_server }} '~/reboot_nut_service'"
 
 # Google calendar API
 google:

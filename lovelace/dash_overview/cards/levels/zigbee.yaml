@@ -3,24 +3,9 @@
 #===================#
 
 type: custom:stack-in-card
-title: Signal Levels
+title: Zigbee Signal Levels
 mode: vertical
 cards:
-  
-  - type: custom:battery-state-card
-    icon: mdi:signal
-    unit: rssi
-    entities:
-      - entity: sensor.porch_wifi_signal
-        name: Porch Sensor
-      - entity: sensor.attic_wifi_signal
-        name: Attic Sensor
-      - entity: sensor.garage_wifi_signal
-        name: Garage Sensor
-      - entity: sensor.shelly1_garage_north_rssi
-        name: Garage North
-      - entity: sensor.shelly1_garage_south_rssi
-        name: Garage South
   
   - type: custom:battery-state-card
     icon: mdi:signal
@@ -35,6 +20,12 @@ cards:
       - entity: sensor.master_bath_motion_detector_linkquality
         name: Master Bath Motion Detector
         attribute: linkquality
-      - entity: switch.sonoff_s31_zb
-        name: Sonoff Router
+      - entity: cover.upstairs_br_vent_1
+        name: Upstairs BR Vent 1
         attribute: linkquality
+      - entity: cover.upstairs_br_vent_2
+        name: Upstairs BR Vent 2
+        attribute: linkquality
+      #- entity: switch.sonoff_s31_zb
+      #  name: Sonoff Router
+      #  attribute: linkquality

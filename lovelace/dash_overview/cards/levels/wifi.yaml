@@ -1,0 +1,23 @@
+#===================#
+#     WiFi Card     #
+#===================#
+
+type: custom:stack-in-card
+title: WiFi Signal Levels
+mode: vertical
+cards:
+  
+  - type: custom:battery-state-card
+    icon: mdi:signal
+    unit: rssi
+    entities:
+      - entity: sensor.porch_wifi_signal
+        name: Porch Sensor
+      - entity: sensor.attic_wifi_signal
+        name: Attic Sensor
+      - entity: sensor.garage_wifi_signal
+        name: Garage Sensor
+      - entity: sensor.shelly1_garage_north_rssi
+        name: Garage North
+      - entity: sensor.shelly1_garage_south_rssi
+        name: Garage South

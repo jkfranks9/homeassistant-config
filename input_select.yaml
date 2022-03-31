@@ -68,6 +68,17 @@ grandchild_sleepover_location:
     - Guest
     - Master
 
+#==========================#
+#     Washer Load Size     #
+#==========================#
+
+washer_load_size:
+  name: Washer Load Size
+  options:
+    - Small
+    - Medium
+    - Large
+
 #======================#
 #     Washer State     #
 #======================#
@@ -107,5 +118,5 @@ theme_list:
   options:
     - Pink
     - Teal
-    - Google Dark Theme
-    - synthwave
+    - Google Dark
+    - Synth Wave

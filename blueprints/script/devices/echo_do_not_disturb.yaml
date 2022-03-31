@@ -1,0 +1,35 @@
+# Enable do not disturb on an Amazon Echo media player.
+
+blueprint:
+  name: Echo Do Not Disturb
+  description: Enable do not disturb on an Amazon Echo media player.
+  domain: script
+  
+  input:
+    switch_entity:
+      name: Target Echo Do Not Disturb Switch
+      description: Echo media player switch to enable do not disturb.
+      selector:
+        entity:
+          domain: switch
+    
+    mute_duration_entity:
+      name: Do Not Disturb Duration
+      description: Entity that contains the do not disturb duration in hours.
+      selector:
+        entity:
+          domain: input_number  
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_mute_duration_entity: !input mute_duration_entity    
+
+sequence:
+  - service: switch.turn_on
+    entity_id: !input switch_entity
+  
+  - delay:
+      hours: "{{ states(input_mute_duration_entity) }}"
+  
+  - service: switch.turn_off
+    entity_id: !input switch_entity

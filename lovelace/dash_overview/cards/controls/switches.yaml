@@ -9,7 +9,6 @@ cards:
     show_header_toggle: false
     entities:
       - entity: input_boolean.grandchild_home
-  - type: entities
-    show_header_toggle: false
-    entities:
+        icon: mdi:human-male-girl
       - entity: input_boolean.christmas_mode
+        icon: mdi:pine-tree

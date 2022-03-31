@@ -241,3 +241,33 @@ zigbee2mqtt_join_minutes:
   max: 5
   step: 1
   mode: slider
+  
+#============================#
+#     Echo Mute Duration     #
+#============================#
+
+# These keep the duration for an Echo device mute.
+guest_bedroom_echo_mute_duration:
+  name: Guest Bedroom Echo Mute Duration
+  min: 1
+  max: 12
+
+upstairs_bedroom_echo_mute_duration:
+  name: Upstairs Bedroom Echo Mute Duration
+  min: 1
+  max: 12
+  
+#============================#
+#     HVAC Vent Position     #
+#============================#
+
+# These keep the position (percentage open) for an HVAC vent (0 means closed).
+upstairs_bedroom_vent_1_position:
+  name: Upstairs Bedroom Vent 1 Position
+  min: 0
+  max: 100
+
+upstairs_bedroom_vent_2_position:
+  name: Upstairs Bedroom Vent 2 Position
+  min: 0
+  max: 100

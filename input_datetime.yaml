@@ -9,6 +9,16 @@ treadmill_start:
   has_time: true
 
 #=======================#
+#     Washer Status     #
+#=======================#
+
+# This keeps the washer start time so the load size can be calculated.
+washer_start:
+  name: Washer Start
+  has_date: true
+  has_time: true
+
+#=======================#
 #     Extended Away     #
 #=======================#
 

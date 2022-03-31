@@ -153,6 +153,26 @@
         message: 'Vacuum appears to be stuck (or not charging).'
         channel: Home Assistant
 
+# Vacuum needs maintenance.
+- alias: Notify Vacuum Needs Maintenance
+  id: 'notify_vacuum_needs_maintenance'
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        source: 'sleekxmppfs.basexmpp'
+        level: 'ERROR'
+  condition:
+    - condition: template
+      value_template: "{{ 'error' in trigger.event.data.message }}"
+  action:
+    - service: script.throttle_mobile_notification
+      data:
+        timer_entity: timer.n21
+        title: 'Action required:'
+        message: 'Vacuum needs maintenance.'
+        channel: Home Assistant
+
 # NUT Server down
 #- alias: Notify NUT Server Down
 #  id: 'notify_nut_server_down'
@@ -405,7 +425,7 @@
     path: notification/proximity_notify.yaml
     input:
       proximity_entity: proximity.mike_home
-      proximity_meters: 20000
+      proximity_meters: 12000
       person_name: Mike
 
 - alias: Notify Sarah Arriving Soon
@@ -414,7 +434,7 @@
     path: notification/proximity_notify.yaml
     input:
       proximity_entity: proximity.sarah_home
-      proximity_meters: 20000
+      proximity_meters: 12000
       person_name: Sarah
 
 - alias: Notify David Arriving Soon
@@ -423,7 +443,7 @@
     path: notification/proximity_notify.yaml
     input:
       proximity_entity: proximity.david_home
-      proximity_meters: 20000
+      proximity_meters: 12000
       person_name: David
 
 #==========================#
@@ -615,27 +635,31 @@
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_filter')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: filter
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_headgear_humidifier')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: headgear
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_hose')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: hose
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_mask')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: mask
   action:
     - service: script.throttle_mobile_notification
       data:
         timer_entity: timer.n10
         title: 'Action required:'
-        message: 'CPAP maintenance due.'
+        message: 'CPAP maintenance due ({{ trigger.id }}).'
         channel: Home Assistant
 
 # HVAC maintenance

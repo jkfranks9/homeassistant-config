@@ -24,6 +24,7 @@ garage_door_button:
   show_icon: true
   show_name: true
   icon: 'hass:garage'
+  size: 30%
   tap_action:
     action: call-service
     service: switch.turn_on
@@ -35,6 +36,62 @@ garage_door_button:
       icon: 'hass:garage-open'
     - value: 'on'
       name: '[[[ return variables.var_name_closed ]]]'
+
+#============================#
+#     Toggle Button Card     #
+#============================#
+toggle_button:
+  show_icon: true
+  show_name: true
+  tap_action:
+    action: toggle
+
+#==================================#
+#     Call Service Button Card     #
+#==================================#
+call_service_button:
+  variables:
+    var_script: script.mute_guest_bedroom_echo
+  show_icon: true
+  show_name: true
+  tap_action:
+    action: call-service
+    service: script.turn_on
+    service_data:
+      entity_id: '[[[ return variables.var_script ]]]'
+
+#===============================#
+#     HVAC Vent Button Card     #
+#===============================#
+
+hvac_vent_button:
+  variables:
+    var_name_open: Upstairs BR 1 open
+    var_name_closed: Upstairs BR 1 closed
+  show_icon: true
+  show_name: true
+  icon: 'mdi:hvac'
+  size: 30%
+  tap_action:
+    action: none
+  state:
+    - value: 'closed'
+      name: '[[[ return variables.var_name_closed ]]]'
+      icon: 'mdi:hvac-off'
+    - value: 'open'
+      name: '[[[ return variables.var_name_open ]]]'
+
+#=======================================#
+#     Call Service Vent Button Card     #
+#=======================================#
+call_service_vent_button:
+  show_icon: true
+  show_name: true
+  tap_action:
+    action: call-service
+    service: script.toggle_upstairs_br_vent
+    service_data:
+      vent_entity: '[[[ return entity.entity_id ]]]'
 
 #=================================#
 #     Light Group Button Card     #
@@ -95,5 +152,32 @@ temperature_button:
   show_icon: false
   show_name: false
   show_state: true
+  tap_action:
+    action: 'none'
+
+#============================#
+#     Motion Button Card     #
+#============================#
+
+motion_button:
+  show_icon: true
+  show_name: false
+  tap_action:
+    action: 'none'
+  state:
+    - value: 'on'
+      icon: mdi:motion-sensor
+    - value: 'off'
+      icon: mdi:motion-sensor-off
+    - value: 'off'
+
+#===========================#
+#     Blank Button Card     #
+#===========================#
+
+blank_button:
+  show_icon: false
+  show_name: false
+  show_state: false
   tap_action:
     action: 'none'
