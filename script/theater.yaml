@@ -476,6 +476,11 @@ get_all_kodi_movies:
         command: 'Home'
         device: NVIDIA Shield TV
     - delay: '00:00:02'
+    
+    # Turn off the Kodi media player.
+    - service: media_player.turn_off
+      data:
+        entity_id: media_player.kodi
   
     # Turn the Shield TV off again.
     - service: media_player.turn_off

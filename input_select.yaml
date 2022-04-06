@@ -36,26 +36,6 @@ kodi_movies:
   options:
     - Select
 
-#========================================#
-#     Ecobee Thermostat Preset Modes     #
-#========================================#
-
-# Downstairs thermostat
-downstairs_ecobee_preset_mode:
-  name: Downstairs Ecobee Preset Mode
-  options:
-    - Away
-    - Home
-    - Sleep
-
-# Upstairs thermostat
-upstairs_ecobee_preset_mode:
-  name: Upstairs Ecobee Preset Mode
-  options:
-    - Away
-    - Home
-    - Sleep
-
 #=======================================#
 #     Grandchild Sleepover Location     #
 #=======================================#

@@ -34,7 +34,7 @@ logs:
   homeassistant.components.automation.reset_manual_exercise_controls:         warning
   homeassistant.components.automation.reset_master_bedroom_lamp:              warning
   homeassistant.components.automation.reset_office_lamp:                      warning
-  homeassistant.components.automation.restore_movie_list_on_start:            info
+  homeassistant.components.automation.restore_movie_list_on_start:            warning
   homeassistant.components.automation.restore_timers:                         warning
   homeassistant.components.automation.run_guest_bath_motion_based_light:      warning
   homeassistant.components.automation.run_laundry_room_motion_based_light:    warning
@@ -89,11 +89,11 @@ logs:
 
   # Custom components
   custom_components.hacs:                              warning
-  custom_components.kodi.media_player:                 debug
+  custom_components.kodi.media_player:                 info
   custom_components.epson_projector:                   info
   #custom_components.proximity:                         debug
   custom_components.pyscript.file.populate_all_movies: info
-  custom_components.pyscript.file.restore_all_movies:  debug
+  custom_components.pyscript.file.restore_all_movies:  info
   custom_components.sonoff.sonoff_cloud:               info
   custom_components.thermal_comfort:                   info
 
@@ -156,6 +156,8 @@ filters:
     - "get_circles: .* Max retries exceeded"
     - "Suppressing further errors until OK"
     - "get_circles: OK again"
+    - "get_circle_members .*: CommError: 400 Client Error: Bad Request for url"
+    - "get_circles: CommError: 500 Server Error: Internal Server Error for url"
 
   homeassistant.components.light:
     - "Setup of light platform .* is taking over 10 seconds"

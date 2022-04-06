@@ -221,13 +221,13 @@
     - service: script.turn_on
       entity_id: script.set_theater_dim
 
-#============================================#
-#     Adguard Control For Paramount Plus     #
-#============================================#
+#===================================#
+#     Shield Application Change     #
+#===================================#
 
-# Paramount Plus cannot function if Adguard protection is turned on.
-- alias: Toggle Adguard For Paramount
-  id: toggle_adguard_for_paramount
+# Handle various things that are required when the Shield application changes.
+- alias: Handle Shield Application Change
+  id: handle_shield_application_change
   
   # Trigger on the Shield application name changing.
   trigger:
@@ -237,7 +237,7 @@
   
   action:
     
-    # Take action based on the application name.
+    # Paramount Plus cannot function if Adguard protection is turned on.
     - choose:
       
       # Turn off Adguard if the application is Paramount.
@@ -250,4 +250,16 @@
       # Turn on Adguard for all other applications. Note that it's also turned on when the cinema
       # is closed, in case Paramount was the last application used.
       default:
-        - service: script.turn_on_adguard       
+        - service: script.turn_on_adguard  
+    
+    # The Kodi media player needs to be turned off if we're changing from Kodi to something else.
+    - choose:
+      
+      # Turn off the Kodi media player if needed, else do nothing.
+      - conditions:
+        - condition: template
+          value_template: "{{ trigger.from_state and trigger.from_state == 'Kodi' }}"
+        sequence:
+          - service: media_player.turn_off
+            data:
+              entity_id: media_player.kodi

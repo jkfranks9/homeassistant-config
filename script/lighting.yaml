@@ -22,6 +22,8 @@ bedtime:
     - service: script.turn_on
       entity_id: script.lock_pc
       
+    - delay: '00:00:07'
+      
     # Turn off appropriate lights.
     - service: script.turn_off_bedtime_lights
   

@@ -57,14 +57,12 @@
     - service: script.create_thermostat_vacation
       data:
         thermostat_entity: climate.downstairs
-        frontend_entity: input_select.downstairs_ecobee_preset_mode
-        control_flag: input_boolean.downstairs_ecobee_preset_mode_triggered
+        type: Extended
     
     - service: script.create_thermostat_vacation
       data:
         thermostat_entity: climate.upstairs
-        frontend_entity: input_select.upstairs_ecobee_preset_mode
-        control_flag: input_boolean.upstairs_ecobee_preset_mode_triggered
+        type: Extended
 
 # Triggered on the end of an extended away period.
 - alias: Disable Extended Away Mode
@@ -84,14 +82,61 @@
     - service: script.remove_thermostat_vacation
       data:
         thermostat_entity: climate.downstairs
-        frontend_entity: input_select.downstairs_ecobee_preset_mode
-        control_flag: input_boolean.downstairs_ecobee_preset_mode_triggered
+        type: Extended
     
     - service: script.remove_thermostat_vacation
       data:
         thermostat_entity: climate.upstairs
-        frontend_entity: input_select.upstairs_ecobee_preset_mode
-        control_flag: input_boolean.upstairs_ecobee_preset_mode_triggered
+        type: Extended
+
+#=====================#
+#     Family Home     #
+#=====================#
+
+# Add a vacation to simulate a temperature hold when family members are here.
+# This only applies to the downstairs.
+- alias: Add Family Temperature Hold
+  id: add_family_temperature_hold
+  
+  trigger:
+    - platform: state
+      entity_id: group.family_members
+      from: 'not_home'
+      to: 'home'
+    - platform: state
+      entity_id: input_boolean.grandchild_home
+      from: 'off'
+      to: 'on'
+  
+  action:
+    
+    # Add thermostat vacation.
+    - service: script.create_thermostat_vacation
+      data:
+        thermostat_entity: climate.downstairs
+        type: Temporary
+
+# Remove family temperature hold.
+- alias: Remove Family Temperature Hold
+  id: remove_family_temperature_hold
+  
+  trigger:
+    - platform: state
+      entity_id: group.family_members
+      from: 'home'
+      to: 'not_home'
+    - platform: state
+      entity_id: input_boolean.grandchild_home
+      from: 'on'
+      to: 'off'
+  
+  action:
+    
+    # Remove thermostat vacation.
+    - service: script.remove_thermostat_vacation
+      data:
+        thermostat_entity: climate.downstairs
+        type: Temporary
 
 #============================================#
 #     Temperature High / Low Water Marks     #

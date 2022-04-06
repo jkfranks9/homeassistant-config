@@ -71,7 +71,7 @@ evaluate_weather_condition:
       default:
         - service: system_log.write
           data:
-            message: Unexpected weather code {{ sensor.openweathermap_weather_code }}
+            message: Unexpected weather code {{ states('sensor.openweathermap_weather_code') }}
             level: warning
         - service: input_select.select_option
           entity_id: input_select.weather_condition
@@ -90,45 +90,57 @@ create_thermostat_vacation:
     thermostat_entity:
       description: The thermostat on which to create a vacation.
     
-    frontend_entity:
-      description: The frontend entity containing the displayed preset modes.
-    
-    control_flag:
-      description: Input boolean flag to control automation(s) from triggering unnecessarily.
+    type:
+      description: The type of vacation to be created.
+      selector:
+        select:
+          options:
+            - Extended
+            - Temporary
   
   sequence:
     
-    # Turn on the control flag.
-    - service: input_boolean.turn_on
-      data:
-        entity_id: "{{ control_flag }}"
-    
-    # Add 'Vacation' to the frontend preset mode display options.
-    - service: input_select.set_options
-      target:
-        entity_id: "{{ frontend_entity }}"
-      data:
-        options: ['Away', 'Home', 'Sleep', 'Vacation']
-    
     # Create the vacation on the thermostat. Note that the name is limited to 12 characters.
-    - service: ecobee.create_vacation
-      data_template:
-        entity_id: "{{ thermostat_entity }}"
-        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-        start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-        start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
-        end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
-        end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
-        heat_temp: 59
-        cool_temp: 83
-    
-    # Short delay.
-    - delay: '00:00:01'
-    
-    # Turn off the control flag.
-    - service: input_boolean.turn_off
-      data:
-        entity_id: "{{ control_flag }}"
+    - choose:
+        
+      # For an extended vacation, use the extended away dates/times, and a wide temperature range.
+      - conditions:
+        - condition: template
+          value_template: "{{ type == 'Extended' }}"
+        sequence:
+          - service: ecobee.create_vacation
+            data_template:
+              entity_id: "{{ thermostat_entity }}"
+              vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+              start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+              start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
+              end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
+              end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
+              heat_temp: 59
+              cool_temp: 83
+      
+      # For a temporary vacation, use today's date (plus 3 days for the end), and a normal temperature range.
+      - conditions:
+        - condition: template
+          value_template: "{{ type == 'Temporary' }}"
+        sequence:
+          - service: ecobee.create_vacation
+            data_template:
+              entity_id: "{{ thermostat_entity }}"
+              vacation_name: "Temporary"
+              start_date: "{{ states('sensor.date') }}"
+              start_time: "{{ now().strftime('%H:%M:%S') }}"
+              end_date: "{{ (as_timestamp(states('sensor.date')) + 259200) | timestamp_custom('%Y-%m-%d') }}"
+              end_time: "{{ now().strftime('%H:%M:%S') }}"
+              heat_temp: 67
+              cool_temp: 77
+      
+      # Invalid type specified, log it.
+      default:
+        - service: system_log.write
+          data:
+            message: "Invalid vacation type {{ type }} specified"
+            level: error
 
 # Remove a vacation for a given thermostat.
 remove_thermostat_vacation:
@@ -137,37 +149,35 @@ remove_thermostat_vacation:
   fields:
     thermostat_entity:
       description: The thermostat on which to remove a vacation.
-    
-    frontend_entity:
-      description: The frontend entity containing the displayed preset modes.
-    
-    control_flag:
-      description: Input boolean flag to control automation(s) from triggering unnecessarily.
   
   sequence:
     
-    # Turn on the control flag.
-    - service: input_boolean.turn_on
-      data:
-        entity_id: "{{ control_flag }}"
-    
     # Remove the vacation on the thermostat. Note that the name is limited to 12 characters.
-    - service: ecobee.delete_vacation
-      data_template:
-        entity_id: "{{ thermostat_entity }}"
-        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-    
-    # Remove 'Vacation' from the frontend preset mode display options.
-    - service: input_select.set_options
-      target:
-        entity_id: "{{ frontend_entity }}"
-      data:
-        options: ['Away', 'Home', 'Sleep']
-    
-    # Short delay.
-    - delay: '00:00:01'
-    
-    # Turn off the control flag.
-    - service: input_boolean.turn_off
-      data:
-        entity_id: "{{ control_flag }}"
+    - choose:
+        
+      # For an extended vacation, use the extended away start date.
+      - conditions:
+        - condition: template
+          value_template: "{{ type == 'Extended' }}"
+        sequence:
+          - service: ecobee.delete_vacation
+            data_template:
+              entity_id: "{{ thermostat_entity }}"
+              vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+      
+      # For a temporary vacation, use the hardcoded name.
+      - conditions:
+        - condition: template
+          value_template: "{{ type == 'Temporary' }}"
+        sequence:
+          - service: ecobee.delete_vacation
+            data_template:
+              entity_id: "{{ thermostat_entity }}"
+              vacation_name: "Temporary"
+      
+      # Invalid type specified, log it.
+      default:
+        - service: system_log.write
+          data:
+            message: "Invalid vacation type {{ type }} specified"
+            level: error

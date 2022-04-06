@@ -22,6 +22,7 @@
   condition:
     - condition: time
       after: '23:00:00'
+      before: '07:30:00'
   action:
     - service: input_boolean.turn_on
       entity_id: input_boolean.nighttime
@@ -37,6 +38,7 @@
   condition:
     - condition: time
       after: '01:00:00'
+      before: '07:30:00'
   action:
     - service: input_boolean.turn_on
       entity_id: input_boolean.sleeptime
@@ -54,14 +56,15 @@
     - platform: homeassistant
       event: start
   condition:
-    condition: or
-    conditions:
-      - condition: time
-        after: '07:30:00'
-      - condition: numeric_state
-        entity_id: sun.sun
-        attribute: elevation
-        above: 2.0
+    - condition: or
+      conditions:
+        - condition: time
+          after: '07:30:00'
+          before: '23:00:00'
+        - condition: numeric_state
+          entity_id: sun.sun
+          attribute: elevation
+          above: 2.0
   action:
     - service: input_boolean.turn_off
       entity_id: input_boolean.nighttime
@@ -258,10 +261,6 @@
   #  - condition: template
   #    value_template: "{{ 'Error calling async_update on entity media_player.kodi: TransportError' in trigger.event.data.message }}"
   action:
-    - service: system_log.write
-      data:
-        message: "message: '{{ trigger.event.data.message }}'"
-        level: debug
     - service: counter.increment
       data:
         entity_id: counter.kodi_errors

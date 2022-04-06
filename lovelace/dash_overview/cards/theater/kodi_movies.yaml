@@ -16,4 +16,3 @@ cards:
       - entity: script.play_feature_movie
         name: Feature Movie
         action_name: Play
-        
