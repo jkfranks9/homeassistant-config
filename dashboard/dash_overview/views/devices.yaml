@@ -1,0 +1,17 @@
+#=====================#
+#     Devices Tab     #
+#=====================#
+
+title: Devices
+icon: mdi:devices
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/devices/pc.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/zigbee2mqtt.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/washer_dryer.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/devices/storage.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/vacuum.yaml

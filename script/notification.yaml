@@ -6,10 +6,7 @@
 # a timer associated with the particular notification. We only proceed if the timer is idle. Then
 # we start the timer with a duration that ends at 7 AM the next day.
 #
-# Note that we rely on timers being saved and restored over a restart. Since we can't be certain 
-# of the order of those automations vs the automations that drive this script, the timer restoration
-# automation sets a switch once complete, and we wait for that switch to be set before continuing, 
-# thus ensuring that any running timers are once again active before we check them.
+# Note that we rely on timers being restored after a restart.
 throttle_mobile_notification:
   alias: Throttle Mobile Notification
   mode: queued
@@ -18,7 +15,7 @@ throttle_mobile_notification:
   fields:
     timer_entity:
       description: 'The controlling timer entity used to throttle the notification.'
-      example: 'timer.vac'
+      example: 'timer.vacuum'
     title:
       description: 'The title of the message.'
       example: 'Warning:'
@@ -31,10 +28,7 @@ throttle_mobile_notification:
   
   sequence:
     
-    # Ensure timers have been restored after a restart.
-    - wait_template: "{{ is_state('input_boolean.timers_restored', 'on') }}"
-    
-    # Wait a few more seconds just in case.
+    # Wait a few seconds just in case, to be sure timers have been restored.
     - delay: '00:00:03'
     
     # Only continue if the input timer is idle.

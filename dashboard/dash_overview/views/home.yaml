@@ -1,0 +1,22 @@
+#==================#
+#     Home Tab     #
+#==================#
+
+title: Home
+icon: mdi:home
+path: default_view
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/home/persons.yaml
+      - !include /config/dashboard/dash_overview/cards/home/garage.yaml
+      - !include /config/dashboard/dash_overview/cards/home/themes.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/home/lighting_domains.yaml
+      - !include /config/dashboard/dash_overview/cards/home/adguard.yaml
+      - !include /config/dashboard/dash_overview/cards/home/ups.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/home/weather.yaml
+      - type: 'custom:sun-card'

@@ -1,0 +1,103 @@
+#================================#
+#     System Statistics Card     #
+#================================#
+
+type: entities
+title: System
+show_header_toggle: false
+entities:
+  
+  # HA Core
+  - type: custom:multiple-entity-row
+    entity: update.home_assistant_core_update
+    attribute: installed_version
+    name: Home Assistant Core
+    icon: mdi:home-assistant
+    state_header: Current
+    entities:
+      - attribute: latest_version
+        name: Latest
+  
+  # Supervisor
+  - type: custom:multiple-entity-row
+    entity: sensor.supervisor_updates
+    name: Supervisor
+    icon: mdi:home-assistant
+    show_state: false
+    entities:
+      - attribute: newest_version
+        name: Latest
+      - attribute: current_version
+        name: Current
+  
+  # OS
+  - type: custom:multiple-entity-row
+    entity: sensor.home_assistant_operating_system_version
+    name: Operating System
+    icon: mdi:home-assistant
+    state_header: Current
+    entities:
+      - entity: sensor.home_assistant_operating_system_newest_version
+        name: Latest
+
+  - type: divider
+
+  - entity: sensor.last_boot_date_time
+    icon: mdi:calendar
+  - entity: sensor.rpi_uptime
+    icon: mdi:clock-start
+  - entity: sensor.ha_uptime
+    icon: mdi:clock-start
+
+  - type: 'custom:decluttering-card'
+    template: severity_colors
+    variables:
+      - name: Processor Use
+      - entity: sensor.processor_use_percent
+      - icon: mdi:cpu-64-bit
+      - range1_from: 0
+      - range1_to:   60.9
+      - range2_from: 61
+      - range2_to:   85.9
+      - range3_from: 86
+      - range3_to:   100
+
+  - type: 'custom:decluttering-card'
+    template: severity_colors
+    variables:
+      - name: CPU Temp
+      - entity: sensor.cpu_temp
+      - icon: mdi:thermometer
+      - max: 85
+      - range1_from: 0
+      - range1_to:   59.99
+      - range2_from: 60
+      - range2_to:   79.99
+      - range3_from: 80
+      - range3_to:   85
+
+  - type: 'custom:decluttering-card'
+    template: severity_colors
+    variables:
+      - name: Memory Use
+      - entity: sensor.memory_use_percent
+      - icon: mdi:memory
+      - range1_from: 0
+      - range1_to:   60.9
+      - range2_from: 61
+      - range2_to:   85.9
+      - range3_from: 86
+      - range3_to:   100
+
+  - type: 'custom:decluttering-card'
+    template: severity_colors
+    variables:
+      - name: Disk Use
+      - entity: sensor.disk_use_percent
+      - icon: mdi:harddisk
+      - range1_from: 0
+      - range1_to:   60.9
+      - range2_from: 61
+      - range2_to:   85.9
+      - range3_from: 86
+      - range3_to:   100

@@ -1,0 +1,16 @@
+#====================#
+#     Energy Tab     #
+#====================#
+
+title: Energy
+icon: mdi:power-plug
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/energy/power_usage.yaml
+      - !include /config/dashboard/dash_overview/cards/energy/energy_consumption.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/energy/energy_history.yaml
+      - !include /config/dashboard/dash_overview/cards/energy/daily_energy.yaml

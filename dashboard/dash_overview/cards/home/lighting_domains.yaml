@@ -1,0 +1,101 @@
+#===============================#
+#     Lighting Domains Card     #
+#===============================#
+
+type: custom:stack-in-card
+title: Domains
+mode: vertical
+cards:
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+      - type: 'custom:button-card'
+        color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
+        name: Downstairs
+      
+      - type: 'custom:button-card'
+        color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
+        name: Upstairs
+      
+      - type: 'custom:button-card'
+        color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
+        name: Garage
+      
+      - type: 'custom:button-card'
+        color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
+        name: Attic
+      
+      - type: 'custom:button-card'
+        color_type: label-card
+        color: "{{ states('input_text.theme_background_color') }}"
+        name: Outdoor
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+      - type: 'custom:button-card'
+        template: light_group_button
+        entity: group.downstairs_lights
+      
+      - type: 'custom:button-card'
+        template: light_group_button
+        entity: light.upstairs_lights
+      
+      - type: 'custom:button-card'
+        template: light_group_button
+        entity: light.garage_lights
+      
+      - type: 'custom:button-card'
+        template: light_group_button
+        entity: light.attic_light
+      
+      - type: 'custom:button-card'
+        template: light_group_button
+        entity: light.outdoor_lights
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+      - type: 'custom:button-card'
+        template: motion_button
+        entity: group.downstairs_motion
+        
+      - type: 'custom:button-card'
+        template: motion_button
+        entity: group.upstairs_motion
+      
+      - type: 'custom:button-card'
+        template: blank_button
+      
+      - type: 'custom:button-card'
+        template: blank_button
+      
+      - type: 'custom:button-card'
+        template: blank_button
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+      - type: 'custom:button-card'
+        template: temperature_button
+        entity: sensor.office_temperature
+      
+      - type: 'custom:button-card'
+        template: temperature_button
+        entity: sensor.theater_temperature
+      
+      - type: 'custom:button-card'
+        template: temperature_button
+        entity: sensor.garage_temperature
+      
+      - type: 'custom:button-card'
+        template: temperature_button
+        entity: sensor.attic_temperature
+      
+      - type: 'custom:button-card'
+        template: temperature_button
+        entity: sensor.porch_temperature

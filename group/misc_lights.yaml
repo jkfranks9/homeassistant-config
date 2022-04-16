@@ -1,9 +1,0 @@
-#=====================#
-#     Misc Lights     #
-#=====================#
-
-Misc Lights:
-  entities:
-    - light.attic_light
-    - light.garage_lights
-    - group.outdoor_lights

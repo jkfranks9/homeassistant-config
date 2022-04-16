@@ -18,7 +18,7 @@
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n02
+        timer_entity: timer.projector_lamp_notification
         title: 'Action required:'
         message: 'Epson projector lamp might need replacing soon.'
         channel: Home Assistant
@@ -39,7 +39,7 @@
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n03
+        timer_entity: timer.printer_toner_notification
         title: 'Action required:'
         message: 'Printer toner might need replacing soon.'
         channel: Home Assistant
@@ -60,7 +60,7 @@
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n04
+        timer_entity: timer.vacuum_main_brush_notification
         title: 'Action required:'
         message: 'Vacuum main brush might need replacing soon.'
         channel: Home Assistant
@@ -81,7 +81,7 @@
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n05
+        timer_entity: timer.vacuum_side_brush_notification
         title: 'Action required:'
         message: 'Vacuum side brush might need replacing soon.'
         channel: Home Assistant
@@ -102,7 +102,7 @@
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n06
+        timer_entity: timer.vacuum_filter_notification
         title: 'Action required:'
         message: 'Vacuum filter might need replacing soon.'
         channel: Home Assistant
@@ -127,7 +127,7 @@
       state: 'off'
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n16
+        timer_entity: timer.vacuum_lazy_notification
         title: 'Action required:'
         message: 'Vacuum did not run on time.'
         channel: Home Assistant
@@ -148,7 +148,7 @@
       below: 90
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n17
+        timer_entity: timer.vacuum_stuck_notification
         title: 'Action required:'
         message: 'Vacuum appears to be stuck (or not charging).'
         channel: Home Assistant
@@ -168,7 +168,7 @@
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n21
+        timer_entity: timer.vacuum_needs_maintenance_notification
         title: 'Action required:'
         message: 'Vacuum needs maintenance.'
         channel: Home Assistant
@@ -217,7 +217,7 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n07
+        timer_entity: timer.phone_battery_notification
         title: 'Action required:'
         message: 'Phone needs recharging.'
         channel: Home Assistant
@@ -240,7 +240,7 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n08
+        timer_entity: timer.tablet_battery_notification
         title: 'Action required:'
         message: 'Tablet needs recharging.'
         channel: Home Assistant
@@ -264,7 +264,7 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n09
+        timer_entity: timer.guest_bath_motion_detector_battery_notification
         title: 'Action required:'
         message: 'Guest bath motion detector battery needs replacing.'
         channel: Home Assistant
@@ -288,7 +288,7 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n14
+        timer_entity: timer.laundry_room_motion_detector_battery_notification
         title: 'Action required:'
         message: 'Laundry room motion detector battery needs replacing.'
         channel: Home Assistant
@@ -312,7 +312,7 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n09
+        timer_entity: timer.master_bath_motion_detector_battery_notification
         title: 'Action required:'
         message: 'Master bath motion detector battery needs replacing.'
         channel: Home Assistant
@@ -343,7 +343,7 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n01
+        timer_entity: timer.porch_battery_notification
         title: 'Action required:'
         message: 'Porch sensor battery needs recharging.'
         channel: Home Assistant
@@ -401,7 +401,7 @@
     
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n00
+        timer_entity: timer.outdoors_unhealthy_notification
         title: 'Warning:'
         message: 'Outdoor quality is unhealthy.'
         channel: Home Assistant
@@ -455,15 +455,17 @@
   id: 'notify_home_assistant_updated'
   trigger:
     - platform: state
-      entity_id: binary_sensor.latest_available_version_update_available
+      entity_id: update.home_assistant_core_update
       from: 'off'
       to: 'on'
     - platform: homeassistant
       event: start
   condition:
     - condition: state
-      entity_id: binary_sensor.latest_available_version_update_available
+      entity_id: update.home_assistant_core_update
       state: 'on'
+    - condition: template
+      value_template: "{{ not state_attr('update.home_assistant_core_update', 'skipped_version') or state_attr('update.home_assistant_core_update', 'latest_version') != state_attr('update.home_assistant_core_update', 'skipped_version') }}"
   action:
     - delay:
         seconds: "{{ range(1, 5) | random }}"
@@ -471,7 +473,7 @@
       data_template:
         title: 'Home Assistant Updated'
         notification_id: 'ha_update'
-        message: "New version is {{ states('sensor.latest_available_version') }}, currently on {{ states('sensor.installed_version') }}"
+        message: "New version is {{ state_attr('update.home_assistant_core_update', 'latest_version') }}, currently on {{ state_attr('update.home_assistant_core_update', 'installed_version') }}"
 
 # Supervisor update
 - alias: Notify Supervisor Updated
@@ -657,7 +659,7 @@
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n10
+        timer_entity: timer.cpap_reminder_notification
         title: 'Action required:'
         message: 'CPAP maintenance due ({{ trigger.id }}).'
         channel: Home Assistant
@@ -671,17 +673,19 @@
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_downstairs')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: downstairs
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_upstairs')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: upstairs
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n11
+        timer_entity: timer.hvac_reminder_notification
         title: 'Action required:'
-        message: 'HVAC maintenance due.'
+        message: 'HVAC maintenance due ({{ trigger.id }}).'
         channel: Home Assistant
 
 # Payment due
@@ -693,32 +697,37 @@
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_amazon')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: Amazon
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_credit_union')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: CU
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_mortgage')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: mortgage
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_randolph')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: Randolph
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_wells_fargo')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: WF
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n12
+        timer_entity: timer.payment_reminder_notification
         title: 'Action required:'
-        message: 'Payment(s) due.'
+        message: 'Payment due ({{ trigger.id }}).'
         channel: Home Assistant
 
 # Medication reorder
@@ -730,37 +739,43 @@
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_eliquis')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: Eliquis
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_gabapentin')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: gabapentin
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_metoprolol')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: metoprolol
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_rosuvastatin')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: rosuvastatin
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_blood_builder_minis')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: blood builder
     - platform: template
       value_template: >
         {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_methyl_b12')))).replace(hour=6) %}
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
         {{ entity_date <= now_date }}
+      id: B12
   action:
     - service: script.throttle_mobile_notification
       data:
-        timer_entity: timer.n13
+        timer_entity: timer.medication_reminder_notification
         title: 'Action required:'
-        message: 'Medication(s) due for reorder.'
+        message: 'Medication due for reorder ({{ trigger.id }}).'
         channel: Home Assistant
 
 #================================#
@@ -777,15 +792,15 @@
       from: false
       to: true
   action:
-    - service: script.throttle_mobile_notification
+    - service: notify.mobile_app_jon_galaxy
       data:
-        timer_entity: timer.n15
         title: 'Reminder:'
         message: >
           {% set timeobj = strptime(state_attr('calendar.appointments', 'start_time'), '%Y-%m-%d %H:%M:%S') %}
           {% set time = timeobj.strftime('%H:%M') %}
           {{ state_attr('calendar.appointments', 'message') }} tomorrow at {{ time }}
-        channel: Home Assistant
+        data:
+          channel: Home Assistant
 
 #==============================#
 #     Device Notifications     #
@@ -800,12 +815,12 @@
       from: Rinse Drain
       to: Stop
   action:
-    - service: script.throttle_mobile_notification
+    - service: notify.mobile_app_jon_galaxy
       data:
-        timer_entity: timer.n18
         title: 'Action required:'
         message: 'Washer has finished.'
-        channel: Home Assistant
+        data:
+          channel: Home Assistant
     - service: notify.alexa_media
       data:
         target:
@@ -823,12 +838,12 @@
       from: 'on'
       to: 'off'
   action:
-    - service: script.throttle_mobile_notification
+    - service: notify.mobile_app_jon_galaxy
       data:
-        timer_entity: timer.n20
         title: 'Action required:'
         message: 'Dryer has finished, or will be soon.'
-        channel: Home Assistant
+        data:
+          channel: Home Assistant
     - service: notify.alexa_media
       data:
         target:

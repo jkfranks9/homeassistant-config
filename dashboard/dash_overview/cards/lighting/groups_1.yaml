@@ -1,0 +1,32 @@
+#===================================================#
+#     Groups Lighting Card (Christmas Mode Off)     #
+#===================================================#
+
+type: custom:stack-in-card
+title: Light Groups
+mode: horizontal
+cards:
+  - type: 'custom:button-card'
+    template: light_group_button_name
+    name: Interior
+    entity: group.interior_lights
+  
+  - type: 'custom:button-card'
+    template: light_group_button_name
+    name: Bedroom
+    entity: light.bedroom_lights
+  
+  - type: 'custom:button-card'
+    template: light_group_button_name
+    name: Theater
+    entity: light.theater_lights
+  
+  - type: 'custom:button-card'
+    template: light_group_button_name
+    name: Misc
+    entity: light.misc_lights
+  
+  - type: 'custom:button-card'
+    template: light_group_button_name
+    name: Daytime
+    entity: light.daytime_lights

@@ -1,9 +1,0 @@
-#========================#
-#     Outdoor Lights     #
-#========================#
-
-Outdoor Lights:
-  entities:
-    - light.driveway_lights
-    - light.front_floodlight
-    - light.porch_light

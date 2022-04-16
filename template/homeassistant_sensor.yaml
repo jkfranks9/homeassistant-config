@@ -8,7 +8,7 @@
     #   -- Nighttime Mode --   #
     #--------------------------#
     
-    # Convert nighttime boolean for lovelace
+    # Convert nighttime boolean for dashboard
     - name: 'Nighttime'
       unique_id: nighttime
       state: "{{ iif(is_state('input_boolean.nighttime', 'on'), 1, 0) }}"

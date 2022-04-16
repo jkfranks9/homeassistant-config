@@ -1,0 +1,12 @@
+#======================#
+#     Tracking Tab     #
+#======================#
+
+title: Tracking
+icon: mdi:map-marker-radius
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/tracking/presence.yaml

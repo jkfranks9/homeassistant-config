@@ -6,18 +6,6 @@
 current_feature:
   name: Current Feature
 
-#================#
-#     Timers     #
-#================#
-
-# These are set to the names of active and paused timers, used to restore the timers on restart.
-timers_active:
-  name: Active Timers
-  max: 255
-timers_paused:
-  name: Paused Timers
-  max: 255
-
 #=====================#
 #     Zigbee2MQTT     #
 #=====================#

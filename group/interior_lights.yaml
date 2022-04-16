@@ -2,9 +2,9 @@
 #     Interior Lights     #
 #=========================#
 
-# These groups are somewhat counter-intuitive. The first group contains lights when
-# Christmas mode is off, while the second group is for Christmas mode on (in which case
-# the Christmas lights are in their own separate group).
+# These groups are somewhat counter-intuitive:
+#   - the first group contains lights when Christmas mode is off (however the Christmas lights are hidden due to conditional cards)
+#   - the second group is for Christmas mode on (in which case the Christmas lights are in their own separate group)
 Interior Lights:
   entities:
     - group.interior_lights_christmas

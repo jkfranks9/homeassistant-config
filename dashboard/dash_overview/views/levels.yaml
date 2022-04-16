@@ -1,0 +1,16 @@
+#====================#
+#     Levels Tab     #
+#====================#
+
+title: Levels
+icon: mdi:percent
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/levels/batteries.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/levels/wifi.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/levels/zigbee.yaml

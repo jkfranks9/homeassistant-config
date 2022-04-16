@@ -255,11 +255,15 @@
     # The Kodi media player needs to be turned off if we're changing from Kodi to something else.
     - choose:
       
-      # Turn off the Kodi media player if needed, else do nothing.
+      # Kill the Kodi app if needed, else do nothing.
       - conditions:
         - condition: template
-          value_template: "{{ trigger.from_state and trigger.from_state == 'Kodi' }}"
+          value_template: "{{ trigger.from_state and trigger.from_state.attributes.app_name == 'Kodi' }}"
         sequence:
+          - service: androidtv.adb_command
+            data:
+              entity_id: media_player.shield_tv
+              command: "am force-stop org.xbmc.kodi"
           - service: media_player.turn_off
             data:
               entity_id: media_player.kodi

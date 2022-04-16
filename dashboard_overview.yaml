@@ -1,0 +1,31 @@
+#============================#
+#     Overview Dashboard     #
+#============================#
+
+# Include templates
+button_card_templates:
+  !include /config/dashboard/button_card_templates.yaml
+
+decluttering_templates:
+  !include /config/dashboard/decluttering_templates.yaml
+
+# Each view in its own file
+title: Overview
+views:
+  - !include /config/dashboard/dash_overview/views/home.yaml
+  - !include /config/dashboard/dash_overview/views/lighting.yaml
+  - !include /config/dashboard/dash_overview/views/environment.yaml
+  - !include /config/dashboard/dash_overview/views/energy.yaml
+  - !include /config/dashboard/dash_overview/views/health.yaml
+  - !include /config/dashboard/dash_overview/views/theater.yaml
+  - !include /config/dashboard/dash_overview/views/office.yaml
+  - !include /config/dashboard/dash_overview/views/devices.yaml
+  - !include /config/dashboard/dash_overview/views/levels.yaml
+  - !include /config/dashboard/dash_overview/views/monitoring.yaml
+  - !include /config/dashboard/dash_overview/views/controls.yaml
+  - !include /config/dashboard/dash_overview/views/tracking.yaml
+  
+  # NOTE: The following two tabs are invisible, and are shown in the sidebar instead. The definitions
+  # are needed to provide a URL for the sidebar items.
+  - !include /config/dashboard/dash_overview/views/first_floor.yaml
+  - !include /config/dashboard/dash_overview/views/second_floor.yaml

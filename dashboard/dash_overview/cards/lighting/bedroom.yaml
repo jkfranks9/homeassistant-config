@@ -1,0 +1,28 @@
+#===============================#
+#     Bedroom Lighting Card     #
+#===============================#
+
+type: custom:stack-in-card
+title: Bedroom
+mode: horizontal
+cards:
+  - type: 'custom:button-card'
+    template: light_button
+    name: Master
+    entity: light.master_bedroom_lamp
+  - type: 'custom:button-card'
+    template: light_button
+    name: Guest 1
+    entity: light.guest_bedroom_lamp
+  - type: 'custom:button-card'
+    template: light_button
+    name: Guest 2
+    entity: light.guest_bedroom_lamp_2
+  - type: 'custom:button-card'
+    template: light_button
+    name: Upstairs
+    entity: light.upstairs_bedroom_light
+  - type: 'custom:button-card'
+    template: light_button
+    name: Outlet
+    entity: light.upstairs_bedroom_outlet

@@ -23,7 +23,7 @@
     path: lighting/sunrise_light_weather.yaml
     input:
       elevation: input_number.min_elevation
-      light_entity: group.daytime_lights
+      light_entity: light.daytime_lights
 
 # Check at a medium sun elevation.
 - alias: Check Daytime Lights Sunrise Medium
@@ -32,7 +32,7 @@
     path: lighting/sunrise_light_weather.yaml
     input:
       elevation: input_number.med_elevation
-      light_entity: group.daytime_lights
+      light_entity: light.daytime_lights
 
 # Check at a maximum sun elevation.
 - alias: Check Daytime Lights Sunrise Maximum
@@ -41,7 +41,7 @@
     path: lighting/sunrise_light_weather.yaml
     input:
       elevation: input_number.max_elevation
-      light_entity: group.daytime_lights
+      light_entity: light.daytime_lights
 
 # Sunset ...
 
@@ -54,7 +54,7 @@
       elevation: input_number.max_elevation
       light_entity: >
         {% if is_state('input_boolean.christmas_mode', 'off') %}
-          group.daytime_lights
+          light.daytime_lights
         {% else %}
           group.daytime_lights_christmas
         {% endif %}
@@ -68,7 +68,7 @@
       elevation: input_number.med_elevation
       light_entity: >
         {% if is_state('input_boolean.christmas_mode', 'off') %}
-          group.daytime_lights
+          light.daytime_lights
         {% else %}
           group.daytime_lights_christmas
         {% endif %}
@@ -82,7 +82,7 @@
       elevation: input_number.min_elevation
       light_entity: >
         {% if is_state('input_boolean.christmas_mode', 'off') %}
-          group.daytime_lights
+          light.daytime_lights
         {% else %}
           group.daytime_lights_christmas
         {% endif %}
@@ -170,7 +170,7 @@
             entity_id: light.office_lamp
       default:
         - service: homeassistant.turn_on
-          entity_id: group.daytime_lights
+          entity_id: light.daytime_lights
         - service: light.turn_on
           entity_id: light.office_lamp
 
@@ -213,7 +213,7 @@
     
     # The conditions are no longer true, so turn off all of the away lights.
     - service: homeassistant.turn_off
-      entity_id: group.away_lights
+      entity_id: light.away_lights
 
 #=========================#
 #     Motion Sensors      #

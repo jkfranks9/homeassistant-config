@@ -2,11 +2,6 @@
 #     Daytime Lights     #
 #========================#
 
-Daytime Lights:
-  entities:
-    - light.family_room_lamp
-    - light.hallway_lamp
-
 Daytime Lights Christmas:
   entities:
     - light.hallway_lamp

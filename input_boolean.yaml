@@ -69,16 +69,6 @@ dryer_running:
   name: Dryer Running
   icon: mdi:tumble-dryer
 
-#===================================#
-#     Timer Restoration Control     #
-#===================================#
-
-# This is used by the script that throttles mobile notifications. That script needs to check the state of a timer,
-# so must run after the timer restoration automation has completed.
-timers_restored:
-  name: Timers Restored
-  initial: false
-
 #=====================#
 #     Zigbee2MQTT     #
 #=====================#

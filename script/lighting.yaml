@@ -134,9 +134,9 @@ turn_off_bedtime_lights:
             data:
               entities:
                 light.family_room_lamp: 'off'
-                group.theater_lights: 'off'
+                light.theater_lights: 'off'
                 group.interior_lights: 'off'
-                group.misc_lights: 'off'
+                light.misc_lights: 'off'
       
       # Grandchild home without parent: leave some lights on, depending on location..
       - conditions:
@@ -154,10 +154,10 @@ turn_off_bedtime_lights:
                   data:
                     entities:
                       light.family_room_lamp: 'on'
-                      group.guest_bedroom_lights: 'off'
-                      group.theater_lights: 'off'
+                      light.guest_bedroom_lights: 'off'
+                      light.theater_lights: 'off'
                       group.interior_lights: 'off'
-                      group.misc_lights: 'off'
+                      light.misc_lights: 'off'
             
             # Grandchild sleeping in master: turn master bath light on.
             default:
@@ -196,7 +196,7 @@ change_lighting_per_weather:
   fields:
     light_entity:
       description: 'The entity ID of the target lights.'
-      example: 'group.daytime_lights'
+      example: 'light.daytime_lights'
     
     wakeup:
       description: 'Whether or not the caller is the wakeup script.'
@@ -271,7 +271,7 @@ change_lighting_per_weather_simple:
   fields:
     light_entity:
       description: 'The entity ID of the target lights.'
-      example: 'group.daytime_lights'
+      example: 'light.daytime_lights'
     
     turn_on:
       description: 'True if the lights should be turned on.'
@@ -331,7 +331,7 @@ automate_lights_while_away:
     repeat:
       sequence:
         - variables:
-            group_id: 'group.away_lights'
+            group_id: 'light.away_lights'
             max_on: 3
             lights_on_count: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | list | length }}"
             lights_on_entities: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | map(attribute = 'entity_id') | list }}"
@@ -423,7 +423,7 @@ switch_grandchild_sleep_location:
         entity_id: light.master_bath_light
     - service: light.turn_off
       target:
-        entity_id: group.daytime_lights
+        entity_id: light.daytime_lights
 
 #==========================#
 #     Christmas Lights     #

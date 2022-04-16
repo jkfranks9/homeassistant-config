@@ -424,7 +424,7 @@
         - mon
         #- sun
     - condition: state
-      entity_id: timer.vac
+      entity_id: timer.vacuum
       state: 'idle'
   action:
     - service: input_boolean.turn_off
@@ -433,7 +433,7 @@
       entity_id: vacuum.ecovacs_deebot
     - service: timer.start
       data:
-        entity_id: timer.vac
+        entity_id: timer.vacuum
         duration: '01:00:00'
 
 # Land the vacuum.
@@ -443,7 +443,7 @@
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.vac
+        entity_id: timer.vacuum
     - platform: numeric_state
       entity_id: sensor.ecovacs_battery
       below: 20
@@ -549,7 +549,7 @@
         sequence:
           - service: timer.start
             data:
-              entity_id: timer.wsh
+              entity_id: timer.washer_rinse_fill_blackout
               duration: '00:03:00'
         
       # Medium
@@ -560,7 +560,7 @@
         sequence:
           - service: timer.start
             data:
-              entity_id: timer.wsh
+              entity_id: timer.washer_rinse_fill_blackout
               duration: '00:04:00'
         
       # Large
@@ -571,7 +571,7 @@
         sequence:
           - service: timer.start
             data:
-              entity_id: timer.wsh
+              entity_id: timer.washer_rinse_fill_blackout
               duration: '00:05:00'
       
       # Invalid load size, log it. Then use the medium value and hope for the best.
@@ -582,7 +582,7 @@
             level: error
         - service: timer.start
           data:
-            entity_id: timer.wsh
+            entity_id: timer.washer_rinse_fill_blackout
             duration: '00:04:00'
 
 # Washer operation control. The normal cycle as reflected in the washer power state sensor proceeds as follows:
@@ -628,7 +628,7 @@
           {% set s = states('input_select.washer_state') %}
           {% set fr = trigger.from_state.state %}
           {% set to = trigger.to_state.state %}
-          {% set t = states('timer.wsh') %}
+          {% set t = states('timer.washer_rinse_fill_blackout') %}
           
           {# --Ignore everything if the rinse fill blackout timer is running-- #}
           {% if t == 'active' %} {{ s }}
@@ -644,7 +644,7 @@
           {# --Some washer power state sensor changes just remain in the current state-- #}
           {% elif fr == 'drop'  and to in ['fill', 'raise', 'pause'] %} {{ s }}
           {% elif fr == 'fill'  and to in ['pause', 'drop', 'raise'] %} {{ s }}
-          {% elif fr == 'raise' and to == 'drop' %}                     {{ s }}
+          {% elif fr == 'raise' and to in ['drop', 'pause'] %}          {{ s }}
           {% elif fr == 'pause' and to in ['drop', 'raise'] %}          {{ s }}
           
           {# --Catch-all, default to Stop-- #}
@@ -698,7 +698,7 @@
     to: 'on'
   action:
     - service: timer.start
-      entity_id: timer.z2m
+      entity_id: timer.zigbee2mqtt_join_time_remaining
       data_template:
         duration: "{{ '00:0%i:00' % (states('input_number.zigbee2mqtt_join_minutes') | int(0) ) }}"
 
@@ -709,14 +709,14 @@
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.z2m
+        entity_id: timer.zigbee2mqtt_join_time_remaining
     - platform: state
       entity_id: switch.zigbee2mqtt_permit_join
       to: 'off'
   action:
     - service: timer.cancel
       data:
-        entity_id: timer.z2m
+        entity_id: timer.zigbee2mqtt_join_time_remaining
     - service: switch.turn_off
       entity_id: switch.zigbee2mqtt_permit_join
 

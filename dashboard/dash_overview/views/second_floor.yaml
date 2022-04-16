@@ -1,0 +1,13 @@
+#==========================#
+#     Second Floor Tab     #
+#==========================#
+
+# NOTE: This tab is invisible. It's still shown on the UI, but in the sidebar instead of a tab.
+# We still need the view defined in order to have a URL for the sidebar item.
+title: Second Floor
+path: second_floor
+icon: mdi:home-floor-2
+panel: true
+visible: false
+cards:
+  - !include /config/dashboard/dash_overview/cards/second_floor.yaml
