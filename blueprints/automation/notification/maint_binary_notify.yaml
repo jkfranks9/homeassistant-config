@@ -1,0 +1,52 @@
+# Notify for a device attribute turning on to indicate required maintenance, such as charging a battery.
+
+blueprint:
+  name: Maintenance Binary Notification
+  description: Notify when a device attribute turns on.
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Sensor Entity
+      description: Sensor entity to be checked.
+      selector:
+        entity:
+          domain: binary_sensor
+    
+    timer_entity:
+      name: Timer Entity
+      description: Timer entity associated with the notification, used for throttling.
+      selector:
+        entity:
+          domain: timer
+    
+    message:
+      name: Notification Message
+      description: Message to be issued.
+
+# Trigger when the sensor value turns on, or when HA starts (in case HA is rebooting when the trigger would have occurred).
+trigger:
+  - platform: state
+    entity_id: !input sensor_entity
+    from: 'off'
+    to: 'on'
+  - platform: homeassistant
+    event: start
+
+# Guard against HA start triggers.
+condition:
+  - condition: state
+    entity_id: !input sensor_entity
+    state: 'on'
+
+# Send the notification after a random delay (to spread out automations done at HA start).
+action:
+  - delay: 
+      seconds: "{{ range(2, 15) | random }}"
+  
+  - service: script.throttle_mobile_notification
+    data:
+      timer_entity: !input timer_entity
+      title: 'Action required:'
+      message: '{{ message }}'
+      channel: Home Assistant

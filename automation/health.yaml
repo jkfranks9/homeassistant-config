@@ -6,15 +6,16 @@
 - alias: Save Monthly Calories
   id: 'save_monthly_calories'
   
-  # Trigger when the total monthly calories sensor is reset to zero, which should occur at the start
-  # of a new month (presumably at midnight). We then save the previous month's total in the history.
+  # Trigger when the total monthly calories sensor changes.
   trigger:
-    - platform: template
-      value_template: "{{ is_state('sensor.total_monthly_calories', '0.0') }}"
+    - platform: state
+      entity_id: sensor.total_monthly_calories
     
   # This should ensure we are actually changing from a valid state, and not just triggering because
-  # the current value is 0.
+  # the current value is 0, and that's it's the first day of the month.
   condition:
+    - condition: template
+      value_template: "{{ now().day == 1 }}"
     - condition: template
       value_template: "{{ trigger.from_state and trigger.from_state > 0.0 }}"
   
@@ -26,7 +27,7 @@
     - service: system_log.write
       data:
         message: "calories from state last changed: '{{ trigger.from_state.last_changed }}'"
-        level: debug
+        level: info
     
     # Set the correct history value using the month variable to complete the target entity ID.
     - service: input_number.set_value

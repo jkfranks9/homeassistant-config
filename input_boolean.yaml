@@ -26,6 +26,10 @@ grandchild_home:
 christmas_mode:
   name: Christmas Mode
 
+# This prevents attempting to create multiple temporary thermostat vacations. Such a vacation uses a static name, so we can only have one.
+temporary_thermostat_vacation:
+  name: Temporary Thermostat Vacation
+
 #============================#
 #     Kodi Movie Control     #
 #============================#
@@ -59,10 +63,6 @@ treadmill_triggered:
 # This is set when the vacuum is started (once per week). It's used to detect if the vacuum did not run for some reason.
 vacuum_kicked_off:
   name: Vacuum Kicked Off
-
-# This allows the family room AV to remain on late at night if desired.
-family_room_av_late_night_control:
-  name: Family Room AV Late Night Control
 
 # Dryer is running.
 dryer_running:

@@ -178,10 +178,51 @@
     input:
       device_name: LD Player
       volume: 0.63
-
+ 
 #============================#
 #     Kodi Movie Control     #
 #============================#
+ 
+# We have an input select that represents the list of Kodi movies. This is dynamically set using the 
+# get_all_kodi_movies script. However, when HA restarts, the input select gets restored to the yaml value
+# instead of the dynamically set value. So this automation restores the dynamic list on HA start.
+#
+# The actual list should exist in a file that was saved at get_all_kodi_movies time, and the feature
+# movie name (input select state value) exists in input_text.current_feature.
+- alias: Restore Movie List On Start
+  id: restore_movie_list_on_start
+  trigger:
+    - platform: homeassistant
+      event: start
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    
+    # Turn on a flag to prevent any other automations or scripts mucking with the feature movie name until
+    # restoration is complete.
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.kodi_movie_list_restoration
+    
+    # Call a pyscript module to restore the movie list.
+    - service: pyscript.restore_all_movies
+      data:
+        entity: input_select.kodi_movies
+    
+    # Wait until the list is restored (state not equal to the static yaml value).
+    - wait_template: "{{ not is_state('input_select.kodi_movies', 'Select') }}"
+      timeout: '00:00:10'
+    
+    # Set the current feature movie as the selected option in the list.
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.kodi_movies
+        option: "{{ states('input_text.current_feature') }}"
+    
+    # Turn off the restoration flag.
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.kodi_movie_list_restoration
 
 # Save the feature movie name when a new movie is selected in the front end.
 # This is needed to restore the selected value in the corresponding list of movies on HA restart, because on restart

@@ -33,7 +33,6 @@ influxdb:       !include influxdb.yaml
 input_boolean:  !include input_boolean.yaml
 input_number:   !include input_number.yaml
 input_select:   !include input_select.yaml
-input_text:     !include input_text.yaml
 logbook:        !include database/logbook.yaml
 logger:         !include database/logger.yaml
 media_player:   !include media_player.yaml
@@ -104,13 +103,13 @@ proximity:
   sarah_home:
     zone: home
     devices:
-      - device_tracker.pixel_4_xl
+      - device_tracker.life360_sarah_jones
     unit_of_measurement: m
-  david_home:
-    zone: home
-    devices:
-      - device_tracker.pixel_6_pro
-    unit_of_measurement: m
+  #david_home:
+  #  zone: home
+  #  devices:
+  #    - device_tracker.pixel_6_pro
+  #  unit_of_measurement: m
 
 #==========================#
 #     Computer Control     #
@@ -193,14 +192,21 @@ counter:
     initial: 0
     restore: false
 
+# Notify service
+notify:
+  - name: triggered_automations
+    platform: file
+    filename: triggered_automations.log
+
 # Shell commands
 shell_command:
   backup_log:               python /config/python/backup_log.py
+  backup_auto_log:          python /config/python/backup_auto_log.py
   concat_log_files:         python /config/python/concat_log_files.py
   copy_floorplan_christmas: python /config/python/copy_floorplan_christmas.py
   copy_floorplan_normal:    python /config/python/copy_floorplan_normal.py
   delete_junk_log_files:    'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
-  reboot_nut_service:       "ssh -i /config/ssh/id_rsa -o 'StrictHostKeyChecking=no' pi@{{ nut_server }} '~/reboot_nut_service'"
+  reboot_nut_service:       bash /config/reboot_nut_server.sh
 
 # Google calendar API
 google:

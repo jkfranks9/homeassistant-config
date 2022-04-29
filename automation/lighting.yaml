@@ -1,3 +1,150 @@
+#=====================================#
+#     Nighttime / Sleeptime Modes     #
+#=====================================#
+
+# The Nighttime flag indicates I've gone to bed. The main usage is to prevent certain automations 
+# (like turning on lights) from running at an inappropriate time.
+#
+# The Sleeptime flag covers the period from going to bed and going to sleep. Normally I'm reading,
+# so don't want the bedroom light turning off unexpectedly.
+#
+# These flags are usually managed by the bedtime, sleeptime, awake and wakeup scripts. But if those
+# are not used for some reason, also manage the flags here using failsafe times.
+
+# Set Nighttime true at a failsafe time (should be in bed).
+- alias: Enable Nighttime Mode
+  id: 'enable_nighttime_mode'
+  trigger:
+    - platform: time
+      at: '00:30:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '00:30:00'
+      before: '07:30:00'
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+
+# Set Sleeptime true at a failsafe time (should be asleep).
+- alias: Enable Sleeptime Mode
+  id: 'enable_sleeptime_mode'
+  trigger:
+    - platform: time
+      at: '01:30:00'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: time
+      after: '01:30:00'
+      before: '07:30:00'
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.sleeptime
+
+# Set Nighttime and Sleeptime false at a failsafe time (should be out of bed).
+- alias: Disable Nighttime & Sleeptime Modes
+  id: 'disable_nighttime_sleeptime_modes'
+  trigger:
+    - platform: time
+      at: '07:30:00'
+    - platform: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      above: 2.0
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: or
+      conditions:
+        - condition: time
+          after: '07:30:00'
+          before: '23:00:00'
+        - condition: numeric_state
+          entity_id: sun.sun
+          attribute: elevation
+          above: 2.0
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.sleeptime
+
+#=============================#
+#     Grandchild Home Mode    #
+#=============================#
+
+# Manage grandchild home mode based on status of the parents. Note that grandchild home mode can also be set
+# using the front end.
+- alias: Enable Grandchild Home Mode
+  id: 'enable_grandchild_home_mode'
+  trigger:
+    - platform: state
+      entity_id: group.device_tracker_sarah
+      from: 'not_home'
+      to: 'home'
+    - platform: state
+      entity_id: group.device_tracker_david
+      from: 'not_home'
+      to: 'home'
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.grandchild_home
+
+- alias: Disable Grandchild Home Mode
+  id: 'disable_grandchild_home_mode'
+  trigger:
+    - platform: state
+      entity_id: group.device_tracker_sarah
+      from: 'home'
+      to: 'not_home'
+    - platform: state
+      entity_id: group.device_tracker_david
+      from: 'home'
+      to: 'not_home'
+  condition:
+    - condition: state
+      entity_id: group.device_tracker_sarah
+      state: 'not_home'
+    - condition: state
+      entity_id: group.device_tracker_david
+      state: 'not_home'
+  action:
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.grandchild_home
+
+#======================================#
+#     Grandchild Sleepover Location    #
+#======================================#
+
+# Default the grandchild sleep location.
+- alias: Set Default Grandchild Sleepover Location
+  id: 'set_default_grandchild_sleepover_location'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.grandchild_home
+      from: 'off'
+      to: 'on'
+    - platform: time
+      at: '07:00:00'
+  condition:
+    - condition: state
+      entity_id: input_boolean.grandchild_home
+      state: 'on'
+  action:
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.grandchild_sleepover_location
+      data: 
+        option: 'Guest'
+
 #===============================#
 #     Change Daytime Lights     #
 #===============================#
@@ -141,39 +288,6 @@
     - service: light.turn_off
       entity_id: light.office_lamp
 
-#========================#
-#     Daytime Lights     #
-#========================#
-
-# Turn on daytime lights when Jon arrives home in darkness or near darkness.
-- alias: Arrive Home Daytime Lights
-  id: 'arrive_home_daytime_lights'
-  trigger:
-    - platform: state
-      entity_id: group.device_tracker_jon
-      from: 'not_home'
-      to: 'home'
-  condition:
-    - condition: numeric_state
-      entity_id: sun.sun
-      attribute: elevation
-      below: 6.0
-  action:
-    - choose:
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('input_boolean.christmas_mode', 'on') }}"
-        sequence:
-          - service: homeassistant.turn_on
-            entity_id: group.daytime_lights_christmas
-          - service: light.turn_on
-            entity_id: light.office_lamp
-      default:
-        - service: homeassistant.turn_on
-          entity_id: light.daytime_lights
-        - service: light.turn_on
-          entity_id: light.office_lamp
-
 #==============================#
 #     Extended Away Lights     #
 #==============================#
@@ -206,6 +320,8 @@
       entity_id: sun.sun
       state: below_horizon
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     
     # The script randomly toggles lights in the away group until the above conditions are
     # no longer met. We wait here until that happens.
@@ -295,6 +411,8 @@
       entity_id: input_boolean.nighttime
       state: 'off'
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     - service: light.turn_on
       entity_id: light.guest_bedroom_lamp_2
     - service: light.turn_on
@@ -312,52 +430,14 @@
     - condition: time
       after: '22:30:00'
     - condition: template
-      value_template: "{{ is_state('device_tracker.pixel_4_xl', 'not_home') and is_state('input_boolean.grandchild_home', 'on') }}"
+      value_template: "{{ is_state('group.device_tracker_sarah', 'not_home') and is_state('input_boolean.grandchild_home', 'on') }}"
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     - service: light.turn_off
       entity_id: light.guest_bedroom_lamp
     - service: light.turn_off
       entity_id: light.guest_bedroom_lamp_2
-
-#=====================#
-#     Smart Bulbs     #
-#=====================#
-
-# Turn off all smart bulbs occasionally if needed. This is to cover a power outage, where such
-# bulbs (at least Kasa) turn on when power is restored.
-- alias: Reset Family Room Lamp
-  id: reset_family_room_lamp
-  use_blueprint:
-    path: lighting/smart_bulb_reset.yaml
-    input:
-      light_entity: light.family_room_lamp
-      reset_condition: 'Sky Conditions'
-      
-      # Defaults don't seem to work; these are unused.
-      lux_entity: sensor.office_ambient_light
-      lux_value: 300
-
-- alias: Reset Master Bedroom Lamp
-  id: reset_master_bedroom_lamp
-  use_blueprint:
-    path: lighting/smart_bulb_reset.yaml
-    input:
-      light_entity: light.master_bedroom_lamp
-      reset_condition: 'Nighttime'
-      
-      # Defaults don't seem to work; these are unused.
-      lux_entity: sensor.office_ambient_light
-      lux_value: 300
-
-- alias: Reset Office Lamp
-  id: reset_office_lamp
-  use_blueprint:
-    path: lighting/smart_bulb_reset.yaml
-    input:
-      light_entity: light.office_lamp
-      reset_condition: 'Lux Sensor'
-      lux_entity: sensor.office_ambient_light
-      lux_value: 300
 
 #==========================#
 #     Christmas Lights     #
@@ -387,6 +467,8 @@
            now().strftime('%m-%d') == '12-31' or
            now().strftime('%m-%d') == '01-01' }}
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     - service: homeassistant.turn_on
       entity_id: group.christmas_lights
 
@@ -411,5 +493,7 @@
            now().strftime('%m-%d') == '12-31' or
            now().strftime('%m-%d') == '01-01' }}
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     - service: homeassistant.turn_off
       entity_id: group.christmas_lights

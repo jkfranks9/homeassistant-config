@@ -21,6 +21,9 @@
   trigger:
     - platform: time
       at: '20:00:00'
+    - platform: homeassistant
+      event: start
+  
   condition:
     - condition: state
       entity_id: binary_sensor.cinema_projector
@@ -28,7 +31,12 @@
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'off'
+    - condition: time
+      after: '20:00:00'
+  
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     - service: climate.set_preset_mode
       target:
         entity_id: climate.upstairs
@@ -107,8 +115,29 @@
       entity_id: input_boolean.grandchild_home
       from: 'off'
       to: 'on'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: input_boolean.temporary_thermostat_vacation
+      state: 'off'
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: group.family_members
+          state: 'home'
+        - condition: state
+          entity_id: input_boolean.grandchild_home
+          state: 'on'
   
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    
+    # Turn on control flag that prevents multiple temporary vacations.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.temporary_thermostat_vacation
     
     # Add thermostat vacation.
     - service: script.create_thermostat_vacation
@@ -129,14 +158,33 @@
       entity_id: input_boolean.grandchild_home
       from: 'on'
       to: 'off'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: input_boolean.temporary_thermostat_vacation
+      state: 'on'
+    - condition: state
+      entity_id: group.family_members
+      state: 'not_home'
+    - condition: state
+      entity_id: input_boolean.grandchild_home
+      state: 'off'
   
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     
     # Remove thermostat vacation.
     - service: script.remove_thermostat_vacation
       data:
         thermostat_entity: climate.downstairs
         type: Temporary
+    
+    # Turn off control flag that prevents multiple temporary vacations.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.temporary_thermostat_vacation
 
 #============================================#
 #     Temperature High / Low Water Marks     #
@@ -179,3 +227,20 @@
       sensor_entity: sensor.porch_temp_max
       result_entity: input_number.max_outdoor_temp
       type: Max
+
+#=================#
+#     Open UV     #
+#=================#
+
+# Update OpenUV once per hour during daylight.
+- alias: Update OpenUV
+  id: 'update_openuv'
+  trigger:
+    - platform: time_pattern
+      minutes: 19
+  condition:
+    - condition: state
+      entity_id: sun.sun
+      state: above_horizon
+  action:
+    - service: openuv.update_data

@@ -165,9 +165,13 @@ next_event:
             interval: '[[interval]]'
     
     style: |
-      {%- set ts_event = as_timestamp(states.[[entity]].state, default=0) %}
-      {%- set ts_now = as_timestamp(now())|round(0) %}
-      {%- set ts_delta = (ts_now - ts_event) %}
+      {% if states.[[entity]].state %}
+        {%- set ts_event = as_timestamp(states.[[entity]].state, default=0) %}
+        {%- set ts_now = as_timestamp(now())|round(0) %}
+        {%- set ts_delta = (ts_now - ts_event) %}
+      {% else %}
+        {% set ts_delta = (-86400) %}
+      {% endif %}
       ha-card {
         border: solid 2px {% if (ts_delta >= 0) %}red {% elif ts_delta > (-86400) %}yellow {% else %}var(--card-background-color) {% endif %};
       }

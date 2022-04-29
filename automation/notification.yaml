@@ -5,107 +5,72 @@
 # Projector lamp is getting old.
 - alias: Notify Projector Lamp Aging
   id: 'notify_projector_lamp_aging'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.epson_lamp_hours
-      above: 2999
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.epson_lamp_hours
-      above: 2999
-  action:
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.projector_lamp_notification
-        title: 'Action required:'
-        message: 'Epson projector lamp might need replacing soon.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_above_notify.yaml
+    input:
+      sensor1_entity: sensor.epson_lamp_hours
+      threshold1: 2999
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.jon_galaxy_battery_level
+      threshold2: 100
+      timer_entity: timer.projector_lamp_notification
+      message: 'Epson projector lamp might need replacing soon.'
 
 # Printer toner is getting low.
 - alias: Notify Printer Toner Low
   id: 'notify_printer_toner_low'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.brother_printer_black_toner_remaining
-      below: 10
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.brother_printer_black_toner_remaining
-      below: 10
-  action:
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.printer_toner_notification
-        title: 'Action required:'
-        message: 'Printer toner might need replacing soon.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.brother_printer_black_toner_remaining
+      threshold1: 10
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.printer_toner_notification
+      message: 'Printer toner might need replacing soon.'
 
 # Vacuum main brush is getting old.
 - alias: Notify Vacuum Main Brush Aging
   id: 'notify_vacuum_main_brush_aging'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.ecovacs_main_brush_remaining_life
-      below: 20
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.ecovacs_main_brush_remaining_life
-      below: 20
-  action:
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.vacuum_main_brush_notification
-        title: 'Action required:'
-        message: 'Vacuum main brush might need replacing soon.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.ecovacs_main_brush_remaining_life
+      threshold1: 20
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.vacuum_main_brush_notification
+      message: 'Vacuum main brush might need replacing soon.'
 
 # Vacuum side brush is getting old.
 - alias: Notify Vacuum Side Brush Aging
   id: 'notify_vacuum_side_brush_aging'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.ecovacs_side_brush_remaining_life
-      below: 20
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.ecovacs_side_brush_remaining_life
-      below: 20
-  action:
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.vacuum_side_brush_notification
-        title: 'Action required:'
-        message: 'Vacuum side brush might need replacing soon.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.ecovacs_side_brush_remaining_life
+      threshold1: 20
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.vacuum_side_brush_notification
+      message: 'Vacuum side brush might need replacing soon.'
 
 # Vacuum filter is getting old.
 - alias: Notify Vacuum Filter Aging
   id: 'notify_vacuum_filter_aging'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.ecovacs_filter_remaining_life
-      below: 20
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.ecovacs_filter_remaining_life
-      below: 20
-  action:
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.vacuum_filter_notification
-        title: 'Action required:'
-        message: 'Vacuum filter might need replacing soon.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.ecovacs_filter_remaining_life
+      threshold1: 20
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.vacuum_filter_notification
+      message: 'Vacuum filter might need replacing soon.'
 
 #==========================================#
 #     Abnormal Condition Notifications     #
@@ -173,28 +138,6 @@
         message: 'Vacuum needs maintenance.'
         channel: Home Assistant
 
-# NUT Server down
-#- alias: Notify NUT Server Down
-#  id: 'notify_nut_server_down'
-#  trigger:
-#    - platform: state
-#      entity_id: sensor.cyber1_status
-#      from: 'Online'
-#  action:
-#    - service: script.throttle_mobile_notification
-#      data:
-#        timer_entity: timer.n21
-#        title: 'Action required:'
-#        message: 'NUT Server is down.'
-#        channel: Home Assistant
-#    - service: notify.alexa_media
-#      data:
-#        target:
-#          - media_player.everywhere
-#        data:
-#          type: announce
-#        message: 'NUT Server is not running.'
-
 #===============================#
 #     Battery Notifications     #
 #===============================#
@@ -202,151 +145,73 @@
 # Phone battery is too low.
 - alias: Notify Phone Battery Low
   id: 'notify_phone_battery_low'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.jon_galaxy_battery_level
-      below: 15
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.jon_galaxy_battery_level
-      below: 15
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.phone_battery_notification
-        title: 'Action required:'
-        message: 'Phone needs recharging.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.jon_galaxy_battery_level
+      threshold1: 15
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.phone_battery_notification
+      message: 'Phone needs recharging.'
 
 # Tablet battery is too low.
 - alias: Notify Tablet Battery Low
   id: 'notify_tablet_battery_low'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.lenovo_tablet_battery_level
-      below: 15
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.lenovo_tablet_battery_level
-      below: 15
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.tablet_battery_notification
-        title: 'Action required:'
-        message: 'Tablet needs recharging.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.lenovo_tablet_battery_level
+      threshold1: 15
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.tablet_battery_notification
+      message: 'Tablet needs recharging.'
 
 # Guest bath motion detector battery is too low.
 - alias: Notify Guest Bath Motion Battery Low
   id: 'notify_guest_bath_motion_battery_low'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.guest_bath_motion_detector_battery_low
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: binary_sensor.guest_bath_motion_detector_battery_low
-      state: 'on'
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.guest_bath_motion_detector_battery_notification
-        title: 'Action required:'
-        message: 'Guest bath motion detector battery needs replacing.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_binary_notify.yaml
+    input:
+      sensor_entity: binary_sensor.guest_bath_motion_detector_battery_low
+      timer_entity: timer.guest_bath_motion_detector_battery_notification
+      message: 'Guest bath motion detector battery needs replacing.'
 
 # Laundry room motion detector battery is too low.
 - alias: Notify Laundry Room Motion Battery Low
   id: 'notify_laundry_room_motion_battery_low'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.laundry_room_motion_detector_battery_low
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: binary_sensor.laundry_room_motion_detector_battery_low
-      state: 'on'
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.laundry_room_motion_detector_battery_notification
-        title: 'Action required:'
-        message: 'Laundry room motion detector battery needs replacing.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_binary_notify.yaml
+    input:
+      sensor_entity: binary_sensor.laundry_room_motion_detector_battery_low
+      timer_entity: timer.laundry_room_motion_detector_battery_notification
+      message: 'Laundry room motion detector battery needs replacing.'
 
 # Master bath motion detector battery is too low.
 - alias: Notify Master Bath Motion Battery Low
   id: 'notify_master_bath_motion_battery_low'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.master_bath_motion_detector_battery_low
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: binary_sensor.master_bath_motion_detector_battery_low
-      state: 'on'
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.master_bath_motion_detector_battery_notification
-        title: 'Action required:'
-        message: 'Master bath motion detector battery needs replacing.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_binary_notify.yaml
+    input:
+      sensor_entity: binary_sensor.master_bath_motion_detector_battery_low
+      timer_entity: timer.master_bath_motion_detector_battery_notification
+      message: 'Master bath motion detector battery needs replacing.'
 
 # Porch battery powered sensor needs recharging.
 - alias: Notify Porch Sensor Battery Low
   id: 'notify_porch_sensor_battery_low'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.porch_battery_level
-      below: 20.0
-    - platform: numeric_state
-      entity_id: sensor.porch_battery_voltage
-      below: 3.24
-    - platform: homeassistant
-      event: start
-  condition:
-    condition: or
-    conditions:
-      - condition: numeric_state
-        entity_id: sensor.porch_battery_level
-        below: 20.0
-      - condition: numeric_state
-        entity_id: sensor.porch_battery_voltage
-        below: 3.24
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: script.throttle_mobile_notification
-      data:
-        timer_entity: timer.porch_battery_notification
-        title: 'Action required:'
-        message: 'Porch sensor battery needs recharging.'
-        channel: Home Assistant
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.porch_battery_level
+      threshold1: 20.0
+      sensor2_entity: sensor.porch_battery_voltage
+      threshold2: 3.24
+      timer_entity: timer.porch_battery_notification
+      message: 'Porch sensor battery needs recharging.'
 
 #===============================#
 #     Health Notifications      #
@@ -437,118 +302,18 @@
       proximity_meters: 12000
       person_name: Sarah
 
-- alias: Notify David Arriving Soon
-  id: 'notify_david_arriving_soon'
-  use_blueprint:
-    path: notification/proximity_notify.yaml
-    input:
-      proximity_entity: proximity.david_home
-      proximity_meters: 12000
-      person_name: David
+#- alias: Notify David Arriving Soon
+#  id: 'notify_david_arriving_soon'
+#  use_blueprint:
+#    path: notification/proximity_notify.yaml
+#    input:
+#      proximity_entity: proximity.david_home
+#      proximity_meters: 12000
+#      person_name: David
 
 #==========================#
 #     Software Updates     #
 #==========================#
-
-# Home Assistant update
-- alias: Notify Home Assistant Updated
-  id: 'notify_home_assistant_updated'
-  trigger:
-    - platform: state
-      entity_id: update.home_assistant_core_update
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: update.home_assistant_core_update
-      state: 'on'
-    - condition: template
-      value_template: "{{ not state_attr('update.home_assistant_core_update', 'skipped_version') or state_attr('update.home_assistant_core_update', 'latest_version') != state_attr('update.home_assistant_core_update', 'skipped_version') }}"
-  action:
-    - delay:
-        seconds: "{{ range(1, 5) | random }}"
-    - service: persistent_notification.create
-      data_template:
-        title: 'Home Assistant Updated'
-        notification_id: 'ha_update'
-        message: "New version is {{ state_attr('update.home_assistant_core_update', 'latest_version') }}, currently on {{ state_attr('update.home_assistant_core_update', 'installed_version') }}"
-
-# Supervisor update
-- alias: Notify Supervisor Updated
-  id: 'notify_supervisor_updated'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.updater_supervisor
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: binary_sensor.updater_supervisor
-      state: 'on'
-  action:
-    - delay:
-        seconds: "{{ range(1, 5) | random }}"
-    - service: persistent_notification.create
-      data_template:
-        title: 'Supervisor Updated'
-        notification_id: 'supervisor_update'
-        message: "New version is {{ state_attr('sensor.supervisor_updates', 'newest_version') }}, currently on {{ state_attr('sensor.supervisor_updates', 'current_version') }}"
-
-# Operating System update
-- alias: Notify Operating System Updated
-  id: 'notify_operating_system_updated'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.home_assistant_operating_system_update_available
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: binary_sensor.home_assistant_operating_system_update_available
-      state: 'on'
-  action:
-    - delay:
-        seconds: "{{ range(1, 5) | random }}"
-    - service: persistent_notification.create
-      data_template:
-        title: 'Operating System Updated'
-        notification_id: 'operating_system_update'
-        message: "New version is {{ states('sensor.home_assistant_operating_system_newest_version') }}, currently on {{ states('sensor.home_assistant_operating_system_version') }}"
-
-# Addons update
-- alias: Notify Addons Updated
-  id: 'notify_addons_updated'
-  trigger:
-    - platform: state
-      entity_id: sensor.supervisor_updates
-      to:
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: binary_sensor.updater_addons
-      state: 'on'
-    - condition: numeric_state
-      entity_id: sensor.supervisor_updates
-      above: 0
-  action:
-    - delay:
-        seconds: "{{ range(1, 5) | random }}"
-    - service: persistent_notification.create
-      data_template:
-        title: 'Addons Updated'
-        notification_id: 'addons_update'
-        message: |
-          {% set num = states('sensor.supervisor_updates') %}
-          Updates available for {{ num }} HA addon{% if num | int(0) > 1 %}s{% endif %}:{{"\n"}}
-          {% for addon in states.sensor.supervisor_updates.attributes.addons %}{{ addon.name }} ({{ addon.version }} -> {{ addon.version_latest }})
-          {% endfor %}
 
 # HACS update
 - alias: Notify HACS Updated
@@ -634,26 +399,26 @@
   trigger:
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_filter')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_filter'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: filter
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_headgear_humidifier')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_headgear_humidifier'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: headgear
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_hose')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_hose'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: hose
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_mask')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_mask'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: mask
   action:
@@ -670,14 +435,14 @@
   trigger:
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_downstairs')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_downstairs'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: downstairs
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_upstairs')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_upstairs'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: upstairs
   action:
@@ -694,32 +459,32 @@
   trigger:
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_amazon')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_amazon'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: Amazon
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_credit_union')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_credit_union'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: CU
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_mortgage')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_mortgage'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: mortgage
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_randolph')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_randolph'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: Randolph
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_wells_fargo')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_wells_fargo'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: WF
   action:
@@ -736,38 +501,38 @@
   trigger:
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_eliquis')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_eliquis'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: Eliquis
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_gabapentin')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_gabapentin'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: gabapentin
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_metoprolol')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_metoprolol'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: metoprolol
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_rosuvastatin')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_rosuvastatin'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: rosuvastatin
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_blood_builder_minis')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_blood_builder_minis'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: blood builder
     - platform: template
       value_template: >
-        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_methyl_b12')))).replace(hour=6) %}
-        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date')))).replace(hour=6) %}
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_methyl_b12'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: B12
   action:

@@ -28,6 +28,7 @@ logs:
   homeassistant.components.automation.initialize_paramount_plus_volume:       warning
   homeassistant.components.automation.initialize_peacock_volume:              warning
   homeassistant.components.automation.initialize_youtube_tv_volume:           warning
+  homeassistant.components.automation.log_automations:                        warning
   homeassistant.components.automation.refresh_front_end:                      warning
   homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
   homeassistant.components.automation.reset_family_room_lamp:                 warning
@@ -58,6 +59,7 @@ logs:
   homeassistant.components.script.set_theater_dim:                    warning
   homeassistant.components.script.set_theater_idle:                   warning
   homeassistant.components.script.sleeptime:                          warning
+  homeassistant.components.script.start_rainbow:                      warning
   homeassistant.components.script.throttle_mobile_notification:       warning
   homeassistant.components.script.turn_on_adguard:                    warning
   homeassistant.components.script.turn_on_bathroom_light:             warning
@@ -82,7 +84,7 @@ logs:
   homeassistant.components.proximity:                     warning
   homeassistant.components.scene:                         warning
   homeassistant.components.shell_command:                 info
-  homeassistant.components.system_log.external:           debug # This is for logs in automations and scripts.
+  homeassistant.components.system_log.external:           info # This is for logs in automations and scripts.
   homeassistant.components.webhook:                       info
   homeassistant.components.websocket_api:                 info
   homeassistant.components.websocket_api.http.connection: info

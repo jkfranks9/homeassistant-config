@@ -1,185 +1,46 @@
-#=====================================#
-#     Nighttime / Sleeptime Modes     #
-#=====================================#
+#=========================#
+#     Automations Log     #
+#=========================#
 
-# The Nighttime flag indicates I've gone to bed. The main usage is to prevent certain automations 
-# (like turning on lights) from running at an inappropriate time.
-#
-# The Sleeptime flag covers the period from going to bed and going to sleep. Normally I'm reading,
-# so don't want the light turning off unexpectedly.
-#
-# These flags are usually managed by the bedtime, sleeptime and wakeup scripts. But if those
-# are forgotten to be triggered, also manage the flags here using failsafe times.
-
-# Set Nighttime true at a failsafe time (should be in bed).
-- alias: Enable Nighttime Mode
-  id: 'enable_nighttime_mode'
+# Record fired automations in a log file.
+- alias: Log Automations
+  id: log_automations
+  mode: queued
+  max: 200
+  
+  # We trigger on all state changes, then weed out unnecessary events in the condition.
   trigger:
-    - platform: time
-      at: '23:00:00'
-    - platform: homeassistant
-      event: start
+    - platform: event
+      event_type: state_changed
+  
+  # Weed out non-automations and some we want to skip (including this one!). Also, verify we have a 
+  # valid old and new state to work with, and that the last triggered time has changed.
   condition:
-    - condition: time
-      after: '23:00:00'
-      before: '07:30:00'
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-
-# Set Sleeptime true at a failsafe time (should be asleep).
-- alias: Enable Sleeptime Mode
-  id: 'enable_sleeptime_mode'
-  trigger:
-    - platform: time
-      at: '01:00:00'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: time
-      after: '01:00:00'
-      before: '07:30:00'
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.sleeptime
-
-# Set Nighttime and Sleeptime false at a failsafe time (should be out of bed).
-- alias: Disable Nighttime & Sleeptime Modes
-  id: 'disable_nighttime_sleeptime_modes'
-  trigger:
-    - platform: time
-      at: '07:30:00'
-    - platform: numeric_state
-      entity_id: sun.sun
-      attribute: elevation
-      above: 2.0
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: or
-      conditions:
-        - condition: time
-          after: '07:30:00'
-          before: '23:00:00'
-        - condition: numeric_state
-          entity_id: sun.sun
-          attribute: elevation
-          above: 2.0
-  action:
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.sleeptime
-
-#=============================#
-#     Grandchild Home Mode    #
-#=============================#
-
-# Manage grandchild home mode based on status of the parents. Note that grandchild home mode can also be set
-# using the front end.
-- alias: Enable Grandchild Home Mode
-  id: 'enable_grandchild_home_mode'
-  trigger:
-    - platform: state
-      entity_id: group.device_tracker_sarah
-      from: 'not_home'
-      to: 'home'
-    - platform: state
-      entity_id: group.device_tracker_david
-      from: 'not_home'
-      to: 'home'
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.grandchild_home
-
-- alias: Disable Grandchild Home Mode
-  id: 'disable_grandchild_home_mode'
-  trigger:
-    - platform: state
-      entity_id: group.device_tracker_sarah
-      from: 'home'
-      to: 'not_home'
-    - platform: state
-      entity_id: group.device_tracker_david
-      from: 'home'
-      to: 'not_home'
-  condition:
-    - condition: state
-      entity_id: group.device_tracker_sarah
-      state: 'not_home'
-    - condition: state
-      entity_id: group.device_tracker_david
-      state: 'not_home'
-  action:
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.grandchild_home
-
-#======================================#
-#     Grandchild Sleepover Location    #
-#======================================#
-
-# Default the grandchild sleep location.
-- alias: Set Default Grandchild Sleepover Location
-  id: 'set_default_grandchild_sleepover_location'
-  trigger:
-    - platform: state
-      entity_id: input_boolean.grandchild_home
-      from: 'off'
-      to: 'on'
-    - platform: time
-      at: '07:00:00'
-  condition:
-    - condition: state
-      entity_id: input_boolean.grandchild_home
-      state: 'on'
-  action:
-    - service: input_select.select_option
-      target:
-        entity_id: input_select.grandchild_sleepover_location
-      data: 
-        option: 'Guest'
-
-#===================#
-#     Button Up     #
-#===================#
-
-# Button up the house when needed.
-- alias: 'Button Up House'
-  id: button_up_house
-  trigger:
-    - platform: sun
-      event: sunset
-    - platform: template
+    - condition: template
       value_template: >
-        {{ is_state('group.device_tracker_jon', 'not_home') and
-           is_state('group.family_members', 'not_home') }}
+        {% set skip_list = ['log_automations', 'backup_log_on_shutdown', 'backup_auto_log', 'log_notifications',
+                             'set_maximum_attic_temperature', 'set_maximum_outdoor_temperature',
+                             'set_minimum_attic_temperature', 'set_minimum_outdoor_temperature',
+                             'update_openuv'] %}
+        {{ trigger.event.data.entity_id.startswith('automation.') and
+           trigger.event.data.entity_id.split('.')[1] not in skip_list and
+           'old_state' in trigger.event.data and 'new_state' in trigger.event.data and
+           'last_triggered' in trigger.event.data.new_state.attributes and 'last_triggered' in trigger.event.data.old_state.attributes and
+           trigger.event.data.new_state.attributes.last_triggered != trigger.event.data.old_state.attributes.last_triggered }}
   
   action:
-  
-    # Garage doors ... run the scripts in parallel because they contain a 30 minute delay.
-    - service: script.turn_on
-      target:
-        entity_id: script.close_garage_door_north
-    - service:  script.turn_on
-      target:
-        entity_id: script.close_garage_door_south
     
-    # Light domains
-    - service: homeassistant.turn_off
-      data:
-        entity_id: light.attic_light
-    - service: homeassistant.turn_off
-      data:
-        entity_id: light.garage_lights
-    - service: homeassistant.turn_off
-      data:
-        entity_id: light.outdoor_lights
+    # Log it.
+    - service: notify.triggered_automations
+      data_template:
+        message: >
+         {{ as_timestamp(trigger.event.data.new_state.last_updated) | timestamp_custom('%b %d: %X') }}: {{ trigger.event.data.new_state.name }}
 
-#==================#
-#     Log File     #
-#==================#
+#===================#
+#     Log Files     #
+#===================#
 
-# Backup the current log file on shutdown, so we don't lose possible debugging information.
+# Backup the current HA log file on shutdown, so we don't lose possible debugging information.
 - alias: Backup Log On Shutdown
   id: backup_log_on_shutdown
   trigger:
@@ -195,52 +56,18 @@
     - platform: homeassistant
       event: start
   action:
-    - service: shell_command.delete_junk_log_files
- 
-#============================#
-#     Kodi Movie Control     #
-#============================#
- 
-# We have an input select that represents the list of Kodi movies. This is dynamically set using the 
-# get_all_kodi_movies script. However, when HA restarts, the input select gets restored to the yaml value
-# instead of the dynamically set value. So this automation restores the dynamic list on HA start.
-#
-# The actual list should exist in a file that was saved at get_all_kodi_movies time, and the feature
-# movie name (input select state value) exists in input_text.current_feature.
-- alias: Restore Movie List On Start
-  id: restore_movie_list_on_start
-  trigger:
-    - platform: homeassistant
-      event: start
-  action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-    
-    # Turn on a flag to prevent any other automations or scripts mucking with the feature movie name until
-    # restoration is complete.
-    - service: input_boolean.turn_on
-      data:
-        entity_id: input_boolean.kodi_movie_list_restoration
-    
-    # Call a pyscript module to restore the movie list.
-    - service: pyscript.restore_all_movies
-      data:
-        entity: input_select.kodi_movies
-    
-    # Wait until the list is restored (state not equal to the static yaml value).
-    - wait_template: "{{ not is_state('input_select.kodi_movies', 'Select') }}"
-      timeout: '00:00:10'
-    
-    # Set the current feature movie as the selected option in the list.
-    - service: input_select.select_option
-      data:
-        entity_id: input_select.kodi_movies
-        option: "{{ states('input_text.current_feature') }}"
-    
-    # Turn off the restoration flag.
-    - service: input_boolean.turn_off
-      data:
-        entity_id: input_boolean.kodi_movie_list_restoration
+    - service: shell_command.delete_junk_log_files
+
+# Backup the automations log file every day.
+- alias: Backup Auto Log
+  id: backup_auto_log
+  trigger:
+    - platform:  time
+      at: '00:02:09'
+  action:
+    - service: shell_command.backup_auto_log
 
 #===================================#
 #     Kodi Media Player Logging     #
@@ -303,9 +130,8 @@
 #       make changes, so it's now just included with all the other automations instead of a package.
 
 # Save notifications to MQTT when they are created.
-- id: save_notifications_on_create
-  alias: Save Notifications On Create
-  initial_state: 'on'
+- alias: Save Notifications On Create
+  id: save_notifications_on_create
   trigger:
     - platform: event
       event_type: call_service
@@ -329,9 +155,8 @@
         retain: true
 
 # Remove saved notifications from MQTT when they are dismissed.
-- id: remove_saved_notifications_on_dismiss
-  alias: Remove Saved Notifications On Dismiss
-  initial_state: 'on'
+- alias: Remove Saved Notifications On Dismiss
+  id: remove_saved_notifications_on_dismiss
   trigger:
     - platform: event
       event_type: call_service
@@ -362,9 +187,8 @@
 #     a new persistent notification to replace the original, thus driving save_notifications_on_create, which in turn re-drives
 #     this, but the condition should be false on the redrive.
 #   - Note that dashes in the notification ID are changed to underscores, presumably to prevent some problem.
-- id: restore_notifications
-  alias: Restore Notifications
-  initial_state: 'on'
+- alias: Restore Notifications
+  id: restore_notifications
   trigger:
     - platform: mqtt
       topic: home-assistant/notifications/+
@@ -393,23 +217,6 @@
       data:
         message: "notification: '{{ trigger.payload }}'"
         level: info
-
-#=================#
-#     Open UV     #
-#=================#
-
-# Update OpenUV once per hour during daylight.
-- alias: Update OpenUV
-  id: 'update_openuv'
-  trigger:
-    - platform: time_pattern
-      minutes: 19
-  condition:
-    - condition: state
-      entity_id: sun.sun
-      state: above_horizon
-  action:
-    - service: openuv.update_data
 
 #========================#
 #     Christmas Mode     #

@@ -70,14 +70,6 @@ disable_family_room_av:
     - service: switch.turn_off
       entity_id: switch.sonoff_family_room_av
 
-# Allow the family room AV to be used late at night.
-allow_late_family_room_av:
-  alias: Allow Late Family Room AV
-  sequence:
-    - service: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.family_room_av_late_night_control
-
 #======================#
 #     Echo Devices     #
 #======================#
@@ -105,6 +97,8 @@ mute_upstairs_bedroom_echo:
 # Template script that does the work.
 close_garage_door:
   alias: Close Garage Door
+  
+  # Allow multiple independent runs.
   mode: parallel
   
   fields:
@@ -139,7 +133,7 @@ close_garage_door:
         entity_id: "{{ switch }}"
     
     # Wait for the door to close.
-    - delay: '00:30:00'
+    - delay: '00:05:00'
     
     # Confirm that the door is closed. If so, we're done.
     - condition: "{{ is_state(contact, 'off') }}"

@@ -369,6 +369,106 @@ automate_lights_while_away:
                is_state('input_boolean.nighttime', 'on') or
                states('sun.sun') == 'above_horizon' }}
 
+#=====================#
+#     Smart Bulbs     #
+#=====================#
+
+# Reset (turn off) all smart bulbs after a power outage if the conditions are right.
+reset_smart_bulbs:
+  alias: Reset Smart Bulbs
+  sequence:
+    - service: script.reset_smart_bulb_sky_conditions
+      data:
+        light_entity: light.family_room_lamp
+    
+    - service: script.reset_smart_bulb_nighttime
+      data:
+        light_entity: light.master_bedroom_lamp
+    
+    - service: script.reset_smart_bulb_lux_sensor
+      data:
+        light_entity: light.office_lamp
+        lux_entity: sensor.office_ambient_light
+        lux_value: 300
+
+# Reset a smart bulb based on the sky conditions (sun angle and weather).
+reset_smart_bulb_sky_conditions:
+  alias: Reset Smart Bulb Sky Conditions
+  
+  fields:
+    light_entity:
+      description: 'The light entity to turn off.'
+
+  sequence:
+        
+    # Evaluate the weather condition and set the result in an input_select.
+    - service: script.evaluate_weather_condition
+    
+    # Use the evaluated weather conditions and sun elevation.
+    - condition: template
+      value_template: >
+        {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+            states('input_select.weather_condition') == 'clear') or
+           (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+            states('input_select.weather_condition') == 'hazy') or
+            state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+    
+    - service: homeassistant.turn_off
+      target:
+        entity_id: "{{ light_entity }}"
+
+# Reset a smart bulb based on various sleep/wake modes.
+reset_smart_bulb_nighttime:
+  alias: Reset Smart Bulb Nighttime
+  
+  fields:
+    light_entity:
+      description: 'The light entity to turn off.'
+
+  sequence:
+        
+    # Perform the reset if nighttime mode is off, or sleeptime mode is on and the bathroom flag is off. 
+    # This disables the reset during the time I'm in bed reading, or using the bathroom.
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: input_boolean.nighttime
+          state: 'off'
+        - condition: and
+          conditions:
+            - condition: state
+              entity_id: input_boolean.sleeptime
+              state: 'on'
+            - condition: state
+              entity_id: input_boolean.bathroom
+              state: 'off'
+    
+    - service: homeassistant.turn_off
+      target:
+        entity_id: "{{ light_entity }}"
+
+# Reset a smart bulb based on the ambient light level.
+reset_smart_bulb_lux_sensor:
+  alias: Reset Smart Bulb Lux Sensor
+  
+  fields:
+    light_entity:
+      description: 'The light entity to turn off.'
+    lux_entity:
+      description: 'The ambient light level sensor entity.'
+    lux_value:
+      description: 'The ambient light level sensor value.'
+
+  sequence:
+        
+     # Perform the reset if the lux value is above the requested threshold.
+    - condition: template
+      value_template: "{{ states(lux_entity) > lux_value }}"
+    
+    - service: homeassistant.turn_off
+      target:
+        entity_id: "{{ light_entity }}"
+
 #============================#
 #     Family Room Normal     #
 #============================#

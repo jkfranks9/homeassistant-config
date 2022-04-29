@@ -38,12 +38,6 @@ action:
   
   # Short delay just to be safe.
   - delay:  '00:00:01'
-  
-  # Continue only if the time value is above zero. This ensures we don't continue when the time is reset to
-  # zero with an automation that runs in the wee hours.
-  - condition: numeric_state
-    entity_id: !input time_entity
-    above: 0
     
   # Calculate the calories.
   - service: input_number.set_value

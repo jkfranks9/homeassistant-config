@@ -1,24 +1,3 @@
-#==================#
-#     Home Off     #
-#==================#
-
-# Ensure the house is shutdown when Jon leaves home and no family members are home.
-- alias: Leave Home
-  id: 'leave_home'
-  trigger:
-    - platform: state
-      entity_id: group.device_tracker_jon
-      from: 'home'
-      to: 'not_home'
-  condition:
-    - condition: state
-      entity_id: group.family_members
-      state: 'not_home'
-  action:
-    - scene: scene.lights_out
-    - service: script.turn_on
-      entity_id: script.lock_pc
-
 #=============#
 #     UPS     #
 #=============#
@@ -34,7 +13,17 @@
       entity_id: sensor.cyber1_status_data
       to: 'OB DISCHRG'
       for: '00:01:00'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: sensor.cyber1_status_data
+      state: 'OB DISCHRG'
+  
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     
     # Send a notification.
     - service: notify.mobile_app_jon_galaxy
@@ -60,7 +49,17 @@
     - platform: numeric_state
       entity_id: sensor.cyber1_battery_runtime
       below: 420
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.cyber1_battery_runtime
+      below: 420
+  
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     
     # Send a notification.
     - service: notify.mobile_app_jon_galaxy
@@ -84,7 +83,17 @@
       entity_id: sensor.cyber1_status_data
       to: 'OL CHRG'
       for: '00:02:00'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: sensor.cyber1_status_data
+      state: 'OL CHRG'
+  
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     
     # Send a notification.
     - service: notify.mobile_app_jon_galaxy
@@ -105,6 +114,9 @@
     # Enable the recorder after a short delay.
     - delay: '00:02:00'
     - service: recorder.enable
+    
+    # Reset smart bulbs if needed.
+    - service: script.reset_smart_bulbs
 
 # Restart the NUT server service if it becomes unavailable.
 - alias: Reboot NUT Service
@@ -113,10 +125,165 @@
     - platform: state
       entity_id: sensor.cyber1_status
       to: 'unavailable'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: sensor.cyber1_status
+      state: 'unavailable'
+  
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     - service: shell_command.reboot_nut_service
+
+#===============#
+#     House     #
+#===============#
+
+# Close up the house when needed.
+- alias: Close House
+  id: 'close_house'
+  
+  trigger:
+    
+    # Jon leaves home.
+    - platform: state
+      entity_id: group.device_tracker_jon
+      from: 'home'
+      to: 'not_home'
+    
+    # The sun goes to bed.
+    - platform: sun
+      event: sunset
+    
+    # In case HA was rebooting when one of the above triggers would have happened.
+    - platform: homeassistant
+      event: start
+  
+  # These conditions cover the HA start trigger.
+  condition:
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: sun.sun
+          state: 'below_horizon'
+        - condition: template
+          value_template: >
+            {{ is_state('group.device_tracker_jon', 'not_home') and
+               is_state('group.family_members', 'not_home') }}
+  
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
+    
+    # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
+    - service: script.turn_on
+      target:
+        entity_id: script.close_garage_door_north
+    - service:  script.turn_on
+      target:
+        entity_id: script.close_garage_door_south
+    
+    - choose:
+      
+      # No one is home.
+      - conditions:
+        - condition: template
+          value_template: >
+            {{ is_state('group.device_tracker_jon', 'not_home') and
+               is_state('group.family_members', 'not_home') }}
+        
+        sequence:
+    
+          # Lock the PC.
+          - service: script.turn_on
+            entity_id: script.lock_pc
+    
+          # Turn off all lights.
+          - scene: scene.lights_out
+        
+          # Turn off automations that could turn on various lights.
+          - service: automation.turn_off
+            entity_id: automation.turn_on_christmas_lights
+          - service: automation.turn_off
+            entity_id: automation.turn_on_guest_lights_sunset
+          - service: automation.turn_off
+            entity_id: automation.turn_on_office_light
+      
+      # Must be sunset.
+      default:
+        
+        # Turn off certain light domains.
+        - service: scene.apply
+          data:
+            entities:
+              light.attic_light: 'off'
+              light.garage_lights: 'off'
+              light.outdoor_lights: 'off'
+
+# Open up the house when needed.
+- alias: Open House
+  id: 'open_house'
+  trigger:
+    
+    # Jon arrives home.
+    - platform: state
+      entity_id: group.device_tracker_jon
+      from: 'not_home'
+      to: 'home'
+  
+  action:
+    
+    # Turn on automations that were possibly turned off by Leave Home, and trigger them.
+    - service: automation.turn_on
+      entity_id: automation.turn_on_christmas_lights
+    
+    - service: automation.turn_on
+      entity_id: automation.turn_on_guest_lights_sunset
+    
+    - service: automation.trigger
       data:
-        nut_server: !secret nut_server_ip
+        entity_id: automation.turn_on_guest_lights_sunset
+        skip_condition: false
+    
+    - service: automation.turn_on
+      entity_id: automation.turn_on_office_light
+    
+    - service: automation.trigger
+      data:
+        entity_id: automation.turn_on_office_light
+        skip_condition: false
+    
+    # Continue only if it's dark-ish.
+    - condition: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 6.0
+    
+    # Turn on appropriate lights.
+    - choose:
+      
+      # It's Christmas time!
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('input_boolean.christmas_mode', 'on') }}"
+        
+        sequence:
+          - service: homeassistant.turn_on
+            entity_id: group.daytime_lights_christmas
+          
+          - service: light.turn_on
+            entity_id: light.office_lamp
+      
+      # No it's not!
+      default:
+        - service: homeassistant.turn_on
+          entity_id: light.daytime_lights
+        
+        - service: light.turn_on
+          entity_id: light.office_lamp
 
 #========================#
 #     Family Room AV     #
@@ -154,60 +321,12 @@
 - alias: Disable Family Room AV
   id: 'disable_family_room_av'
   trigger:
-    - platform: time
-      at: '23:00:10'
     - platform: state
       entity_id: input_boolean.nighttime
       from: 'off'
       to: 'on'
   action:
-    - choose:
-      
-      # If the system is off, just remove power.
-      - conditions:
-        - condition: numeric_state
-          entity_id: sensor.sonoff_family_room_av_power
-          below: 10.0
-        sequence:
-          - service: script.disable_family_room_av
-      
-      # The system is currently on.
-      default:
-        
-        # Turn off the late night control. This can be turned on by a script to allow the AV system to remain on.
-        - service: input_boolean.turn_off
-          target:
-            entity_id: input_boolean.family_room_av_late_night_control
-        
-        
-        # Repeat a few times while the system is still on, unless the late night control is activated.
-        - repeat:            
-            while:
-              - condition: numeric_state
-                entity_id: sensor.sonoff_family_room_av_power
-                above: 10.0
-              - condition: state
-                entity_id: input_boolean.family_room_av_late_night_control
-                state: 'off'
-              - condition: template
-                value_template: "{{ repeat.index <= 3 }}"
-            
-            # Ask someone to turn off the system so power can be removed.
-            sequence:
-              - service: notify.alexa_media
-                data:
-                  target:
-                    - media_player.everywhere
-                  data:
-                    type: announce
-                  message: 'Family room AV system in use. Please turn it off so power can be removed.'
-              - delay: '00:01:00'
-        
-        # Remove power, unless the late night control was activated.
-        - condition: state
-          entity_id: input_boolean.family_room_av_late_night_control
-          state: 'off'
-        - service: script.disable_family_room_av
+    - service: script.disable_family_room_av
 
 #===================#
 #     Treadmill     #
@@ -399,6 +518,16 @@
       component_name: sonoff
       device_name: Microwave
 
+# Turn off washer plug early each day.
+- alias: Turn Off Washer Plug
+  id: 'turn_off_washer_plug'
+  trigger:
+    - platform:  time
+      at: '01:01:01'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.sonoff_washer
+
 #======================#
 #     Robot Vacuum     #
 #======================#
@@ -409,24 +538,22 @@
   trigger:
     - platform: time
       at: '03:19:00'
-      #at: '08:00:00'
     - platform: homeassistant
       event: start
   condition:
     - condition: time
       after: '03:19:00'
-      #after: '08:00:00'
     - condition: time
       before: '04:19:00'
-      #before: '09:00:00'
     - condition: time
       weekday:
         - mon
-        #- sun
     - condition: state
       entity_id: timer.vacuum
       state: 'idle'
   action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_off
       entity_id: input_boolean.vacuum_kicked_off
     - service: vacuum.turn_on
@@ -585,21 +712,7 @@
             entity_id: timer.washer_rinse_fill_blackout
             duration: '00:04:00'
 
-# Washer operation control. The normal cycle as reflected in the washer power state sensor proceeds as follows:
-#
-# - stop
-# - fill      <-- filling
-# - raise     <-- start agitating
-# - drop      <-- stop agitating
-# - pause     <-- short pause
-# - fill      <-- filling
-# - [various] <-- optional fabric softener injection
-# - raise     <-- start agitating
-# - drop      <-- stop agitating
-# - pause     <-- short pause
-# - stop
-#
-# This should result in the following input select transitions:
+# Washer operation control. This uses the washer power state sensor and other controls to step through the following washer states:
 #
 # - Stop
 # - Wash Fill
@@ -634,11 +747,11 @@
           {% if t == 'active' %} {{ s }}
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
-          {% elif fr in ['stop', 'unknown'] and to == 'fill' %}                                    Wash Fill
-          {% elif fr == 'fill'              and to == 'raise'   and s == 'Wash Fill' %}            Wash
+          {% elif fr in ['stop', 'unknown'] and to in ['fill', 'pause'] %}                         Wash Fill
+          {% elif fr in ['fill', 'pause']   and to == 'raise'   and s == 'Wash Fill' %}            Wash
           {% elif fr == 'raise'             and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
           {% elif fr == 'pause'             and to == 'fill' %}                                    Rinse Fill
-          {% elif fr == 'fill'              and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
+          {% elif fr in ['fill', 'drop']    and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
           {% elif fr == 'raise'             and to == 'drop'    and s == 'Rinse' %}                Rinse Drain     
           
           {# --Some washer power state sensor changes just remain in the current state-- #}
@@ -659,7 +772,9 @@
   id: turn_on_dryer_running
   trigger:
     - platform: template
-      value_template: "{{ states('sensor.dryer_temperature') | int(0) > (states('sensor.office_temperature') | int(0) + 10) }}"
+      value_template: >
+        {{ states('sensor.dryer_temperature') != 'unavailable' and states('sensor.office_temperature') != 'unavailable' and
+           states('sensor.dryer_temperature') | int(0) > (states('sensor.office_temperature') | int(0) + 10) }}
   action:
     - service: input_boolean.turn_on
       entity_id: input_boolean.dryer_running

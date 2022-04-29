@@ -1,0 +1,85 @@
+# Notify for device attribute(s) being low enough to require maintenance, such as replacing a device filter.
+
+blueprint:
+  name: Maintenance Low Notification
+  description: Notify when device attribute(s) cross a low threshold.
+  domain: automation
+  
+  input:
+    sensor1_entity:
+      name: Sensor 1 Entity
+      description: First sensor entity to be checked.
+      selector:
+        entity:
+          domain: sensor
+    
+    sensor2_entity:
+      name: Sensor 2 Entity
+      description: Second sensor entity to be checked.
+      selector:
+        entity:
+          domain: sensor
+          
+    threshold1:
+      name: Threshold 1 Value
+      description: First sensor threshold value to trigger the notification.
+      selector:
+        number:
+          min: 0
+          max: 3000
+          
+    threshold2:
+      name: Threshold 2 Value
+      description: Second sensor threshold value to trigger the notification.
+      selector:
+        number:
+          min: 0
+          max: 3000
+    
+    timer_entity:
+      name: Timer Entity
+      description: Timer entity associated with the notification, used for throttling.
+      selector:
+        entity:
+          domain: timer
+    
+    message:
+      name: Notification Message
+      description: Message to be issued.
+
+# Trigger when the sensor value(s) become too low, or when HA starts (in case HA is rebooting when the trigger would have occurred).
+trigger:
+  - platform: numeric_state
+    entity_id: !input sensor1_entity
+    below: !input threshold1
+  
+  - platform: numeric_state
+    entity_id: !input sensor2_entity
+    below: !input threshold2
+  
+  - platform: homeassistant
+    event: start
+
+# Guard against HA start triggers.
+condition:
+  condition: or
+  conditions:
+    - condition: numeric_state
+      entity_id: !input sensor1_entity
+      below: !input threshold1
+
+    - condition: numeric_state
+      entity_id: !input sensor2_entity
+      below: !input threshold2
+
+# Send the notification after a random delay (to spread out automations done at HA start).
+action:
+  - delay: 
+      seconds: "{{ range(2, 15) | random }}"
+  
+  - service: script.throttle_mobile_notification
+    data:
+      timer_entity: !input timer_entity
+      title: 'Action required:'
+      message: '{{ message }}'
+      channel: Home Assistant
