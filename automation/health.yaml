@@ -17,7 +17,7 @@
     - condition: template
       value_template: "{{ now().day == 1 }}"
     - condition: template
-      value_template: "{{ trigger.from_state and trigger.from_state > 0.0 }}"
+      value_template: "{{ trigger.from_state and trigger.from_state.state > 0.0 }}"
   
   # Determine the previous month using the 'from' state's last changed value.
   variables:

@@ -80,86 +80,48 @@ close_cinema:
 #     Theater Lighting      #
 #===========================#
 
-# Make the theater dark. Note that this uses the Lutron scene, since that dims the lights slowly.
+# Make the theater dark.
 set_theater_dark:
   alias: Set Theater Dark
   sequence:
-    - service: light.turn_off
-      entity_id: light.utility_light
-    - service: light.turn_off
-      entity_id: light.stairway_light
-    - service: light.turn_off
-      entity_id: light.snack_light
-    - scene: scene.theater_dark
+    - scene: scene.theater_aux_dark
+    - scene: scene.lutron_dark
+
+# Make the theater dark, with a delay.
+set_theater_dark_delay:
+  alias: Set Theater Dark Delay
+  sequence:
+    - scene: scene.theater_aux_dark
+    - delay: '00:00:12'
+    - scene: scene.lutron_dark
 
 # Make the theater dim.
 set_theater_dim:
   alias: Set Theater Dim
   sequence:
-    - service: light.turn_off
-      entity_id: light.theater_ceiling
-      data:
-        transition: 2
-    - service: light.turn_on
-      entity_id: light.theater_sconces
-      data:
-        brightness_pct: 75
-        transition: 2
-    - service: light.turn_off
-      entity_id: light.upstairs_hallway_lights
-    - service: light.turn_off
-      entity_id: light.utility_light
-    - service: light.turn_off
-      entity_id: light.stairway_light
-    - service: light.turn_off
-      entity_id: light.snack_light
+    - scene: scene.theater_aux_dark
+    - scene: scene.lutron_dim
 
 # Make the theater bright.
 set_theater_bright:
   alias: Set Theater Bright
   sequence:
-    - service: light.turn_on
-      entity_id: light.theater_ceiling
-      data:
-        brightness_pct: 100
-        transition: 2
-    - service: light.turn_off
-      entity_id: light.theater_sconces
-      data:
-        transition: 2
-    - service: light.turn_on
-      entity_id: light.upstairs_hallway_lights
-    - service: light.turn_off
-      entity_id: light.utility_light
+    - scene: scene.theater_aux_partial
     - service: script.turn_on
       entity_id: script.turn_on_stairway_light
-    - service: light.turn_off
-      entity_id: light.snack_light
+    - scene: scene.lutron_bright
 
 # Make the theater idle, meaning it's on but we need lights to see.
 set_theater_idle:
   alias: Set Theater Idle
   sequence:
-    - service: light.turn_off
-      entity_id: light.theater_ceiling
-      data:
-        transition: 2
-    - service: light.turn_on
-      entity_id: light.theater_sconces
-      data:
-        brightness_pct: 100
-        transition: 2
-    - service: light.turn_off
-      entity_id: light.upstairs_hallway_lights
-    - service: light.turn_off
-      entity_id: light.utility_light
+    - scene: scene.theater_aux_partial
     - service: script.turn_on
       entity_id: script.turn_on_stairway_light
-    - service: light.turn_on
-      entity_id: light.snack_light
+    - scene: scene.lutron_idle
 
 # Turn on the stairway light if it's dark enough. This is used by the open/close cinema scripts,
-# and the 'take a break' automation, because the stairs are (or might be) used at these times.
+# and the 'take a break' scipt, because the stairs are (or might be) used at these times.
 turn_on_stairway_light:
   alias: Turn On Stairway Light
   sequence:
@@ -181,8 +143,14 @@ watch_app:
     component:
       description: 'The component name of the target Shield TV application. These are obtained by querying the Shield TV box.'
       example: 'com.netflix.ninja/.MainActivity'
+    lighting:
+      description: 'Script or scene that establishes the desired lighting.'
+      example: 'script.set_theater_dark'
   
   sequence:
+    
+    # Turn on some lights.
+    - service: script.set_theater_idle
   
     # First, turn on the harmony activity that ensures the projector, receiver and Shield TV are powered on. The receiver at this 
     # point is switched to an unused input so the screen will be dark.
@@ -203,10 +171,8 @@ watch_app:
         command: 'InputCbl/Sat'
         device: Marantz Receiver
   
-    # Finally, make the theater dark after a delay.
-    - delay: '00:00:12'
-    - service: script.turn_on
-      entity_id: script.set_theater_dark
+    # Establish the target lighting.
+    - service: "{{ lighting }}"
 
 #------------------------#
 #   -- Applications --   #
@@ -219,6 +185,7 @@ watch_amazon_prime:
     - service: script.watch_app
       data:
         component: 'com.amazon.amazonvideo.livingroom/com.amazon.ignition.IgnitionActivity'
+        lighting: 'script.set_theater_dark_delay'
 
 # Disney Plus
 watch_disney_plus:
@@ -227,6 +194,7 @@ watch_disney_plus:
     - service: script.watch_app
       data:
         component: 'com.disney.disneyplus/com.bamtechmedia.dominguez.main.MainActivity'
+        lighting: 'script.set_theater_dark_delay'
 
 # HBO Max
 watch_hbo_max:
@@ -235,6 +203,7 @@ watch_hbo_max:
     - service: script.watch_app
       data:
         component: 'com.hbo.hbonow/com.hbo.go.LaunchActivity'
+        lighting: 'script.set_theater_dark_delay'
 
 # Kodi
 watch_kodi:
@@ -243,6 +212,7 @@ watch_kodi:
     - service: script.watch_app
       data:
         component: 'org.xbmc.kodi/.Splash'
+        lighting: 'script.set_theater_dark_delay'
 
 # Netflix
 watch_netflix:
@@ -251,6 +221,7 @@ watch_netflix:
     - service: script.watch_app
       data:
         component: 'com.netflix.ninja/.MainActivity'
+        lighting: 'script.set_theater_dark_delay'
 
 # Pandora
 watch_pandora:
@@ -259,6 +230,7 @@ watch_pandora:
     - service: script.watch_app
       data:
         component: 'com.pandora.android.atv/com.pandora.android.MainActivity'
+        lighting: 'script.set_theater_dim'
 
 # Paramount Plus
 watch_paramount_plus:
@@ -267,6 +239,7 @@ watch_paramount_plus:
     - service: script.watch_app
       data:
         component: 'com.cbs.ott/com.cbs.app.tv.ui.activity.SplashActivity'
+        lighting: 'script.set_theater_dark_delay'
 
 # Peacock
 watch_peacock:
@@ -275,6 +248,7 @@ watch_peacock:
     - service: script.watch_app
       data:
         component: 'com.peacocktv.peacockandroid/com.peacock.peacocktv.GoogleMainActivity'
+        lighting: 'script.set_theater_dark_delay'
 
 # Youtube TV
 watch_youtube_tv:
@@ -283,6 +257,7 @@ watch_youtube_tv:
     - service: script.watch_app
       data:
         component: 'com.google.android.youtube.tvunplugged/com.google.android.apps.youtube.tvunplugged.activity.MainActivity'
+        lighting: 'script.set_theater_dark_delay'
 
 #=============================#
 #     Harmony Activities      #
@@ -307,8 +282,7 @@ start_activity:
       data:
         activity: "{{ activity }}"
   
-    # Establish the target lighting after a delay.
-    - delay: '00:00:15'
+    # Establish the target lighting.
     - service: "{{ lighting }}"
 
 #----------------------#
@@ -322,7 +296,7 @@ start_streaming:
     - service: script.start_activity
       data:
         activity: 'Stream Player'
-        lighting: 'script.set_theater_dark'
+        lighting: 'script.set_theater_dark_delay'
 
 # Blu-ray
 start_bluray:
@@ -331,7 +305,7 @@ start_bluray:
     - service: script.start_activity
       data:
         activity: 'BD Player'
-        lighting: 'script.set_theater_dark'
+        lighting: 'script.set_theater_dark_delay'
 
 # Laserdisc
 start_laserdisc:
@@ -340,7 +314,7 @@ start_laserdisc:
     - service: script.start_activity
       data:
         activity: 'LD Player'
-        lighting: 'script.set_theater_dark'
+        lighting: 'script.set_theater_dark_delay'
 
 # Turntable
 start_turntable:
@@ -502,7 +476,7 @@ play_feature_movie:
     # Start the 'enable streaming' Harmony activity, which ensures the correct devices are on and the screen is dark.
     - service: switch.turn_on
       entity_id: switch.harmony_hub_enable_streaming
-    - delay: '00:00:05'
+    - delay: '00:00:03'
   
     # Start Kodi on the Shield TV.
     - service: androidtv.adb_command
@@ -553,8 +527,7 @@ play_feature_movie:
         method: Player.Open
         item:
           movieid: "{{ movieid }}"
-    - delay: '00:00:12'
   
     # Darken the theater.
     - service: script.turn_on
-      entity_id: script.set_theater_dark
+      entity_id: script.set_theater_dark_delay

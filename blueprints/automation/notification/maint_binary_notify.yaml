@@ -48,5 +48,5 @@ action:
     data:
       timer_entity: !input timer_entity
       title: 'Action required:'
-      message: '{{ message }}'
+      message: !input message
       channel: Home Assistant

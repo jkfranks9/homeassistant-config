@@ -141,16 +141,6 @@ lutron_caseta:
   certfile: /ssl/lutron/caseta.crt
   ca_certs: /ssl/lutron/caseta-bridge.crt
 
-# Sonoff
-sonoff:
-  username: !secret sonoff_username
-  password: !secret sonoff_password
-  sensors: [power, current]
-  #mode: local
-  reload: always
-  force_update: [power]
-  scan_interval: '00:01:00'
-
 # Ecovacs DEEBOT
 ecovacs:
   username: !secret ecovacs_user_id

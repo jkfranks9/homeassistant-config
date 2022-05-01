@@ -248,20 +248,6 @@
         entity_id: input_text.current_feature
         value: "{{ ( trigger.to_state.state ) }}"
 
-#=======================#
-#     Miscellaneous     #
-#=======================#
-
-#  Turn on dim lighting for Pandora since it's (mostly) audio only.
-- alias: Turn On Pandora Dim Lighting
-  id: turn_on_pandora_dim_lighting
-  trigger: 
-    - platform: template
-      value_template: "{{ is_state_attr('media_player.shield_tv', 'app_name', 'Pandora') }}"
-  action:
-    - service: script.turn_on
-      entity_id: script.set_theater_dim
-
 #===================================#
 #     Shield Application Change     #
 #===================================#

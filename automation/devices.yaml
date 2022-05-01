@@ -645,7 +645,7 @@
       target:
         entity_id: input_select.washer_load_size
       data:
-        value: >
+        option: >
           {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
           {% set seconds = (now().timestamp() - start) %}
           {% if   seconds >= 240 and seconds < 350 %} Small

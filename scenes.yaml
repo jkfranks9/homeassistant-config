@@ -37,3 +37,26 @@
     group.interior_lights:      'off'
     light.misc_lights:          'off'
     light.theater_lights:       'off'
+
+#==================================#
+#     Theater Auxiliary Lights     #
+#==================================#
+
+# These are lights associated with the theater but not in the theater room.
+
+# Turn off all theater auxiliary lights.
+- id: 'theater_aux_dark'
+  name: Theater Aux Dark
+  entities:
+    light.snack_light:             'off'
+    light.upstairs_hallway_lights: 'off'
+    light.utility_light:           'off'
+    light.stairway_light:          'off'
+# Turn on partial theater auxiliary lights. Note that the stairway light is controlled by a script in this
+# scenario, so is missing here.
+- id: 'theater_aux_partial'
+  name: Theater Aux Partial
+  entities:
+    light.snack_light:             'off'
+    light.upstairs_hallway_lights: 'on'
+    light.utility_light:           'off'
