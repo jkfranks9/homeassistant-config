@@ -727,6 +727,11 @@
   trigger:
     - platform: state 
       entity_id: sensor.washer_power_state
+  
+  condition:
+    - condition: template
+      value_template: "{{ trigger.from_state and trigger.from_state.state != 'unavailable' }}"
+  
   action:
     
     # Delay one second so automations (above) that determine the load size have a chance to run before we do.

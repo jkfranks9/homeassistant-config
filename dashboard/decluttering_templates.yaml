@@ -165,7 +165,7 @@ next_event:
             interval: '[[interval]]'
     
     style: |
-      {% if states.[[entity]].state %}
+      {% if states.input_datetime | count > 0 %}
         {%- set ts_event = as_timestamp(states.[[entity]].state, default=0) %}
         {%- set ts_now = as_timestamp(now())|round(0) %}
         {%- set ts_delta = (ts_now - ts_event) %}

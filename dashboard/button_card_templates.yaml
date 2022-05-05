@@ -181,3 +181,179 @@ blank_button:
   show_state: false
   tap_action:
     action: 'none'
+
+#==============================#
+#     Presence Button Card     #
+#==============================#
+
+presence-tile:
+  triggers_update: all
+  aspect_ratio: 3/1.5
+  tap_action:
+    action: 'none'
+  
+  styles:
+    card:
+      - background-color: var(--card-background-color)
+      - border-radius: 0%
+      - padding: 1%
+      - font-size: 100%
+      - text-transform: capitalize
+    grid:
+      - grid-template-areas: '"n n n n n" "i i m1 m1 m1" "i i m2 m2 m2" "fam fam m3 m3 m3"'
+      - grid-template-columns: 1fr 1fr 1fr 1fr 1fr
+      - grid-template-rows: 1fr 1fr 1fr 1fr
+    name:
+      - font-weight: bold
+      - align-self: middle
+      - justify-self: start
+      - padding-bottom: 0px
+    img_cell:
+      - justify-content: start
+      - align-items: start
+      - margin: 0%
+    icon:
+      - color: |
+            [[[
+              if (entity.state == 0) return 'var(--accent-color)';
+              if (entity.state == 1) return 'var(--primary-color)';
+              else return 'var(--light-primary-color)';
+            ]]]
+      - width: 70%
+      - margin-top: 0%
+    
+    custom_fields:
+      fam:
+        - align-self: middle
+        - justify-self: start
+      m1:
+        - align-self: middle
+        - justify-self: start
+      m2:
+        - align-self: middle
+        - justify-self: start
+      m3:
+        - align-self: middle
+        - justify-self: start
+  
+  custom_fields:
+    fam: '[[[ return `${entity.state} home` ]]]'
+    m1: |
+      [[[
+        var icon = "mdi:map-marker";
+        var color = "var(--input-fill-color)";
+        var status = states[variables.m1_entity].state;
+        if (status != 'not_home') {
+          icon = states['zone.'+status.toLowerCase()].attributes['icon'];
+          color = "var(--primary-color)";
+        }
+        return `<span>${variables.m1_name}:</span>
+        <ha-icon icon="${icon}"
+        style="width: 14px; height: 14px; color: ${color};"></ha-icon>
+        <span>${status}</span>`
+      ]]]
+    m2: |
+      [[[
+        var icon = "mdi:map-marker";
+        var color = "var(--input-fill-color)";
+        var status = states[variables.m2_entity].state;
+        if (status != 'not_home') {
+          icon = states['zone.'+status.toLowerCase()].attributes['icon'];
+          color = "var(--primary-color)";
+        }
+        return `<span>${variables.m2_name}:</span>
+        <ha-icon icon="${icon}"
+        style="width: 14px; height: 14px; color: ${color};"></ha-icon>
+        <span>${status}</span>`
+      ]]]
+    m3: |
+      [[[
+        var icon = "mdi:map-marker";
+        var color = "var(--input-fill-color)";
+        var status = states[variables.m3_entity].state;
+        if (status != 'not_home') {
+          icon = states['zone.'+status.toLowerCase()].attributes['icon'];
+          color = "var(--primary-color)";
+        }
+        return `<span>${variables.m3_name}:</span>
+        <ha-icon icon="${icon}"
+        style="width: 14px; height: 14px; color: ${color};"></ha-icon>
+        <span>${status}</span>`
+      ]]]
+
+#================================#
+#     UPS Status Button Card     #
+#================================#
+
+ups-status:
+  triggers_update: all
+  aspect_ratio: 3/1.5
+  
+  styles:
+    card:
+      - background-color: var(--card-background-color)
+      - border-radius: 0%
+      - padding: 1%
+      - font-size: 100%
+      #- text-transform: capitalize
+    grid:
+      - grid-template-areas: '"n n bat bat" "i i run run" "i i out out" "stat stat load load"'
+      - grid-template-columns: 1fr 1fr 1fr 1fr
+      - grid-template-rows: 1fr 1fr 1fr 1fr
+    name:
+      - font-weight: bold
+      - align-self: middle
+      - justify-self: start
+      - padding-bottom: 0px
+    img_cell:
+      - justify-content: start
+      - align-items: start
+      - margin: 0%
+    icon:
+      - color: |
+          [[[
+            if (`${entity.state}` == `${variables.state_on}`) return 'var(--light-primary-color)';
+            else return 'var(--primary-color)';
+          ]]]
+      - width: 70%
+      - margin-top: 0%
+    
+    custom_fields:
+      stat:
+        - align-self: middle
+        - justify-self: start
+      bat:
+        - align-self: middle
+        - justify-self: start
+      run:
+        - align-self: middle
+        - justify-self: start
+      out:
+        - align-self: middle
+        - justify-self: start
+      load:
+        - align-self: middle
+        - justify-self: start
+  
+  custom_fields:
+    stat: '[[[ return `${entity.state}` ]]]'
+    bat: |
+      [[[
+        var status = states[variables.bat_entity].state;
+        return `<span>Battery ${status} %</span>`
+      ]]]
+    run: |
+      [[[
+        var status = Math.round(states[variables.run_entity].state / 60);
+        return `<span>Runtime ${status} m</span>`
+      ]]]
+    out: |
+      [[[
+        var status = states[variables.out_entity].state;
+        return `<span>Output ${status} V</span>`
+      ]]]
+    load: |
+      [[[
+        var status = states[variables.load_entity].state;
+        return `<span>Load ${status} %</span>`
+      ]]]

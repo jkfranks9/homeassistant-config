@@ -320,15 +320,13 @@
   id: 'notify_hacs_updated'
   trigger:
     - platform: state
-      entity_id: binary_sensor.updater_hacs
-      from: 'off'
-      to: 'on'
+      entity_id: sensor.hacs
     - platform: homeassistant
       event: start
   condition:
-    - condition: state
-      entity_id: binary_sensor.updater_hacs
-      state: 'on'
+    - condition: numeric_state
+      entity_id: sensor.hacs
+      above: 0
   action:
     - delay:
         seconds: "{{ range(1, 5) | random }}"

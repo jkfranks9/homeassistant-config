@@ -41,11 +41,9 @@ exclude:
     - input_number.treadmill_speed
     - input_number.user_weight
     - input_number.zigbee2mqtt_join_minutes
-    - input_select.downstairs_ecobee_preset_mode
     - input_select.grandchild_sleepover_location
     - input_select.kodi_movies
     - input_select.rainbow_colors
-    - input_select.upstairs_ecobee_preset_mode
     - input_select.weather_condition
     - input_select.zigbee2mqtt_log_level
   

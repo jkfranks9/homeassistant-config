@@ -89,21 +89,3 @@
            (is_state('switch.harmony_hub_stream_player', 'off') or
              (is_state('switch.harmony_hub_stream_player', 'on') and
               is_state('media_player.shield_tv', 'playing'))) }}
-
-    #----------------------------#
-    #   -- Software Updates --   #
-    #----------------------------#
-
-    # Update sensors for HACS, supervisor and addons, similar to the one for HA itself.
-    - name: 'Updater - HACS'
-      unique_id: updater_hacs
-      state: "{{ states('sensor.hacs') | int(0) > 0 }}"
-    
-    - name: 'Updater - Supervisor'
-      unique_id: updater_supervisor
-      state: "{{ state_attr('sensor.supervisor_updates', 'update_available') }}"
-      availability: "{{ (states('sensor.supervisor_updates') | int(-1)) > -1 }}"
-
-    - name: 'Updater - Addons'
-      unique_id: updater_addons
-      state: "{{ states('sensor.supervisor_updates') | int(0) > 0 }}"

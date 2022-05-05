@@ -75,6 +75,7 @@ config:
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
         
+    # This is shown when Christmas mode is on.
     - entity: binary_sensor.mantle_bookcase_mirror
       tap_action:
         action: call-service

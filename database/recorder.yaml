@@ -39,7 +39,6 @@ exclude:
     - zone
 
   entities:
-    - device_tracker.lenovo_tab_2_a10_70f
     - device_tracker.lenovo_tablet
 
 #==== Inclusions

@@ -206,3 +206,17 @@
       state: >
         {% set n = now() %}
         {{ n.month > 2 and n.month < 11 }}
+    
+    # Number of family members home, including me. Since presence detection is currently a mess, some assumptions are made:
+    #
+    # - If either child is here, so is their spouse
+    # - Count the grandchild if the parents are here, or grandchild mode is on
+    - name: 'Family Home'
+      unique_id: family_home
+      state: >
+        {% set num = (expand('group.family_members') | selectattr('state', 'eq', 'home') | list | length) * 2 %}
+        {% if states('group.device_tracker_sarah') == 'home' or states('input_boolean.grandchild_home') == 'on' %}
+          {% set num = num + 1 %}
+        {% endif %}
+        {% set num = num + 1 if states('group.device_tracker_jon') == 'home' %}
+        {{ num }}

@@ -10,13 +10,38 @@ cards:
   - type: custom:layout-card
     layout_type: custom:vertical-layout
     cards:
-      - !include /config/dashboard/dash_overview/cards/home/persons.yaml
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: 'custom:button-card'
+            template: presence-tile
+            entity: sensor.family_home
+            name: Family
+            variables:
+              m1_entity: device_tracker.life360_jon_franks
+              m1_name: Jon
+              m2_entity: device_tracker.life360_michael_franks
+              m2_name: Mike
+              m3_entity: group.device_tracker_sarah
+              m3_name: Sarah
+          - type: 'custom:button-card'
+            template: ups-status
+            entity: sensor.cyber1_status
+            name: CPS (Primary)
+            variables:
+              state_on: 'Online'
+              bat_entity: sensor.cyber1_battery_charge
+              run_entity: sensor.cyber1_battery_runtime
+              out_entity: sensor.cyber1_output_voltage
+              load_entity: sensor.cyber1_load
+      #- !include /config/dashboard/dash_overview/cards/home/persons.yaml
       - !include /config/dashboard/dash_overview/cards/home/garage.yaml
       - !include /config/dashboard/dash_overview/cards/home/themes.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/lighting_domains.yaml
       - !include /config/dashboard/dash_overview/cards/home/adguard.yaml
-      - !include /config/dashboard/dash_overview/cards/home/ups.yaml
+      #- !include /config/dashboard/dash_overview/cards/home/ups.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
       - type: 'custom:sun-card'

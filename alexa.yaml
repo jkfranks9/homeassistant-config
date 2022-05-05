@@ -30,7 +30,6 @@ smart_home:
       - binary_sensor.backups_stale
       - scene.non_bedroom_lights_out
       - scene.non_master_lights_out
-      - scene.theater_dark
       - script.automate_lights_while_away
       - script.change_lighting_per_weather
       - script.concat_log_files

@@ -76,16 +76,17 @@ config:
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
         
-    - entity: binary_sensor.mantle_bookcase_mirror
-      tap_action:
-        action: call-service
-        service: switch.toggle
-        service_data:
-          entity_id: switch.mantle_bookcase
-      state_action:
-        action: call-service
-        service: floorplan.class_set
-        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    # This is hidden when Christmas mode is off.
+    #- entity: binary_sensor.mantle_bookcase_mirror
+    #  tap_action:
+    #    action: call-service
+    #    service: switch.toggle
+    #    service_data:
+    #      entity_id: switch.mantle_bookcase
+    #  state_action:
+    #    action: call-service
+    #    service: floorplan.class_set
+    #    service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
     # Temperatures
     - entities:

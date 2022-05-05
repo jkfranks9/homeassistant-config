@@ -5,6 +5,6 @@
 Family Members:
   entities:
     - person.mike
-    - person.maryam
+    #- person.maryam
     - person.sarah
-    - person.david
+    #- person.david
