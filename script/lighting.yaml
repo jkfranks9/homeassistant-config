@@ -21,6 +21,13 @@ bedtime:
     # Lock the PC.
     - service: script.turn_on
       entity_id: script.lock_pc
+    
+    # Enter sleep mode downstairs.
+    - service: climate.set_preset_mode
+      target:
+        entity_id: climate.downstairs
+      data:
+        preset_mode: 'Sleep'
       
     - delay: '00:00:07'
       
@@ -429,19 +436,17 @@ reset_smart_bulb_nighttime:
         
     # Perform the reset if nighttime mode is off, or sleeptime mode is on and the bathroom flag is off. 
     # This disables the reset during the time I'm in bed reading, or using the bathroom.
-    - condition: or
-      conditions:
+    - or:
+      - condition: state
+        entity_id: input_boolean.nighttime
+        state: 'off'
+      - and:
         - condition: state
-          entity_id: input_boolean.nighttime
+          entity_id: input_boolean.sleeptime
+          state: 'on'
+        - condition: state
+          entity_id: input_boolean.bathroom
           state: 'off'
-        - condition: and
-          conditions:
-            - condition: state
-              entity_id: input_boolean.sleeptime
-              state: 'on'
-            - condition: state
-              entity_id: input_boolean.bathroom
-              state: 'off'
     
     - service: homeassistant.turn_off
       target:

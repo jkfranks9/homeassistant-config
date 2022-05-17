@@ -17,6 +17,7 @@ cards:
       - !include /config/dashboard/dash_overview/cards/controls/grandchild_sleep.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
-      - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml
+      - !include /config/dashboard/dash_overview/cards/controls/themes.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/zigbee2mqtt.yaml
+      - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml

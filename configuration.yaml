@@ -11,14 +11,6 @@ frontend:
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
 
-# Home zone
-zone:
-  - name: Home
-    latitude: !secret home_latitude
-    longitude: !secret home_longitude
-    radius: 100
-    icon: mdi:home
-
 #========================#
 #     Included Files     #
 #========================#

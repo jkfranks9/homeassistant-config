@@ -60,15 +60,14 @@
     - platform: homeassistant
       event: start
   condition:
-    - condition: or
-      conditions:
-        - condition: time
-          after: '07:30:00'
-          before: '23:00:00'
-        - condition: numeric_state
-          entity_id: sun.sun
-          attribute: elevation
-          above: 2.0
+    - or:
+      - condition: time
+        after: '07:30:00'
+        before: '23:00:00'
+      - condition: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        above: 2.0
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"

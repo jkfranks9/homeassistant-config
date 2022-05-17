@@ -1,27 +1,38 @@
-#=====================================#
-#     Environmental Areas Cards 1     #
-#=====================================#
+#================================#
+#     Area Environments Card     #
+#================================#
 
 type: custom:stack-in-card
 mode: horizontal
+title: Area Environments
 cards:
       
-  # Office
-  - type: custom:decluttering-card
-    template: temperature_entity_4
-    variables:
-      - entity_0: sensor.office_temperature
-      - name_0:  'Office'
-      - entity_1: sensor.office_temp_min
-      - entity_2: sensor.office_temp_max
-      - entity_3: sensor.office_humidity
-
   # Garage
-  - type: custom:decluttering-card
-    template: temperature_entity_4
+  - type: custom:button-card
+    template: temperature
+    entity: sensor.garage_temperature
+    name: Garage
     variables:
-      - entity_0: sensor.garage_temperature
-      - name_0:  'Garage'
-      - entity_1: sensor.garage_temp_min
-      - entity_2: sensor.garage_temp_max
-      - entity_3: sensor.garage_humidity
+      min_entity: sensor.garage_temp_min
+      max_entity: sensor.garage_temp_max
+      humidity_entity: sensor.garage_humidity
+      
+  # Porch
+  - type: custom:button-card
+    template: temperature
+    entity: sensor.porch_temperature
+    name: Porch
+    variables:
+      min_entity: sensor.porch_temp_min
+      max_entity: sensor.porch_temp_max
+      humidity_entity: sensor.porch_humidity
+      
+  # Attic
+  - type: custom:button-card
+    template: temperature
+    entity: sensor.attic_temperature
+    name: Attic
+    variables:
+      min_entity: sensor.attic_temp_min
+      max_entity: sensor.attic_temp_max
+      humidity_entity: sensor.attic_humidity

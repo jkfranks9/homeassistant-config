@@ -12,7 +12,6 @@ cards:
     layout_type: custom:vertical-layout
     cards:
       - !include /config/dashboard/dash_overview/cards/office/printer.yaml
-      - !include /config/dashboard/dash_overview/cards/office/router.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/office/pc_info.yaml
       - type: custom:layout-break

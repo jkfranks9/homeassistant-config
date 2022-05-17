@@ -14,34 +14,52 @@ cards:
         columns: 2
         square: false
         cards:
-          - type: 'custom:button-card'
-            template: presence-tile
-            entity: sensor.family_home
-            name: Family
+          - type: 'custom:decluttering-card'
+            template: button_card
             variables:
-              m1_entity: device_tracker.life360_jon_franks
-              m1_name: Jon
-              m2_entity: device_tracker.life360_michael_franks
-              m2_name: Mike
-              m3_entity: group.device_tracker_sarah
-              m3_name: Sarah
-          - type: 'custom:button-card'
-            template: ups-status
-            entity: sensor.cyber1_status
-            name: CPS (Primary)
+              - entity: sensor.family_home
+              - name: Family
+              - transform: 'capitalize'
+              - template_columns: 6
+              - state_on: 0
+              - icon_color_on: 'var(--state-icon-color)'
+              - icon_color_off: 'var(--state-icon-active-color)'
+              - stat_text: ' home'
+              - m1_entity: device_tracker.life360_jon_franks
+              - m1_name: Jon
+              - m2_entity: device_tracker.life360_michael_franks
+              - m2_name: Mike
+              - m3_entity: group.device_tracker_sarah
+              - m3_name: Sarah
+          
+          - type: 'custom:decluttering-card'
+            template: button_card
             variables:
-              state_on: 'Online'
-              bat_entity: sensor.cyber1_battery_charge
-              run_entity: sensor.cyber1_battery_runtime
-              out_entity: sensor.cyber1_output_voltage
-              load_entity: sensor.cyber1_load
-      #- !include /config/dashboard/dash_overview/cards/home/persons.yaml
+              - entity: sensor.cyber1_status
+              - name: CPS (Primary)
+              - transform: 'none'
+              - template_columns: 4
+              - state_on: Online
+              - icon_color_on: 'var(--state-icon-active-color)'
+              - icon_color_off: 'var(--state-icon-color)'
+              - stat_text: ''
+              - m0_show: 'true'
+              - m0_entity: sensor.cyber1_battery_charge
+              - m0_name: Battery
+              - m0_extra: ' %'
+              - m1_entity: sensor.cp_ups_runtime_minutes
+              - m1_name: Runtime
+              - m1_extra: ' m'
+              - m2_entity: sensor.cyber1_output_voltage
+              - m2_name: Output
+              - m2_extra: ' V'
+              - m3_entity: sensor.cyber1_load
+              - m3_name: Load
+              - m3_extra: ' %'
       - !include /config/dashboard/dash_overview/cards/home/garage.yaml
-      - !include /config/dashboard/dash_overview/cards/home/themes.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/lighting_domains.yaml
       - !include /config/dashboard/dash_overview/cards/home/adguard.yaml
       #- !include /config/dashboard/dash_overview/cards/home/ups.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
-      - type: 'custom:sun-card'

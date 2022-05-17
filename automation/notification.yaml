@@ -213,6 +213,34 @@
       timer_entity: timer.porch_battery_notification
       message: 'Porch sensor battery needs recharging.'
 
+# Upstairs BR Vent 1 batteries are too low.
+- alias: Notify Upstairs BR Vent 1 Batteries Low
+  id: 'notify_upstairs_br_vent_1_batteries_low'
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.upstairs_br_vent_1_battery
+      threshold1: 15
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.upstairs_br_vent_1_battery_notification
+      message: 'Upstairs BR vent 1 batteries need replacing.'
+
+# Upstairs BR Vent 2 batteries are too low.
+- alias: Notify Upstairs BR Vent 2 Batteries Low
+  id: 'notify_upstairs_br_vent_2_batteries_low'
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.upstairs_br_vent_2_battery
+      threshold1: 15
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.upstairs_br_vent_2_battery_notification
+      message: 'Upstairs BR vent 2 batteries need replacing.'
+
 #===============================#
 #     Health Notifications      #
 #===============================#
@@ -242,17 +270,15 @@
       event: start
   
   condition:
-    condition: and
-    conditions:
+    - and:
       
-      # Only during daytime
-      - condition: state
-        entity_id: sun.sun
-        state: above_horizon
+        # Only during daytime
+        - condition: state
+          entity_id: sun.sun
+          state: above_horizon
       
-      # Only if the levels are high (for the Home Assistant start trigger)
-      - condition: or
-        conditions:
+        # Only if the levels are high (for the Home Assistant start trigger)
+        - or:
           - condition: numeric_state
             entity_id: sensor.current_uv_index
             above: 7.9999

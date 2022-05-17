@@ -26,10 +26,6 @@
 - url: /local/community/decluttering-card/decluttering-card.js
   type: module
 
-# Flex Horseshoe Card
-- url: /local/community/flex-horseshoe-card/flex-horseshoe-card.js
-  type: module
-
 # Fold Entity Row
 - url: /local/community/lovelace-fold-entity-row/fold-entity-row.js
   type: module
@@ -62,16 +58,8 @@
 - url: /local/community/select-list-card/select-list-card.js
   type: module
 
-# Simple Thermostat
-- url: /local/community/simple-thermostat/simple-thermostat.js
-  type: module
-
 # Stack In Card
 - url: /local/community/stack-in-card/stack-in-card.js
-  type: module
-
-# Sun Card
-- url: /local/community/home-assistant-sun-card/home-assistant-sun-card.js
   type: module
 
 # Template Entity Row

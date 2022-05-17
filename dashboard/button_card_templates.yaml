@@ -1,17 +1,3 @@
-#============================#
-#     Person Button Card     #
-#============================#
-
-person_button:
-  show_state: true
-  #show_icon: false
-  show_entity_picture: true
-  size: 90%
-  styles:
-    card:
-      - height: 140px
-      - width: 120px
-
 #=================================#
 #     Garage Door Button Card     #
 #=================================#
@@ -59,39 +45,6 @@ call_service_button:
     service: script.turn_on
     service_data:
       entity_id: '[[[ return variables.var_script ]]]'
-
-#===============================#
-#     HVAC Vent Button Card     #
-#===============================#
-
-hvac_vent_button:
-  variables:
-    var_name_open: Upstairs BR 1 open
-    var_name_closed: Upstairs BR 1 closed
-  show_icon: true
-  show_name: true
-  icon: 'mdi:hvac'
-  size: 30%
-  tap_action:
-    action: none
-  state:
-    - value: 'closed'
-      name: '[[[ return variables.var_name_closed ]]]'
-      icon: 'mdi:hvac-off'
-    - value: 'open'
-      name: '[[[ return variables.var_name_open ]]]'
-
-#=======================================#
-#     Call Service Vent Button Card     #
-#=======================================#
-call_service_vent_button:
-  show_icon: true
-  show_name: true
-  tap_action:
-    action: call-service
-    service: script.toggle_upstairs_br_vent
-    service_data:
-      vent_entity: '[[[ return entity.entity_id ]]]'
 
 #=================================#
 #     Light Group Button Card     #
@@ -169,7 +122,6 @@ motion_button:
       icon: mdi:motion-sensor
     - value: 'off'
       icon: mdi:motion-sensor-off
-    - value: 'off'
 
 #===========================#
 #     Blank Button Card     #
@@ -182,178 +134,383 @@ blank_button:
   tap_action:
     action: 'none'
 
-#==============================#
-#     Presence Button Card     #
-#==============================#
+#===============================#
+#     Condensed Button Card     #
+#===============================#
 
-presence-tile:
-  triggers_update: all
-  aspect_ratio: 3/1.5
-  tap_action:
-    action: 'none'
+# Used as the basis for various condensed format buttons.
+condensed_button:
+  variables:
+    color: 'var(--card-background-color)'
+  
+  show_icon: true
+  show_state: true
   
   styles:
     card:
-      - background-color: var(--card-background-color)
-      - border-radius: 0%
-      - padding: 1%
-      - font-size: 100%
-      - text-transform: capitalize
+      - background-color: '[[[ return variables.color || "transparent" ]]]'
+      - overflow: visible
+      - box-shadow: none
+      - padding: 2px 0 5px 2px
+      - display: flex
+      - width: fit-content
+      - margin-right: 15px
+      - border: 1px solid gray
     grid:
-      - grid-template-areas: '"n n n n n" "i i m1 m1 m1" "i i m2 m2 m2" "fam fam m3 m3 m3"'
-      - grid-template-columns: 1fr 1fr 1fr 1fr 1fr
-      - grid-template-rows: 1fr 1fr 1fr 1fr
-    name:
-      - font-weight: bold
-      - align-self: middle
-      - justify-self: start
-      - padding-bottom: 0px
+      - display: contents
     img_cell:
-      - justify-content: start
-      - align-items: start
-      - margin: 0%
+      - display: contents
     icon:
-      - color: |
-            [[[
-              if (entity.state == 0) return 'var(--accent-color)';
-              if (entity.state == 1) return 'var(--primary-color)';
-              else return 'var(--light-primary-color)';
-            ]]]
       - width: 70%
-      - margin-top: 0%
-    
-    custom_fields:
-      fam:
-        - align-self: middle
-        - justify-self: start
-      m1:
-        - align-self: middle
-        - justify-self: start
-      m2:
-        - align-self: middle
-        - justify-self: start
-      m3:
-        - align-self: middle
-        - justify-self: start
-  
-  custom_fields:
-    fam: '[[[ return `${entity.state} home` ]]]'
-    m1: |
-      [[[
-        var icon = "mdi:map-marker";
-        var color = "var(--input-fill-color)";
-        var status = states[variables.m1_entity].state;
-        if (status != 'not_home') {
-          icon = states['zone.'+status.toLowerCase()].attributes['icon'];
-          color = "var(--primary-color)";
-        }
-        return `<span>${variables.m1_name}:</span>
-        <ha-icon icon="${icon}"
-        style="width: 14px; height: 14px; color: ${color};"></ha-icon>
-        <span>${status}</span>`
-      ]]]
-    m2: |
-      [[[
-        var icon = "mdi:map-marker";
-        var color = "var(--input-fill-color)";
-        var status = states[variables.m2_entity].state;
-        if (status != 'not_home') {
-          icon = states['zone.'+status.toLowerCase()].attributes['icon'];
-          color = "var(--primary-color)";
-        }
-        return `<span>${variables.m2_name}:</span>
-        <ha-icon icon="${icon}"
-        style="width: 14px; height: 14px; color: ${color};"></ha-icon>
-        <span>${status}</span>`
-      ]]]
-    m3: |
-      [[[
-        var icon = "mdi:map-marker";
-        var color = "var(--input-fill-color)";
-        var status = states[variables.m3_entity].state;
-        if (status != 'not_home') {
-          icon = states['zone.'+status.toLowerCase()].attributes['icon'];
-          color = "var(--primary-color)";
-        }
-        return `<span>${variables.m3_name}:</span>
-        <ha-icon icon="${icon}"
-        style="width: 14px; height: 14px; color: ${color};"></ha-icon>
-        <span>${status}</span>`
-      ]]]
-
-#================================#
-#     UPS Status Button Card     #
-#================================#
-
-ups-status:
-  triggers_update: all
-  aspect_ratio: 3/1.5
-  
-  styles:
-    card:
-      - background-color: var(--card-background-color)
-      - border-radius: 0%
-      - padding: 1%
-      - font-size: 100%
-      #- text-transform: capitalize
-    grid:
-      - grid-template-areas: '"n n bat bat" "i i run run" "i i out out" "stat stat load load"'
-      - grid-template-columns: 1fr 1fr 1fr 1fr
-      - grid-template-rows: 1fr 1fr 1fr 1fr
+      - position: absolute
+      - color: silver
+    state:
+      - font-size: 3.5em
+      - text-shadow: 0 0 2px black
+      - overflow: visible
+      - margin-top: '-10px'
     name:
-      - font-weight: bold
-      - align-self: middle
-      - justify-self: start
-      - padding-bottom: 0px
-    img_cell:
-      - justify-content: start
-      - align-items: start
-      - margin: 0%
-    icon:
-      - color: |
+      - color: var(--primary-color)
+      - text-shadow: 0 0 2px black
+      - overflow: visible
+      - font-size: 0.75em
+      - font-weight: 500
+      - position: absolute
+      - transform: rotate(90deg)
+      - transform-origin: right bottom
+      - bottom: 0
+      - right: 0
+      - z-index: 10
+
+#================================#
+#     Thermostat Button Card     #
+#================================#
+
+thermostat:
+  template: condensed_button
+  
+  variables:
+    color_setpoint_off: 'var(--bar-low-color)'
+    color_setpoint_idle: 'var(--bar-low-color)'
+    color_setpoint_cool: 'var(--bar-medium-color)'
+    color_setpoint_heat: 'var(--bar-high-color)'
+    text_setpoint_off: 'var(--primary-text-color)'
+    text_setpoint_idle: 'var(--disabled-text-color)'
+    text_setpoint_cool: 'var(--primary-text-color)'
+    text_setpoint_heat: 'var(--primary-text-color)'
+    
+  icon: 'mdi:fan'
+  state_display: |-
+    [[[ 
+      return Math.round(entity.attributes.current_temperature).toString()+"°" 
+    ]]]
+    
+  custom_fields:
+    preset: |
+      [[[
+        return `<div style="line-height:1">${entity.attributes.preset_mode}</div>`;
+      ]]]
+      
+    humidity:
+      card:
+        type: 'custom:button-card'
+        show_icon: true
+        icon: 'mdi:water-percent'
+        show_name: false
+        show_state: true
+        state_display: |
           [[[
-            if (`${entity.state}` == `${variables.state_on}`) return 'var(--light-primary-color)';
-            else return 'var(--primary-color)';
+            if (entity.attributes.current_humidity) 
+              return entity.attributes.current_humidity;
           ]]]
-      - width: 70%
-      - margin-top: 0%
+        styles:
+          grid:
+            - grid-template-areas: '"s i"'
+          img_cell:
+            - display: contents
+          state:
+            - color: 'var(--disabled-text-color)'
+            - font-size: 0.8em
+            - align-self: flex-end
+          card:
+            - padding: 0
+            - padding-left: 2px
+            - background-color: 'var(--bar-low-color)'
+          icon:
+            - color: 'var(--disabled-text-color)'
+            - width: 18px
+            - height: 15px
+            - margin-top: '-4px'
+            - margin-left: '-4px'
+            - margin-right: '-3px'
+      
+    setpoint:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: true
+        show_state: true
+        state_display: |
+          [[[ 
+            return entity.attributes.temperature 
+              ? entity.attributes.temperature + "°" 
+              : entity.attributes.target_temp_low
+                ? entity.attributes.target_temp_low + "°" 
+                : ''
+          ]]]
+        name: |
+          [[[ 
+            return entity.attributes.target_temp_high
+              ? entity.attributes.target_temp_high + "°" 
+              : ''
+          ]]]
+        styles:
+          state:
+            - font-size: 0.8em
+            - color: |
+                [[[ 
+                  switch(entity.attributes.hvac_action) {
+                    case "cool":
+                    case "cooling":
+                      return variables.text_setpoint_cool;
+                    case "heat":
+                    case "heating":
+                      return variables.text_setpoint_heat;
+                    default:
+                      return entity.state == "off"
+                        ? variables.text_setpoint_off
+                        : variables.text_setpoint_idle 
+                  }
+                ]]]
+          name:
+            - font-size: 0.8em
+            - color: |
+                [[[ 
+                  switch(entity.attributes.hvac_action) {
+                    case "cool":
+                    case "cooling":
+                      return variables.text_setpoint_cool;
+                    case "heat":
+                    case "heating":
+                      return variables.text_setpoint_heat;
+                    default:
+                      return entity.state == "off"
+                        ? variables.text_setpoint_off
+                        : variables.text_setpoint_idle 
+                  }
+                ]]]
+          card:
+            - padding: 0 2px
+            - background-color: |
+                [[[ 
+                  switch(entity.attributes.hvac_action) {
+                    case "cool":
+                    case "cooling":
+                      return variables.color_setpoint_cool;
+                    case "heat":
+                    case "heating":
+                      return variables.color_setpoint_heat;
+                    default:
+                      return entity.state == "off"
+                        ? variables.color_setpoint_off
+                        : variables.color_setpoint_idle 
+                  }
+                ]]]
     
+  state:
+    - id: value_any
+      operator: '!='
+      value: all
+      spin: true
+    
+  styles:
+    icon:
+      - left: 3px
+      - display: >-
+          [[[ return entity.attributes.fan &&
+          entity.attributes.fan === 'on' ? "block" : "none" ]]]
+    state:
+      - color: var(--primary-text-color)
+      - z-index: 1
+      
     custom_fields:
-      stat:
-        - align-self: middle
-        - justify-self: start
-      bat:
-        - align-self: middle
-        - justify-self: start
-      run:
-        - align-self: middle
-        - justify-self: start
-      out:
-        - align-self: middle
-        - justify-self: start
-      load:
-        - align-self: middle
-        - justify-self: start
+      preset:
+        - text-shadow: 0 0 0.2em black
+        - overflow: visible
+        - font-size: 0.6em
+        - position: absolute
+        - bottom: 1px
+        - right: 32px
+        - z-index: 1
+        
+      mode:
+        - position: absolute
+        - bottom: 18px
+        - right: 2px
+        
+      setpoint:
+        - position: absolute
+        - bottom: 0
+        - right: 0
+        - z-index: 1
+        
+      humidity:
+        - z-index: 2
+        - position: absolute
+        - bottom: 0
+        - left: 0
+        - display: flex
+
+#=================================#
+#     Temperature Button Card     #
+#=================================#
+
+temperature:
+  template: condensed_button
   
+  variables:
+    min_entity: ''
+    max_entity: ''
+    humidity_entity: ''
+    
+  show_icon: false
+  
+  state_display: |-
+    [[[ 
+      return Math.round(entity.state).toString()+"°" 
+    ]]]
+    
   custom_fields:
-    stat: '[[[ return `${entity.state}` ]]]'
-    bat: |
+    humidity:
+      card:
+        type: 'custom:button-card'
+        show_icon: true
+        icon: 'mdi:water-percent'
+        show_name: false
+        show_state: true
+        state_display: |
+          [[[
+            return Math.round(states[variables.humidity_entity].state).toString();
+          ]]]
+        styles:
+          grid:
+            - grid-template-areas: '"s i"'
+          img_cell:
+            - display: contents
+          state:
+            - color: 'var(--disabled-text-color)'
+            - font-size: 0.8em
+            - align-self: flex-end
+          card:
+            - padding: 0
+            - padding-left: 2px
+            - background-color: 'var(--bar-low-color)'
+          icon:
+            - color: 'var(--disabled-text-color)'
+            - width: 18px
+            - height: 15px
+            - margin-top: '-4px'
+            - margin-left: '-4px'
+            - margin-right: '-3px'
+      
+    minmax:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: true
+        show_state: true
+        state_display: |
+          [[[ 
+            return Math.round(states[variables.max_entity].state).toString();
+          ]]]
+        name: |
+          [[[ 
+            return Math.round(states[variables.min_entity].state).toString();
+          ]]]
+        styles:
+          state:
+            - font-size: 0.8em
+            - color: var(--disabled-text-color)
+          name:
+            - font-size: 0.8em
+            - color: var(--disabled-text-color)
+          card:
+            - padding: 0 2px
+            - background-color: var(--bar-low-color)
+    
+  state:
+    - id: value_any
+      operator: '!='
+      value: all
+    
+  styles:
+    state:
+      - color: var(--primary-text-color)
+      - z-index: 1
+      
+    custom_fields:
+      minmax:
+        - position: absolute
+        - bottom: 0
+        - right: 0
+        - z-index: 1
+        
+      humidity:
+        - z-index: 2
+        - position: absolute
+        - bottom: 0
+        - left: 0
+        - display: flex
+
+#===============================#
+#     HVAC Vent Button Card     #
+#===============================#
+
+hvac_vent:
+  template: condensed_button
+  
+  variables:
+    color: 'var(--card-background-color)'
+    
+  state_display: |-
+    [[[ 
+      return "00°" 
+    ]]]
+    
+  custom_fields:
+    pos: |
       [[[
-        var status = states[variables.bat_entity].state;
-        return `<span>Battery ${status} %</span>`
+        if (entity.state == 'closed')
+          return `<div style="line-height:1">Closed</div>`;
+        else if (entity.attributes.current_position == 100)
+          return `<div style="line-height:1">Open</div>`;
+        else
+          return `<div style="line-height:1">${entity.attributes.current_position}%</div>`;
       ]]]
-    run: |
-      [[[
-        var status = Math.round(states[variables.run_entity].state / 60);
-        return `<span>Runtime ${status} m</span>`
-      ]]]
-    out: |
-      [[[
-        var status = states[variables.out_entity].state;
-        return `<span>Output ${status} V</span>`
-      ]]]
-    load: |
-      [[[
-        var status = states[variables.load_entity].state;
-        return `<span>Load ${status} %</span>`
-      ]]]
+    
+  state:
+    - value: 'open'
+      icon: mdi:hvac
+    - value: 'closed'
+      icon: mdi:hvac-off
+    
+  styles:
+    icon:
+      - color: var(--primary-text-color)
+      - width: 80%
+      - left: 13px
+      - display: block
+      - z-index: 10
+    state:
+      - color: var(--card-background-color)
+      - z-index: 0
+      
+    custom_fields:
+      pos:
+        - text-shadow: 0 0 0.2em black
+        - overflow: visible
+        - font-size: 0.6em
+        - position: absolute
+        - bottom: 1px
+        - right: 32px
+        - z-index: 1

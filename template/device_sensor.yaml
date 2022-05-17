@@ -8,10 +8,10 @@
     #   -- CP UPS Runtime --   #
     #--------------------------#
     
-    - name: 'CP UPS Runtime Hours'
-      unique_id: cp_ups_runtime_hours
-      unit_of_measurement: 'h'
-      state: "{{ '%.2f' | format(states('sensor.cyber1_battery_runtime') | float(0) / 3600) }}"
+    - name: 'CP UPS Runtime Minutes'
+      unique_id: cp_ups_runtime_minutes
+      unit_of_measurement: 'm'
+      state: "{{ '%.0f' | format(states('sensor.cyber1_battery_runtime') | float(0) / 60) }}"
 
     #-----------------------#
     #   -- Harmony Hub --   #

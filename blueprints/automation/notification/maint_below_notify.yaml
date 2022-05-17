@@ -62,8 +62,7 @@ trigger:
 
 # Guard against HA start triggers.
 condition:
-  condition: or
-  conditions:
+  - or:
     - condition: numeric_state
       entity_id: !input sensor1_entity
       below: !input threshold1

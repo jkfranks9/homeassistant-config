@@ -9,14 +9,7 @@ cards:
   - type: custom:layout-card
     layout_type: custom:vertical-layout
     cards:
-      - !include /config/dashboard/dash_overview/cards/environment/thermostat.yaml
+      - !include /config/dashboard/dash_overview/cards/environment/thermostat_vents.yaml
+      - !include /config/dashboard/dash_overview/cards/environment/areas_environment.yaml 
       - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/environment/hvac_vents.yaml
-      
-      - type: custom:layout-break
-      - type: custom:stack-in-card
-        title: Area Temperatures
-        cards:
-          - !include /config/dashboard/dash_overview/cards/environment/areas_environment.yaml
-          - !include /config/dashboard/dash_overview/cards/environment/areas_environment_2.yaml
-          - !include /config/dashboard/dash_overview/cards/environment/min_max_temps.yaml
+      - !include /config/dashboard/dash_overview/cards/environment/min_max_temps.yaml

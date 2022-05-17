@@ -74,6 +74,8 @@ include:
     - binary_sensor.theater_occupancy
     - binary_sensor.upstairs_occupancy
     - group.device_tracker_jon
+    - sensor.cyber1_status
+    - sensor.cyber1_status_data
     - sensor.openweathermap_weather
     - sensor.openweathermap_weather_code
     

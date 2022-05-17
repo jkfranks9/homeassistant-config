@@ -42,29 +42,21 @@ trigger:
     event: start
     id: 'ha_start'
 
-# Continue only if the sun is setting, we're not in a nighttime situation, and I'm home or on an
-# extended away.
+# Continue only if the sun is setting, we're not in a nighttime situation, and I'm home.
 # The first condition covers the case where the elevation threshold crossing occurs during a restart.
 condition:
-  condition: and
-  conditions:
-    - condition: numeric_state
-      entity_id: sun.sun
-      attribute: elevation
-      below: !input elevation
-    - condition: template
-      value_template: "{{ state_attr('sun.sun', 'rising') == false }}"
-    - condition: state
-      entity_id: input_boolean.nighttime
-      state: 'off'
-    - condition: or
-      conditions:
-        - condition: state
-          entity_id: group.device_tracker_jon
-          state: 'home'
-        #- condition: state
-        #  entity_id: input_boolean.extended_away_mode
-        #  state: 'on'
+  - condition: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: !input elevation
+  - condition: template
+    value_template: "{{ state_attr('sun.sun', 'rising') == false }}"
+  - condition: state
+    entity_id: input_boolean.nighttime
+    state: 'off'
+  - condition: state
+    entity_id: group.device_tracker_jon
+    state: 'home'
 
 # Call the script with the given light/group entity.
 action:

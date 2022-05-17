@@ -164,15 +164,14 @@
   
   # These conditions cover the HA start trigger.
   condition:
-    - condition: or
-      conditions:
-        - condition: state
-          entity_id: sun.sun
-          state: 'below_horizon'
-        - condition: template
-          value_template: >
-            {{ is_state('group.device_tracker_jon', 'not_home') and
-               is_state('group.family_members', 'not_home') }}
+    - or:
+      - condition: state
+        entity_id: sun.sun
+        state: 'below_horizon'
+      - condition: template
+        value_template: >
+          {{ is_state('group.device_tracker_jon', 'not_home') and
+             is_state('group.family_members', 'not_home') }}
   
   action:
     - delay: 
@@ -300,15 +299,13 @@
       at: '16:00:00'
       id: 'afternoon'
   condition:
-    condition: or
-    conditions:
-      - condition: and
-        conditions:
-          - condition: state
-            entity_id: input_boolean.grandchild_home
-            state: 'on'
-          - condition: trigger
-            id: 'morning'
+    - or:
+      - and:
+        - condition: state
+          entity_id: input_boolean.grandchild_home
+          state: 'on'
+        - condition: trigger
+          id: 'morning'
       - condition: trigger
         id: 'afternoon'
   action:
@@ -712,6 +709,22 @@
             entity_id: timer.washer_rinse_fill_blackout
             duration: '00:04:00'
 
+# Start the washer rinse blackout timer. This is used to ignore a potential early drop,
+# which would shorten the rinse cycle dramatically.
+- alias: Start Washer Rinse Blackout Timer
+  id: 'start_washer_rinse_blackout_timer'
+  trigger:
+    - platform: state 
+      entity_id: input_select.washer_state
+      from: 'Rinse Fill'
+      to: 'Rinse'
+  
+  action:
+    - service: timer.start
+      data:
+        entity_id: timer.washer_rinse_blackout
+        duration: '00:01:00'
+
 # Washer operation control. This uses the washer power state sensor and other controls to step through the following washer states:
 #
 # - Stop
@@ -746,10 +759,12 @@
           {% set s = states('input_select.washer_state') %}
           {% set fr = trigger.from_state.state %}
           {% set to = trigger.to_state.state %}
-          {% set t = states('timer.washer_rinse_fill_blackout') %}
+          {% set t1 = states('timer.washer_rinse_fill_blackout') %}
+          {% set t2 = states('timer.washer_rinse_blackout') %}
           
-          {# --Ignore everything if the rinse fill blackout timer is running-- #}
-          {% if t == 'active' %} {{ s }}
+          {# --Ignore everything if one of the timers is running-- #}
+          {% if t1 == 'active' %} {{ s }}
+          {% if t2 == 'active' %} {{ s }}
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
           {% elif fr in ['stop', 'unknown'] and to in ['fill', 'pause'] %}                         Wash Fill
