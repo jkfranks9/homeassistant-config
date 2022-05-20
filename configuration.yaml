@@ -179,6 +179,9 @@ notify:
   - name: triggered_automations
     platform: file
     filename: triggered_automations.log
+  - name: dryer_trend_sensors
+    platform: file
+    filename: dryer_trend_sensors.log
 
 # Shell commands
 shell_command:

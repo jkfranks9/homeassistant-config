@@ -21,7 +21,7 @@
         {% set skip_list = ['log_automations', 'backup_log_on_shutdown', 'backup_auto_log', 'log_notifications',
                              'set_maximum_attic_temperature', 'set_maximum_outdoor_temperature',
                              'set_minimum_attic_temperature', 'set_minimum_outdoor_temperature',
-                             'update_openuv'] %}
+                             'update_openuv', 'log_dryer_trend_sensors'] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list and
            'old_state' in trigger.event.data and 'new_state' in trigger.event.data and

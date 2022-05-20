@@ -65,3 +65,7 @@
 # Template Entity Row
 - url: /local/community/lovelace-template-entity-row/template-entity-row.js
   type: module
+
+# Zigbee2MQTT Networkmap
+- url: /local/community/zigbee2mqtt-networkmap/zigbee2mqtt-networkmap.js
+  type: module

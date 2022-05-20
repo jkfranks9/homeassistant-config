@@ -29,6 +29,7 @@ logs:
   homeassistant.components.automation.initialize_peacock_volume:              warning
   homeassistant.components.automation.initialize_youtube_tv_volume:           warning
   homeassistant.components.automation.log_automations:                        warning
+  homeassistant.components.automation.log_dryer_trend_sensors:                warning
   homeassistant.components.automation.refresh_front_end:                      warning
   homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
   homeassistant.components.automation.reset_family_room_lamp:                 warning

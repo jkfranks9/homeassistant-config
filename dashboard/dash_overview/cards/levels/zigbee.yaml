@@ -26,6 +26,9 @@ cards:
       - entity: cover.upstairs_br_vent_2
         name: Upstairs BR Vent 2
         attribute: linkquality
-      #- entity: switch.sonoff_s31_zb
-      #  name: Sonoff Router
-      #  attribute: linkquality
+      - entity: switch.sonoff_s31_zb
+        name: Sonoff Router
+        attribute: linkquality
+      - entity: binary_sensor.cc2530_router_1_led
+        name: CC2530 Router 1
+        attribute: linkquality

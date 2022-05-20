@@ -764,7 +764,7 @@
           
           {# --Ignore everything if one of the timers is running-- #}
           {% if t1 == 'active' %} {{ s }}
-          {% if t2 == 'active' %} {{ s }}
+          {% elif t2 == 'active' %} {{ s }}
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
           {% elif fr in ['stop', 'unknown'] and to in ['fill', 'pause'] %}                         Wash Fill
@@ -807,6 +807,42 @@
   action:
     - service: input_boolean.turn_off
       entity_id: input_boolean.dryer_running
+
+# Log the dryer trend sensors for debugging purposes. I anticipate needing a lot of dryer runs in different seasons
+# and conditions before settling on the final settings for the trend sensors that trigger the end of the cycle.
+- alias: Log Dryer Trend Sensors
+  id: log_dryer_trend_sensors
+  mode: queued
+  
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.dryer_humidity_falling
+      attribute: gradient
+      id: humidity
+    - platform: state
+      entity_id: binary_sensor.dryer_temperature_falling
+      attribute: gradient
+      id: temperature
+  
+  condition:
+    - condition: state
+      entity_id: input_boolean.dryer_running
+      state: 'on'
+  
+  action:
+    - if:
+        - condition: trigger
+          id: humidity
+      then:
+        - service: notify.dryer_trend_sensors
+          data_template:
+            message: >
+             {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Humidity {{ trigger.to_state.attributes.gradient }}
+      else:
+        - service: notify.dryer_trend_sensors
+          data_template:
+            message: >
+             {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Temperature {{ trigger.to_state.attributes.gradient }}
 
 #=====================#
 #     Zigbee2MQTT     #

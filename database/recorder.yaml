@@ -57,6 +57,9 @@ include:
   entities:
     
     # TEMPORARY FOR TESTING
+    - input_boolean.dryer_running
+    - binary_sensor.dryer_humidity_falling
+    - binary_sensor.dryer_temperature_falling
     - sensor.dryer_humidity
     - sensor.dryer_temperature
     - sensor.office_humidity
