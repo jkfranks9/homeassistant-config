@@ -69,6 +69,10 @@ dryer_running:
   name: Dryer Running
   icon: mdi:tumble-dryer
 
+# Dryer almost done.
+dryer_almost_done:
+  name: Dryer Almost Done
+
 #=====================#
 #     Zigbee2MQTT     #
 #=====================#

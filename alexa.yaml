@@ -12,7 +12,6 @@ smart_home:
     exclude_domains:
       - automation
       - brother
-      - input_boolean
       - input_number
       - group
       - lutron_caseta

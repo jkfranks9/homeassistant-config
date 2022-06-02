@@ -2,9 +2,9 @@
 #     Home Assistant Statistics Card     #
 #========================================#
 
-type: glance
-title: Home Assistant Statistics
-columns: 3
+type: entities
+title: Statistics
+show_header_toggle: false
 entities:
   - entity: sensor.count_automations
     name: Automations
@@ -13,10 +13,6 @@ entities:
   - entity: sensor.count_scripts
     name: Scripts
     icon: mdi:script-text-outline
-  
-  - entity: sensor.count_timers
-    name: Timers
-    icon: mdi:timer
   
   - entity: sensor.count_binary_sensors
     name: Binary Sensors
@@ -28,7 +24,7 @@ entities:
   
   - entity: sensor.count_device_trackers
     name: Device Trackers
-    icon: mdi:map-marker
+    icon: mdi:location-enter
   
   - entity: sensor.count_lights
     name: Lights
@@ -41,6 +37,18 @@ entities:
   - entity: sensor.count_groups
     name: Groups
     icon: mdi:account-group
+  
+  - entity: sensor.count_scenes
+    name: Scenes
+    icon: mdi:palette
+  
+  - entity: sensor.count_timers
+    name: Timers
+    icon: mdi:timer
+  
+  - entity: sensor.count_zones
+    name: Zones
+    icon: mdi:map-marker-radius
   
   - entity: sensor.count_input_booleans
     name: Input Booleans

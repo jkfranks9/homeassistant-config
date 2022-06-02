@@ -11,6 +11,18 @@ frontend:
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
 
+#=====================#
+#     Browser Mod     #
+#=====================#
+
+browser_mod:
+  devices:
+    de079a8e_98edec58:
+      name: legion
+      disable:
+        - light
+        - media_player
+
 #========================#
 #     Included Files     #
 #========================#
@@ -103,24 +115,92 @@ proximity:
   #    - device_tracker.pixel_6_pro
   #  unit_of_measurement: m
 
+#==============#
+#     MQTT     #
+#==============#
+
+mqtt:
+  
+  switch:
+    
+    # Zigbee2MQTT
+    - name: Zigbee2MQTT Permit Join
+      state_topic: "zigbee2mqtt/bridge/info"
+      value_template: "{{ value_json.permit_join | lower }}"
+      command_topic: "zigbee2mqtt/bridge/request/permit_join"
+      payload_on: "true"
+      payload_off: "false"
+  
+  binary_sensor:
+    
+    # Room presence
+    - name: Garage Espresense Sensor
+      state_topic: espresense/rooms/garage/status
+      json_attributes_topic: espresense/rooms/garage/telemetry
+      payload_on: online
+      payload_off: offline
+      device_class: connectivity
+      
+    - name: House Espresense Sensor
+      state_topic: espresense/rooms/house/status
+      json_attributes_topic: espresense/rooms/house/telemetry
+      payload_on: online
+      payload_off: offline
+      device_class: connectivity
+  
+  sensor:
+    
+    # Room presence ... Unfortunately, the MQTT topic for beacon devices includes the name of the scanner closest to the beacon,
+    # so we have to have a sensor for each scanner state topic ...
+
+    # ... garage scanner.
+    - name: 'Blue Charm Battery Level Garage'
+      state_topic: 'espresense/devices/iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949/garage'
+      unit_of_measurement: '%'
+      value_template: >
+        {% set pct = ((value_json.mV / 1000) / 3.00 * 100) | float(0) | round(0) %}
+        {% if pct > 100 %}
+          {% set pct = 100 %}
+        {% endif %}    
+        {{ pct }}
+  
+    - name: 'Blue Charm Battery Level House'
+      state_topic: 'espresense/devices/iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949/house'
+      unit_of_measurement: '%'
+      value_template: >
+        {% set pct = ((value_json.mV / 1000) / 3.00 * 100) | float(0) | round(0) %}
+        {% if pct > 100 %}
+          {% set pct = 100 %}
+        {% endif %}    
+        {{ pct }}    
+
 #==========================#
 #     Computer Control     #
 #==========================#
 
 wake_on_lan:
 
-#=====================#
-#     Zigbee2MQTT     #
-#=====================#
+#==================#
+#     Switches     #
+#==================#
 
 switch:
-  - platform: mqtt
-    name: Zigbee2MQTT Permit Join
-    state_topic: "zigbee2mqtt/bridge/info"
-    value_template: "{{ value_json.permit_join | lower }}"
-    command_topic: "zigbee2mqtt/bridge/request/permit_join"
-    payload_on: "true"
-    payload_off: "false"
+  
+  # Amazon Smart Plug ... copies the input boolean of the same name, allowing the plug to be a switch (and thus a light),
+  # which in turn allows it to be placed in a group.
+  - platform: template
+    switches:
+      alexa_ha_plug:
+        friendly_name: Office Bookcase
+        value_template: "{{ is_state('input_boolean.alexa_ha_plug', 'on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            entity_id:
+              - input_boolean.alexa_ha_plug
+        turn_off:
+          - service: input_boolean.turn_off
+            entity_id:
+              - input_boolean.alexa_ha_plug
 
 #=================#
 #     Devices     #
@@ -188,12 +268,8 @@ shell_command:
   backup_log:               python /config/python/backup_log.py
   backup_auto_log:          python /config/python/backup_auto_log.py
   concat_log_files:         python /config/python/concat_log_files.py
+  concat_auto_log_files:    python /config/python/concat_auto_log_files.py
   copy_floorplan_christmas: python /config/python/copy_floorplan_christmas.py
   copy_floorplan_normal:    python /config/python/copy_floorplan_normal.py
   delete_junk_log_files:    'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
   reboot_nut_service:       bash /config/reboot_nut_server.sh
-
-# Google calendar API
-google:
-  client_id:     !secret google_client_id
-  client_secret: !secret google_client_secret

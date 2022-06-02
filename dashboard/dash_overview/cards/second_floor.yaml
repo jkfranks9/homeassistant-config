@@ -13,6 +13,28 @@ config:
   #console_log_level: info
   defaults:
     hover_action: hover-info
+    hover_info_filter:
+      - friendly_name
+      - icon
+      - min_mireds
+      - max_mireds
+      - supported_features
+      - supported_color_modes
+      - device_class
+      - state_class
+      - editable
+      - hvac_modes
+      - min_temp
+      - max_temp
+      - target_temp_step
+      - fan_modes
+      - preset_modes
+      - fan_min_on_time
+      - fan_speed_list
+      - battery_icon
+      - device_id
+      - zone_id
+      - hdmi_input
     tap_action: toggle
   rules:
     
@@ -21,18 +43,30 @@ config:
         - light.theater_ceiling
         - light.theater_sconces
         - switch.attic_light
+        - switch.hallway_lights
         - switch.snack_light
         - switch.stairway_light
         - switch.upstairs_bedroom_light
         - switch.upstairs_bedroom_outlet
-        - switch.upstairs_hallway_lights
         - switch.utility_light
+        - switch.shield_tv
       state_action:
         action: call-service
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
-    # Light mirrors - these allow additional elements to be tied to a light
+    # Light mirrors - these allow additional elements to be tied to a light    
+    - entity: binary_sensor.hallway_lights_mirror
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data:
+          entity_id: switch.hallway_lights
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
     - entity: binary_sensor.snack_light_mirror
       tap_action:
         action: call-service
@@ -77,22 +111,23 @@ config:
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
-    - entity: binary_sensor.upstairs_hallway_lights_mirror
-      tap_action:
-        action: call-service
-        service: switch.toggle
-        service_data:
-          entity_id: switch.upstairs_hallway_lights
-      state_action:
-        action: call-service
-        service: floorplan.class_set
-        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
-    
     # Media players
     - entities:
         - media_player.epson_projector
         - media_player.marantz_sr7012
         - media_player.shield_tv
+        - media_player.theater_echo
+        - media_player.upstairs_bedroom_echo
+      tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Motion detectors
+    - entities:
+        - binary_sensor.upstairs_occupancy
+        - binary_sensor.theater_occupancy
       tap_action: more-info
       state_action:
         action: call-service

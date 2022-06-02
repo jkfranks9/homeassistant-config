@@ -73,6 +73,11 @@
       unit_of_measurement: 'W'
       state: "{{ iif(is_state('light.hallway_lamp', 'on'), 8.5, 0) }}"
 
+    - name: 'Hallway Lights Power'
+      unique_id: hallway_lights_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.hallway_lights', 'on'), 75, 0) }}"
+
     - name: 'Laundry Room Light Power'
       unique_id: laundry_room_light_power
       unit_of_measurement: 'W'
@@ -139,11 +144,6 @@
       unique_id: upstairs_bedroom_outlet_power
       unit_of_measurement: 'W'
       state: "{{ iif(is_state('switch.upstairs_bedroom_outlet', 'on'), 7.5, 0) }}"
-
-    - name: 'Upstairs Hallway Lights Power'
-      unique_id: upstairs_hallway_lights_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.upstairs_hallway_lights', 'on'), 75, 0) }}"
 
     - name: 'Utility Light Power'
       unique_id: utility_light_power
@@ -219,12 +219,12 @@
       unit_of_measurement: 'W'
       icon: mdi:flash
       state: "{{ (states('sensor.attic_light_power') | float(0) +
+                  states('sensor.hallway_lights_power') | float(0) +
                   states('sensor.snack_light_power') | float(0) +
                   states('sensor.theater_ceiling_power') | float(0) +
                   states('sensor.theater_sconces_power') | float(0) +
                   states('sensor.upstairs_bedroom_light_power') | float(0) +
                   states('sensor.upstairs_bedroom_outlet_power') | float(0) +
-                  states('sensor.upstairs_hallway_lights_power') | float(0) +
                   states('sensor.utility_light_power') | float(0)) | round(2) }}"
 
     #--------------------------------------------#
@@ -339,11 +339,11 @@
       unit_of_measurement: 'kWh'
       icon: mdi:flash
       state: "{{ (states('sensor.attic_light_daily_energy') | float(0) +
+                  states('sensor.hallway_lights_daily_energy') | float(0) +
                   states('sensor.theater_ceiling_daily_energy') | float(0) + 
                   states('sensor.theater_sconces_daily_energy') | float(0) + 
                   states('sensor.upstairs_bedroom_light_daily_energy') | float(0) +
                   states('sensor.upstairs_bedroom_outlet_daily_energy') | float(0) +
-                  states('sensor.upstairs_hallway_lights_daily_energy') | float(0) +
                   states('sensor.utility_light_daily_energy') | float(0) +
                   states('sensor.projector_daily_energy') | float(0) +
                   states('sensor.receiver_daily_energy') | float(0) +
@@ -411,11 +411,11 @@
       unit_of_measurement: 'kWh'
       icon: mdi:flash
       state: "{{ (states('sensor.attic_light_monthly_energy') | float(0) +
+                  states('sensor.hallway_lights_monthly_energy') | float(0) +
                   states('sensor.theater_ceiling_monthly_energy') | float(0) + 
                   states('sensor.theater_sconces_monthly_energy') | float(0) + 
                   states('sensor.upstairs_bedroom_light_monthly_energy') | float(0) +
                   states('sensor.upstairs_bedroom_outlet_monthly_energy') | float(0) +
-                  states('sensor.upstairs_hallway_lights_monthly_energy') | float(0) +
                   states('sensor.utility_light_monthly_energy') | float(0) +
                   states('sensor.projector_monthly_energy') | float(0) +
                   states('sensor.receiver_monthly_energy') | float(0) +

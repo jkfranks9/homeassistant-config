@@ -21,3 +21,9 @@ cards:
         name: Garage North
       - entity: sensor.shelly1_garage_south_rssi
         name: Garage South
+      - entity: binary_sensor.espresense_garage
+        name: ESPresense Garage
+        attribute: rssi
+      - entity: binary_sensor.espresense_house
+        name: ESPresense House
+        attribute: rssi

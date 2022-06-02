@@ -49,6 +49,10 @@
       unique_id: count_lights
       state: "{{ states.light | count }}"
     
+    - name: 'Count Scenes'
+      unique_id: count_scenes
+      state: "{{ states.scene| count }}"
+    
     - name: 'Count Scripts'
       unique_id: count_scripts
       state: "{{ states.script| count }}"
@@ -64,6 +68,10 @@
     - name: 'Count Timers'
       unique_id: count_timers
       state: "{{ states.timer | count }}"
+    
+    - name: 'Count Zones'
+      unique_id: count_zones
+      state: "{{ states.zone | count }}"
 
     #---------------------------#
     #   -- Boot / Up Times --   #

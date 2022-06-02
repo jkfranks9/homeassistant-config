@@ -57,9 +57,9 @@ cards:
               - m3_name: Load
               - m3_extra: ' %'
       - !include /config/dashboard/dash_overview/cards/home/garage.yaml
+      - !include /config/dashboard/dash_overview/cards/home/groups.yaml      
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/lighting_domains.yaml
       - !include /config/dashboard/dash_overview/cards/home/adguard.yaml
-      #- !include /config/dashboard/dash_overview/cards/home/ups.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml

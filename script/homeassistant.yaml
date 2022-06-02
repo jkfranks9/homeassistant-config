@@ -8,6 +8,12 @@ concat_log_files:
   sequence:
     - service: shell_command.concat_log_files
 
+# Concatenate a set of automation log files into one file for easier examination.
+concat_auto_log_files:
+  alias: Concat Auto Log Files
+  sequence:
+    - service: shell_command.concat_auto_log_files
+
 #===================#
 #     Reminders     #
 #===================#

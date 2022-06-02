@@ -218,8 +218,7 @@
         - service: scene.apply
           data:
             entities:
-              light.attic_light: 'off'
-              light.garage_lights: 'off'
+              light.storage_lights: 'off'
               light.outdoor_lights: 'off'
 
 # Open up the house when needed.
@@ -271,7 +270,7 @@
         
         sequence:
           - service: homeassistant.turn_on
-            entity_id: group.daytime_lights_christmas
+            entity_id: light.daytime_lights_christmas
           
           - service: light.turn_on
             entity_id: light.office_lamp
@@ -799,14 +798,49 @@
     - service: input_boolean.turn_on
       entity_id: input_boolean.dryer_running
 
+- alias: Turn On Dryer Almost Done
+  id: turn_on_dryer_almost_done
+  
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.dryer_humidity_falling
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.dryer_temperature_falling
+      to: 'on'
+  
+  condition:
+    - condition: state
+      entity_id: input_boolean.dryer_running
+      state: 'on'
+  
+  action:
+    - delay: '00:00:01'
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.dryer_almost_done
+
 - alias: Turn Off Dryer Running
   id: turn_off_dryer_running
+  
   trigger:
-    - platform: template
-      value_template: "{{ is_state('binary_sensor.dryer_humidity_falling', 'on') and is_state('binary_sensor.dryer_temperature_falling', 'on') }}"
+    - platform: state
+      entity_id: binary_sensor.dryer_humidity_falling
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.dryer_temperature_falling
+      to: 'on'
+  
+  condition:
+    - condition: state
+      entity_id: input_boolean.dryer_almost_done
+      state: 'on'
+  
   action:
     - service: input_boolean.turn_off
       entity_id: input_boolean.dryer_running
+    - delay: '00:00:02'
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.dryer_almost_done
 
 # Log the dryer trend sensors for debugging purposes. I anticipate needing a lot of dryer runs in different seasons
 # and conditions before settling on the final settings for the trend sensors that trigger the end of the cycle.
@@ -936,3 +970,56 @@
     - delay: '00:02:00'
     - service: switch.turn_off
       entity_id: switch.general_plug_1
+
+#======================#
+#     Tags/Beacons     #
+#======================#
+
+# Control grandchild home mode based on Nut Mini presence.
+- alias: Turn On Grandchild Home
+  id: 'turn_on_grandchild_home'
+  trigger:
+    - platform: state
+      entity_id: sensor.nut_mini
+      from: 'not_home'
+      to:
+        - 'garage'
+        - 'house'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: sensor.nut_mini
+      state:
+        - 'garage'
+        - 'house'
+  
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"    
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.grandchild_home
+
+- alias: Turn Off Grandchild Home
+  id: 'turn_off_grandchild_home'
+  trigger:
+    - platform: state
+      entity_id: sensor.nut_mini
+      from:
+        - 'garage'
+        - 'house'
+      to: 'not_home'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: sensor.nut_mini
+      state: 'not_home'
+  
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"    
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.grandchild_home

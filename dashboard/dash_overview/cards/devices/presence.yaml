@@ -16,4 +16,4 @@ cards:
     show_header_toggle: false
     entities:
       - entity: sensor.blue_charm_beacon
-        name: Blue Charm Beacon
+      - entity: sensor.nut_mini

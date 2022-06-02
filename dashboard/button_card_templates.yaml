@@ -67,35 +67,34 @@ light_group_button:
     - value: 'off'
       icon: mdi:home-lightbulb-outline
 
+#======================================#
+#     Light Group Button Name Card     #
+#======================================#
+
 light_group_button_name:
+  variables:
+    entities_title: Lights
+    entities_group: light.dummy
+  
   show_icon: true
   show_name: true
+  
   tap_action:
-    action: >
-      [[[
-        if (entity.state == 'on')
-          return 'toggle'
-        else
-          return 'none'
-      ]]]
+    action: fire-dom-event
+    browser_mod:
+      command: call-service
+      service: script.popup_light_group
+      service_data:
+        deviceID:
+          - this
+        title: '[[[ return variables.entities_title ]]]'
+        light_group: '[[[ return variables.entities_group ]]]'
+  
   state:
     - value: 'on'
       icon: mdi:home-lightbulb
     - value: 'off'
       icon: mdi:home-lightbulb-outline
-
-#===========================#
-#     Light Button Card     #
-#===========================#
-
-light_button:
-  show_icon: true
-  show_name: true
-  tap_action:
-    action: 'toggle'
-  state:
-    - value: 'on'
-    - value: 'off'
 
 #=================================#
 #     Temperature Button Card     #

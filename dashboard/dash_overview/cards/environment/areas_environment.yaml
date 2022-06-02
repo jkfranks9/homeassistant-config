@@ -17,16 +17,6 @@ cards:
       max_entity: sensor.garage_temp_max
       humidity_entity: sensor.garage_humidity
       
-  # Porch
-  - type: custom:button-card
-    template: temperature
-    entity: sensor.porch_temperature
-    name: Porch
-    variables:
-      min_entity: sensor.porch_temp_min
-      max_entity: sensor.porch_temp_max
-      humidity_entity: sensor.porch_humidity
-      
   # Attic
   - type: custom:button-card
     template: temperature
@@ -36,3 +26,13 @@ cards:
       min_entity: sensor.attic_temp_min
       max_entity: sensor.attic_temp_max
       humidity_entity: sensor.attic_humidity
+      
+  # Porch
+  - type: custom:button-card
+    template: temperature
+    entity: sensor.porch_temperature
+    name: Porch
+    variables:
+      min_entity: sensor.porch_temp_min
+      max_entity: sensor.porch_temp_max
+      humidity_entity: sensor.porch_humidity

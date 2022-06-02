@@ -5,11 +5,10 @@
 - id: 'lights_out'
   name: Lights Out
   entities:
-    light.attic_light:          'off'
-    group.downstairs_lights:    'off'
-    light.garage_lights:        'off'
-    light.outdoor_lights:       'off'
-    light.upstairs_lights:      'off'
+    light.downstairs_lights: 'off'
+    light.upstairs_lights:   'off'
+    light.storage_lights:    'off'
+    light.outdoor_lights:    'off'
 
 #===============================#
 #     Non Master Lights Out     #
@@ -19,11 +18,16 @@
 - id: 'non_master_lights_out'
   name: Non Master Lights Out
   entities:
-    light.daytime_lights:       'off'
-    light.guest_bedroom_lights: 'off'
-    group.interior_lights:      'off'
-    light.misc_lights:          'off'
-    light.theater_lights:       'off'
+    light.master_bath_light:             'off'
+    light.downstairs_common_lights:      'off'
+    light.downstairs_guest_suite_lights: 'off'
+    light.family_room_lights:            'off'
+    light.kitchen_lights:                'off'
+    light.office_lights:                 'off'
+    light.laundry_room_lights:           'off'
+    light.upstairs_lights:               'off'
+    light.storage_lights:                'off'
+    light.outdoor_lights:                'off'
 
 #================================#
 #     Non Bedroom Lights Out     #
@@ -33,10 +37,17 @@
 - id: 'non_bedroom_lights_out'
   name: Non Bedroom Lights Out
   entities:
-    light.daytime_lights:       'off'
-    group.interior_lights:      'off'
-    light.misc_lights:          'off'
-    light.theater_lights:       'off'
+    light.master_bath_light:        'off'
+    light.guest_bath_light:         'off'
+    light.downstairs_common_lights: 'off'
+    light.family_room_lights:       'off'
+    light.kitchen_lights:           'off'
+    light.office_lights:            'off'
+    light.laundry_room_lights:      'off'
+    light.theater_lights:           'off'
+    light.upstairs_common_lights:   'off'
+    light.storage_lights:           'off'
+    light.outdoor_lights:           'off'
 
 #==================================#
 #     Theater Auxiliary Lights     #
@@ -48,15 +59,32 @@
 - id: 'theater_aux_dark'
   name: Theater Aux Dark
   entities:
-    light.snack_light:             'off'
-    light.upstairs_hallway_lights: 'off'
-    light.utility_light:           'off'
-    light.stairway_light:          'off'
+    light.upstairs_common_lights: 'off'
+    light.stairway_light:         'off'
+
 # Turn on partial theater auxiliary lights. Note that the stairway light is controlled by a script in this
 # scenario, so is missing here.
 - id: 'theater_aux_partial'
   name: Theater Aux Partial
   entities:
-    light.snack_light:             'off'
-    light.upstairs_hallway_lights: 'on'
-    light.utility_light:           'off'
+    light.snack_light:    'off'
+    light.hallway_lights: 'on'
+    light.utility_light:  'off'
+
+#==========================#
+#     Christmas Lights     #
+#==========================#
+
+- id: 'christmas_lights_on'
+  name: Christmas Lights On
+  entities:
+    light.christmas_lights:  'on'
+    light.dining_room_hutch: 'on'
+    light.foyer_hutch:       'on'
+
+- id: 'christmas_lights_off'
+  name: Christmas Lights Off
+  entities:
+    light.christmas_lights:  'off'
+    light.dining_room_hutch: 'off'
+    light.foyer_hutch:       'off'

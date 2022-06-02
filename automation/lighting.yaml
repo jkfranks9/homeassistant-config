@@ -202,7 +202,7 @@
         {% if is_state('input_boolean.christmas_mode', 'off') %}
           light.daytime_lights
         {% else %}
-          group.daytime_lights_christmas
+          light.daytime_lights_christmas
         {% endif %}
 
 # Check at a medium sun elevation.
@@ -216,7 +216,7 @@
         {% if is_state('input_boolean.christmas_mode', 'off') %}
           light.daytime_lights
         {% else %}
-          group.daytime_lights_christmas
+          light.daytime_lights_christmas
         {% endif %}
 
 # Check at a minimum sun elevation.
@@ -230,7 +230,7 @@
         {% if is_state('input_boolean.christmas_mode', 'off') %}
           light.daytime_lights
         {% else %}
-          group.daytime_lights_christmas
+          light.daytime_lights_christmas
         {% endif %}
 
 #======================#
@@ -468,8 +468,7 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-    - service: homeassistant.turn_on
-      entity_id: group.christmas_lights
+    - service: script.turn_on_christmas_lights
 
 # Turn off Christmas lights at night on certain Christmas-y days.
 - alias: Turn Off Christmas Lights
@@ -494,5 +493,4 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-    - service: homeassistant.turn_off
-      entity_id: group.christmas_lights
+    - service: script.turn_off_christmas_lights

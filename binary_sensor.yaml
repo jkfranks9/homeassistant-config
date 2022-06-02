@@ -1,36 +1,3 @@
-#============================#
-#     MQTT Room Presence     #
-#============================#
-
-- platform: mqtt
-  name: Garage Espresense Sensor
-  state_topic: espresense/rooms/garage/status
-  json_attributes_topic: espresense/rooms/garage/telemetry
-  payload_on: online
-  payload_off: offline
-  device_class: connectivity
-
-- platform: mqtt
-  name: House Espresense Sensor
-  state_topic: espresense/rooms/house/status
-  json_attributes_topic: espresense/rooms/house/telemetry
-  payload_on: online
-  payload_off: offline
-  device_class: connectivity
-
-#===================#
-#     Legion PC     #
-#===================#
-
-- platform: mqtt
-  name: "Legion T530 Connected"
-  state_topic: "iotlink/workgroup/legion-t530/lwt"
-  value_template: "{{ value }}"
-  payload_on: "ON"
-  payload_off: "OFF"
-  device_class: "connectivity"
-  qos: 1
-
 #===============#
 #     Dryer     #
 #===============#

@@ -13,6 +13,28 @@ config:
   #console_log_level: info
   defaults:
     hover_action: hover-info
+    hover_info_filter:
+      - friendly_name
+      - icon
+      - min_mireds
+      - max_mireds
+      - supported_features
+      - supported_color_modes
+      - device_class
+      - state_class
+      - editable
+      - hvac_modes
+      - min_temp
+      - max_temp
+      - target_temp_step
+      - fan_modes
+      - preset_modes
+      - fan_min_on_time
+      - fan_speed_list
+      - battery_icon
+      - device_id
+      - zone_id
+      - hdmi_input
     tap_action: toggle
   rules:
     
@@ -29,7 +51,7 @@ config:
         - switch.foyer_hutch
         - switch.front_floodlight
         - switch.garage_lights
-        - switch.general_plug_1  # treadmill fan; reused at Christmas
+        - switch.general_plug_1  # treadmill fan
         - switch.guest_bath_fan
         - switch.guest_bath_light
         - switch.guest_bedroom_lamp
@@ -88,6 +110,30 @@ config:
     #    service: floorplan.class_set
     #    service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
+    # Media players
+    - entities:
+        - media_player.family_room_echo
+        - media_player.master_bedroom_echo
+        - media_player.guest_bedroom_echo
+      tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Motion detectors
+    - entities:
+        - binary_sensor.master_bath_motion_detector_occupancy
+        - binary_sensor.guest_bath_motion_detector_occupancy
+        - binary_sensor.laundry_room_motion_detector_occupancy
+        - binary_sensor.downstairs_occupancy
+        - binary_sensor.main_floor_occupancy
+      tap_action: more-info
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
     # Temperatures
     - entities:
         - sensor.garage_temperature
@@ -96,6 +142,25 @@ config:
       state_action:
         - service: floorplan.text_set
           service_data: "${(entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown'}"
+        - service: floorplan.class_set
+          service_data:
+            class: 'static-temp'
+    
+    # Dryer
+    - entities:
+        - sensor.dryer_humidity
+      state_action:
+        - service: floorplan.text_set
+          service_data: "${state('input_boolean.dryer_running', 'on') ? ((entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '%' : 'unknown') : ''}"
+        - service: floorplan.class_set
+          service_data:
+            class: 'static-temp'
+    
+    - entities:
+        - sensor.dryer_temperature
+      state_action:
+        - service: floorplan.text_set
+          service_data: "${state('input_boolean.dryer_running', 'on') ? ((entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown') : ''}"
         - service: floorplan.class_set
           service_data:
             class: 'static-temp'

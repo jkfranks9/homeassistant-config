@@ -132,18 +132,12 @@ turn_off_bedtime_lights:
     # Choose which lights to turn off.
     - choose:
       
-      # Grandchild home with parent: don't mess with the guest bedroom lights, and turn off the family room lamp.
+      # Family members home: turn off everything except bedroom lights.
       - conditions:
           - condition: template
-            value_template: "{{ is_state('person.sarah', 'home') and is_state('input_boolean.grandchild_home', 'on') }}"
+            value_template: "{{ is_state('group.family_members', 'home') }}"
         sequence:
-          - service: scene.apply
-            data:
-              entities:
-                light.family_room_lamp: 'off'
-                light.theater_lights: 'off'
-                group.interior_lights: 'off'
-                light.misc_lights: 'off'
+          - scene: scene.non_bedroom_lights_out
       
       # Grandchild home without parent: leave some lights on, depending on location..
       - conditions:
@@ -152,7 +146,7 @@ turn_off_bedtime_lights:
         sequence:
           - choose:
             
-            # Grandchild sleeping in guest room: leave/turn daytime lights on.
+            # Grandchild sleeping in guest room: leave daytime lights on.
             - conditions:
                 - condition: template
                   value_template: "{{ is_state('input_select.grandchild_sleepover_location', 'Guest') }}"
@@ -160,24 +154,24 @@ turn_off_bedtime_lights:
                 - service: scene.apply
                   data:
                     entities:
-                      light.family_room_lamp: 'on'
-                      light.guest_bedroom_lights: 'off'
-                      light.theater_lights: 'off'
-                      group.interior_lights: 'off'
-                      light.misc_lights: 'off'
+                      light.stairway_light: 'off'
+                      light.guest_bath_light: 'off'
+                      light.guest_bedroom_lamp: 'off'
+                      light.guest_bedroom_lamp_2: 'off'
+                      light.master_bath_light: 'off'
+                      light.downstairs_common_lights: 'off'
+                      light.kitchen_lights: 'off'
+                      light.office_lights: 'off'
+                      light.laundry_room_lights: 'off'
+                      light.upstairs_lights: 'off'
+                      light.storage_lights: 'off'
+                      light.outdoor_lights: 'off'
             
             # Grandchild sleeping in master: turn master bath light on.
             default:
               - scene: scene.non_master_lights_out
               - service: light.turn_on
                 entity_id: light.master_bath_light
-      
-      # Grandchild not home, but family members are: turn off everything except bedroom lights.
-      - conditions:
-          - condition: template
-            value_template: "{{ is_state('group.family_members', 'home') }}"
-        sequence:
-          - scene: scene.non_bedroom_lights_out
       
       # Just me home: turn off everything except the master bedroom lamp.
       default:
@@ -540,9 +534,7 @@ turn_on_christmas_lights:
     - condition: state
       entity_id: input_boolean.christmas_mode
       state: 'on'
-    - service: homeassistant.turn_on
-      target:
-        entity_id: group.christmas_lights
+    - scene: scene.christmas_lights_on
 
 turn_off_christmas_lights:
   alias: Turn Off Christmas Lights
@@ -550,6 +542,20 @@ turn_off_christmas_lights:
     - condition: state
       entity_id: input_boolean.christmas_mode
       state: 'on'
-    - service: homeassistant.turn_off
-      target:
-        entity_id: group.christmas_lights
+    - scene: scene.christmas_lights_off
+
+#===========================#
+#     Light Group Popup     #
+#===========================#
+
+popup_light_group:
+  alias: Popup Light Group
+  sequence:
+    - service: browser_mod.popup
+      data_template:
+        deviceID: "{{ deviceID }}"
+        title: "{{ title }}"
+        card:
+          type: entities
+          show_header_toggle: true
+          entities: "{{ expand(light_group) | map(attribute = 'entity_id') | list }}"

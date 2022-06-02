@@ -1,0 +1,37 @@
+
+type: custom:stack-in-card
+cards:
+
+  - type: custom:minimalistic-area-card
+    title: Family Room
+    image: /local/img/Family Room.jpg
+    entities:
+      - entity: light.family_room_lamp
+      - entity: switch.fire_tv
+      - entity: switch.sonoff_family_room_av
+
+  - type: custom:minimalistic-area-card
+    title: Office
+    image: /local/img/Office.jpg
+    entities:
+      - entity: light.office_lamp
+      - entity: input_boolean.alexa_ha_plug
+      - entity: sensor.office_temperature
+
+  - type: custom:minimalistic-area-card
+    title: Theater
+    image: /local/img/Theater.jpg
+    entities:
+      - entity: light.theater_sconces
+      - entity: light.theater_ceiling
+      - entity: media_player.epson_projector
+      - entity: sensor.theater_temperature
+
+  - type: custom:minimalistic-area-card
+    title: Upstairs BR
+    image: /local/img/Upstairs Bedroom.jpg
+    entities:
+      - entity: light.upstairs_bedroom_light
+      - entity: light.upstairs_bedroom_outlet
+      - entity: cover.upstairs_br_vent_1
+      - entity: cover.upstairs_br_vent_2

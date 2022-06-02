@@ -11,13 +11,13 @@ cards:
     icon: mdi:signal
     unit: lqi
     entities:
-      - entity: sensor.guest_bath_motion_detector_linkquality
+      - entity: binary_sensor.guest_bath_motion_detector_occupancy
         name: Guest Bath Motion Detector
         attribute: linkquality
-      - entity: sensor.laundry_room_motion_detector_linkquality
+      - entity: binary_sensor.laundry_room_motion_detector_occupancy
         name: Laundry Room Motion Detector
         attribute: linkquality
-      - entity: sensor.master_bath_motion_detector_linkquality
+      - entity: binary_sensor.master_bath_motion_detector_occupancy
         name: Master Bath Motion Detector
         attribute: linkquality
       - entity: cover.upstairs_br_vent_1

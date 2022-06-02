@@ -50,6 +50,10 @@
 - url: /local/community/mini-media-player/mini-media-player-bundle.js
   type: module
 
+# Minimalistic Area Card
+- url: /local/community/homeassistant-minimalistic-area-card/minimalistic-area-card.js
+  type: module
+
 # Multiple Entity Row
 - url: /local/community/lovelace-multiple-entity-row/multiple-entity-row.js
   type: module
@@ -64,8 +68,4 @@
 
 # Template Entity Row
 - url: /local/community/lovelace-template-entity-row/template-entity-row.js
-  type: module
-
-# Zigbee2MQTT Networkmap
-- url: /local/community/zigbee2mqtt-networkmap/zigbee2mqtt-networkmap.js
   type: module

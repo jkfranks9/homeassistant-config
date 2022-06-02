@@ -1,8 +1,0 @@
-#========================#
-#     Daytime Lights     #
-#========================#
-
-Daytime Lights Christmas:
-  entities:
-    - light.hallway_lamp
-    - group.christmas_lights

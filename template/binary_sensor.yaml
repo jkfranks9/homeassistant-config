@@ -32,6 +32,11 @@
       device_class: light
       state: "{{ is_state('switch.garage_lights', 'on') }}"
     
+    - name: 'Hallway Lights Mirror'
+      unique_id: hallway_lights_mirror
+      device_class: light
+      state: "{{ is_state('switch.hallway_lights', 'on') }}"
+    
     - name: 'Mantle Bookcase Mirror'
       unique_id: mantle_bookcase_mirror
       device_class: light
@@ -56,11 +61,6 @@
       unique_id: upstairs_bedroom_light_mirror
       device_class: light
       state: "{{ is_state('switch.upstairs_bedroom_light', 'on') }}"
-    
-    - name: 'Upstairs Hallway Lights Mirror'
-      unique_id: upstairs_hallway_lights_mirror
-      device_class: light
-      state: "{{ is_state('switch.upstairs_hallway_lights', 'on') }}"
 
     #-------------------------#
     #   -- History Stats --   #
