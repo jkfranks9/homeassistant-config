@@ -26,7 +26,7 @@
     - name: 'Driveway Lights Power'
       unique_id: driveway_lights_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.driveway_lights', 'on'), 33, 0) }}"
+      state: "{{ iif(is_state('light.driveway_light', 'on'), 33, 0) }}"
 
     - name: 'Foyer Hutch Power'
       unique_id: foyer_hutch_power
@@ -46,7 +46,7 @@
     - name: 'Garage Lights Power'
       unique_id: garage_lights_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.garage_lights', 'on'), 27, 0) }}"
+      state: "{{ iif(is_state('light.garage_light', 'on'), 27, 0) }}"
 
     - name: 'Guest Bath Fan Power'
       unique_id: guest_bath_fan_power
@@ -76,7 +76,7 @@
     - name: 'Hallway Lights Power'
       unique_id: hallway_lights_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.hallway_lights', 'on'), 75, 0) }}"
+      state: "{{ iif(is_state('light.hallway_light', 'on'), 75, 0) }}"
 
     - name: 'Laundry Room Light Power'
       unique_id: laundry_room_light_power

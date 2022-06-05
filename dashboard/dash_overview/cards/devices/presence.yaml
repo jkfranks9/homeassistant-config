@@ -8,9 +8,9 @@ cards:
   - type: entities
     show_header_toggle: false
     entities:
-      - entity: binary_sensor.garage_espresense_sensor
+      - entity: binary_sensor.espresense_garage
         name: Garage Espresense Sensor
-      - entity: binary_sensor.house_espresense_sensor
+      - entity: binary_sensor.espresense_house
         name: House Espresense Sensor
   - type: entities
     show_header_toggle: false

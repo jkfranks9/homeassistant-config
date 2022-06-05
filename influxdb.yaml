@@ -9,43 +9,173 @@ username: !secret influx_username
 password: !secret influx_password
 max_retries: 3
 default_measurement: state
+
+# NOTE: Identical to recorder configuration.
+
+#==== Exclusions
+
 exclude:
   
   domains:
     - automation
     - binary_sensor
-    - button
     - calendar
     - counter
-    - cover
     - group
     - input_boolean
     - input_datetime
+    - input_number
+    - input_select   
     - input_text
     - media_player
     - number
-    - persistent_notification
+    - person
     - proximity
     - remote
     - scene
     - script
+    - select
+    - sensor  
     - sun
+    - switch
     - timer
-    - zone
+    - update
+    - weather
   
   entities:
-    - input_number.max_elevation
-    - input_number.med_elevation
-    - input_number.min_elevation
-    - input_number.treadmill_incline
-    - input_number.treadmill_speed
-    - input_number.user_weight
-    - input_number.zigbee2mqtt_join_minutes
-    - input_select.grandchild_sleepover_location
-    - input_select.kodi_movies
-    - input_select.rainbow_colors
-    - input_select.weather_condition
-    - input_select.zigbee2mqtt_log_level
+    - device_tracker.legion_t530
+    - device_tracker.lenovo_tablet
+    - device_tracker.jbl_charge_5
   
   entity_globs:
-    - input_number.calories*
+    - light.*_lights
+
+#==== Inclusions
+
+include:
+
+  domains:
+    
+    # Included in history.
+    - climate
+    - device_tracker
+    
+    # Excluded from history.
+    - button
+    - cover
+    - light
+    - vacuum
+    - zone
+
+  entities:
+    
+    # TEMPORARY LAUNDRY
+    - input_boolean.dryer_almost_done
+    - input_boolean.dryer_running
+    - input_select.washer_load_size
+    - input_select.washer_state
+    - sensor.dryer_humidity
+    - sensor.dryer_temperature
+    - sensor.office_humidity
+    - sensor.office_temperature
+    - sensor.porch_humidity
+    #- sensor.porch_temperature  <-- included below, excluded from history, so is temporarily commented out in history
+    - sensor.sonoff_washer_power
+    - sensor.washer_power_state
+    - timer.washer_rinse_blackout
+    - timer.washer_rinse_fill_blackout
+    
+    # Included in history.
+    # Partially included in logbook.
+    - binary_sensor.downstairs_occupancy
+    - binary_sensor.dryer_humidity_falling
+    - binary_sensor.dryer_temperature_falling
+    - binary_sensor.guest_bath_motion_detector_occupancy
+    - binary_sensor.laundry_room_motion_detector_occupancy
+    - binary_sensor.main_floor_occupancy
+    - binary_sensor.master_bath_motion_detector_occupancy
+    - binary_sensor.theater_occupancy
+    - binary_sensor.upstairs_occupancy
+    - group.family_members
+    - sensor.cyber1_status
+    - sensor.cyber1_status_data
+    - sensor.total_power
+    
+    # Excluded from history by domain, so don't need to be in the entities list below.
+    # Partially excluded from logbook by domain.
+    - input_number.calories_curr_year_jan
+    - input_number.calories_curr_year_feb
+    - input_number.calories_curr_year_mar
+    - input_number.calories_curr_year_apr
+    - input_number.calories_curr_year_may
+    - input_number.calories_curr_year_jun
+    - input_number.calories_curr_year_jul
+    - input_number.calories_curr_year_aug
+    - input_number.calories_curr_year_sep
+    - input_number.calories_curr_year_oct
+    - input_number.calories_curr_year_nov
+    - input_number.calories_curr_year_dec
+    - input_number.calories_prev_year_jan
+    - input_number.calories_prev_year_feb
+    - input_number.calories_prev_year_mar
+    - input_number.calories_prev_year_apr
+    - input_number.calories_prev_year_may
+    - input_number.calories_prev_year_jun
+    - input_number.calories_prev_year_jul
+    - input_number.calories_prev_year_aug
+    - input_number.calories_prev_year_sep
+    - input_number.calories_prev_year_oct
+    - input_number.calories_prev_year_nov
+    - input_number.calories_prev_year_dec
+    - switch.guest_bath_fan
+    - switch.master_bath_fan
+    
+    # Excluded from history ... can be pasted into the history entity excludes.
+    # Partially excluded from logbook.
+    - binary_sensor.cinema_projector
+    - binary_sensor.family_room_av
+    - binary_sensor.espresense_garage
+    - binary_sensor.espresense_house
+    - sensor.attic_temperature
+    - sensor.attic_temp_max
+    - sensor.attic_temp_min
+    - sensor.cinema_last_7_days
+    - sensor.cinema_yesterday
+    - sensor.cpu_temp
+    - sensor.ecovacs_battery
+    - sensor.garage_temp_max
+    - sensor.garage_temp_min
+    - sensor.garage_temperature
+    - sensor.jon_galaxy_battery_level
+    - sensor.legion_t530_cpu_usage
+    - sensor.legion_t530_memory_available
+    - sensor.legion_t530_memory_total
+    - sensor.legion_t530_memory_usage
+    - sensor.legion_t530_storage_c_label
+    - sensor.legion_t530_storage_c_total_free_space
+    - sensor.legion_t530_storage_c_total_storage
+    - sensor.legion_t530_storage_c_usage
+    - sensor.legion_t530_storage_e_label
+    - sensor.legion_t530_storage_e_total_free_space
+    - sensor.legion_t530_storage_e_total_storage
+    - sensor.legion_t530_storage_e_usage
+    - sensor.legion_t530_system_boot_time
+    - sensor.lenovo_tablet_battery_level
+    - sensor.nighttime
+    - sensor.office_ambient_light
+    - sensor.porch_battery_level
+    - sensor.porch_battery_voltage
+    - sensor.porch_temp_max
+    - sensor.porch_temp_min
+    - sensor.porch_temperature
+    - sensor.projector_power
+    - sensor.sonoff_family_room_av_power
+    - sensor.sonoff_microwave_power
+    - sensor.sonoff_refrigerator_power
+    - sensor.sonoff_treadmill_power
+    - sensor.total_daily_calories
+    - sensor.total_daily_energy
+    - sensor.total_daily_time
+    - sensor.total_power
+    - sensor.tv_last_7_days
+    - sensor.tv_yesterday

@@ -5,16 +5,20 @@
 exclude:
 
   domains:
-    - counter
+    - button
+    - cover
     - input_number
+    - light
+    - switch
     - vacuum
+    - zone
 
   # Paste into here from recorder entity excludes.
   entities:
     - binary_sensor.cinema_projector
     - binary_sensor.family_room_av
-    - sensor.archer_c2300_kib_s_received
-    - sensor.archer_c2300_kib_s_sent
+    - binary_sensor.espresense_garage
+    - binary_sensor.espresense_house
     - sensor.attic_temperature
     - sensor.attic_temp_max
     - sensor.attic_temp_min
@@ -46,7 +50,7 @@ exclude:
     - sensor.porch_battery_voltage
     - sensor.porch_temp_max
     - sensor.porch_temp_min
-    #- sensor.porch_temperature  <-- temporarily commented out
+    - sensor.porch_temperature
     - sensor.projector_power
     - sensor.sonoff_family_room_av_power
     - sensor.sonoff_microwave_power

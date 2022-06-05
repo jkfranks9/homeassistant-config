@@ -5,8 +5,15 @@
 exclude:
 
   domains:
-    - binary_sensor
-    - climate
     - group
+    - input_boolean # TEMPORARY LAUNDRY
     - input_number
+    - input_select # TEMPORARY LAUNDRY
     - sensor
+    - timer
+  
+  entities:
+    - binary_sensor.cinema_projector
+    - binary_sensor.family_room_av
+    - binary_sensor.espresense_garage
+    - binary_sensor.espresense_house

@@ -68,7 +68,7 @@
   name: Theater Aux Partial
   entities:
     light.snack_light:    'off'
-    light.hallway_lights: 'on'
+    light.hallway_light:  'on'
     light.utility_light:  'off'
 
 #==========================#

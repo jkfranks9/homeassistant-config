@@ -42,7 +42,7 @@ cards:
       
       - type: 'custom:button-card'
         template: light_group_button
-        entity: light.garage_lights
+        entity: light.garage_light
       
       - type: 'custom:button-card'
         template: light_group_button

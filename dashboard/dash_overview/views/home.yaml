@@ -63,3 +63,4 @@ cards:
       - !include /config/dashboard/dash_overview/cards/home/adguard.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
+      - type: custom:browser-player

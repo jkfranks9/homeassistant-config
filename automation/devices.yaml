@@ -155,8 +155,10 @@
       to: 'not_home'
     
     # The sun goes to bed.
-    - platform: sun
-      event: sunset
+    - platform: state
+      entity_id: sun.sun
+      from: 'above_horizon'
+      to: 'below_horizon'
     
     # In case HA was rebooting when one of the above triggers would have happened.
     - platform: homeassistant
@@ -270,7 +272,7 @@
         
         sequence:
           - service: homeassistant.turn_on
-            entity_id: light.daytime_lights_christmas
+            entity_id: light.daytime_christmas_lights
           
           - service: light.turn_on
             entity_id: light.office_lamp
