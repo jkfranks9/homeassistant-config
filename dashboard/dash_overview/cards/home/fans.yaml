@@ -1,0 +1,18 @@
+#===================#
+#     Fans Card     #
+#===================#
+
+type: custom:stack-in-card
+title: Ceiling Fans
+mode: vertical
+cards:
+  
+  - type: 'custom:button-card'
+    template: fan_container
+    entity: fan.office_fan
+    name: Office
+  
+  - type: 'custom:button-card'
+    template: fan_container
+    entity: fan.theater_fan
+    name: Theater

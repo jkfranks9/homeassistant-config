@@ -1,3 +1,7 @@
+#======================#
+#     Generic Test     #
+#======================#
+
 - alias: Test Automation
   trigger:
     - platform: time
@@ -8,3 +12,25 @@
   action:
     - service: light.turn_on
       entity_id: light.office_lamp
+
+#=========================#
+#     Temporary Tests     #
+#=========================#
+
+# Wait for result from Test Kodi script
+- alias: Test Kodi Result
+  mode: parallel
+  trigger:
+    - platform: event
+      event_type: kodi_call_method_result
+      event_data:
+        result_ok: true
+        input:
+          method: VideoLibrary.GetMusicVideos
+  action:
+  - delay:
+      milliseconds: 500
+  - event: test_kodi_result
+    event_data:
+      source: "{{ trigger.event.data.entity_id }}"
+      result: "{{ trigger.event.data.result }}"

@@ -12,6 +12,16 @@
       unique_id: attic_light_power
       unit_of_measurement: 'W'
       state: "{{ iif(is_state('light.attic_light', 'on'), 53, 0) }}"
+
+    - name: 'Back Floodlight Power'
+      unique_id: back_floodlight_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.back_floodlight', 'on'), 180, 0) }}"
+
+    - name: 'Back Yard Light Power'
+      unique_id: back_yard_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.back_yard_light', 'on'), 20, 0) }}"
     
     - name: 'Dining Room Hutch Power'
       unique_id: dining_room_hutch_power
@@ -182,7 +192,9 @@
       unique_id: first_floor_lights_calculated_power
       unit_of_measurement: 'W'
       icon: mdi:flash
-      state: "{{ (states('sensor.dining_room_hutch_power') | float(0) +
+      state: "{{ (states('sensor.back_floodlight_power') | float(0) +
+                  states('sensor.back_yard_light_power') | float(0) +
+                  states('sensor.dining_room_hutch_power') | float(0) +
                   states('sensor.dining_room_lamps_power') | float(0) +
                   states('sensor.driveway_lights_power') | float(0) +
                   states('sensor.foyer_hutch_power') | float(0) +
@@ -314,12 +326,14 @@
       unique_id: first_floor_calculated_daily_energy
       unit_of_measurement: 'kWh'
       icon: mdi:flash
-      state: "{{ (states('sensor.dining_room_hutch_daily_energy') | float(0) +
+      state: "{{ (states('sensor.back_floodlight_daily_energy') | float(0) +
+                  states('sensor.back_yard_light_daily_energy') | float(0) +
+                  states('sensor.dining_room_hutch_daily_energy') | float(0) +
                   states('sensor.dining_room_lamps_daily_energy') | float(0) +   
                   states('sensor.driveway_lights_daily_energy') | float(0) +                       
                   states('sensor.fire_tv_daily_energy') | float(0) +                       
                   states('sensor.floor_fan_daily_energy') | float(0) +
-                  states('sensor.foyer_hutch_daily_energy') | float(0) +                       
+                  states('sensor.foyer_hutch_daily_energy') | float(0) +
                   states('sensor.front_floodlight_daily_energy') | float(0) +
                   states('sensor.garage_lights_daily_energy') | float(0) +
                   states('sensor.guest_bath_fan_daily_energy') | float(0) +
@@ -386,7 +400,9 @@
       unique_id: first_floor_calculated_monthly_energy
       unit_of_measurement: 'kWh'
       icon: mdi:flash
-      state: "{{ (states('sensor.dining_room_hutch_monthly_energy') | float(0) +
+      state: "{{ (states('sensor.back_floodlight_monthly_energy') | float(0) +
+                  states('sensor.back_yard_light_monthly_energy') | float(0) +
+                  states('sensor.dining_room_hutch_monthly_energy') | float(0) +
                   states('sensor.dining_room_lamps_monthly_energy') | float(0) +
                   states('sensor.driveway_lights_monthly_energy') | float(0) +
                   states('sensor.fire_tv_monthly_energy') | float(0) +

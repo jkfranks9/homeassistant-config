@@ -27,15 +27,11 @@
 !dashboard/dash_overview/cards/controls
 !dashboard/dash_overview/cards/devices
 !dashboard/dash_overview/cards/energy
-!dashboard/dash_overview/cards/environment
 !dashboard/dash_overview/cards/health
 !dashboard/dash_overview/cards/home
 !dashboard/dash_overview/cards/levels
-!dashboard/dash_overview/cards/lighting
 !dashboard/dash_overview/cards/monitoring
-!dashboard/dash_overview/cards/office
 !dashboard/dash_overview/cards/theater
-!dashboard/dash_overview/cards/tracking
 !dashboard/dash_overview/views
 !dashboard/dash_reminders/
 !dashboard/dash_reminders/cards/

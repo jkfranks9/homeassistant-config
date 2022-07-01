@@ -33,6 +33,9 @@ bedtime:
       
     # Turn off appropriate lights.
     - service: script.turn_off_bedtime_lights
+    
+    # Turn off all fans.
+    - scene: scene.fans_off
   
 # Going to sleep now.
 sleeptime:

@@ -12,3 +12,4 @@ cards:
         icon: mdi:human-male-girl
       - entity: input_boolean.christmas_mode
         icon: mdi:pine-tree
+      - input_boolean.show_browser_player

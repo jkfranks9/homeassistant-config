@@ -247,6 +247,22 @@
       data_template:
         entity_id: input_text.current_feature
         value: "{{ ( trigger.to_state.state ) }}"
+ 
+#=======================#
+#     Turn Off Kodi     #
+#=======================#
+
+# This should be called when the Kodi media player is turned off.
+- alias: Turn Off Kodi
+  id: turn_off_kodi
+  trigger:
+    - platform: device
+      device_id: 7000b71050bd8b00ed5ae05567e931c5
+      domain: kodi
+      entity_id: media_player.kodi
+      type: turn_off
+  action:
+    - service: script.turn_off_kodi
 
 #===================================#
 #     Shield Application Change     #
@@ -287,10 +303,10 @@
         - condition: template
           value_template: "{{ trigger.from_state and trigger.from_state.attributes.app_name == 'Kodi' }}"
         sequence:
-          - service: androidtv.adb_command
-            data:
-              entity_id: media_player.shield_tv
-              command: "am force-stop org.xbmc.kodi"
+          #- service: androidtv.adb_command
+          #  data:
+          #    entity_id: media_player.shield_tv
+          #    command: "am force-stop org.xbmc.kodi"
           - service: media_player.turn_off
             data:
               entity_id: media_player.kodi

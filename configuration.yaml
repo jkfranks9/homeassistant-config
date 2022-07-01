@@ -39,13 +39,13 @@ browser_mod:
 #     Included Files     #
 #========================#
 
-alexa:          !include alexa.yaml
+alexa:          !include database/alexa.yaml
 automation:     !include_dir_merge_list automation
 binary_sensor:  !include binary_sensor.yaml
 cover:          !include covers.yaml
 group:          !include_dir_merge_named group
 history:        !include database/history.yaml
-influxdb:       !include influxdb.yaml
+influxdb:       !include database/influxdb.yaml
 input_boolean:  !include input_boolean.yaml
 input_number:   !include input_number.yaml
 input_select:   !include input_select.yaml
@@ -254,6 +254,11 @@ notify:
   - name: triggered_automations
     platform: file
     filename: triggered_automations.log
+  
+  - name: triggered_scripts
+    platform: file
+    filename: triggered_scripts.log
+  
   - name: dryer_trend_sensors
     platform: file
     filename: dryer_trend_sensors.log
@@ -262,8 +267,10 @@ notify:
 shell_command:
   backup_log:               python /config/python/backup_log.py
   backup_auto_log:          python /config/python/backup_auto_log.py
+  backup_scripts_log:       python /config/python/backup_scripts_log.py
   concat_log_files:         python /config/python/concat_log_files.py
   concat_auto_log_files:    python /config/python/concat_auto_log_files.py
+  concat_scripts_log_files: python /config/python/concat_scripts_log_files.py
   copy_floorplan_christmas: python /config/python/copy_floorplan_christmas.py
   copy_floorplan_normal:    python /config/python/copy_floorplan_normal.py
   delete_junk_log_files:    'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'

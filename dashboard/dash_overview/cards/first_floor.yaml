@@ -44,6 +44,8 @@ config:
         - light.family_room_lamp
         - light.master_bedroom_lamp
         - light.office_lamp
+        - switch.back_floodlight
+        - switch.back_yard_light
         - switch.dining_room_hutch
         - switch.dining_room_lamps
         - switch.driveway_lights
@@ -109,6 +111,14 @@ config:
     #    action: call-service
     #    service: floorplan.class_set
     #    service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    
+    # Ceiling fans
+    - entities:
+        - fan.office_fan
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'spinning' : 'element-off' }"
     
     # Media players
     - entities:

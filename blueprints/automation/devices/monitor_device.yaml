@@ -58,6 +58,10 @@ action:
       data:
         channel: Home Assistant
     
+  # Indicate a possible power glitch occurred.
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.possible_power_glitch
+  
   # Turn the device back on.
   - service: homeassistant.turn_on
     target:

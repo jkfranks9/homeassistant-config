@@ -1,0 +1,17 @@
+#====================#
+#     Vents Card     #
+#====================#
+
+type: custom:stack-in-card
+mode: horizontal
+title: Vents
+cards:
+  - type: custom:button-card
+    template: hvac_vent
+    entity: cover.upstairs_br_vent_1
+    name: Up BR 1
+      
+  - type: custom:button-card
+    template: hvac_vent
+    entity: cover.upstairs_br_vent_2
+    name: Up BR 2

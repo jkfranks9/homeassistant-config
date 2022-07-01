@@ -1,3 +1,73 @@
+#============================#
+#     Toggle Button Card     #
+#============================#
+
+toggle_button:
+  show_icon: true
+  show_name: true
+  
+  tap_action:
+    action: toggle
+
+#===========================#
+#     Blank Button Card     #
+#===========================#
+
+blank_button:
+  show_icon: false
+  show_name: false
+  show_state: false
+  
+  tap_action:
+    action: 'none'
+
+#===============================#
+#     Container Button Card     #
+#===============================#
+
+container:
+  color_type: card
+  
+  styles:
+    card:
+      - padding: 0
+    grid:
+      - grid-template-areas: '"buttons"'
+      - grid-template-columns: 1fr
+      - grid-template-rows: 1fr
+    
+    custom_fields:
+      buttons:
+        - margin: 0
+        - padding: 0.15em
+
+#==================================#
+#     Call Service Button Card     #
+#==================================#
+
+call_service_button:
+  variables:
+    var_script: script.mute_guest_bedroom_echo
+  
+  show_icon: true
+  show_name: true
+  
+  tap_action:
+    action: call-service
+    service: script.turn_on
+    service_data:
+      entity_id: '[[[ return variables.var_script ]]]'
+  
+  styles:
+    icon:
+      - color: |
+          [[[
+            if (entity.state == 'on')
+              return 'var(--paper-item-icon-active-color)';
+            else
+              return 'var(--paper-item-icon-color)';
+          ]]]
+
 #=================================#
 #     Garage Door Button Card     #
 #=================================#
@@ -7,44 +77,25 @@ garage_door_button:
     var_entity: switch.shelly1_garage_north
     var_name_open: North open
     var_name_closed: North closed
+  
   show_icon: true
   show_name: true
   icon: 'hass:garage'
   size: 30%
+  
   tap_action:
     action: call-service
     service: switch.turn_on
     service_data:
       entity_id: '[[[ return variables.var_entity ]]]'
+  
   state:
     - value: 'off'
       name: '[[[ return variables.var_name_open ]]]'
       icon: 'hass:garage-open'
+    
     - value: 'on'
       name: '[[[ return variables.var_name_closed ]]]'
-
-#============================#
-#     Toggle Button Card     #
-#============================#
-toggle_button:
-  show_icon: true
-  show_name: true
-  tap_action:
-    action: toggle
-
-#==================================#
-#     Call Service Button Card     #
-#==================================#
-call_service_button:
-  variables:
-    var_script: script.mute_guest_bedroom_echo
-  show_icon: true
-  show_name: true
-  tap_action:
-    action: call-service
-    service: script.turn_on
-    service_data:
-      entity_id: '[[[ return variables.var_script ]]]'
 
 #=================================#
 #     Light Group Button Card     #
@@ -53,6 +104,7 @@ call_service_button:
 light_group_button:
   show_icon: true
   show_name: false
+  
   tap_action:
     action: >
       [[[
@@ -61,9 +113,11 @@ light_group_button:
         else
           return 'none'
       ]]]
+  
   state:
     - value: 'on'
       icon: mdi:home-lightbulb
+    
     - value: 'off'
       icon: mdi:home-lightbulb-outline
 
@@ -93,19 +147,9 @@ light_group_button_name:
   state:
     - value: 'on'
       icon: mdi:home-lightbulb
+    
     - value: 'off'
       icon: mdi:home-lightbulb-outline
-
-#=================================#
-#     Temperature Button Card     #
-#=================================#
-
-temperature_button:
-  show_icon: false
-  show_name: false
-  show_state: true
-  tap_action:
-    action: 'none'
 
 #============================#
 #     Motion Button Card     #
@@ -114,47 +158,45 @@ temperature_button:
 motion_button:
   show_icon: true
   show_name: false
+  
   tap_action:
     action: 'none'
+  
   state:
     - value: 'on'
       icon: mdi:motion-sensor
+    
     - value: 'off'
       icon: mdi:motion-sensor-off
 
-#===========================#
-#     Blank Button Card     #
-#===========================#
+#=================================#
+#     Environment Button Card     #
+#=================================#
 
-blank_button:
-  show_icon: false
-  show_name: false
-  show_state: false
-  tap_action:
-    action: 'none'
-
-#===============================#
-#     Condensed Button Card     #
-#===============================#
-
-# Used as the basis for various condensed format buttons.
-condensed_button:
+environment_button:
   variables:
     color: 'var(--card-background-color)'
+    humidity_entity: ''
   
   show_icon: true
   show_state: true
+  show_name: false
+    
+  state:
+    - id: value_any
+      operator: '!='
+      value: all
+      spin: true
   
   styles:
     card:
       - background-color: '[[[ return variables.color || "transparent" ]]]'
       - overflow: visible
-      - box-shadow: none
       - padding: 2px 0 5px 2px
       - display: flex
-      - width: fit-content
-      - margin-right: 15px
+      #- width: fit-content
       - border: 1px solid gray
+      - margin-right: 1px
     grid:
       - display: contents
     img_cell:
@@ -164,52 +206,20 @@ condensed_button:
       - position: absolute
       - color: silver
     state:
-      - font-size: 3.5em
-      - text-shadow: 0 0 2px black
-      - overflow: visible
+      - font-size: 290%
       - margin-top: '-10px'
-    name:
-      - color: var(--primary-color)
-      - text-shadow: 0 0 2px black
-      - overflow: visible
-      - font-size: 0.75em
-      - font-weight: 500
-      - position: absolute
-      - transform: rotate(90deg)
-      - transform-origin: right bottom
-      - bottom: 0
-      - right: 0
-      - z-index: 10
-
-#================================#
-#     Thermostat Button Card     #
-#================================#
-
-thermostat:
-  template: condensed_button
+      - color: var(--primary-text-color)
+      - z-index: 1
+    
+    custom_fields:        
+      humidity:
+        - z-index: 2
+        - position: absolute
+        - bottom: 0
+        - left: 0
+        - display: flex
   
-  variables:
-    color_setpoint_off: 'var(--bar-low-color)'
-    color_setpoint_idle: 'var(--bar-low-color)'
-    color_setpoint_cool: 'var(--bar-medium-color)'
-    color_setpoint_heat: 'var(--bar-high-color)'
-    text_setpoint_off: 'var(--primary-text-color)'
-    text_setpoint_idle: 'var(--disabled-text-color)'
-    text_setpoint_cool: 'var(--primary-text-color)'
-    text_setpoint_heat: 'var(--primary-text-color)'
-    
-  icon: 'mdi:fan'
-  state_display: |-
-    [[[ 
-      return Math.round(entity.attributes.current_temperature).toString()+"°" 
-    ]]]
-    
   custom_fields:
-    preset: |
-      [[[
-        return `<div style="line-height:1">${entity.attributes.preset_mode}</div>`;
-      ]]]
-      
     humidity:
       card:
         type: 'custom:button-card'
@@ -217,11 +227,12 @@ thermostat:
         icon: 'mdi:water-percent'
         show_name: false
         show_state: true
+        
         state_display: |
           [[[
-            if (entity.attributes.current_humidity) 
-              return entity.attributes.current_humidity;
+            return Math.round(states[variables.humidity_entity].state).toString();
           ]]]
+        
         styles:
           grid:
             - grid-template-areas: '"s i"'
@@ -229,7 +240,7 @@ thermostat:
             - display: contents
           state:
             - color: 'var(--disabled-text-color)'
-            - font-size: 0.8em
+            - font-size: 70%
             - align-self: flex-end
           card:
             - padding: 0
@@ -239,88 +250,31 @@ thermostat:
             - color: 'var(--disabled-text-color)'
             - width: 18px
             - height: 15px
-            - margin-top: '-4px'
-            - margin-left: '-4px'
-            - margin-right: '-3px'
-      
-    setpoint:
-      card:
-        type: 'custom:button-card'
-        show_icon: false
-        show_name: true
-        show_state: true
-        state_display: |
-          [[[ 
-            return entity.attributes.temperature 
-              ? entity.attributes.temperature + "°" 
-              : entity.attributes.target_temp_low
-                ? entity.attributes.target_temp_low + "°" 
-                : ''
-          ]]]
-        name: |
-          [[[ 
-            return entity.attributes.target_temp_high
-              ? entity.attributes.target_temp_high + "°" 
-              : ''
-          ]]]
-        styles:
-          state:
-            - font-size: 0.8em
-            - color: |
-                [[[ 
-                  switch(entity.attributes.hvac_action) {
-                    case "cool":
-                    case "cooling":
-                      return variables.text_setpoint_cool;
-                    case "heat":
-                    case "heating":
-                      return variables.text_setpoint_heat;
-                    default:
-                      return entity.state == "off"
-                        ? variables.text_setpoint_off
-                        : variables.text_setpoint_idle 
-                  }
-                ]]]
-          name:
-            - font-size: 0.8em
-            - color: |
-                [[[ 
-                  switch(entity.attributes.hvac_action) {
-                    case "cool":
-                    case "cooling":
-                      return variables.text_setpoint_cool;
-                    case "heat":
-                    case "heating":
-                      return variables.text_setpoint_heat;
-                    default:
-                      return entity.state == "off"
-                        ? variables.text_setpoint_off
-                        : variables.text_setpoint_idle 
-                  }
-                ]]]
-          card:
-            - padding: 0 2px
-            - background-color: |
-                [[[ 
-                  switch(entity.attributes.hvac_action) {
-                    case "cool":
-                    case "cooling":
-                      return variables.color_setpoint_cool;
-                    case "heat":
-                    case "heating":
-                      return variables.color_setpoint_heat;
-                    default:
-                      return entity.state == "off"
-                        ? variables.color_setpoint_off
-                        : variables.color_setpoint_idle 
-                  }
-                ]]]
+            - margin: -4px -3px 0 -4px
+
+#================================#
+#     Thermostat Button Card     #
+#================================#
+
+thermostat:
+  template: environment_button
+  
+  variables:
+    color_setpoint_off: 'var(--bar-low-color)'
+    color_setpoint_idle: 'var(--bar-low-color)'
+    color_setpoint_cool: 'var(--bar-low-color)'
+    color_setpoint_heat: 'var(--bar-low-color)'
+    text_setpoint_off: 'var(--disabled-text-color)'
+    text_setpoint_idle: 'var(--disabled-text-color)'
+    text_setpoint_cool: 'var(--disabled-text-color)'
+    text_setpoint_heat: 'var(--disabled-text-color)'
     
-  state:
-    - id: value_any
-      operator: '!='
-      value: all
-      spin: true
+  icon: 'mdi:fan'
+  
+  state_display: |-
+    [[[ 
+      return Math.round(entity.attributes.current_temperature).toString()+"°" 
+    ]]]
     
   styles:
     icon:
@@ -328,153 +282,209 @@ thermostat:
       - display: >-
           [[[ return entity.attributes.fan &&
           entity.attributes.fan === 'on' ? "block" : "none" ]]]
-    state:
-      - color: var(--primary-text-color)
-      - z-index: 1
       
     custom_fields:
-      preset:
-        - text-shadow: 0 0 0.2em black
-        - overflow: visible
-        - font-size: 0.6em
+      low:
         - position: absolute
-        - bottom: 1px
-        - right: 32px
+        - bottom: 0
+        - right: 5
         - z-index: 1
         
-      mode:
-        - position: absolute
-        - bottom: 18px
-        - right: 2px
-        
-      setpoint:
+      high:
         - position: absolute
         - bottom: 0
         - right: 0
         - z-index: 1
+    
+  custom_fields:
+    low:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: false
+        show_state: true
         
-      humidity:
-        - z-index: 2
-        - position: absolute
-        - bottom: 0
-        - left: 0
-        - display: flex
+        state_display: |
+          [[[
+            return entity.attributes.target_temp_low
+                ? entity.attributes.target_temp_low + "°" 
+                : ''
+          ]]]
+        
+        styles:
+          state:
+            - font-size: 70%
+            - color: var(--disabled-text-color)
+          card:
+            - padding: 0 2px
+            - background-color: var(--bar-low-color)
+    
+    high:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: false
+        show_state: true
+        
+        state_display: |
+          [[[
+            return entity.attributes.target_temp_high
+                ? entity.attributes.target_temp_high + "°" 
+                : ''
+          ]]]
+        
+        styles:
+          state:
+            - font-size: 70%
+            - color: var(--disabled-text-color)
+          card:
+            - padding: 0 2px
+            - background-color: var(--bar-low-color)
 
 #=================================#
 #     Temperature Button Card     #
 #=================================#
 
 temperature:
-  template: condensed_button
+  template: environment_button
   
   variables:
     min_entity: ''
     max_entity: ''
-    humidity_entity: ''
     
   show_icon: false
   
   state_display: |-
-    [[[ 
-      return Math.round(entity.state).toString()+"°" 
+    [[[
+      if (entity.state < 100)
+        return Math.round(entity.state).toString() + "°"
+      else
+        return Math.round(entity.state).toString()
     ]]]
     
-  custom_fields:
-    humidity:
-      card:
-        type: 'custom:button-card'
-        show_icon: true
-        icon: 'mdi:water-percent'
-        show_name: false
-        show_state: true
-        state_display: |
-          [[[
-            return Math.round(states[variables.humidity_entity].state).toString();
-          ]]]
-        styles:
-          grid:
-            - grid-template-areas: '"s i"'
-          img_cell:
-            - display: contents
-          state:
-            - color: 'var(--disabled-text-color)'
-            - font-size: 0.8em
-            - align-self: flex-end
-          card:
-            - padding: 0
-            - padding-left: 2px
-            - background-color: 'var(--bar-low-color)'
-          icon:
-            - color: 'var(--disabled-text-color)'
-            - width: 18px
-            - height: 15px
-            - margin-top: '-4px'
-            - margin-left: '-4px'
-            - margin-right: '-3px'
-      
-    minmax:
-      card:
-        type: 'custom:button-card'
-        show_icon: false
-        show_name: true
-        show_state: true
-        state_display: |
-          [[[ 
-            return Math.round(states[variables.max_entity].state).toString();
-          ]]]
-        name: |
-          [[[ 
-            return Math.round(states[variables.min_entity].state).toString();
-          ]]]
-        styles:
-          state:
-            - font-size: 0.8em
-            - color: var(--disabled-text-color)
-          name:
-            - font-size: 0.8em
-            - color: var(--disabled-text-color)
-          card:
-            - padding: 0 2px
-            - background-color: var(--bar-low-color)
-    
-  state:
-    - id: value_any
-      operator: '!='
-      value: all
-    
-  styles:
-    state:
-      - color: var(--primary-text-color)
-      - z-index: 1
-      
+  styles:      
     custom_fields:
-      minmax:
+      min:
+        - position: absolute
+        - bottom: 0
+        - right: 5
+        - z-index: 1
+        
+      max:
         - position: absolute
         - bottom: 0
         - right: 0
         - z-index: 1
+    
+  custom_fields:
+    min:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: false
+        show_state: true
         
-      humidity:
-        - z-index: 2
-        - position: absolute
-        - bottom: 0
-        - left: 0
-        - display: flex
+        state_display: |
+          [[[ 
+            return Math.round(states[variables.min_entity].state).toString() + "°";
+          ]]]
+        
+        styles:
+          state:
+            - font-size: 70%
+            - color: var(--disabled-text-color)
+          card:
+            - padding: 0 2px
+            - background-color: var(--bar-low-color)
+      
+    max:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: false
+        show_state: true
+        
+        state_display: |
+          [[[ 
+            return Math.round(states[variables.max_entity].state).toString() + "°";
+          ]]]
+        
+        styles:
+          state:
+            - font-size: 70%
+            - color: var(--disabled-text-color)
+          card:
+            - padding: 0 2px
+            - background-color: var(--bar-low-color)
 
 #===============================#
 #     HVAC Vent Button Card     #
 #===============================#
 
 hvac_vent:
-  template: condensed_button
-  
-  variables:
-    color: 'var(--card-background-color)'
-    
+  show_icon: true
+  show_state: true
+      
   state_display: |-
     [[[ 
       return "00°" 
     ]]]
+    
+  state:
+    - value: 'open'
+      icon: mdi:hvac
+      styles:
+        icon:
+          - color: var(--paper-item-icon-active-color)
+    
+    - value: 'closed'
+      icon: mdi:hvac-off
+      styles:
+        icon:
+          - color: var(--paper-item-icon-color)
+    
+  styles:
+    card:
+      - background-color: var(--card-background-color)
+      - padding: 2px 0 5px 2px
+      - display: flex
+      - width: fit-content
+      - border: 1px solid gray
+      - margin-right: 15px
+    grid:
+      - display: contents
+    img_cell:
+      - display: contents
+    icon:
+      - position: absolute
+      - color: silver
+      - width: 70%
+      - left: 10px
+      - display: block
+      - z-index: 10
+    state:
+      - font-size: 350%
+      - margin-top: '-10px'
+      - color: var(--card-background-color)
+      - z-index: 0
+    name:
+      - color: var(--primary-text-color)
+      - font-size: 0.75em
+      - font-weight: 500
+      - position: absolute
+      - transform: rotate(90deg)
+      - transform-origin: right top
+      - bottom: 0
+      - right: 0
+      - z-index: 10
+      
+    custom_fields:
+      pos:
+        - font-size: 0.6em
+        - position: absolute
+        - bottom: 1px
+        - right: 32px
+        - z-index: 1
     
   custom_fields:
     pos: |
@@ -486,30 +496,164 @@ hvac_vent:
         else
           return `<div style="line-height:1">${entity.attributes.current_position}%</div>`;
       ]]]
-    
-  state:
-    - value: 'open'
-      icon: mdi:hvac
-    - value: 'closed'
-      icon: mdi:hvac-off
-    
+
+#================================#
+#     Fan Basics Button Card     #
+#================================#
+
+fan_basics:
+  size: 80%
+  
+  hold_action:
+    action: more-info
+  
   styles:
-    icon:
-      - color: var(--primary-text-color)
-      - width: 80%
-      - left: 13px
-      - display: block
-      - z-index: 10
-    state:
-      - color: var(--card-background-color)
-      - z-index: 0
-      
+    card:
+      - padding: 0.2em
+    name:
+      - font-size: 0.9em
+
+#================================#
+#     Fan Option Button Card     #
+#================================#
+        
+fan_option:
+  template: fan_basics
+  
+  show_icon: false
+  aspect_ratio: 1/1
+  
+  tap_action:
+    action: call-service
+    service: fan.turn_on
+    service_data:
+      entity_id: '[[[ return entity.entity_id ]]]'
+      percentage: '[[[ return variables.set_value ]]]'
+  
+  state:
+    - operator: default
+      styles:
+        card:
+          - background-color: var(--paper-card-background-color)
+          - color: var(--primary-text-color)
+    
+    - operator: template
+      value: >-
+        [[[ return (entity.attributes.percentage||0) >= variables.range_start
+        && (entity.attributes.percentage||0) <= variables.range_stop ]]]
+      styles:
+        card:
+          - background-color: var(--paper-item-icon-active-color)
+          - color: var(--primary-text-color)
+  
+  styles:
+    card:
+      - border-radius: 20%
+
+#===================================#
+#     Fan Container Button Card     #
+#===================================#
+  
+fan_container:
+  template: fan_basics
+  
+  variables:
+    option1_name: Low
+    option1_set_value: 33
+    option1_range_start: 1
+    option1_range_stop: 50
+    option2_name: Med
+    option2_set_value: 66
+    option2_range_start: 51
+    option2_range_stop: 75
+    option3_name: High
+    option3_set_value: 100
+    option3_range_start: 76
+    option3_range_stop: 100
+    option4_name: 'Off'
+    option4_set_value: 0
+    option4_range_start: 0
+    option4_range_stop: 0
+  
+  color_type: icon
+  
+  tap_action:
+    action: none
+  
+  state:
+    - value: 'off'
+      icon: 'mdi:fan-off'
+    
+    - value: 'on'
+      spin: true
+  
+  styles:
+    grid:
+      - grid-template-areas: '"i opt1 opt2 opt3 opt4" "n opt1 opt2 opt3 opt4"'
+      - grid-template-columns: 1fr 1fr 1fr 1fr 1fr
+    
     custom_fields:
-      pos:
-        - text-shadow: 0 0 0.2em black
-        - overflow: visible
-        - font-size: 0.6em
-        - position: absolute
-        - bottom: 1px
-        - right: 32px
-        - z-index: 1
+      opt1:
+        - margin: 0.1em
+      
+      opt2:
+        - margin: 0.1em
+      
+      opt3:
+        - margin: 0.1em
+      
+      opt4:
+        - margin: 0.1em
+  
+  custom_fields:    
+    opt1:
+      card:
+        type: 'custom:button-card'
+        template: fan_option
+        
+        variables:
+          set_value: '[[[ return variables.option1_set_value ]]]'
+          range_start: '[[[ return variables.option1_range_start ]]]'
+          range_stop: '[[[ return variables.option1_range_stop ]]]'
+        
+        entity: '[[[ return entity.entity_id ]]]'
+        name: '[[[ return variables.option1_name ]]]'
+    
+    opt2:
+      card:
+        type: 'custom:button-card'
+        template: fan_option
+        
+        variables:
+          set_value: '[[[ return variables.option2_set_value ]]]'
+          range_start: '[[[ return variables.option2_range_start ]]]'
+          range_stop: '[[[ return variables.option2_range_stop ]]]'
+        
+        entity: '[[[ return entity.entity_id ]]]'
+        name: '[[[ return variables.option2_name ]]]'
+    
+    opt3:
+      card:
+        type: 'custom:button-card'
+        template: fan_option
+        
+        variables:
+          set_value: '[[[ return variables.option3_set_value ]]]'
+          range_start: '[[[ return variables.option3_range_start ]]]'
+          range_stop: '[[[ return variables.option3_range_stop ]]]'
+        
+        entity: '[[[ return entity.entity_id ]]]'
+        name: '[[[ return variables.option3_name ]]]'
+    
+    opt4:
+      card:
+        type: 'custom:button-card'
+        template: fan_option
+        
+        variables:
+          set_value: '[[[ return variables.option4_set_value ]]]'
+          range_start: '[[[ return variables.option4_range_start ]]]'
+          range_stop: '[[[ return variables.option4_range_stop ]]]'
+        
+        entity: '[[[ return entity.entity_id ]]]'
+        name: '[[[ return variables.option4_name ]]]'

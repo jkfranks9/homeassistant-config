@@ -20,14 +20,14 @@ entities:
   
   # Supervisor
   - type: custom:multiple-entity-row
-    entity: sensor.supervisor_updates
+    entity: update.home_assistant_supervisor_update
     name: Supervisor
     icon: mdi:home-assistant
     show_state: false
     entities:
-      - attribute: newest_version
+      - attribute: latest_version
         name: Latest
-      - attribute: current_version
+      - attribute: installed_version
         name: Current
   
   # OS

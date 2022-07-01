@@ -494,3 +494,21 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     - service: script.turn_off_christmas_lights
+
+#=====================#
+#     Smart Bulbs     #
+#=====================#
+
+# Reset smart bulbs if a possible power glitch occurred. Note that catching such glitches is not guaranteed.
+- alias: Reset Smart Bulbs On Power Glitch
+  id: 'reset_smart_bulbs_on_power_glitch'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.possible_power_glitch
+      to: 'on'
+  
+  action:
+    - delay: '00:01:00'
+    - service: script.reset_smart_bulbs
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.possible_power_glitch

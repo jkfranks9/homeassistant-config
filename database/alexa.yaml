@@ -31,6 +31,7 @@ smart_home:
       - binary_sensor.home_assistant_operating_system_update_available
       - binary_sensor.protection_window
       - script.automate_lights_while_away
+      - script.change_some_downstairs_lights
       - script.copy_monthly_calories
       - script.evaluate_weather_condition
       - script.get_all_kodi_movies
@@ -41,9 +42,10 @@ smart_home:
       - script.throttle_mobile_notification
       - script.toggle_upstairs_br_vent
       - script.turn_off_bedtime_lights
+      - script.turn_off_kodi
       - script.turn_off_pc
       - script.turn_on_family_room_normal
-      - script.turn_on_stairway_light
+      - script.turn_on_theater_fan
       - script.watch_app
     
     exclude_entity_globs:
@@ -86,5 +88,6 @@ smart_home:
     #==== Inclusions
 
     include_entities:
+      - scene.fans_off
       - scene.lights_out
       - script.set_theater_idle

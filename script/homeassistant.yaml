@@ -14,6 +14,12 @@ concat_auto_log_files:
   sequence:
     - service: shell_command.concat_auto_log_files
 
+# Concatenate a set of scripts log files into one file for easier examination.
+concat_scripts_log_files:
+  alias: Concat Scripts Log Files
+  sequence:
+    - service: shell_command.concat_scripts_log_files
+
 #===================#
 #     Reminders     #
 #===================#

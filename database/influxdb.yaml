@@ -63,6 +63,7 @@ include:
     # Excluded from history.
     - button
     - cover
+    - fan
     - light
     - vacuum
     - zone

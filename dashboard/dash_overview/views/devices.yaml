@@ -5,14 +5,19 @@
 title: Devices
 icon: mdi:devices
 panel: true
+visible:
+  - user: f02fbce66df546fa90f8f3d03283b55e
 cards:
   - type: custom:layout-card
     layout_type: custom:vertical-layout
     cards:
-      - !include /config/dashboard/dash_overview/cards/devices/washer_dryer.yaml
       - !include /config/dashboard/dash_overview/cards/devices/presence.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/pc_info.yaml
       - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/devices/pc_resources.yaml
       - !include /config/dashboard/dash_overview/cards/devices/storage.yaml
-      - !include /config/dashboard/dash_overview/cards/devices/vacuum.yaml
       - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/devices/areas.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/printer.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/vacuum.yaml
+      #- type: custom:layout-break
+      #- !include /config/dashboard/dash_overview/cards/devices/areas.yaml

@@ -11,7 +11,7 @@ cards:
     entity: switch.guest_bedroom_echo_do_not_disturb_switch
     variables:
       var_script: script.mute_guest_bedroom_echo
-    name: Guest BR
+    name: "[[[ return 'Guest ' + '\u2193' ]]]"
     icon: mdi:volume-off
   
   - type: entity
@@ -23,7 +23,7 @@ cards:
     entity: switch.upstairs_bedroom_echo_do_not_disturb_switch
     variables:
       var_script: script.mute_upstairs_bedroom_echo
-    name: Upstairs BR
+    name: "[[[ return 'Guest ' + '\u2191' ]]]"
     icon: mdi:volume-off
   
   - type: entity

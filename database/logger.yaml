@@ -30,6 +30,7 @@ logs:
   homeassistant.components.automation.initialize_youtube_tv_volume:           warning
   homeassistant.components.automation.log_automations:                        warning
   homeassistant.components.automation.log_dryer_trend_sensors:                warning
+  homeassistant.components.automation.log_scripts:                            warning
   homeassistant.components.automation.refresh_front_end:                      warning
   homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
   homeassistant.components.automation.reset_family_room_lamp:                 warning
@@ -43,8 +44,10 @@ logs:
   homeassistant.components.automation.run_master_bath_motion_based_light:     warning
   homeassistant.components.automation.save_timers:                            warning
   homeassistant.components.automation.set_maximum_attic_temperature:          warning
-  homeassistant.components.automation.set_minimum_attic_temperature:          warning
+  homeassistant.components.automation.set_maximum_garage_temperature:         warning
   homeassistant.components.automation.set_maximum_outdoor_temperature:        warning
+  homeassistant.components.automation.set_minimum_attic_temperature:          warning
+  homeassistant.components.automation.set_minimum_garage_temperature:         warning
   homeassistant.components.automation.set_minimum_outdoor_temperature:        warning
   homeassistant.components.automation.toggle_adguard_for_paramount:           warning
   homeassistant.components.automation.update_openuv:                          warning
@@ -54,6 +57,7 @@ logs:
   homeassistant.components.script.bedtime:                            warning
   homeassistant.components.script.change_lighting_per_weather:        warning
   homeassistant.components.script.change_lighting_per_weather_simple: warning
+  homeassistant.components.script.change_some_downstairs_lights:      warning
   homeassistant.components.script.evaluate_weather_condition:         warning
   homeassistant.components.script.start_activity:                     warning
   homeassistant.components.script.set_theater_dark:                   warning
@@ -64,7 +68,6 @@ logs:
   homeassistant.components.script.throttle_mobile_notification:       warning
   homeassistant.components.script.turn_on_adguard:                    warning
   homeassistant.components.script.turn_on_bathroom_light:             warning
-  homeassistant.components.script.turn_on_stairway_light:             warning
 
   # HA misc components
   homeassistant.components.alexa:                         info

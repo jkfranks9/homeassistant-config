@@ -25,9 +25,8 @@
       event: start
   
   condition:
-    - condition: state
-      entity_id: binary_sensor.cinema_projector
-      state: 'off'
+    - condition: template
+      value_template: "{{ states('sensor.projector_power') | float(0) == 0 }}"
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'off'
@@ -206,6 +205,25 @@
     input:
       sensor_entity: sensor.attic_temp_max
       result_entity: input_number.max_attic_temp
+      type: Max
+
+# Garage temperatures.
+- alias: Set Minimum Garage Temperature
+  id: set_minimum_garage_temperature
+  use_blueprint:
+    path: climate/temp_extremes.yaml
+    input:
+      sensor_entity: sensor.garage_temp_min
+      result_entity: input_number.min_garage_temp
+      type: Min
+
+- alias: Set Maximum Garage Temperature
+  id: set_maximum_garage_temperature
+  use_blueprint:
+    path: climate/temp_extremes.yaml
+    input:
+      sensor_entity: sensor.garage_temp_max
+      result_entity: input_number.max_garage_temp
       type: Max
 
 # Outdoor temperatures.

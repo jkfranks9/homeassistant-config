@@ -7,6 +7,7 @@ exclude:
   domains:
     - button
     - cover
+    - fan
     - input_number
     - light
     - switch

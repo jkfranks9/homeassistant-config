@@ -13,11 +13,9 @@ decluttering_templates:
 title: Overview
 views:
   - !include /config/dashboard/dash_overview/views/home.yaml
-  - !include /config/dashboard/dash_overview/views/environment.yaml
   - !include /config/dashboard/dash_overview/views/energy.yaml
   - !include /config/dashboard/dash_overview/views/health.yaml
   - !include /config/dashboard/dash_overview/views/theater.yaml
-  - !include /config/dashboard/dash_overview/views/office.yaml
   - !include /config/dashboard/dash_overview/views/devices.yaml
   - !include /config/dashboard/dash_overview/views/levels.yaml
   - !include /config/dashboard/dash_overview/views/monitoring.yaml

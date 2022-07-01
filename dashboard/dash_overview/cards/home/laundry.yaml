@@ -1,9 +1,9 @@
-#=============================#
-#     Washer / Dryer Card     #
-#=============================#
+#======================#
+#     Laundry Card     #
+#======================#
 
 type: entities
-title: Washer / Dryer
+title: Laundry
 show_header_toggle: false
 entities:
   

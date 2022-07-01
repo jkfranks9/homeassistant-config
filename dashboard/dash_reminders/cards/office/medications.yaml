@@ -59,7 +59,7 @@ cards:
       - entity: input_datetime.reminder_medication_blood_builder_minis
       - name: Blood Builder Minis
       - icon: pill
-      - interval: 36
+      - interval: 72
       - period: 'days'
       - service: script.set_datetime_offset_days
       

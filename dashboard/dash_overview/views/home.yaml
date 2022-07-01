@@ -10,57 +10,19 @@ cards:
   - type: custom:layout-card
     layout_type: custom:vertical-layout
     cards:
-      - type: grid
-        columns: 2
-        square: false
-        cards:
-          - type: 'custom:decluttering-card'
-            template: button_card
-            variables:
-              - entity: sensor.family_home
-              - name: Family
-              - transform: 'capitalize'
-              - template_columns: 6
-              - state_on: 0
-              - icon_color_on: 'var(--state-icon-color)'
-              - icon_color_off: 'var(--state-icon-active-color)'
-              - stat_text: ' home'
-              - m1_entity: device_tracker.life360_jon_franks
-              - m1_name: Jon
-              - m2_entity: device_tracker.life360_michael_franks
-              - m2_name: Mike
-              - m3_entity: group.device_tracker_sarah
-              - m3_name: Sarah
-          
-          - type: 'custom:decluttering-card'
-            template: button_card
-            variables:
-              - entity: sensor.cyber1_status
-              - name: CPS (Primary)
-              - transform: 'none'
-              - template_columns: 4
-              - state_on: Online
-              - icon_color_on: 'var(--state-icon-active-color)'
-              - icon_color_off: 'var(--state-icon-color)'
-              - stat_text: ''
-              - m0_show: 'true'
-              - m0_entity: sensor.cyber1_battery_charge
-              - m0_name: Battery
-              - m0_extra: ' %'
-              - m1_entity: sensor.cp_ups_runtime_minutes
-              - m1_name: Runtime
-              - m1_extra: ' m'
-              - m2_entity: sensor.cyber1_output_voltage
-              - m2_name: Output
-              - m2_extra: ' V'
-              - m3_entity: sensor.cyber1_load
-              - m3_name: Load
-              - m3_extra: ' %'
-      - !include /config/dashboard/dash_overview/cards/home/garage.yaml
-      - !include /config/dashboard/dash_overview/cards/home/groups.yaml      
+      - !include /config/dashboard/dash_overview/cards/home/domains.yaml
+      - !include /config/dashboard/dash_overview/cards/home/groups.yaml
       - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/home/lighting_domains.yaml
-      - !include /config/dashboard/dash_overview/cards/home/adguard.yaml
+      - !include /config/dashboard/dash_overview/cards/home/garage.yaml
+      - !include /config/dashboard/dash_overview/cards/home/fans.yaml
+      - !include /config/dashboard/dash_overview/cards/home/laundry.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
-      - type: custom:browser-player
+      - !include /config/dashboard/dash_overview/cards/home/family_ups.yaml
+      - !include /config/dashboard/dash_overview/cards/home/echo_mute_duration.yaml
+      - type: conditional
+        conditions:
+          - entity: input_boolean.show_browser_player
+            state: 'on'
+        card:
+          type: custom:browser-player

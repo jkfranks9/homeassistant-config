@@ -14,3 +14,68 @@ test_washer_cycle:
             data:
               value: "{{ pow[repeat.index-1] }}"
           - delay: '00:00:05'
+
+test_kodi_start:
+  alias: Test Kodi Start
+  
+  sequence:
+    
+    # Turn on the Shield TV so we can host the Kodi application.
+    - service: media_player.turn_on
+      data:
+        entity_id: media_player.shield_tv
+    - delay: '00:00:03'
+  
+    # Start Kodi on the Shield TV.
+    - service: androidtv.adb_command
+      data:
+        entity_id: media_player.shield_tv
+        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n 'org.xbmc.kodi/.Splash'"
+
+test_kodi_stop:
+  alias: Test Kodi Stop
+  
+  sequence:
+  
+    # Exit the Kodi application.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'Home'
+        device: NVIDIA Shield TV
+    - delay: '00:00:02'
+    
+    # Turn off the Kodi media player.
+    - service: media_player.turn_off
+      data:
+        entity_id: media_player.kodi
+  
+    # Turn the Shield TV off again.
+    - service: media_player.turn_off
+      data:
+        entity_id: media_player.shield_tv
+
+test_kodi:
+  alias: Test Kodi
+  
+  sequence:
+  
+    # Send the 'get movies' command to Kodi.
+    - service: kodi.call_method
+      data:
+        entity_id: media_player.kodi
+        method: VideoLibrary.GetMusicVideos
+    
+    # Wait a bit for a good 'get movies' result, but quit if it times out.
+    - wait_for_trigger:
+        - platform: event
+          event_type: test_kodi_result
+          #event_data:
+          #  source: "{{ wait.trigger.event.data.source }}"
+      timeout: 10
+      continue_on_timeout: false
+        
+    - service: system_log.write
+      data:
+        message: "{{ wait.trigger.event.data.result }}"
+        level: warning

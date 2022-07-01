@@ -12,11 +12,12 @@ cards:
     layout_type: custom:vertical-layout
     cards:
       - !include /config/dashboard/dash_overview/cards/controls/treadmill.yaml
-      - !include /config/dashboard/dash_overview/cards/controls/echo_mute_duration.yaml
+      - !include /config/dashboard/dash_overview/cards/controls/vents.yaml
       - !include /config/dashboard/dash_overview/cards/controls/switches.yaml
       - !include /config/dashboard/dash_overview/cards/controls/grandchild_sleep.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
       - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml
+      - !include /config/dashboard/dash_overview/cards/controls/adguard.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/zigbee2mqtt.yaml

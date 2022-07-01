@@ -41,6 +41,13 @@
     
     # Shut down the PC.
     - service: script.turn_off_pc
+    
+    # The vacuum bizarrely starts running if the power goes out, so stop it (unless it's already running).   
+    - condition: state
+      entity_id: timer.vacuum
+      state: 'idle'
+    - service: vacuum.stop
+      entity_id: vacuum.ecovacs_deebot 
 
 # Shut down the host if UPS runtime reaches critical level.
 - alias: Handle UPS Critical
@@ -117,6 +124,10 @@
     
     # Reset smart bulbs if needed.
     - service: script.reset_smart_bulbs
+    
+    # Instruct the vacuum to return home.
+    - service: vacuum.return_to_base
+      entity_id: vacuum.ecovacs_deebot 
 
 # Restart the NUT server service if it becomes unavailable.
 - alias: Reboot NUT Service
@@ -204,6 +215,9 @@
     
           # Turn off all lights.
           - scene: scene.lights_out
+    
+          # Turn off all fans.
+          - scene: scene.fans_off
         
           # Turn off automations that could turn on various lights.
           - service: automation.turn_off
@@ -764,16 +778,15 @@
           {% set t2 = states('timer.washer_rinse_blackout') %}
           
           {# --Ignore everything if one of the timers is running-- #}
-          {% if t1 == 'active' %} {{ s }}
-          {% elif t2 == 'active' %} {{ s }}
+          {% if t1 == 'active' or t2 == 'active'%} {{ s }}
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
-          {% elif fr in ['stop', 'unknown'] and to in ['fill', 'pause'] %}                         Wash Fill
-          {% elif fr in ['fill', 'pause']   and to == 'raise'   and s == 'Wash Fill' %}            Wash
-          {% elif fr == 'raise'             and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
-          {% elif fr == 'pause'             and to == 'fill' %}                                    Rinse Fill
-          {% elif fr in ['fill', 'drop']    and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
-          {% elif fr == 'raise'             and to == 'drop'    and s == 'Rinse' %}                Rinse Drain     
+          {% elif fr in ['stop', 'unknown']       and to in ['fill', 'pause'] %}                         Wash Fill
+          {% elif fr in ['fill', 'pause']         and to == 'raise'   and s == 'Wash Fill' %}            Wash
+          {% elif fr == 'raise'                   and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
+          {% elif fr == 'pause'                   and to == 'fill' %}                                    Rinse Fill
+          {% elif fr in ['fill', 'pause', 'drop'] and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
+          {% elif fr == 'raise'                   and to == 'drop'    and s == 'Rinse' %}                Rinse Drain     
           
           {# --Some washer power state sensor changes just remain in the current state-- #}
           {% elif fr == 'drop'  and to in ['fill', 'raise', 'pause'] %} {{ s }}

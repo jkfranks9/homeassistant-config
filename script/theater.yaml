@@ -15,6 +15,13 @@ open_cinema:
     - service: script.turn_on
       entity_id: script.set_theater_idle
     
+    # Turn on the fan if needed.
+    - service: script.turn_on
+      entity_id: script.turn_on_theater_fan
+    
+    # Turn off the family room AV system.
+    - service: script.disable_family_room_av
+    
     # Set the upstairs Ecobee to home mode if it's not there already. Note that the mode could be lower case if
     # we're in smart home mode.
     - condition: template
@@ -26,6 +33,12 @@ open_cinema:
         entity_id: climate.upstairs
       data:
         preset_mode: 'Home'
+    
+    # If no family are home, delay, then turn off some downstairs lights.
+    - delay: '00:05:00'
+    - service: script.change_some_downstairs_lights
+      data:
+        turn_on: false
 
 # Close the cinema by turning off the current harmony activity, and relevant lights after a delay.
 #
@@ -38,6 +51,10 @@ close_cinema:
     # Turn on some lights.
     - service: script.turn_on
       entity_id: script.set_theater_idle
+    
+    # Turn off the fan.
+    - service: fan.turn_off
+      entity_id: fan.theater_fan
     
     # Turn off the Kodi media player (it might not be on but that's OK).
     - service: media_player.turn_off
@@ -107,8 +124,9 @@ set_theater_bright:
   alias: Set Theater Bright
   sequence:
     - scene: scene.theater_aux_partial
-    - service: script.turn_on
-      entity_id: script.turn_on_stairway_light
+    - service: script.change_some_downstairs_lights
+      data:
+        turn_on: true
     - scene: scene.lutron_bright
 
 # Make the theater idle, meaning it's on but we need lights to see.
@@ -116,21 +134,66 @@ set_theater_idle:
   alias: Set Theater Idle
   sequence:
     - scene: scene.theater_aux_partial
-    - service: script.turn_on
-      entity_id: script.turn_on_stairway_light
     - scene: scene.lutron_idle
+    - service: script.change_some_downstairs_lights
+      data:
+        turn_on: true
 
-# Turn on the stairway light if it's dark enough. This is used by the open/close cinema scripts,
-# and the 'take a break' scipt, because the stairs are (or might be) used at these times.
-turn_on_stairway_light:
-  alias: Turn On Stairway Light
+#======================#
+#     Theater Fan      #
+#======================#
+
+# Turn on the theater fan if it's warm enough.
+turn_on_theater_fan:
+  alias: Turn On Theater Fan
   sequence:
     - condition: numeric_state
-      entity_id: sun.sun
-      attribute: elevation
-      below: 4.0
-    - service: light.turn_on
-      entity_id: light.stairway_light
+      entity_id: sensor.theater_temperature
+      above: 75.0
+    - service: fan.turn_on
+      entity_id: fan.theater_fan
+
+#============================#
+#     Downstairs Lights      #
+#============================#
+
+# Turn on some downstairs lights if it's dark enough, or conditionally turn them off. This is used by the open/close cinema scripts,
+# and the 'take a break' scipt, because we might need to go downstairs at these times.
+change_some_downstairs_lights:
+  alias: Change Some Downstairs Lights
+  fields:
+    turn_on:
+      description: Whether to turn the lights on (true) or off (false).
+  
+  sequence:
+    - choose:
+      
+      # Turn on lights.
+      - conditions:
+        - condition: template
+          value_template: "{{ turn_on == true }}"
+        
+        sequence:
+          - condition: numeric_state
+            entity_id: sun.sun
+            attribute: elevation
+            below: 4.0
+          - service: homeassistant.turn_on
+            entity_id:
+              - light.stairway_light
+              - light.family_room_lamp
+              - light.hallway_lamp
+        
+      # Turn off lights, but only if no family members present.
+      default:
+        - condition: state
+          entity_id: group.family_members
+          state: 'not_home'
+        - service: homeassistant.turn_off
+          entity_id:
+            - light.stairway_light
+            - light.family_room_lamp
+            - light.hallway_lamp
 
 #==============================#
 #     Watch Shield TV App      #
@@ -351,6 +414,11 @@ resume_worker:
     # Establish 'dark' theater lighting.
     - service: script.turn_on
       entity_id: script.set_theater_dark
+    
+    # Turn off some downstairs lights.
+    - service: script.change_some_downstairs_lights
+      data:
+        turn_on: false
 
 # Call the worker script with the appropriate device based on the Harmony activity.
 # Note: The turntable cannot be controlled, so all we do is turn on some lights.
@@ -531,3 +599,15 @@ play_feature_movie:
     # Darken the theater.
     - service: script.turn_on
       entity_id: script.set_theater_dark_delay
+ 
+#=======================#
+#     Turn Off Kodi     #
+#=======================#
+turn_off_kodi:
+  alias: Turn Off Kodi
+  sequence:
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Application.Quit

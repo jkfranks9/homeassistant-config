@@ -111,6 +111,14 @@ config:
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
+    # Ceiling fans
+    - entities:
+        - fan.theater_fan
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'spinning' : 'element-off' }"
+    
     # Media players
     - entities:
         - media_player.epson_projector

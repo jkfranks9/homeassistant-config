@@ -18,9 +18,9 @@
   condition:
     - condition: template
       value_template: >
-        {% set skip_list = ['log_automations', 'backup_log_on_shutdown', 'backup_auto_log', 'log_notifications',
-                             'set_maximum_attic_temperature', 'set_maximum_outdoor_temperature',
-                             'set_minimum_attic_temperature', 'set_minimum_outdoor_temperature',
+        {% set skip_list = ['log_automations', 'log_scripts', 'backup_log_on_shutdown', 'backup_auto_log', 'backup_scripts_log', 'log_notifications',
+                             'set_maximum_attic_temperature', 'set_maximum_outdoor_temperature', 'set_maximum_garage_temperature',
+                             'set_minimum_attic_temperature', 'set_minimum_outdoor_temperature', 'set_minimum_garage_temperature',
                              'update_openuv', 'log_dryer_trend_sensors'] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list and
@@ -35,6 +35,29 @@
       data_template:
         message: >
          {{ as_timestamp(trigger.event.data.new_state.last_updated) | timestamp_custom('%b %d: %X') }}: {{ trigger.event.data.new_state.name }}
+
+#=====================#
+#     Scripts Log     #
+#=====================#
+
+# Record fired scripts in a log file.
+- alias: Log Scripts
+  id: log_scripts
+  mode: queued
+  max: 200
+  
+  # We trigger on all started scripts.
+  trigger:
+    - platform: event
+      event_type: script_started
+  
+  action:
+    
+    # Log it.
+    - service: notify.triggered_scripts
+      data_template:
+        message: >
+         {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: {{ trigger.event.data.name }}
 
 #===================#
 #     Log Files     #
@@ -60,14 +83,15 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: shell_command.delete_junk_log_files
 
-# Backup the automations log file every day.
-- alias: Backup Auto Log
-  id: backup_auto_log
+# Backup the automations and scripts log files every day.
+- alias: Backup Auto Scripts Logs
+  id: backup_auto_scripts_logs
   trigger:
     - platform:  time
       at: '00:02:09'
   action:
     - service: shell_command.backup_auto_log
+    - service: shell_command.backup_scripts_log
 
 #===================================#
 #     Kodi Media Player Logging     #

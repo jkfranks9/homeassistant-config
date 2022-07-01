@@ -14,20 +14,8 @@
 - url: /local/community/button-card/button-card.js
   type: module
 
-# Card Mod (NOTE: installed as a frontend module for performance improvements)
-#- url: /local/community/lovelace-card-mod/card-mod.js
-#  type: module
-
-# Card Tools
-- url: /local/community/lovelace-card-tools/card-tools.js
-  type: module
-
 # Decluttering Card
 - url: /local/community/decluttering-card/decluttering-card.js
-  type: module
-
-# Fold Entity Row
-- url: /local/community/lovelace-fold-entity-row/fold-entity-row.js
   type: module
 
 # HA Card Weather Conditions
@@ -38,8 +26,40 @@
 - url: /local/community/ha-floorplan/floorplan.js
   type: module
 
-# Layout Card
+# Home Assistant Minimalistic Area Card
+- url: /local/community/homeassistant-minimalistic-area-card/minimalistic-area-card.js
+  type: module
+
+# Light Entity Card
+- url: /local/community/light-entity-card/light-entity-card.js
+  type: module
+
+# Lovelace Auto Entities
+- url: /local/community/lovelace-auto-entities/auto-entities.js
+  type: module
+
+# Lovelace Card Mod (NOTE: installed as a frontend module for performance improvements)
+#- url: /local/community/lovelace-card-mod/card-mod.js
+#  type: module
+
+# Lovelace Card Tools
+- url: /local/community/lovelace-card-tools/card-tools.js
+  type: module
+
+# Lovelace Fold Entity Row
+- url: /local/community/lovelace-fold-entity-row/fold-entity-row.js
+  type: module
+
+# Lovelace Layout Card
 - url: /local/community/lovelace-layout-card/layout-card.js
+  type: module
+
+# Lovelace Multiple Entity Row
+- url: /local/community/lovelace-multiple-entity-row/multiple-entity-row.js
+  type: module
+
+# Lovelace Template Entity Row
+- url: /local/community/lovelace-template-entity-row/template-entity-row.js
   type: module
 
 # Mini Graph Card
@@ -50,22 +70,18 @@
 - url: /local/community/mini-media-player/mini-media-player-bundle.js
   type: module
 
-# Minimalistic Area Card
-- url: /local/community/homeassistant-minimalistic-area-card/minimalistic-area-card.js
-  type: module
-
-# Multiple Entity Row
-- url: /local/community/lovelace-multiple-entity-row/multiple-entity-row.js
+# My Cards
+- url: /local/community/my-cards/my-cards.js
   type: module
 
 # Select List Card
 - url: /local/community/select-list-card/select-list-card.js
   type: module
 
-# Stack In Card
-- url: /local/community/stack-in-card/stack-in-card.js
+# Simple Weather Card
+- url: /local/community/simple-weather-card/simple-weather-card-bundle.js
   type: module
 
-# Template Entity Row
-- url: /local/community/lovelace-template-entity-row/template-entity-row.js
+# Stack In Card
+- url: /local/community/stack-in-card/stack-in-card.js
   type: module

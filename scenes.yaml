@@ -88,3 +88,12 @@
     light.christmas_lights:  'off'
     light.dining_room_hutch: 'off'
     light.foyer_hutch:       'off'
+
+#======================#
+#     Ceiling Fans     #
+#======================#
+- id: 'fans_off'
+  name: Fans Off
+  entities:
+    fan.office_fan:  'off'
+    fan.theater_fan: 'off'
