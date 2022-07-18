@@ -9,6 +9,11 @@ cards:
   
   - type: 'custom:button-card'
     template: fan_container
+    entity: fan.family_room_fan
+    name: Family Room
+  
+  - type: 'custom:button-card'
+    template: fan_container
     entity: fan.office_fan
     name: Office
   

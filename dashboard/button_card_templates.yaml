@@ -93,9 +93,11 @@ garage_door_button:
     - value: 'off'
       name: '[[[ return variables.var_name_open ]]]'
       icon: 'hass:garage-open'
+      color: var(--paper-item-icon-active-color)
     
     - value: 'on'
       name: '[[[ return variables.var_name_closed ]]]'
+      color: var(--paper-item-icon-color)
 
 #=================================#
 #     Light Group Button Card     #
@@ -558,22 +560,22 @@ fan_container:
   template: fan_basics
   
   variables:
-    option1_name: Low
-    option1_set_value: 33
-    option1_range_start: 1
-    option1_range_stop: 50
-    option2_name: Med
-    option2_set_value: 66
-    option2_range_start: 51
-    option2_range_stop: 75
-    option3_name: High
-    option3_set_value: 100
-    option3_range_start: 76
-    option3_range_stop: 100
-    option4_name: 'Off'
-    option4_set_value: 0
-    option4_range_start: 0
-    option4_range_stop: 0
+    option1_name: 'Off'
+    option1_set_value: 0
+    option1_range_start: 0
+    option1_range_stop: 0
+    option2_name: Low
+    option2_set_value: 33
+    option2_range_start: 1
+    option2_range_stop: 50
+    option3_name: Med
+    option3_set_value: 66
+    option3_range_start: 51
+    option3_range_stop: 75
+    option4_name: High
+    option4_set_value: 100
+    option4_range_start: 76
+    option4_range_stop: 100
   
   color_type: icon
   

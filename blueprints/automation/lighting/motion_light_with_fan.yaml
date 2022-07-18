@@ -98,7 +98,7 @@ action:
       - service: script.change_lighting_per_weather_simple
         data:
           light_entity: !input light_entity
-          turn_on: true  
+          turn_on: true
   
   # Wait for no motion detected.
   - wait_for_trigger:

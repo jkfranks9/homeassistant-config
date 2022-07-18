@@ -28,11 +28,10 @@ open_cinema:
       value_template: >
         {% set mode = state_attr('climate.upstairs', 'preset_mode') | title %}
         {{ mode != 'Home' }}
-    - service: climate.set_preset_mode
-      target:
-        entity_id: climate.upstairs
+    - service: script.set_thermostat_preset
       data:
-        preset_mode: 'Home'
+        thermostat_entity: climate.upstairs
+        preset: 'Home'
     
     # If no family are home, delay, then turn off some downstairs lights.
     - delay: '00:05:00'
@@ -73,17 +72,15 @@ close_cinema:
           after:  '18:30:00'
           before: '23:30:00'
         sequence:
-          - service: climate.set_preset_mode
-            target:
-              entity_id: climate.upstairs
+          - service: script.set_thermostat_preset
             data:
-              preset_mode: 'Sleep'
+              thermostat_entity: climate.upstairs
+              preset: 'Sleep'
       default:
-        - service: climate.set_preset_mode
-          target:
-            entity_id: climate.upstairs
+        - service: script.set_thermostat_preset
           data:
-            preset_mode: 'Away'
+            thermostat_entity: climate.upstairs
+            preset: 'Away'
     
     # Turn Adguard protection on in case it was turned off (for example for Paramount Plus).
     - service: script.turn_on_adguard

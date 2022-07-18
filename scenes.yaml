@@ -29,18 +29,41 @@
     light.storage_lights:                'off'
     light.outdoor_lights:                'off'
 
-#================================#
-#     Non Bedroom Lights Out     #
-#================================#
+#==================================#
+#     Adult Bedtime Lights Out     #
+#==================================#
 
-# Turn off all lights except any bedroom lights, used when Jon goes to bed but family members are home without grandchild.
-- id: 'non_bedroom_lights_out'
-  name: Non Bedroom Lights Out
+# Turn off all lights except bedrooms, used when adults are preseent at bedtime.
+- id: 'adult_bedtime_lights_out'
+  name: Adult Bedtime Lights Out
   entities:
     light.master_bath_light:        'off'
     light.guest_bath_light:         'off'
     light.downstairs_common_lights: 'off'
     light.family_room_lights:       'off'
+    light.kitchen_lights:           'off'
+    light.office_lights:            'off'
+    light.laundry_room_lights:      'off'
+    light.theater_lights:           'off'
+    light.upstairs_common_lights:   'off'
+    light.storage_lights:           'off'
+    light.outdoor_lights:           'off'
+
+#==================================#
+#     Child Bedtime Lights Out     #
+#==================================#
+
+# Turn off all lights except night lights, used when children are preseent at bedtime without adults.
+- id: 'child_bedtime_lights_out'
+  name: Child Bedtime Lights Out
+  entities:
+    light.stairway_light:           'off'
+    light.master_bath_light:        'off'
+    light.guest_bath_light:         'off'
+    light.guest_bedroom_lamp:       'off'
+    light.guest_bedroom_lamp_2:     'off'
+    light.upstairs_bedroom_light:   'off'
+    light.downstairs_common_lights: 'off'
     light.kitchen_lights:           'off'
     light.office_lights:            'off'
     light.laundry_room_lights:      'off'
@@ -95,5 +118,6 @@
 - id: 'fans_off'
   name: Fans Off
   entities:
-    fan.office_fan:  'off'
-    fan.theater_fan: 'off'
+    fan.family_room_fan:  'off'
+    fan.office_fan:       'off'
+    fan.theater_fan:      'off'

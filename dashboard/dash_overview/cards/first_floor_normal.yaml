@@ -114,6 +114,7 @@ config:
     
     # Ceiling fans
     - entities:
+        - fan.family_room_fan
         - fan.office_fan
       state_action:
         action: call-service

@@ -11,23 +11,23 @@ entities:
     attribute: last_backup
     name: Last Backup
     icon: mdi:calendar
-  - type: attribute
-    entity: sensor.backup_state
-    attribute: backups_in_google_drive
-    name: Drive Backups
-    icon: mdi:counter
-  - type: attribute
+  
+  - type: custom:multiple-entity-row
     entity: sensor.backup_state
     attribute: size_in_google_drive
-    name: Drive Size
+    name: Google Drive
     icon: mdi:harddisk
-  - type: attribute
-    entity: sensor.backup_state
-    attribute: backups_in_home_assistant
-    name: Home Assistant Backups
-    icon: mdi:counter
-  - type: attribute
+    state_header: Size
+    entities:
+      - attribute: backups_in_google_drive
+        name: Number
+  
+  - type: custom:multiple-entity-row
     entity: sensor.backup_state
     attribute: size_in_home_assistant
-    name: Home Assistant Size
+    name: Home Assistant
     icon: mdi:harddisk
+    state_header: Size
+    entities:
+      - attribute: backups_in_home_assistant
+        name: Number

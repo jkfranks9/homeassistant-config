@@ -79,3 +79,29 @@ test_kodi:
       data:
         message: "{{ wait.trigger.event.data.result }}"
         level: warning
+
+test_thermostat_hold:
+  alias: Test Thermostat Hold
+  
+  sequence:
+    - service: ecobee.create_vacation
+      data_template:
+        entity_id: climate.upstairs
+        vacation_name: "Temporary"
+        start_date: "{{ states('sensor.date') }}"
+        start_time: "{{ now().strftime('%H:%M:%S') }}"
+        end_date: "{{ (as_timestamp(states('sensor.date')) + 86400) | timestamp_custom('%Y-%m-%d') }}"
+        end_time: "{{ now().strftime('%H:%M:%S') }}"
+        heat_temp: 59
+        cool_temp: 83
+
+test_remove_thermostat_hold:
+  alias: Test Remove Thermostat Hold
+  
+  sequence:
+    - condition: template
+      value_template: "{{ state_attr('climate.upstairs', 'preset_mode') == 'vacation' }}"
+    - service: ecobee.delete_vacation
+      data_template:
+        entity_id: climate.upstairs
+        vacation_name: "Temporary"

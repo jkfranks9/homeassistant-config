@@ -26,10 +26,6 @@
 - url: /local/community/ha-floorplan/floorplan.js
   type: module
 
-# Home Assistant Minimalistic Area Card
-- url: /local/community/homeassistant-minimalistic-area-card/minimalistic-area-card.js
-  type: module
-
 # Light Entity Card
 - url: /local/community/light-entity-card/light-entity-card.js
   type: module

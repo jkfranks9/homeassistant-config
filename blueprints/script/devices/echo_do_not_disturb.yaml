@@ -13,23 +13,16 @@ blueprint:
         entity:
           domain: switch
     
-    mute_duration_entity:
+    mute_duration:
       name: Do Not Disturb Duration
-      description: Entity that contains the do not disturb duration in hours.
-      selector:
-        entity:
-          domain: input_number  
-
-# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
-variables:
-  input_mute_duration_entity: !input mute_duration_entity    
+      description: Entity that contains the do not disturb duration in seconds.
 
 sequence:
   - service: switch.turn_on
     entity_id: !input switch_entity
   
   - delay:
-      hours: "{{ states(input_mute_duration_entity) }}"
+      seconds: !input mute_duration
   
   - service: switch.turn_off
     entity_id: !input switch_entity

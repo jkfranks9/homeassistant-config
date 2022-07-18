@@ -76,74 +76,6 @@
     - service: input_boolean.turn_off
       entity_id: input_boolean.sleeptime
 
-#=============================#
-#     Grandchild Home Mode    #
-#=============================#
-
-# Manage grandchild home mode based on status of the parents. Note that grandchild home mode can also be set
-# using the front end.
-- alias: Enable Grandchild Home Mode
-  id: 'enable_grandchild_home_mode'
-  trigger:
-    - platform: state
-      entity_id: group.device_tracker_sarah
-      from: 'not_home'
-      to: 'home'
-    #- platform: state
-    #  entity_id: group.device_tracker_david
-    #  from: 'not_home'
-    #  to: 'home'
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.grandchild_home
-
-- alias: Disable Grandchild Home Mode
-  id: 'disable_grandchild_home_mode'
-  trigger:
-    - platform: state
-      entity_id: group.device_tracker_sarah
-      from: 'home'
-      to: 'not_home'
-    #- platform: state
-    #  entity_id: group.device_tracker_david
-    #  from: 'home'
-    #  to: 'not_home'
-  condition:
-    - condition: state
-      entity_id: group.device_tracker_sarah
-      state: 'not_home'
-    #- condition: state
-    #  entity_id: group.device_tracker_david
-    #  state: 'not_home'
-  action:
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.grandchild_home
-
-#======================================#
-#     Grandchild Sleepover Location    #
-#======================================#
-
-# Default the grandchild sleep location.
-- alias: Set Default Grandchild Sleepover Location
-  id: 'set_default_grandchild_sleepover_location'
-  trigger:
-    - platform: state
-      entity_id: input_boolean.grandchild_home
-      from: 'off'
-      to: 'on'
-    - platform: time
-      at: '07:00:00'
-  condition:
-    - condition: state
-      entity_id: input_boolean.grandchild_home
-      state: 'on'
-  action:
-    - service: input_select.select_option
-      target:
-        entity_id: input_select.grandchild_sleepover_location
-      data: 
-        option: 'Guest'
-
 #===============================#
 #     Change Daytime Lights     #
 #===============================#
@@ -243,7 +175,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.office_ambient_light
-      below: 120
+      below: 150
       for: '00:02:00'
     - platform: state
       entity_id: input_boolean.nighttime
@@ -257,7 +189,7 @@
       state: 'off'
     - condition: numeric_state
       entity_id: sensor.office_ambient_light
-      below: 120
+      below: 150
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'off'
@@ -379,7 +311,7 @@
   id: 'turn_off_guest_lights'
   trigger:
     - platform: state
-      entity_id: input_boolean.grandchild_home
+      entity_id: input_boolean.children_home
       to: 'off'
   action:
     - service: light.turn_off
@@ -394,7 +326,7 @@
       attribute: elevation
       below: 4.0
     - platform: state
-      entity_id: input_boolean.grandchild_home
+      entity_id: input_boolean.children_home
       to: 'on'
     - platform: homeassistant
       event: start
@@ -404,7 +336,7 @@
       attribute: elevation
       below: 4.0
     - condition: state
-      entity_id: input_boolean.grandchild_home
+      entity_id: input_boolean.children_home
       state: 'on'
     - condition: state
       entity_id: input_boolean.nighttime
@@ -429,7 +361,7 @@
     - condition: time
       after: '22:30:00'
     - condition: template
-      value_template: "{{ is_state('group.device_tracker_sarah', 'not_home') and is_state('input_boolean.grandchild_home', 'on') }}"
+      value_template: "{{ is_state('group.device_tracker_sarah', 'not_home') and is_state('input_boolean.children_home', 'on') }}"
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"

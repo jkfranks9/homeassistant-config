@@ -1,14 +1,16 @@
 # Device specific information
 substitutions:
-  device_name:        porch-sensor
-  friendly_name:      Porch
-  prefix:             porch
-  loglevel:           DEBUG
-  update_interval:    3s
-  window_interval:    3s
-  window_size:        "1"
-  calibrate_measured: "72.0"
-  calibrate_truth:    "72.0"
+  device_name:             porch-sensor
+  friendly_name:           Porch
+  prefix:                  porch
+  loglevel:                DEBUG
+  update_interval:         3s
+  window_interval:         3s
+  window_size:             "1"
+  calibrate_measured:      "72.0"
+  calibrate_truth:         "72.0"
+  hum_calibrate_measured:  "90.0"
+  hum_calibrate_truth:     "75.0"
 
 # Pull in common configuration
 packages:

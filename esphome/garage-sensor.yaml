@@ -1,14 +1,16 @@
 # Device specific information
 substitutions:
-  device_name:        garage-sensor
-  friendly_name:      Garage
-  prefix:             garage
-  loglevel:           DEBUG
-  update_interval:    600s
-  window_interval:    60s
-  window_size:        "10"
-  calibrate_measured: "72.0"
-  calibrate_truth:    "72.0"
+  device_name:             garage-sensor
+  friendly_name:           Garage
+  prefix:                  garage
+  loglevel:                DEBUG
+  update_interval:         600s
+  window_interval:         60s
+  window_size:             "10"
+  calibrate_measured:      "72.0"
+  calibrate_truth:         "72.0"
+  hum_calibrate_measured:  "70.0"
+  hum_calibrate_truth:     "70.0"
 
 # Pull in common configuration
 packages:

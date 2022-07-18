@@ -218,6 +218,9 @@
     
           # Turn off all fans.
           - scene: scene.fans_off
+    
+          # Close the upstairs guest bedroom vents.
+          - service: script.close_upstairs_br_vents
         
           # Turn off automations that could turn on various lights.
           - service: automation.turn_off
@@ -236,6 +239,30 @@
             entities:
               light.storage_lights: 'off'
               light.outdoor_lights: 'off'
+
+# Close house subset when family members leave.
+- alias: Close House For Family
+  id: 'close_house_for_family'
+  
+  trigger:
+    - platform: state
+      entity_id: group.family_members
+      from: 'home'
+      to: 'not_home'
+    
+    - platform: state
+      entity_id: input_boolean.children_home
+      from: 'on'
+      to: 'off'
+  
+  action:
+    
+    # Close the upstairs guest bedroom vents.
+    - service: script.close_upstairs_br_vents
+    
+    # Turn off upstairs guest suite lights.
+    - service: light.turn_off
+      entity_id: light.upstairs_guest_suite_lights
 
 # Open up the house when needed.
 - alias: Open House
@@ -317,7 +344,7 @@
     - or:
       - and:
         - condition: state
-          entity_id: input_boolean.grandchild_home
+          entity_id: input_boolean.children_home
           state: 'on'
         - condition: trigger
           id: 'morning'
@@ -328,17 +355,6 @@
       entity_id: input_boolean.extended_away_mode
       state: 'off'
     - service: script.enable_family_room_av
-
-# Turn off the Family Room AV at night.
-- alias: Disable Family Room AV
-  id: 'disable_family_room_av'
-  trigger:
-    - platform: state
-      entity_id: input_boolean.nighttime
-      from: 'off'
-      to: 'on'
-  action:
-    - service: script.disable_family_room_av
 
 #===================#
 #     Treadmill     #
@@ -530,16 +546,6 @@
       component_name: sonoff
       device_name: Microwave
 
-# Turn off washer plug early each day.
-- alias: Turn Off Washer Plug
-  id: 'turn_off_washer_plug'
-  trigger:
-    - platform:  time
-      at: '01:01:01'
-  action:
-    - service: switch.turn_off
-      entity_id: switch.sonoff_washer
-
 #======================#
 #     Robot Vacuum     #
 #======================#
@@ -619,12 +625,12 @@
   trigger:
     - platform: state 
       entity_id: sensor.washer_power_state
-      from: 'stop'
-      to: 'fill'
-    - platform: state 
-      entity_id: sensor.washer_power_state
-      from: 'unknown'
-      to: 'fill'
+      from:
+        - 'stop'
+        - 'unknown'
+      to:
+        - 'fill'
+        - 'pause'
   
   action:
     
@@ -636,13 +642,15 @@
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
 
 # Set the washer load size, based on the amount of time spent on the initial fill. This is triggered only
-# when the power state changes from fill to raise, and the washer state is Wash Fill.
+# when the power state changes from fill/pause to raise, and the washer state is Wash Fill.
 - alias: Set Washer Load Size
   id: 'set_washer_load_size'
   trigger:
     - platform: state
       entity_id: sensor.washer_power_state
-      from: 'fill'
+      from:
+        - 'fill'
+        - 'pause'
       to: 'raise'
   
   condition:
@@ -661,8 +669,8 @@
           {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
           {% set seconds = (now().timestamp() - start) %}
           {% if   seconds >= 240 and seconds < 350 %} Small
-          {% elif seconds >= 350 and seconds < 500 %} Medium
-          {% elif seconds >= 500  %}                  Large
+          {% elif seconds >= 350 and seconds < 450 %} Medium
+          {% elif seconds >= 450  %}                  Large
           {% endif %}
 
 # Start the washer rinse fill blackout timer. This is used to ignore the fabric softener injection
@@ -808,7 +816,7 @@
     - platform: template
       value_template: >
         {{ states('sensor.dryer_temperature') != 'unavailable' and states('sensor.office_temperature') != 'unavailable' and
-           states('sensor.dryer_temperature') | int(0) > (states('sensor.office_temperature') | int(0) + 10) }}
+           states('sensor.dryer_temperature') | int(0) > (states('sensor.office_temperature') | int(0) + 20) }}
   action:
     - service: input_boolean.turn_on
       entity_id: input_boolean.dryer_running
@@ -879,6 +887,12 @@
       state: 'on'
   
   action:
+    
+    # Remember to backup the log tomorrow morning.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.backup_dryer_trend_sensors_log
+    
+    # Log either the humidity or the temperature, based on the trigger id.
     - if:
         - condition: trigger
           id: humidity
@@ -1014,7 +1028,7 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"    
     - service: input_boolean.turn_on
-      entity_id: input_boolean.grandchild_home
+      entity_id: input_boolean.children_home
 
 - alias: Turn Off Grandchild Home
   id: 'turn_off_grandchild_home'
@@ -1037,4 +1051,4 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"    
     - service: input_boolean.turn_off
-      entity_id: input_boolean.grandchild_home
+      entity_id: input_boolean.children_home

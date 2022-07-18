@@ -38,10 +38,10 @@ smart_home:
       - script.lock_pc
       - script.popup_light_group
       - script.position_hvac_vent
+      - script.set_thermostat_preset
       - script.start_activity
       - script.throttle_mobile_notification
       - script.toggle_upstairs_br_vent
-      - script.turn_off_bedtime_lights
       - script.turn_off_kodi
       - script.turn_off_pc
       - script.turn_on_family_room_normal
@@ -71,8 +71,9 @@ smart_home:
       - sensor.*_temp_stats
       - sensor.openweathermap*
       - sensor.outdoor_*
+      - script.*_bedtime_environment
       - script.*_deep_sleep
-      - script.*_thermostat_vacation
+      - script.*_thermostat_hold
       - script.*_worker
       - script.change_lighting_per_weather*
       - script.close_garage_door*

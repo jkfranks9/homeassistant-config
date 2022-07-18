@@ -45,24 +45,6 @@
 #     Manual Exercise      #
 #==========================#
 
-# Reset manual exercise controls to zero early each day.
-- alias: Reset Manual Exercise Controls
-  id: 'reset_manual_exercise_controls'
-  trigger:
-    - platform:  time
-      at: '01:01:01'
-  action:
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.yard_work_time
-      data:
-        value: 0
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.weight_training_time
-      data:
-        value: 0
-
 # Set yard work calories.
 - alias: Set Yard Work Calories
   id: 'set_yard_work_calories'

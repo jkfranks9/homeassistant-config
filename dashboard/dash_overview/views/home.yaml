@@ -19,7 +19,6 @@ cards:
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
       - !include /config/dashboard/dash_overview/cards/home/family_ups.yaml
-      - !include /config/dashboard/dash_overview/cards/home/echo_mute_duration.yaml
       - type: conditional
         conditions:
           - entity: input_boolean.show_browser_player

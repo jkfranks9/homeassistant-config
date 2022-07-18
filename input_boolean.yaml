@@ -1,3 +1,10 @@
+#========================#
+#     Home Assistant     #
+#========================#
+
+backup_dryer_trend_sensors_log:
+  name: Backup Dryer Trend Sensors Log
+
 #===============================================#
 #     Lighting & Automation/Script Controls     #
 #===============================================#
@@ -19,16 +26,20 @@ extended_away_mode:
   name: Extended Away Mode
 
 # This modifies some automations and scripts.
-grandchild_home:
-  name: Grandchild Home
-
-# This modifies some automations and scripts.
 christmas_mode:
   name: Christmas Mode
 
-# This prevents attempting to create multiple temporary thermostat vacations. Such a vacation uses a static name, so we can only have one.
-temporary_thermostat_vacation:
-  name: Temporary Thermostat Vacation
+#===================#
+#     Presence      #
+#===================#
+
+# Adult family members present.
+adults_home:
+  name: Adults Home
+
+# Child family members present.
+children_home:
+  name: Children Home
 
 #============================#
 #     Kodi Movie Control     #

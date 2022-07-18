@@ -70,45 +70,45 @@ logs:
   homeassistant.components.script.turn_on_bathroom_light:             warning
 
   # HA misc components
-  homeassistant.components.alexa:                         info
-  homeassistant.components.analytics:                     warning
-  homeassistant.components.androidtv.media_player:        info
-  homeassistant.components.automation:                    info
-  homeassistant.components.cover:                         warning
-  homeassistant.components.device_tracker:                info
-  homeassistant.components.ecovacs:                       info
-  homeassistant.components.esphome:                       warning
-  homeassistant.components.fan:                           warning
-  homeassistant.components.history:                       info
-  homeassistant.components.http.view:                     info
-  homeassistant.components.kodi.media_player:             warning
-  homeassistant.components.lutron_caseta:                 info
-  homeassistant.components.media_player:                  info
-  homeassistant.components.mqtt:                          warning
-  homeassistant.components.proximity:                     warning
-  homeassistant.components.scene:                         warning
-  homeassistant.components.shell_command:                 info
-  homeassistant.components.system_log.external:           info # This is for logs in automations and scripts.
-  homeassistant.components.webhook:                       info
-  homeassistant.components.websocket_api:                 info
-  homeassistant.components.websocket_api.http.connection: info
+  homeassistant.components.alexa:                               info
+  homeassistant.components.analytics:                           warning
+  homeassistant.components.androidtv.media_player:              info
+  homeassistant.components.automation:                          info
+  homeassistant.components.bluetooth_le_tracker.device_tracker: warning
+  homeassistant.components.cover:                               info
+  homeassistant.components.device_tracker:                      info
+  homeassistant.components.ecovacs:                             info
+  homeassistant.components.esphome:                             info
+  homeassistant.components.fan:                                 info
+  homeassistant.components.history:                             info
+  homeassistant.components.http.view:                           info
+  homeassistant.components.kodi.media_player:                   info
+  homeassistant.components.life360:                             info
+  homeassistant.components.lutron_caseta:                       info
+  homeassistant.components.media_player:                        info
+  homeassistant.components.mqtt:                                warning
+  homeassistant.components.proximity:                           warning
+  homeassistant.components.scene:                               info
+  homeassistant.components.shell_command:                       info
+  homeassistant.components.system_log.external:                 info # This is for logs in automations and scripts.
+  homeassistant.components.webhook:                             info
+  homeassistant.components.websocket_api:                       info
+  homeassistant.components.websocket_api.http.connection:       info
 
   # Custom components
   custom_components.hacs:                              warning
   custom_components.kodi.media_player:                 info
   custom_components.epson_projector:                   info
-  #custom_components.proximity:                         debug
   custom_components.pyscript.file.populate_all_movies: info
   custom_components.pyscript.file.restore_all_movies:  info
   custom_components.sonoff.sonoff_cloud:               info
   custom_components.thermal_comfort:                   info
 
   # Other
-  aioesphomeapi.connection:                warning
+  aioesphomeapi.connection:                info
   androidtv.adb_manager.adb_manager_async: info
-  googleapiclient.discovery:               warning
-  hangups.channel:                         warning
-  my_debug:                                debug
+  googleapiclient.discovery:               info
+  pygatt.backends.gatttool.gatttool:       warning
   pylutron_caseta:                         info
   sucks:                                   info
   kasa:                                    info
@@ -133,9 +133,6 @@ filters:
     - "Unable to find entity switch.stair_railing"
   ##################################################################
   
-  custom_components.androidtv.config_flow:
-    - "Host .* already configured. This yaml configuration has already been imported. Please remove it"
-  
   custom_components.watchman:
     - "Watchman sensors updated"
   
@@ -150,10 +147,12 @@ filters:
 
   homeassistant.components.binary_sensor:
     - "Setup of binary_sensor platform .* is taking over 10 seconds"
-    - "Not adding entity .* because it's disabled"
-
-  homeassistant.components.calendar:
-    - "Setup of calendar platform .* is taking over 10 seconds"
+  
+  homeassistant.components.bond.entity:
+    - "Updating .* took longer than the scheduled update interval .*"
+  
+  homeassistant.components.brother:
+    - "Timeout fetching brother data"
   
   homeassistant.components.input_select:
     - "Current option: Select no longer valid"
@@ -165,12 +164,7 @@ filters:
     - "get_circle_members .*: CommError: 400 Client Error: Bad Request for url"
     - "get_circles: CommError: 500 Server Error: Internal Server Error for url"
 
-  homeassistant.components.light:
-    - "Setup of light platform .* is taking over 10 seconds"
-    - "Updating .* took longer than the scheduled update interval .*"
-
   homeassistant.components.media_player:
-    - "Setup of media_player platform .* is taking over 10 seconds"
     - "Updating .* took longer than the scheduled update interval .*"
 
   homeassistant.components.openuv:
@@ -179,31 +173,17 @@ filters:
   homeassistant.components.scene:
     - "Setup of scene platform .* is taking over 10 seconds"
 
-  homeassistant.components.sensor:
-    - "Setup of sensor platform .* is taking over 10 seconds"
-    - "Not adding entity .* because it's disabled"
-
   homeassistant.components.shelly:
     - "Timeout fetching shelly1.* data"
-
-  homeassistant.components.switch:
-    - "Setup of switch platform .* is taking over 10 seconds"
-    - "Updating .* took longer than the scheduled update interval .*"
-
-  homeassistant.components.vacuum:
-    - "Setup of vacuum platform .* is taking over 10 seconds"
+  
+  homeassistant.components.update:
+    - "Setup of update platform .* is taking over 10 seconds"
   
   homeassistant.components.webhook:
     - "Received message for unregistered webhook"
-  
-  homeassistant.components.weather:
-    - "Setup of weather platform .* is taking over 10 seconds"
 
   homeassistant.config_entries:
     - "Config entry .* for .* integration not ready yet:"
-
-  homeassistant.helpers.entity:
-    - "Update of .* is taking over 10 seconds"
 
   homeassistant.helpers.template:
     - "Template variable error: 'dict object' has no attribute 'payload_json' when rendering"
@@ -216,6 +196,3 @@ filters:
   
   oauth2client.transport:
     - "Refreshing due to a 401"
-
-  sleekxmppfs.basexmpp:
-    - "fulljid property deprecated. Use boundjid.resource"

@@ -60,16 +60,18 @@
     - service: input_boolean.turn_on
       entity_id: input_boolean.extended_away_mode
     
-    # Create thermostat vacations.
-    - service: script.create_thermostat_vacation
+    # Set thermostat holds.
+    - service: script.set_extended_thermostat_hold
       data:
         thermostat_entity: climate.downstairs
-        type: Extended
+        heat_temp: !secret constant_extended_hold_heat_temp
+        cool_temp: !secret constant_extended_hold_cool_temp
     
-    - service: script.create_thermostat_vacation
+    - service: script.set_extended_thermostat_hold
       data:
         thermostat_entity: climate.upstairs
-        type: Extended
+        heat_temp: !secret constant_extended_hold_heat_temp
+        cool_temp: !secret constant_extended_hold_cool_temp
 
 # Triggered on the end of an extended away period.
 - alias: Disable Extended Away Mode
@@ -85,104 +87,16 @@
     - service: input_boolean.turn_off
       entity_id: input_boolean.extended_away_mode
     
-    # Remove thermostat vacations.
-    - service: script.remove_thermostat_vacation
+    # Remove thermostat holds.
+    - service: script.remove_thermostat_hold
       data:
         thermostat_entity: climate.downstairs
-        type: Extended
+        extended: true
     
-    - service: script.remove_thermostat_vacation
+    - service: script.remove_thermostat_hold
       data:
         thermostat_entity: climate.upstairs
-        type: Extended
-
-#=====================#
-#     Family Home     #
-#=====================#
-
-# Add a vacation to simulate a temperature hold when family members are here.
-# This only applies to the downstairs.
-- alias: Add Family Temperature Hold
-  id: add_family_temperature_hold
-  
-  trigger:
-    - platform: state
-      entity_id: group.family_members
-      from: 'not_home'
-      to: 'home'
-    - platform: state
-      entity_id: input_boolean.grandchild_home
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - condition: state
-      entity_id: input_boolean.temporary_thermostat_vacation
-      state: 'off'
-    - or:
-      - condition: state
-        entity_id: group.family_members
-        state: 'home'
-      - condition: state
-        entity_id: input_boolean.grandchild_home
-        state: 'on'
-  
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    
-    # Turn on control flag that prevents multiple temporary vacations.
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.temporary_thermostat_vacation
-    
-    # Add thermostat vacation.
-    - service: script.create_thermostat_vacation
-      data:
-        thermostat_entity: climate.downstairs
-        type: Temporary
-
-# Remove family temperature hold.
-- alias: Remove Family Temperature Hold
-  id: remove_family_temperature_hold
-  
-  trigger:
-    - platform: state
-      entity_id: group.family_members
-      from: 'home'
-      to: 'not_home'
-    - platform: state
-      entity_id: input_boolean.grandchild_home
-      from: 'on'
-      to: 'off'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - condition: state
-      entity_id: input_boolean.temporary_thermostat_vacation
-      state: 'on'
-    - condition: state
-      entity_id: group.family_members
-      state: 'not_home'
-    - condition: state
-      entity_id: input_boolean.grandchild_home
-      state: 'off'
-  
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    
-    # Remove thermostat vacation.
-    - service: script.remove_thermostat_vacation
-      data:
-        thermostat_entity: climate.downstairs
-        type: Temporary
-    
-    # Turn off control flag that prevents multiple temporary vacations.
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.temporary_thermostat_vacation
+        extended: true
 
 #============================================#
 #     Temperature High / Low Water Marks     #

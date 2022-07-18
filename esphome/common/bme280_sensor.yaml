@@ -27,6 +27,10 @@ sensor:
       name: ${friendly_name} Humidity
       id: ${prefix}_humidity
       filters:
+        - calibrate_linear:
+            # Map 0.0 (from sensor) to 0.0 (true value)
+            - 0.0 -> 0.0
+            - $hum_calibrate_measured -> $hum_calibrate_truth
         - sliding_window_moving_average:
             window_size: $window_size
             send_every:  $window_size

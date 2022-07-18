@@ -12,9 +12,9 @@
       max_samples: 300        # 1500 / 5 (sampling interval)
       min_gradient: -0.02667  # -40 / 1500
     
-    # Measures temperature falling by 20 over 8 minutes.
+    # Measures temperature falling by 20 over 10 minutes.
     dryer_temperature_falling:
       entity_id: sensor.dryer_temperature
-      sample_duration: 480    # 8m * 60s
-      max_samples: 96         # 480 / 5 (sampling interval)
-      min_gradient: -0.04167  # -20 / 480
+      sample_duration: 600    # 10m * 60s
+      max_samples: 120         # 600 / 5 (sampling interval)
+      min_gradient: -0.03333  # -20 / 600

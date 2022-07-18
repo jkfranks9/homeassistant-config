@@ -9,14 +9,14 @@ cards:
   - type: 'custom:decluttering-card'
     template: button_card
     variables:
-      - entity: sensor.family_home
+      - entity: person.jon
       - name: Family
       - transform: 'capitalize'
       - template_columns: 6
       - state_on: 0
       - icon_color_on: 'var(--state-icon-color)'
       - icon_color_off: 'var(--state-icon-active-color)'
-      - stat_text: ' home'
+      - stat_text: ''
       - m1_entity: device_tracker.life360_jon_franks
       - m1_name: Jon
       - m2_entity: device_tracker.life360_michael_franks

@@ -12,8 +12,8 @@
 
 # Nut Mini state sensor, updated via ESPresence scanners.
 - platform: mqtt_room
-  device_id: 'name:nut'
+  device_id: 'nut:c8d12a58fc78'
   name: 'Nut Mini'
-  state_topic: 'espresense/devices/name:nut'
+  state_topic: 'espresense/devices/nut:c8d12a58fc78'
   timeout: 60
   away_timeout: 120

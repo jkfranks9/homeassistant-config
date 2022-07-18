@@ -18,10 +18,10 @@
   condition:
     - condition: template
       value_template: >
-        {% set skip_list = ['log_automations', 'log_scripts', 'backup_log_on_shutdown', 'backup_auto_log', 'backup_scripts_log', 'log_notifications',
-                             'set_maximum_attic_temperature', 'set_maximum_outdoor_temperature', 'set_maximum_garage_temperature',
-                             'set_minimum_attic_temperature', 'set_minimum_outdoor_temperature', 'set_minimum_garage_temperature',
-                             'update_openuv', 'log_dryer_trend_sensors'] %}
+        {% set skip_list = ['backup_auto_scripts_logs', 'backup_log_on_shutdown', 'delete_junk_log_files', 'log_automations', 'log_dryer_trend_sensors', 'log_notifications', 'log_scripts',
+                             'set_maximum_attic_temperature', 'set_maximum_garage_temperature', 'set_maximum_outdoor_temperature',
+                             'set_minimum_attic_temperature', 'set_minimum_garage_temperature', 'set_minimum_outdoor_temperature',
+                             'update_openuv'] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list and
            'old_state' in trigger.event.data and 'new_state' in trigger.event.data and
@@ -50,6 +50,16 @@
   trigger:
     - platform: event
       event_type: script_started
+  
+  # Weed out non-scripts and some we want to skip.
+  condition:
+    - condition: template
+      value_template: >
+        {% set skip_list = ['close_garage_door', 'concat_auto_log_files', 'concat_log_files', 'concat_scripts_log_files', 'evaluate_weather_condition', 'popup_light_group',
+                             'reset_smart_bulbs', 'resume_worker', 'set_datetime_offset_days', 'set_datetime_offset_months', 'set_datetime_offset_weeks', 'set_theater_dark',
+                             'start_activity', 'throttle_mobile_notification', 'turn_off_adguard', 'turn_on_adguard', 'watch_application'] %}
+        {{ trigger.event.data.entity_id.startswith('script.') and
+           trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
   action:
     
@@ -83,15 +93,60 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: shell_command.delete_junk_log_files
 
-# Backup the automations and scripts log files every day.
-- alias: Backup Auto Scripts Logs
-  id: backup_auto_scripts_logs
+#======================#
+#     Daily Chores     #
+#======================#
+
+# Perform various daily chores.
+- alias: Perform Daily Chores
+  id: 'perform_daily_chores'
   trigger:
     - platform:  time
-      at: '00:02:09'
+      at: '01:01:01'
   action:
+    
+    # Reset manual exercise controls.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.yard_work_time
+      data:
+        value: 0
+    
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.weight_training_time
+      data:
+        value: 0
+    
+    # Reset occupied bedrooms.
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.occupied_bedrooms
+      data:
+        option: None
+    
+    # Turn off washer plug.
+    - service: switch.turn_off
+      entity_id: switch.sonoff_washer
+    
+    # Backup automations and scripts log files.
     - service: shell_command.backup_auto_log
+    
     - service: shell_command.backup_scripts_log
+    
+    # Temporarily make sure the dryer isn't running.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.dryer_running
+    
+    # Backup the dryer trend sensors log file if indicated.
+    - condition: state
+      entity_id: input_boolean.backup_dryer_trend_sensors_log
+      state: 'on'
+    
+    - service: shell_command.backup_dryer_trend_sensors_log
+    
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.backup_dryer_trend_sensors_log
 
 #===================================#
 #     Kodi Media Player Logging     #

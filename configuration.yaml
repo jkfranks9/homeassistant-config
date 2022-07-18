@@ -22,7 +22,7 @@ browser_mod:
       disable:
         - light
         - media_player
-    50079fef-daf209c2:
+    f9705d63-cb2f7c1e:
       name: chrome
       disable:
         - light
@@ -93,34 +93,53 @@ device_tracker:
     interval_seconds: 15
     consider_home: 150
     track_new_devices: true
-
-# Life360
-life360:
-  accounts:
-    - username: !secret life360_username
-      password: !secret life360_password
+    
+  #- platform: bluetooth_le_tracker
+  #  interval_seconds: 15
+  #  consider_home: 150
+  #  track_new_devices: true
 
 # Proximity
-proximity:
-  jon_home:
-    zone: home
-    #ignored_zones:
-    #  - dummy
-    devices:
-      - device_tracker.jon_galaxy
-      - device_tracker.life360_jon_franks
-    unit_of_measurement: m
-  mike_home:
-    zone: home
-    devices:
-      #- device_tracker.mike_galaxy
-      - device_tracker.life360_michael_franks
-    unit_of_measurement: m
-  sarah_home:
-    zone: home
-    devices:
-      - device_tracker.life360_sarah_jones
-    unit_of_measurement: m
+#proximity:
+  
+#  jon_home:
+#    zone: home
+#    ignored_zones:
+#      - habitat
+#      - khan_home
+#      - maryam_home
+#      - mike_home
+#      - sarah_home
+#    devices:
+#      - device_tracker.jon_galaxy
+#      - device_tracker.life360_jon_franks
+#    unit_of_measurement: m
+  
+#  mike_home:
+#    zone: home
+#    ignored_zones:
+#      - habitat
+#      - khan_home
+#      - maryam_home
+#      - mike_home
+#      - sarah_home
+#    devices:
+#      #- device_tracker.mike_galaxy
+#      - device_tracker.life360_michael_franks
+#    unit_of_measurement: m
+  
+#  sarah_home:
+#    zone: home
+#    ignored_zones:
+#      - habitat
+#      - khan_home
+#      - maryam_home
+#      - mike_home
+#      - sarah_home
+#    devices:
+#      - device_tracker.life360_sarah_jones
+#    unit_of_measurement: m
+  
   #david_home:
   #  zone: home
   #  devices:
@@ -209,11 +228,11 @@ lutron_caseta:
   ca_certs: /ssl/lutron/caseta-bridge.crt
 
 # Ecovacs DEEBOT
-ecovacs:
-  username: !secret ecovacs_user_id
-  password: !secret ecovacs_password
-  country: us
-  continent: na
+#ecovacs:
+#  username: !secret ecovacs_user_id
+#  password: !secret ecovacs_password
+#  country: us
+#  continent: na
       
 #=========================#
 #     Thermal Comfort     #
@@ -265,13 +284,14 @@ notify:
 
 # Shell commands
 shell_command:
-  backup_log:               python /config/python/backup_log.py
-  backup_auto_log:          python /config/python/backup_auto_log.py
-  backup_scripts_log:       python /config/python/backup_scripts_log.py
-  concat_log_files:         python /config/python/concat_log_files.py
-  concat_auto_log_files:    python /config/python/concat_auto_log_files.py
-  concat_scripts_log_files: python /config/python/concat_scripts_log_files.py
-  copy_floorplan_christmas: python /config/python/copy_floorplan_christmas.py
-  copy_floorplan_normal:    python /config/python/copy_floorplan_normal.py
-  delete_junk_log_files:    'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
-  reboot_nut_service:       bash /config/reboot_nut_server.sh
+  backup_log:                     python /config/python/backup_log.py
+  backup_auto_log:                python /config/python/backup_auto_log.py
+  backup_dryer_trend_sensors_log: python /config/python/backup_dryer_trend_sensors_log.py
+  backup_scripts_log:             python /config/python/backup_scripts_log.py
+  concat_log_files:               python /config/python/concat_log_files.py
+  concat_auto_log_files:          python /config/python/concat_auto_log_files.py
+  concat_scripts_log_files:       python /config/python/concat_scripts_log_files.py
+  copy_floorplan_christmas:       python /config/python/copy_floorplan_christmas.py
+  copy_floorplan_normal:          python /config/python/copy_floorplan_normal.py
+  delete_junk_log_files:          'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
+  reboot_nut_service:             bash /config/reboot_nut_server.sh

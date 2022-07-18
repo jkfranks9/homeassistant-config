@@ -22,6 +22,7 @@ evaluate_weather_condition:
   mode: parallel
   
   sequence:
+    
     - choose:
       
       # Clear or light clouds
@@ -31,6 +32,7 @@ evaluate_weather_condition:
             {{  states('sensor.openweathermap_weather_code') | int(0) == 800 or
                 states('sensor.openweathermap_weather_code') | int(0) == 801 }}
         sequence:
+          
           - service: input_select.select_option
             entity_id: input_select.weather_condition
             data:
@@ -46,6 +48,7 @@ evaluate_weather_condition:
                 states('sensor.openweathermap_weather_code') | int(0) <  800) or
                 states('sensor.openweathermap_weather_code') | int(0) == 802 }}
         sequence:
+          
           - service: input_select.select_option
             entity_id: input_select.weather_condition
             data:
@@ -62,6 +65,7 @@ evaluate_weather_condition:
                 states('sensor.openweathermap_weather_code') | int(0) == 803  or
                 states('sensor.openweathermap_weather_code') | int(0) == 804 }}
         sequence:
+          
           - service: input_select.select_option
             entity_id: input_select.weather_condition
             data:
@@ -69,115 +73,182 @@ evaluate_weather_condition:
       
       # This should never happen, log a warning but choose clear.
       default:
+        
         - service: system_log.write
           data:
             message: Unexpected weather code {{ states('sensor.openweathermap_weather_code') }}
             level: warning
+        
         - service: input_select.select_option
           entity_id: input_select.weather_condition
           data:
             option: 'clear'
 
 #=============================#
-#     Thermostat Vacation     #
+#     Thermostat Settings     #
 #=============================#
-
-# Create a vacation for a given thermostat.
-create_thermostat_vacation:
-  alias: Create Thermostat Vacation
+set_thermostat_preset:
+  alias: Set Thermostat Preset
   
   fields:
     thermostat_entity:
-      description: The thermostat on which to create a vacation.
+      description: The thermostat on which to set the preset.
     
-    type:
-      description: The type of vacation to be created.
-      selector:
-        select:
-          options:
-            - Extended
-            - Temporary
+    preset:
+      description: The thermostat preset mode.
+    
+  sequence:
+    
+    - service: climate.set_preset_mode
+      target:
+        entity_id: "{{ thermostat_entity }}"
+      data:
+        preset_mode: "{{ preset }}"
+
+#==========================#
+#     Temperature Hold     #
+#==========================#
+
+# Set temporary thermostat hold.
+set_temporary_thermostat_hold:
+  alias: Set Temporary Thermostat Hold
+  
+  fields:
+    thermostat_entity:
+      description: The thermostat on which to create a hold.
+    
+    heat_temp:
+      description: The desired heat temperature.
+    
+    cool_temp:
+      description: The desired cool temperature.
   
   sequence:
     
-    # Create the vacation on the thermostat. Note that the name is limited to 12 characters.
-    - choose:
-        
-      # For an extended vacation, use the extended away dates/times, and a wide temperature range.
-      - conditions:
-        - condition: template
-          value_template: "{{ type == 'Extended' }}"
-        sequence:
-          - service: ecobee.create_vacation
-            data_template:
-              entity_id: "{{ thermostat_entity }}"
-              vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-              start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-              start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
-              end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
-              end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
-              heat_temp: 59
-              cool_temp: 83
-      
-      # For a temporary vacation, use today's date (plus 3 days for the end), and a normal temperature range.
-      - conditions:
-        - condition: template
-          value_template: "{{ type == 'Temporary' }}"
-        sequence:
-          - service: ecobee.create_vacation
-            data_template:
-              entity_id: "{{ thermostat_entity }}"
-              vacation_name: "Temporary"
-              start_date: "{{ states('sensor.date') }}"
-              start_time: "{{ now().strftime('%H:%M:%S') }}"
-              end_date: "{{ (as_timestamp(states('sensor.date')) + 259200) | timestamp_custom('%Y-%m-%d') }}"
-              end_time: "{{ now().strftime('%H:%M:%S') }}"
-              heat_temp: 67
-              cool_temp: 77
-      
-      # Invalid type specified, log it.
-      default:
-        - service: system_log.write
-          data:
-            message: "Invalid vacation type {{ type }} specified"
-            level: error
+    # Create a vacation to simulate a hold, using today's date/time, plus 1 day for the end. 
+    # We should remove the vacation on the following morning.
+    - service: ecobee.create_vacation
+      data_template:
+        entity_id: "{{ thermostat_entity }}"
+        vacation_name: "Temporary"
+        start_date: "{{ states('sensor.date') }}"
+        start_time: "{{ now().strftime('%H:%M:%S') }}"
+        end_date: "{{ (as_timestamp(states('sensor.date')) + 86400) | timestamp_custom('%Y-%m-%d') }}"
+        end_time: "{{ now().strftime('%H:%M:%S') }}"
+        heat_temp: "{{ heat_temp }}"
+        cool_temp: "{{  cool_temp }}"
 
-# Remove a vacation for a given thermostat.
-remove_thermostat_vacation:
-  alias: Remove Thermostat Vacation
+# Set extended thermostat hold.
+set_extended_thermostat_hold:
+  alias: Set Extended Thermostat Hold
+  
+  fields:
+    thermostat_entity:
+      description: The thermostat on which to create a hold.
+    
+    heat_temp:
+      description: The desired heat temperature.
+    
+    cool_temp:
+      description: The desired cool temperature.
+  
+  sequence:
+    
+    # Create a vacation to simulate a hold, using the extended away dates/times. 
+    # We should remove the vacation when the extended away ends.
+    - service: ecobee.create_vacation
+      data_template:
+        entity_id: "{{ thermostat_entity }}"
+        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
+        end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
+        end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
+        heat_temp: "{{ heat_temp }}"
+        cool_temp: "{{  cool_temp }}"
+
+# Remove a temperature hold for a given thermostat.
+remove_thermostat_hold:
+  alias: Remove Thermostat Hold
   
   fields:
     thermostat_entity:
       description: The thermostat on which to remove a vacation.
+    
+    extended:
+      description: True for an extended hold, false for a temporary hold.
   
   sequence:
     
+    # Verify a vacation exists on the thermostat first.
+    - condition: template
+      value_template: "{{ state_attr(thermostat_entity, 'preset_mode') == 'vacation' }}"
+    
     # Remove the vacation on the thermostat. Note that the name is limited to 12 characters.
-    - choose:
         
-      # For an extended vacation, use the extended away start date.
-      - conditions:
-        - condition: template
-          value_template: "{{ type == 'Extended' }}"
-        sequence:
-          - service: ecobee.delete_vacation
-            data_template:
-              entity_id: "{{ thermostat_entity }}"
-              vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+    # For an extended vacation, use the extended away start date as the name.
+    - if:
+        - "{{ extended == 'true' }}"
+      
+      then:
+          
+        - service: ecobee.delete_vacation
+          data_template:
+            entity_id: "{{ thermostat_entity }}"
+            vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
       
       # For a temporary vacation, use the hardcoded name.
+      else:
+        
+        - service: ecobee.delete_vacation
+          data_template:
+            entity_id: "{{ thermostat_entity }}"
+            vacation_name: "Temporary"
+
+#============================#
+#     Upstairs Home Mode     #
+#============================#
+
+# Turn on home mode upstairs.
+turn_on_upstairs_home_mode:
+  alias: Turn On Upstairs Home Mode
+  
+  sequence:
+    
+    # Set the preset to home mode.
+    - service: script.set_thermostat_preset
+      data:
+        thermostat_entity: climate.upstairs
+        preset: 'Home'
+    
+    # Also, open the upstairs bedroom vents.
+    - service: script.open_upstairs_br_vents
+
+# Turn off home mode upstairs.
+turn_off_upstairs_home_mode:
+  alias: Turn Off Upstairs Home Mode
+  
+  sequence:
+    
+    # Set the preset to away or sleep mode, depending on the time of day.
+    - choose:
       - conditions:
-        - condition: template
-          value_template: "{{ type == 'Temporary' }}"
+        - condition: time
+          after:  '18:30:00'
+          before: '23:30:00'
+        
         sequence:
-          - service: ecobee.delete_vacation
-            data_template:
-              entity_id: "{{ thermostat_entity }}"
-              vacation_name: "Temporary"
-      
-      # Invalid type specified, log it.
+          
+          - service: script.set_thermostat_preset
+            data:
+              thermostat_entity: climate.upstairs
+              preset: 'Sleep'
       default:
-        - service: system_log.write
+        
+        - service: script.set_thermostat_preset
           data:
-            message: "Invalid vacation type {{ type }} specified"
-            level: error
+            thermostat_entity: climate.upstairs
+            preset: 'Away'
+    
+    # Also, close the upstairs bedroom vents.
+    - service: script.close_upstairs_br_vents

@@ -91,10 +91,10 @@
         {% if p < 3 %} stop
           
         {# --Power level indicates paused--  #}
-        {% elif 4 <= p <= 7.20 %} pause
+        {% elif 4 <= p <= 6.95 %} pause
           
         {# --Power level indicates filling if the current state is stopped or paused--  #}
-        {% elif 7.40 <= p <= 11 %}
+        {% elif 7 <= p <= 11 %}
           {{ 'fill' if s in ['stop', 'pause', 'unknown'] else s }}
         
         {# --Power level indicates a drop to a lower level--  #}
