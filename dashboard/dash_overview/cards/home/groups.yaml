@@ -13,6 +13,14 @@ cards:
   
       - type: 'custom:button-card'
         template: light_group_button_name
+        name: Office
+        entity: light.office_lights
+        variables:
+          entities_title: Office Lights
+          entities_group: light.office_lights
+  
+      - type: 'custom:button-card'
+        template: light_group_button_name
         name: Family
         entity: light.family_room_lights
         variables:
@@ -35,14 +43,6 @@ cards:
           entities_title: Master Suite Lights
           entities_group: light.master_suite_lights
   
-      - type: 'custom:button-card'
-        template: light_group_button_name
-        name: Office
-        entity: light.office_lights
-        variables:
-          entities_title: Office Lights
-          entities_group: light.office_lights
-  
   - type: custom:stack-in-card
     mode: horizontal
     cards:  
@@ -57,19 +57,19 @@ cards:
   
       - type: 'custom:button-card'
         template: light_group_button_name
-        name: Laundry
-        entity: light.laundry_room_lights
-        variables:
-          entities_title: Laundry Room Lights
-          entities_group: light.laundry_room_lights
-  
-      - type: 'custom:button-card'
-        template: light_group_button_name
         name: "[[[ return 'Common ' + '\u2193' ]]]"
         entity: light.downstairs_common_lights
         variables:
           entities_title: Downstairs Common Lights
           entities_group: light.downstairs_common_lights
+  
+      - type: 'custom:button-card'
+        template: light_group_button_name
+        name: Laundry
+        entity: light.laundry_room_lights
+        variables:
+          entities_title: Laundry Room Lights
+          entities_group: light.laundry_room_lights
   
       - type: 'custom:button-card'
         template: light_group_button_name
@@ -82,14 +82,6 @@ cards:
   - type: custom:stack-in-card
     mode: horizontal
     cards:
-  
-      - type: 'custom:button-card'
-        template: light_group_button_name
-        name: Theater
-        entity: light.theater_lights
-        variables:
-          entities_title: Theater Lights
-          entities_group: light.theater_lights
       
       - type: 'custom:button-card'
         template: light_group_button_name
@@ -106,6 +98,14 @@ cards:
         variables:
           entities_title: Upstairs Common Lights
           entities_group: light.upstairs_common_lights
+  
+      - type: 'custom:button-card'
+        template: light_group_button_name
+        name: Theater
+        entity: light.theater_lights
+        variables:
+          entities_title: Theater Lights
+          entities_group: light.theater_lights
       
       - type: 'custom:button-card'
         template: light_group_button_name

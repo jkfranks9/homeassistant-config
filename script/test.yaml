@@ -105,3 +105,104 @@ test_remove_thermostat_hold:
       data_template:
         entity_id: climate.upstairs
         vacation_name: "Temporary"
+
+test_bedtime_adults_down:
+  alias: Test Bedtime Adults Down
+  
+  sequence:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.adults_home
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.children_home
+    - service: input_select.select_option
+      entity_id: input_select.occupied_bedrooms
+      data:
+        option: 'Downstairs'
+    - service: script.establish_bedtime_environment
+
+
+test_bedtime_adults_up:
+  alias: Test Bedtime Adults Up
+  
+  sequence:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.adults_home
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.children_home
+    - service: input_select.select_option
+      entity_id: input_select.occupied_bedrooms
+      data:
+        option: 'Upstairs'
+    - service: script.establish_bedtime_environment
+
+
+test_bedtime_adults_both:
+  alias: Test Bedtime Adults Both
+  
+  sequence:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.adults_home
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.children_home
+    - service: input_select.select_option
+      entity_id: input_select.occupied_bedrooms
+      data:
+        option: 'Both'
+    - service: script.establish_bedtime_environment
+
+
+test_bedtime_children_down:
+  alias: Test Bedtime Chidren Down
+  
+  sequence:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.adults_home
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.children_home
+    - service: input_select.select_option
+      entity_id: input_select.occupied_bedrooms
+      data:
+        option: 'Downstairs'
+    - service: script.establish_bedtime_environment
+
+
+test_bedtime_children_up:
+  alias: Test Bedtime Chidren Up
+  
+  sequence:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.adults_home
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.children_home
+    - service: input_select.select_option
+      entity_id: input_select.occupied_bedrooms
+      data:
+        option: 'Upstairs'
+    - service: script.establish_bedtime_environment
+
+
+test_bedtime_children_both:
+  alias: Test Bedtime Chidren Both
+  
+  sequence:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.adults_home
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.children_home
+    - service: input_select.select_option
+      entity_id: input_select.occupied_bedrooms
+      data:
+        option: 'Both'
+    - service: script.establish_bedtime_environment

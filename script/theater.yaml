@@ -19,25 +19,33 @@ open_cinema:
     - service: script.turn_on
       entity_id: script.turn_on_theater_fan
     
-    # Turn off the family room AV system.
-    - service: script.disable_family_room_av
-    
-    # Set the upstairs Ecobee to home mode if it's not there already. Note that the mode could be lower case if
-    # we're in smart home mode.
-    - condition: template
-      value_template: >
-        {% set mode = state_attr('climate.upstairs', 'preset_mode') | title %}
-        {{ mode != 'Home' }}
+    # Set the upstairs Ecobee to home mode.
     - service: script.set_thermostat_preset
       data:
         thermostat_entity: climate.upstairs
         preset: 'Home'
+    
+    # Indicate the theater is open.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.theater_open
     
     # If no family are home, delay, then turn off some downstairs lights.
     - delay: '00:05:00'
     - service: script.change_some_downstairs_lights
       data:
         turn_on: false
+    
+    # Turn off the family room AV system if it's late enough and no one else is home.
+    - condition:
+        - condition: state
+          entity_id: 
+            - input_boolean.adults_home
+            - input_boolean.children_home
+          state: 'off'
+        - condition: time
+          after:  '18:00:00'
+          before: '23:30:00'
+    - service: script.disable_family_room_av
 
 # Close the cinema by turning off the current harmony activity, and relevant lights after a delay.
 #
@@ -47,7 +55,16 @@ close_cinema:
   alias: Close Cinema
   sequence:
     
-    # Turn on some lights.
+    # Indicate the theater is closed.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.theater_open
+    
+    # Turn on automations/lights that were possibly turned off by the open cinema script.
+    - service: script.change_some_downstairs_lights
+      data:
+        turn_on: true
+    
+    # Turn on some lights. There's some overlap in entities with the above service, but that's OK.
     - service: script.turn_on
       entity_id: script.set_theater_idle
     
@@ -155,7 +172,7 @@ turn_on_theater_fan:
 #============================#
 
 # Turn on some downstairs lights if it's dark enough, or conditionally turn them off. This is used by the open/close cinema scripts,
-# and the 'take a break' scipt, because we might need to go downstairs at these times.
+# and the 'take a break' script, because we might need to go downstairs at these times.
 change_some_downstairs_lights:
   alias: Change Some Downstairs Lights
   fields:
@@ -171,6 +188,15 @@ change_some_downstairs_lights:
           value_template: "{{ turn_on == true }}"
         
         sequence:
+          
+          # Turn on automations that might have been turned off.
+          - service: automation.turn_on
+            entity_id:
+              - automation.check_daytime_lights_sunset_minimum
+              - automation.check_daytime_lights_sunset_medium
+              - automation.check_daytime_lights_sunset_maximum
+          
+          # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
           - condition: numeric_state
             entity_id: sun.sun
             attribute: elevation
@@ -184,8 +210,17 @@ change_some_downstairs_lights:
       # Turn off lights, but only if no family members present.
       default:
         - condition: state
-          entity_id: group.family_members
-          state: 'not_home'
+          entity_id: input_boolean.adults_home
+          state: 'off'
+        
+        # First, turn off automations that might turn on some of these lights.
+        - service: automation.turn_off
+          entity_id:
+            - automation.check_daytime_lights_sunset_minimum
+            - automation.check_daytime_lights_sunset_medium
+            - automation.check_daytime_lights_sunset_maximum
+        
+        # Now, turn them off.
         - service: homeassistant.turn_off
           entity_id:
             - light.stairway_light

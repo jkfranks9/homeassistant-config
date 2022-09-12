@@ -29,6 +29,10 @@ extended_away_mode:
 christmas_mode:
   name: Christmas Mode
 
+# This indicates the theater is open, used as a sanity check in the Close Cinema automation.
+theater_open:
+  name: Theater Open
+
 #===================#
 #     Presence      #
 #===================#
@@ -96,10 +100,3 @@ zigbee2mqtt_force_remove:
   name: Zigbee2MQTT Force Remove
   initial: false
   icon: mdi:alert-remove
-
-#=====================#
-#     Browser Mod     #
-#=====================#
-
-show_browser_player:
-  name: Show Browser Player

@@ -55,7 +55,7 @@ condition:
     entity_id: input_boolean.nighttime
     state: 'off'
   - condition: state
-    entity_id: group.device_tracker_jon
+    entity_id: person.jon
     state: 'home'
 
 # Call the script with the given light/group entity.

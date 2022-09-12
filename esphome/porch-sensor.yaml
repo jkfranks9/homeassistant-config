@@ -1,16 +1,36 @@
 # Device specific information
 substitutions:
-  device_name:             porch-sensor
-  friendly_name:           Porch
-  prefix:                  porch
-  loglevel:                DEBUG
-  update_interval:         3s
-  window_interval:         3s
-  window_size:             "1"
-  calibrate_measured:      "72.0"
-  calibrate_truth:         "72.0"
-  hum_calibrate_measured:  "90.0"
-  hum_calibrate_truth:     "75.0"
+  
+  # Used by boards (device name also used by MQTT)
+  device_name:               porch-sensor
+  loglevel:                  DEBUG
+  
+  # Used by sensors and WiFi
+  friendly_name:             Porch
+  
+  # Used by WiFi
+  update_interval:           3s
+  
+  # Used by sensors
+  window_interval:           3s
+  window_size:               "1"
+  
+  # Used by temperature sensors
+  calibrate_measured:        "72.0"
+  calibrate_truth:           "72.0"
+  
+  # Used by humidity sensors
+  hum_calibrate_measured_1:  "85.0"
+  hum_calibrate_truth_1:     "75.0"
+  hum_calibrate_measured_2:  "74.0"
+  hum_calibrate_truth_2:     "66.0"
+  hum_calibrate_measured_3:  "64.0"
+  hum_calibrate_truth_3:     "60.0"
+  hum_calibrate_measured_4:  "50.0"
+  hum_calibrate_truth_4:     "50.0"
+  
+  # Used by bme280 sensor
+  prefix:                    porch
 
 # Pull in common configuration
 packages:

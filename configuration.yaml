@@ -11,30 +11,6 @@ frontend:
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
 
-#=====================#
-#     Browser Mod     #
-#=====================#
-
-browser_mod:
-  devices:
-    de079a8e-98edec58:
-      name: firefox
-      disable:
-        - light
-        - media_player
-    f9705d63-cb2f7c1e:
-      name: chrome
-      disable:
-        - light
-        - media_player
-    efafa6a3-e759f165:
-      name: phone
-      disable:
-        - light
-        - media_player
-  disable:
-    - all
-
 #========================#
 #     Included Files     #
 #========================#
@@ -88,63 +64,49 @@ lovelace:
 #     Presence     #
 #==================#
 
-device_tracker:
-  - platform: bluetooth_tracker
-    interval_seconds: 15
-    consider_home: 150
-    track_new_devices: true
-    
-  #- platform: bluetooth_le_tracker
-  #  interval_seconds: 15
-  #  consider_home: 150
-  #  track_new_devices: true
-
 # Proximity
-#proximity:
+proximity:
   
-#  jon_home:
-#    zone: home
-#    ignored_zones:
-#      - habitat
-#      - khan_home
-#      - maryam_home
-#      - mike_home
-#      - sarah_home
-#    devices:
-#      - device_tracker.jon_galaxy
-#      - device_tracker.life360_jon_franks
-#    unit_of_measurement: m
+  jon_home:
+    zone: home
+    ignored_zones:
+      - habitat
+      - khan_s
+      - m_m
+      - mobile
+      - s_d
+      - ecu
+    devices:
+      - device_tracker.jon_galaxy
+      - device_tracker.life360_jon_franks
+    unit_of_measurement: m
   
-#  mike_home:
-#    zone: home
-#    ignored_zones:
-#      - habitat
-#      - khan_home
-#      - maryam_home
-#      - mike_home
-#      - sarah_home
-#    devices:
-#      #- device_tracker.mike_galaxy
-#      - device_tracker.life360_michael_franks
-#    unit_of_measurement: m
+  mike_home:
+    zone: home
+    ignored_zones:
+      - habitat
+      - khan_s
+      - m_m
+      - mobile
+      - s_d
+      - ecu
+    devices:
+      #- device_tracker.mike_galaxy
+      - device_tracker.life360_michael_franks
+    unit_of_measurement: m
   
-#  sarah_home:
-#    zone: home
-#    ignored_zones:
-#      - habitat
-#      - khan_home
-#      - maryam_home
-#      - mike_home
-#      - sarah_home
-#    devices:
-#      - device_tracker.life360_sarah_jones
-#    unit_of_measurement: m
-  
-  #david_home:
-  #  zone: home
-  #  devices:
-  #    - device_tracker.pixel_6_pro
-  #  unit_of_measurement: m
+  sarah_home:
+    zone: home
+    ignored_zones:
+      - habitat
+      - khan_s
+      - m_m
+      - mobile
+      - s_d
+      - ecu
+    devices:
+      - device_tracker.life360_sarah_jones
+    unit_of_measurement: m
 
 #==============#
 #     MQTT     #
@@ -228,11 +190,11 @@ lutron_caseta:
   ca_certs: /ssl/lutron/caseta-bridge.crt
 
 # Ecovacs DEEBOT
-#ecovacs:
-#  username: !secret ecovacs_user_id
-#  password: !secret ecovacs_password
-#  country: us
-#  continent: na
+ecovacs:
+  username: !secret ecovacs_user_id
+  password: !secret ecovacs_password
+  country: us
+  continent: na
       
 #=========================#
 #     Thermal Comfort     #

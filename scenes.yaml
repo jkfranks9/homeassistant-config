@@ -38,7 +38,6 @@
   name: Adult Bedtime Lights Out
   entities:
     light.master_bath_light:        'off'
-    light.guest_bath_light:         'off'
     light.downstairs_common_lights: 'off'
     light.family_room_lights:       'off'
     light.kitchen_lights:           'off'
@@ -68,6 +67,7 @@
     light.office_lights:            'off'
     light.laundry_room_lights:      'off'
     light.theater_lights:           'off'
+    light.upstairs_bath_tub_light:  'off'
     light.upstairs_common_lights:   'off'
     light.storage_lights:           'off'
     light.outdoor_lights:           'off'

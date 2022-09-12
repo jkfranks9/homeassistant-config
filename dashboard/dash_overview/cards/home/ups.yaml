@@ -1,0 +1,17 @@
+#==================#
+#     UPS Card     #
+#==================#
+
+type: entities
+entities:
+  - type: custom:multiple-entity-row
+    entity: sensor.cyber1_load
+    name: UPS
+    state_header: Load
+    entities:
+      - entity: sensor.cyber1_battery_charge
+        name: Battery
+      - entity: sensor.cp_ups_runtime_minutes
+        name: Runtime
+      - entity: sensor.cyber1_output_voltage
+        name: Output

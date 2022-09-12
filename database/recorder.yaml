@@ -36,11 +36,6 @@ exclude:
     - timer
     - update
     - weather
-
-  entities:
-    - device_tracker.legion_t530
-    - device_tracker.lenovo_tablet
-    - device_tracker.jbl_charge_5
   
   entity_globs:
     - light.*_lights
@@ -92,9 +87,10 @@ include:
     - binary_sensor.master_bath_motion_detector_occupancy
     - binary_sensor.theater_occupancy
     - binary_sensor.upstairs_occupancy
-    - group.family_members
+    - sensor.blue_charm_beacon
     - sensor.cyber1_status
     - sensor.cyber1_status_data
+    - sensor.nut_mini
     - sensor.total_power
     
     # Excluded from history by domain, so don't need to be in the entities list below.
@@ -125,6 +121,7 @@ include:
     - input_number.calories_prev_year_dec
     - switch.guest_bath_fan
     - switch.master_bath_fan
+    - switch.upstairs_bath_fan
     
     # Excluded from history ... can be pasted into the history entity excludes.
     # Partially excluded from logbook.

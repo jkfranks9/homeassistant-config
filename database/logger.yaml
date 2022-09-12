@@ -17,6 +17,7 @@ logs:
   homeassistant.components.automation.disable_nighttime_sleeptime_modes:      warning
   homeassistant.components.automation.enable_nighttime_mode:                  warning
   homeassistant.components.automation.enable_sleeptime_mode:                  warning
+  homeassistant.components.automation.handle_shield_application_change:       warning
   homeassistant.components.automation.initialize_amazon_prime_volume:         warning
   homeassistant.components.automation.initialize_bluray_volume:               warning
   homeassistant.components.automation.initialize_disney_plus_volume:          warning
@@ -31,6 +32,7 @@ logs:
   homeassistant.components.automation.log_automations:                        warning
   homeassistant.components.automation.log_dryer_trend_sensors:                warning
   homeassistant.components.automation.log_scripts:                            warning
+  homeassistant.components.automation.log_tracker_context:                    warning
   homeassistant.components.automation.refresh_front_end:                      warning
   homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
   homeassistant.components.automation.reset_family_room_lamp:                 warning
@@ -39,6 +41,7 @@ logs:
   homeassistant.components.automation.reset_office_lamp:                      warning
   homeassistant.components.automation.restore_movie_list_on_start:            warning
   homeassistant.components.automation.restore_timers:                         warning
+  homeassistant.components.automation.resume_cinema:                          warning
   homeassistant.components.automation.run_guest_bath_motion_based_light:      warning
   homeassistant.components.automation.run_laundry_room_motion_based_light:    warning
   homeassistant.components.automation.run_master_bath_motion_based_light:     warning
@@ -59,6 +62,9 @@ logs:
   homeassistant.components.script.change_lighting_per_weather_simple: warning
   homeassistant.components.script.change_some_downstairs_lights:      warning
   homeassistant.components.script.evaluate_weather_condition:         warning
+  homeassistant.components.script.popup_light_group:                  warning
+  homeassistant.components.script.resume_cinema:                      warning
+  homeassistant.components.script.resume_worker:                      warning
   homeassistant.components.script.start_activity:                     warning
   homeassistant.components.script.set_theater_dark:                   warning
   homeassistant.components.script.set_theater_dim:                    warning
@@ -110,6 +116,7 @@ logs:
   googleapiclient.discovery:               info
   pygatt.backends.gatttool.gatttool:       warning
   pylutron_caseta:                         info
+  pyopenuv.client:                         warning
   sucks:                                   info
   kasa:                                    info
 
@@ -121,6 +128,15 @@ logs:
 filters:
 
   ##################################################################
+  #
+  # NOTE: This smart bulb still operates but produces these errors.
+  homeassistant.components.tplink.coordinator:
+    - "Error fetching 192.168.1.241 data: Unable to connect to the device: 192.168.1.241"
+    - "Fetching 192.168.1.241 data recovered"
+  ##################################################################
+
+  ##################################################################
+  #
   # NOTE: These should be commented out when Christmas mode is on. 
   homeassistant.helpers.service:
     - "Unable to find referenced entities switch.kitchen_christmas_tree"
@@ -133,12 +149,21 @@ filters:
     - "Unable to find entity switch.stair_railing"
   ##################################################################
   
+  androidtv.adb_manager.adb_manager_async:
+    - "Couldn't connect to .*  TcpTimeoutException: Reading from .*:5555 timed out (30.0 seconds)"
+  
   custom_components.watchman:
     - "Watchman sensors updated"
+  
+  frontend.js.latest:
+    - ".* ResizeObserver loop completed with undelivered notifications."
   
   homeassistant.bootstrap:
     - "Waiting on integrations to complete setup"
 
+  homeassistant.components.alexa.auth:
+    - "Timeout calling LWA to get auth token"
+  
   homeassistant.components.alexa.state_report:
     - "Timeout sending report to Alexa"
 
@@ -153,6 +178,9 @@ filters:
   
   homeassistant.components.brother:
     - "Timeout fetching brother data"
+  
+  homeassistant.components.denonavr.media_player:
+    - "Timeout connecting to .* at host .* Device is unavailable"
   
   homeassistant.components.input_select:
     - "Current option: Select no longer valid"
@@ -176,15 +204,24 @@ filters:
   homeassistant.components.shelly:
     - "Timeout fetching shelly1.* data"
   
+  homeassistant.components.switch:
+    - "Updating .* switch took longer than the scheduled update interval .*"
+  
   homeassistant.components.update:
     - "Setup of update platform .* is taking over 10 seconds"
   
   homeassistant.components.webhook:
     - "Received message for unregistered webhook"
 
+  homeassistant.components.websocket_api.http.connection:
+    - "Disconnected: Did not receive auth message within 10 seconds"
+  
   homeassistant.config_entries:
     - "Config entry .* for .* integration not ready yet:"
 
+  homeassistant.helpers.entity:
+    - "Update of .* is taking over 10 seconds"
+  
   homeassistant.helpers.template:
     - "Template variable error: 'dict object' has no attribute 'payload_json' when rendering"
 
@@ -196,3 +233,6 @@ filters:
   
   oauth2client.transport:
     - "Refreshing due to a 401"
+  
+  sleekxmppfs.basexmpp:
+    - "fulljid property deprecated. Use boundjid.resource"

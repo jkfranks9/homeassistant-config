@@ -30,16 +30,19 @@ blueprint:
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_proximity_entity: !input proximity_entity
+  input_proximity_meters: !input proximity_meters
   input_person_name: !input person_name
 
-# Trigger when the person is getting close to home, using their proximity value (in meters).
+# Due to the catch-22 with triggers and variables, just trigger on the proximity entity changing. 
+# We test when the person is getting close to home in the condition, using their proximity value (in meters).
 trigger:
-  - platform: numeric_state
+  - platform: state
     entity_id: !input proximity_entity
-    below: !input proximity_meters
 
-# Continue only if the person is traveling towards home.
+# Continue only if the person is getting close, and is traveling towards home.
 condition:
+  - condition: template
+    value_template: "{{ is_state(input_proximity_entity) < input_proximity_meters if is_number(input_proximity_entity) }}"
   - condition: template
     value_template: "{{ is_state_attr(input_proximity_entity, 'dir_of_travel', 'towards') }}"
 

@@ -1,11 +1,21 @@
 # Device specific information
 substitutions:
+  
+  # Used by boards
   device_name:        dryer-sensor
-  friendly_name:      Dryer
   loglevel:           DEBUG
+  
+  # Used by sensors and WiFi
+  friendly_name:      Dryer
+  
+  # Used by WiFi
   update_interval:    60s
+  
+  # Used by sensors
   window_interval:    5s
   window_size:        "1"
+  
+  # Used by temperature sensors
   calibrate_measured: "72.0"
   calibrate_truth:    "72.0"
 

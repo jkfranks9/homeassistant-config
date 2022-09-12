@@ -17,7 +17,7 @@ cards:
         sun: sun.sun
         moon_phase: sensor.moon
         current_conditions: sensor.openweathermap_weather
-        temperature: sensor.porch_temperature
+        temperature: sensor.openweathermap_temperature
         humidity: sensor.openweathermap_humidity
         pressure: sensor.porch_pressure
         precipitation: sensor.openweathermap_precipitation_kind

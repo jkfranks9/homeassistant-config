@@ -8,17 +8,22 @@
   trigger:
     - platform: state
       entity_id: media_player.shield_tv
-      from: 'paused'
+      from:
+        - 'paused'
+        - 'standby'
       to: 'playing'
       for: 00:00:02
-    - platform: state
-      entity_id: media_player.shield_tv
-      from: 'standby'
-      to: 'playing'
-      for: 00:00:02
+  
   action:
+  
+    # Establish 'dark' theater lighting.
     - service: script.turn_on
       entity_id: script.set_theater_dark
+    
+    # Turn off some downstairs lights.
+    - service: script.change_some_downstairs_lights
+      data:
+        turn_on: false
 
 #======================#
 #     Cinema Close     #
@@ -32,8 +37,15 @@
       entity_id: remote.harmony_hub
       attribute: current_activity
       to: 'PowerOff'
+  
+  # Sanity check to prevent false triggers, which can happen if the network is twitchy.
+  condition:
+    - condition: state
+      entity_id: input_boolean.theater_open
+      state: 'on'
+  
   action:
-    - service: script.close_cinema
+    - service: script.close_cinema 
 
 #==================================#
 #     Automatic Volume Control     #
@@ -61,10 +73,27 @@
 # -29 db = 51%
 # -30 db = 50%
 # -31 db = 49%
-# -32 db = 48%
+# -32 db = 48% 
+
+# The Marantz receiver is set to turn on muted. This is because there are intermittent noise sounds at turn on.
+# This automation sets the volume to a default level a short time after the receiver is powered on.
+- alias: Initialize Turn On Volume
+  id: initialize_turn_on_volume
+  trigger:
+    - platform: state
+      entity_id: media_player.marantz_sr7012
+      from: 'off'
+      to: 'on'
+  
+  action:
+    - delay: '00:00:30'
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.marantz_sr7012
+        volume_level: 0.60
 
 # NOTES:
-#   1) The Shield TV app names used here must match those defined in media_player.yaml for the androidtv platform.
+#   1) The Shield TV app names used here must match those defined for the androidtv integration.
 #   2) The Harmony activity names used here must match those defined in harmony_nnn.conf.
 
 #   -- Shield TV Apps --   #

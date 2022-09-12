@@ -18,10 +18,5 @@ cards:
       - !include /config/dashboard/dash_overview/cards/home/laundry.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
-      - !include /config/dashboard/dash_overview/cards/home/family_ups.yaml
-      - type: conditional
-        conditions:
-          - entity: input_boolean.show_browser_player
-            state: 'on'
-        card:
-          type: custom:browser-player
+      - !include /config/dashboard/dash_overview/cards/home/presence.yaml
+      - !include /config/dashboard/dash_overview/cards/home/ups.yaml

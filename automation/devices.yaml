@@ -153,15 +153,89 @@
 #     House     #
 #===============#
 
+# Open up the house when needed.
+- alias: Open House
+  id: 'open_house'
+  
+  # Hopefully temporary, to assist debugging open/close house timing issue.
+  trace:
+    stored_traces: 25
+  
+  trigger:
+    
+    # Jon arrives home.
+    - platform: state
+      entity_id: person.jon
+      from: 'not_home'
+      to: 'home'
+  
+  action:
+    
+    # Turn on automations that were possibly turned off by Leave Home, and trigger them.
+    - service: automation.turn_on
+      entity_id: automation.turn_on_christmas_lights
+    
+    - service: automation.turn_on
+      entity_id: automation.turn_on_guest_lights_sunset
+    
+    - service: automation.trigger
+      data:
+        entity_id: automation.turn_on_guest_lights_sunset
+        skip_condition: false
+    
+    - service: automation.turn_on
+      entity_id: automation.turn_on_office_light
+    
+    - service: automation.trigger
+      data:
+        entity_id: automation.turn_on_office_light
+        skip_condition: false
+    
+    # Turn off extended away mode (this should have happened above based on proximity ... this is a failsafe).
+    - service: script.turn_off_extended_away_mode
+    
+    # Continue only if it's dark-ish.
+    - condition: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 6.0
+    
+    # Turn on appropriate lights.
+    - choose:
+      
+      # It's Christmas time!
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('input_boolean.christmas_mode', 'on') }}"
+        
+        sequence:
+          - service: homeassistant.turn_on
+            entity_id: light.daytime_christmas_lights
+          
+          - service: light.turn_on
+            entity_id: light.office_lamp
+      
+      # No it's not!
+      default:
+        - service: homeassistant.turn_on
+          entity_id: light.daytime_lights
+        
+        - service: light.turn_on
+          entity_id: light.office_lamp
+
 # Close up the house when needed.
 - alias: Close House
   id: 'close_house'
+  
+  # Hopefully temporary, to assist debugging open/close house timing issue.
+  trace:
+    stored_traces: 25
   
   trigger:
     
     # Jon leaves home.
     - platform: state
-      entity_id: group.device_tracker_jon
+      entity_id: person.jon
       from: 'home'
       to: 'not_home'
     
@@ -183,8 +257,8 @@
         state: 'below_horizon'
       - condition: template
         value_template: >
-          {{ is_state('group.device_tracker_jon', 'not_home') and
-             is_state('group.family_members', 'not_home') }}
+          {{ not is_state('person.jon', 'home') and
+             is_state('input_boolean.adults_home', 'off') }}
   
   action:
     - delay: 
@@ -204,8 +278,8 @@
       - conditions:
         - condition: template
           value_template: >
-            {{ is_state('group.device_tracker_jon', 'not_home') and
-               is_state('group.family_members', 'not_home') }}
+            {{ not is_state('person.jon', 'home') and
+               is_state('input_boolean.adults_home', 'off') }}
         
         sequence:
     
@@ -240,15 +314,47 @@
               light.storage_lights: 'off'
               light.outdoor_lights: 'off'
 
+# Deal with the open/close house timing issue. The problem is:
+# 
+# - One tracker changes to home state, which changes the person to home, driving Open House
+# - A second tracker gets an attribute updated (but NOT the state), which changes the person back to not_home, driving Close House
+# - The second tracker then changes to home state, which again drives Open House
+#
+# Note that nothing terrible actually happens, but stuff like this makes me nuts.
+#
+# I believe this issue doesn't exist for leaving home, due to the algorithm that updates the person state.
+- alias: Handle House Timing Issue
+  id: 'handle_house_timing_issue'
+  
+  # Trigger on any of the GPS trackers changing from not_home to home.
+  trigger:
+    - platform: state
+      entity_id:
+        - device_tracker.jon_galaxy
+        - device_tracker.life360_jon_franks
+      from: 'not_home'
+      to: 'home'
+  
+  action:
+    
+    # Temporarily turn off the Close House automation, then turn it back on.
+    - service: automation.turn_off
+      entity_id: automation.close_house
+      
+    - delay: "00:02:00"
+    
+    - service: automation.turn_on
+      entity_id: automation.close_house
+
 # Close house subset when family members leave.
 - alias: Close House For Family
   id: 'close_house_for_family'
   
   trigger:
     - platform: state
-      entity_id: group.family_members
-      from: 'home'
-      to: 'not_home'
+      entity_id: input_boolean.adults_home
+      from: 'on'
+      to: 'off'
     
     - platform: state
       entity_id: input_boolean.children_home
@@ -264,67 +370,21 @@
     - service: light.turn_off
       entity_id: light.upstairs_guest_suite_lights
 
-# Open up the house when needed.
-- alias: Open House
-  id: 'open_house'
+# Turn off extended away mode when Jon is nearing home (proximity is somewhat unreliable, so if this doesn't trigger we have a failsafe 
+# below in Open House).
+- alias: Turn Off Extended Away Mode
+  id: 'turn_off_extended_away_mode'
+  
   trigger:
-    
-    # Jon arrives home.
-    - platform: state
-      entity_id: group.device_tracker_jon
-      from: 'not_home'
-      to: 'home'
+    - platform: template
+      value_template: "{{ is_state('proximity.jon_home') < 13000 if is_number('proximity.jon_home') }}"
+      
+  condition:
+    - condition: template
+      value_template: "{{ is_state_attr('proximity.jon_home', 'dir_of_travel', 'towards') }}"
   
   action:
-    
-    # Turn on automations that were possibly turned off by Leave Home, and trigger them.
-    - service: automation.turn_on
-      entity_id: automation.turn_on_christmas_lights
-    
-    - service: automation.turn_on
-      entity_id: automation.turn_on_guest_lights_sunset
-    
-    - service: automation.trigger
-      data:
-        entity_id: automation.turn_on_guest_lights_sunset
-        skip_condition: false
-    
-    - service: automation.turn_on
-      entity_id: automation.turn_on_office_light
-    
-    - service: automation.trigger
-      data:
-        entity_id: automation.turn_on_office_light
-        skip_condition: false
-    
-    # Continue only if it's dark-ish.
-    - condition: numeric_state
-      entity_id: sun.sun
-      attribute: elevation
-      below: 6.0
-    
-    # Turn on appropriate lights.
-    - choose:
-      
-      # It's Christmas time!
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('input_boolean.christmas_mode', 'on') }}"
-        
-        sequence:
-          - service: homeassistant.turn_on
-            entity_id: light.daytime_christmas_lights
-          
-          - service: light.turn_on
-            entity_id: light.office_lamp
-      
-      # No it's not!
-      default:
-        - service: homeassistant.turn_on
-          entity_id: light.daytime_lights
-        
-        - service: light.turn_on
-          entity_id: light.office_lamp
+    - service: script.turn_off_extended_away_mode
 
 #========================#
 #     Family Room AV     #
@@ -493,25 +553,59 @@
 #     Garage Doors     #
 #======================#
 
+# Open garage door for me.
+- alias: Open Garage Door
+  id: 'open_garage_door'
+  
+  trigger:
+    - platform: state
+      entity_id: sensor.blue_charm_beacon
+      from: 'not_home'
+      to: 'garage'
+    
+    - platform: state
+      entity_id: sensor.blue_charm_beacon
+      from: 'not_home'
+      to: 'house'
+  
+  condition:
+    - condition: state
+      entity_id: person.jon
+      state: 'home'
+    - condition: template
+      value_template: "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
+  
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.shelly1_garage_north
+
 # Open garage door when family member(s) arrive home, and I'm home.
 - alias: Open Garage Door For Family
   id: 'open_garage_door_for_family'
   trigger:
     - platform: state
-      entity_id: group.family_members
-      from: 'not_home'
-      to: 'home'
+      entity_id: input_boolean.adults_home
+      from: 'off'
+      to: 'on'
+    
+    - platform: state
+      entity_id: input_boolean.children_home
+      from: 'off'
+      to: 'on'
+    
     #- platform: state
     #  entity_id: sensor.blue_charm_beacon
     #  from: 'not_home'
     #  to: 'garage'
+    
     #- platform: state
     #  entity_id: sensor.blue_charm_beacon
     #  from: 'not_home'
     #  to: 'house'
   condition:
     - condition: state
-      entity_id: group.device_tracker_jon
+      entity_id: person.jon
       state: 'home'
     - condition: template
       value_template: "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
@@ -792,7 +886,7 @@
           {% elif fr in ['stop', 'unknown']       and to in ['fill', 'pause'] %}                         Wash Fill
           {% elif fr in ['fill', 'pause']         and to == 'raise'   and s == 'Wash Fill' %}            Wash
           {% elif fr == 'raise'                   and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
-          {% elif fr == 'pause'                   and to == 'fill' %}                                    Rinse Fill
+          {% elif fr == 'pause'                   and to == 'fill'    and s == 'Wash Drain' %}           Rinse Fill
           {% elif fr in ['fill', 'pause', 'drop'] and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
           {% elif fr == 'raise'                   and to == 'drop'    and s == 'Rinse' %}                Rinse Drain     
           
@@ -800,7 +894,7 @@
           {% elif fr == 'drop'  and to in ['fill', 'raise', 'pause'] %} {{ s }}
           {% elif fr == 'fill'  and to in ['pause', 'drop', 'raise'] %} {{ s }}
           {% elif fr == 'raise' and to in ['drop', 'pause'] %}          {{ s }}
-          {% elif fr == 'pause' and to in ['drop', 'raise'] %}          {{ s }}
+          {% elif fr == 'pause' and to in ['fill', 'drop', 'raise'] %}  {{ s }}
           
           {# --Catch-all, default to Stop-- #}
           {% else %} Stop
@@ -991,22 +1085,96 @@
 
 - alias: Turn Off Treadmill Fan
   id: 'turn_off_treadmill_fan'
+  
   trigger:
     - platform: state
       entity_id: input_boolean.treadmill_triggered
       to: 'off'
+  
   action:
+    
+    # Allow a nice cooldown period.
     - delay: '00:02:00'
+    
+    # Turn off the treadmill fan.
     - service: switch.turn_off
       entity_id: switch.general_plug_1
+    
+    # Now turn on the office fan so I can continue cooling down.
+    - service: script.set_fan_to_speed
+      data:
+        entity_id: fan.office_fan
+        speed: 66
 
-#======================#
-#     Tags/Beacons     #
-#======================#
+#=================================#
+#     Device Tracker Presence     #
+#=================================#
 
-# Control grandchild home mode based on Nut Mini presence.
-- alias: Turn On Grandchild Home
-  id: 'turn_on_grandchild_home'
+# Control adults home based on device tracker presence.
+- alias: Turn On Adults Home
+  id: 'turn_on_adults_home'
+  trigger:
+    - platform: state
+      entity_id: person.mike
+      from: 'not_home'
+      to: 'home'
+    - platform: state
+      entity_id: person.sarah
+      from: 'not_home'
+      to: 'home'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    or:
+      - condition: state
+        entity_id: person.mike
+        state: 'home'
+      - condition: state
+        entity_id: person.sarah
+        state: 'home'
+  
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"    
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.adults_home
+
+- alias: Turn Off Adults Home
+  id: 'turn_off_adults_home'
+  trigger:
+    - platform: state
+      entity_id: person.mike
+      from: 'home'
+      to: 'not_home'
+    - platform: state
+      entity_id: person.sarah
+      from: 'home'
+      to: 'not_home'
+    - platform: homeassistant
+      event: start
+  
+  condition:
+    - condition: state
+      entity_id: person.mike
+      state: 'not_home'
+    - condition: state
+      entity_id: person.sarah
+      state: 'not_home'
+  
+  action:
+    - delay: 
+        seconds: "{{ range(2, 15) | random }}"    
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.adults_home
+
+#=============================#
+#     Tag/Beacon Presence     #
+#=============================#
+
+# Control children home based on Nut Mini presence.
+- alias: Turn On Children Home
+  id: 'turn_on_children_home'
   trigger:
     - platform: state
       entity_id: sensor.nut_mini
@@ -1030,8 +1198,8 @@
     - service: input_boolean.turn_on
       entity_id: input_boolean.children_home
 
-- alias: Turn Off Grandchild Home
-  id: 'turn_off_grandchild_home'
+- alias: Turn Off Children Home
+  id: 'turn_off_children_home'
   trigger:
     - platform: state
       entity_id: sensor.nut_mini

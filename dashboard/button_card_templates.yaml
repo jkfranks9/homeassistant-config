@@ -9,6 +9,47 @@ toggle_button:
   tap_action:
     action: toggle
 
+#======================================#
+#     Info Button Card (Stateless)     #
+#======================================#
+
+info_button_stateless:
+  show_icon: true
+  show_name: true
+  show_state: false
+  
+  tap_action:
+    action: 'none'
+  
+  state:
+    - value: 'off'
+      color: var(--paper-item-icon-color)
+    
+    - value: 'on'
+      color: var(--paper-item-icon-active-color)
+
+#==================================#
+#     Info Button Card (State)     #
+#==================================#
+
+info_button_state:
+  show_icon: true
+  show_name: true
+  show_state: true
+  
+  tap_action:
+    action: 'none'
+  
+  state:
+    - value: 'not_home'
+      color: var(--paper-item-icon-color)
+    
+    - value: 'home'
+      color: var(--paper-item-icon-active-color)
+    
+    - operator: default
+      color: var(--accent-color)
+
 #===========================#
 #     Blank Button Card     #
 #===========================#
@@ -138,11 +179,9 @@ light_group_button_name:
   tap_action:
     action: fire-dom-event
     browser_mod:
-      command: call-service
       service: script.popup_light_group
-      service_data:
-        deviceID:
-          - this
+      data:
+        browser_id: THIS
         title: '[[[ return variables.entities_title ]]]'
         light_group: '[[[ return variables.entities_group ]]]'
   
@@ -504,14 +543,14 @@ hvac_vent:
 #================================#
 
 fan_basics:
-  size: 80%
+  size: 70%
   
   hold_action:
     action: more-info
   
   styles:
     card:
-      - padding: 0.2em
+      - padding: 0.1em
     name:
       - font-size: 0.9em
 
@@ -523,14 +562,14 @@ fan_option:
   template: fan_basics
   
   show_icon: false
-  aspect_ratio: 1/1
+  aspect_ratio: 1/0.7
   
   tap_action:
     action: call-service
-    service: fan.turn_on
+    service: script.set_fan_to_speed
     service_data:
       entity_id: '[[[ return entity.entity_id ]]]'
-      percentage: '[[[ return variables.set_value ]]]'
+      speed: '[[[ return variables.set_value ]]]'
   
   state:
     - operator: default
@@ -573,7 +612,7 @@ fan_container:
     option3_range_start: 51
     option3_range_stop: 75
     option4_name: High
-    option4_set_value: 100
+    option4_set_value: 99
     option4_range_start: 76
     option4_range_stop: 100
   

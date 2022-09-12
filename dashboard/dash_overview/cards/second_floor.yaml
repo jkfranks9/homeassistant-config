@@ -48,6 +48,9 @@ config:
         - switch.stairway_light
         - switch.upstairs_bedroom_light
         - switch.upstairs_bedroom_outlet
+        - switch.upstairs_bath_vanity_light
+        - switch.upstairs_bath_tub_light
+        - switch.upstairs_bath_fan
         - switch.utility_light
         - switch.shield_tv
       state_action:

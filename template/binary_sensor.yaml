@@ -77,7 +77,7 @@
         {{ states('sensor.sonoff_family_room_av_power') | float(0) > 10 and
            (is_state('input_boolean.children_home', 'off') or
              (is_state('input_boolean.children_home', 'on') and
-              now().strftime('%H') > '7')) }}
+              now().strftime('%H') >= '19')) }}
     
     # Cinema is true if the projector is drawing power, and the source device is not Shield TV
     # (we can't know if such devices are playing or not) or the source is Shield TV and it's in

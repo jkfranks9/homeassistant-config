@@ -1,3 +1,25 @@
+#===============#
+#     House     #
+#===============#
+
+# Turn off extended away mode if Jon returns home early.
+turn_off_extended_away_mode:
+  alias: Turn Off Extended Away Mode  
+  sequence:
+
+    # Continue only if extended away mode is currently on.  
+    - condition: state
+      entity_id: input_boolean.extended_away_mode
+      state: 'on'
+    
+    # Set the extended away end 2 minutes from now (the extra time is just to make sure the timing satifies my paranoia).
+    # This in turn will trigger the Disable Extended Away Mode automation.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.extended_away_end
+      data:
+        datetime: "{{ (now() + timedelta(minutes = 2)).strftime('%Y-%m-%d %H:%M:%S') }}"
+
 #==========================#
 #     Computer Control     #
 #==========================#
@@ -86,7 +108,7 @@ disable_family_room_av:
 #     Echo Devices     #
 #======================#
 
-# Mute guest bedroom echo devices until 9 AM the next morning.
+# Mute bedroom echo devices until 9 AM the next morning.
 
 mute_guest_bedroom_echo:
   alias: Mute Guest Bedroom Echo
@@ -94,6 +116,16 @@ mute_guest_bedroom_echo:
     path: devices/echo_do_not_disturb.yaml
     input:
       switch_entity: switch.guest_bedroom_echo_do_not_disturb_switch
+      mute_duration: >
+        {% set next = now().today().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
+        {{ (next - now().today().replace(microsecond=0)).seconds }}
+
+mute_master_bedroom_echo:
+  alias: Mute Master Bedroom Echo
+  use_blueprint:
+    path: devices/echo_do_not_disturb.yaml
+    input:
+      switch_entity: switch.master_bedroom_echo_do_not_disturb_switch
       mute_duration: >
         {% set next = now().today().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
         {{ (next - now().today().replace(microsecond=0)).seconds }}
@@ -359,3 +391,74 @@ close_upstairs_br_vents:
       data:
         vent: 'Upstairs BR Vent 2'
         position: 0
+
+#======================#
+#     Ceiling Fans     #
+#======================#
+
+set_fan_to_speed:
+  alias: Set Fan To Speed
+  
+  fields:
+    entity_id:
+      description: 'The target ceiling fan.'
+    
+    speed:
+      description: 'The desired fan speed (0 = off, 33 = low, 66 = medium, 99 = high).'
+      example: 66
+  
+  sequence:
+    
+    # Set the fan to the specified speed. 
+    - service: fan.turn_on
+      target:
+        entity_id: "{{ entity_id }}"
+      data:
+        percentage: "{{ speed }}"
+    
+    # To calculate estimated power consumption, we need to keep track of the specified speed. We do this
+    # using a unique input number for each fan. Lovely.
+    - choose:
+        
+      # Family room
+      - conditions:
+        - condition: template
+          value_template: "{{ state_attr(entity_id, 'friendly_name') == 'Family Room Fan' }}"
+        
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.family_room_fan_speed
+            data:
+              value: "{{ speed }}"
+        
+      # Office
+      - conditions:
+        - condition: template
+          value_template: "{{ state_attr(entity_id, 'friendly_name') == 'Office Fan' }}"
+        
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.office_fan_speed
+            data:
+              value: "{{ speed }}"
+        
+      # Theater
+      - conditions:
+        - condition: template
+          value_template: "{{ state_attr(entity_id, 'friendly_name') == 'Theater Fan' }}"
+        
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.theater_fan_speed
+            data:
+              value: "{{ speed }}"
+      
+      # Not a fan we know about, log it.
+      default:
+        - service: system_log.write
+          data:
+            message: "Invalid ceiling fan entity {{ state_attr(entity_id, 'friendly_name') }} specified"
+            level: error

@@ -8,8 +8,10 @@ cards:
   - type: entities
     show_header_toggle: false
     entities:
-      - entity: input_boolean.children_home
-        icon: mdi:human-male-girl
+      #- entity: input_boolean.adults_home
+      #  icon: mdi:human-male-female
+      #- entity: input_boolean.children_home
+      #  icon: mdi:human-child
       - entity: input_boolean.christmas_mode
         icon: mdi:pine-tree
-      - input_boolean.show_browser_player
+      - entity: input_select.occupied_bedrooms

@@ -47,9 +47,11 @@ sleeptime:
     - service: input_boolean.turn_on
       entity_id: input_boolean.sleeptime
     
-    # Also, turn off the master bedroom lamp.
+    # Also, turn off the master bedroom lamp and bath light.
     - service: light.turn_off
       entity_id: light.master_bedroom_lamp
+    - service: light.turn_off
+      entity_id: light.master_bath_light
 
 # Turn on the bathroom light during the night.
 turn_on_bathroom_light:
@@ -74,8 +76,7 @@ turn_on_bathroom_light:
     
     # Turn on bath light.
     - service: light.turn_on
-      target:
-        entity_id: light.master_bath_light
+      entity_id: light.master_bath_light
     
     # Wait a few minutes then turn off the bathroom flag.
     - delay: '00:05:00'
@@ -122,6 +123,70 @@ wakeup:
       data:
         light_entity: light.family_room_lamp
         wakeup: true
+
+#=================================#
+#     Pre-Bedtime Environment     #
+#=================================#
+
+# Pre-Bedtime environment: this is driven by an automation with the same name when the occupied bedrooms select is changed,
+# and children are home without parents. The idea is to create the correct lighting environment before my normal bedtime.
+
+set_up_pre_bedtime_environment:
+  alias: Set up Pre-bedtime Environment
+  
+  variables:
+    
+    # This is the time in minutes between now and 8 PM. If we run before that time, we delay until then to do anything.
+    evening_delta: >
+      {% set evening = as_timestamp(now().today().replace(hour=20, minute=0, second=0, microsecond=0)) %}
+      {% set current = as_timestamp(now().today().replace(microsecond=0)) %}
+      {{ ((evening - current) / 60) | round(0) }}
+
+  fields:
+    target_bedroom:
+      description: 'The target occupied bedroom.'
+      example: 'Master'
+  
+  sequence:
+    
+    # Delay until 8 PM if needed.
+    - choose:
+      - conditions:
+        - condition: template
+          value_template: "{{ evening_delta > 0 }}"
+        
+        sequence:
+          - delay:
+              minutes: "{{ evening_delta }}"
+    
+    # Determine which bedroom will be used. The default is the downstairs guest bedroom, which is already set up.
+    - choose:
+      
+      # Master: turn on master bedroom lamp and turn off downstairs guest bedroom lights.
+      - conditions:
+        - condition: template
+          value_template: "{{ target_bedroom == 'Master' }}"
+        
+        sequence:
+          - service: light.turn_on
+            entity_id: light.master_bedroom_lamp
+          - service: light.turn_off
+            entity_id:
+              - light.guest_bedroom_lamp
+              - light.guest_bedroom_lamp_2
+      
+      # Upstairs guest: turn on upstairs guest bedroom lamp and turn off downstairs guest bedroom lights.
+      - conditions:
+        - condition: template
+          value_template: "{{ target_bedroom == 'Upstairs' }}"
+        
+        sequence:
+          - service: light.turn_on
+            entity_id: light.upstairs_bedroom_outlet
+          - service: light.turn_off
+            entity_id:
+              - light.guest_bedroom_lamp
+              - light.guest_bedroom_lamp_2
 
 #=============================#
 #     Bedtime Environment     #
@@ -278,6 +343,52 @@ establish_bedtime_environment:
           # Determine which bedrooms are occupied.
           - choose:
             
+            # Master
+            - conditions:
+              - condition: state
+                entity_id: input_select.occupied_bedrooms
+                state: 'Master'
+              
+              sequence:
+                
+                # Turn off all normal night lights (we turn on the master bath light later as a night light).
+                - service: scene.apply
+                  data:
+                    entities:
+                      light.hallway_lamp:               'off'
+                      light.family_room_lamp:           'off'
+                      light.upstairs_bath_vanity_light: 'off'
+    
+                # Set a temporary temperature hold downstairs.
+                - service: script.set_temporary_thermostat_hold
+                  data:
+                    thermostat_entity: climate.downstairs
+                    heat_temp: !secret constant_downstairs_home_heat_temp
+                    cool_temp: !secret constant_downstairs_home_cool_temp
+    
+                # Enter sleep mode upstairs.
+                - service: script.set_thermostat_preset
+                  data:
+                    thermostat_entity: climate.upstairs
+                    preset: 'Sleep'
+    
+                # Mute master bedroom echo device.
+                - service: script.turn_on
+                  entity_id: script.mute_master_bedroom_echo
+                
+                # Close the upstairs guest bedroom vents.
+                - service: script.close_upstairs_br_vents
+                
+                # Turn on the master bath light as a night light, after a delay.
+                - delay: '00:20:00'
+                - service: light.turn_on
+                  entity_id: light.master_bath_light
+                  
+                # Disable the motion sensor automation, so the light remains on all night.
+                - service: automation.turn_off
+                  entity_id: automation.run_master_bath_motion_based_light
+                  
+            
             # Downstairs only
             - conditions:
               - condition: state
@@ -290,9 +401,9 @@ establish_bedtime_environment:
                 - service: scene.apply
                   data:
                     entities:
-                      light.hallway_lamp:            'on'
-                      light.family_room_lamp:        'on'
-                      light.upstairs_bedroom_outlet: 'off'
+                      light.hallway_lamp:               'on'
+                      light.family_room_lamp:           'on'
+                      light.upstairs_bath_vanity_light: 'off'
     
                 # Set a temporary temperature hold downstairs.
                 - service: script.set_temporary_thermostat_hold
@@ -326,9 +437,9 @@ establish_bedtime_environment:
                 - service: scene.apply
                   data:
                     entities:
-                      light.hallway_lamp:            'off'
-                      light.family_room_lamp:        'off'
-                      light.upstairs_bedroom_outlet: 'on'
+                      light.hallway_lamp:               'off'
+                      light.family_room_lamp:           'off'
+                      light.upstairs_bath_vanity_light: 'on'
     
                 # Enter sleep mode downstairs.
                 - service: script.set_thermostat_preset
@@ -366,9 +477,9 @@ establish_bedtime_environment:
                 - service: scene.apply
                   data:
                     entities:
-                      light.hallway_lamp:            'on'
-                      light.family_room_lamp:        'on'
-                      light.upstairs_bedroom_outlet: 'on'
+                      light.hallway_lamp:               'on'
+                      light.family_room_lamp:           'on'
+                      light.upstairs_bath_vanity_light: 'on'
     
                 # Set a temporary temperature hold downstairs.
                 - service: script.set_temporary_thermostat_hold
@@ -424,12 +535,14 @@ reset_bedtime_environment:
     # Note that if it's still dark, we don't check this light again anywhere. Oh well.
     - service: script.change_lighting_per_weather_simple
       data:
-        light_entity: light.upstairs_bedroom_outlet
+        light_entity: light.upstairs_bath_vanity_light
         turn_on: false  
   
-    # Turn on the vacuum automation.
+    # Turn on all automations that were turned off.
     - service: automation.turn_on
-      entity_id: automation.start_vacuum
+      entity_id: 
+        - automation.start_vacuum
+        - automation.run_master_bath_motion_based_light
     
     # Remove thermostat holds.
     - service: script.remove_thermostat_hold
@@ -759,7 +872,7 @@ reset_smart_bulb_lux_sensor:
     # the lux sensor entity to be valid, so wait a bit for that to happen. The lux entity updates every 
     # 10 minutes, so wait slightly longer than that.
     - wait_template: "{{ is_number(states(lux_entity)) }}"
-      timeout: '00:10:10'
+      timeout: '00:11:00'
     
     # If the wait completed, check the lux sensor. Otherwise, revert to the next best thing by performing
     # the sky conditions check.
@@ -865,9 +978,9 @@ popup_light_group:
     
     - service: browser_mod.popup
       data_template:
-        deviceID: "{{ deviceID }}"
+        browser_id: "{{ browser_id }}"
         title: "{{ title }}"
-        card:
+        content:
           type: entities
           show_header_toggle: true
           entities: "{{ expand(light_group) | map(attribute = 'entity_id') | list }}"

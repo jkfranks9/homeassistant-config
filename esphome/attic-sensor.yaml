@@ -1,16 +1,36 @@
 # Device specific information
 substitutions:
-  device_name:             attic-sensor
-  friendly_name:           Attic
-  prefix:                  attic
-  loglevel:                DEBUG
-  update_interval:         600s
-  window_interval:         60s
-  window_size:             "10"
-  calibrate_measured:      "72.0"
-  calibrate_truth:         "72.0"
-  hum_calibrate_measured:  "70.0"
-  hum_calibrate_truth:     "70.0"
+  
+  # Used by boards
+  device_name:               attic-sensor
+  loglevel:                  DEBUG
+  
+  # Used by sensors and WiFi
+  friendly_name:             Attic
+  
+  # Used by WiFi
+  update_interval:           600s
+  
+  # Used by sensors
+  window_interval:           60s
+  window_size:               "10"
+  
+  # Used by temperature sensors
+  calibrate_measured:        "72.0"
+  calibrate_truth:           "72.0"
+  
+  # Used by humidity sensors
+  hum_calibrate_measured_1:  "90.0"
+  hum_calibrate_truth_1:     "90.0"
+  hum_calibrate_measured_2:  "75.0"
+  hum_calibrate_truth_2:     "75.0"
+  hum_calibrate_measured_3:  "60.0"
+  hum_calibrate_truth_3:     "60.0"
+  hum_calibrate_measured_4:  "45.0"
+  hum_calibrate_truth_4:     "45.0"
+  
+  # Used by bme280 sensor
+  prefix:                    attic
 
 # Pull in common configuration
 packages:

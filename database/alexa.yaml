@@ -23,7 +23,6 @@ smart_home:
       - timer
     
     exclude_entities:
-      - binary_sensor.archer_c2300_wan_status
       - binary_sensor.backups_stale
       - binary_sensor.cc2530_router_1_led
       - binary_sensor.cinema_projector

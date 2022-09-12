@@ -154,27 +154,24 @@ config:
         - service: floorplan.text_set
           service_data: "${(entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown'}"
         - service: floorplan.class_set
-          service_data:
-            class: 'static-temp'
+          service_data: 'static-temp'
     
     # Dryer
     - entities:
         - sensor.dryer_humidity
       state_action:
         - service: floorplan.text_set
-          service_data: "${state('input_boolean.dryer_running', 'on') ? ((entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '%' : 'unknown') : ''}"
+          service_data: "${(entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown'}"
         - service: floorplan.class_set
-          service_data:
-            class: 'static-temp'
+          service_data: 'static-temp'
     
     - entities:
         - sensor.dryer_temperature
       state_action:
         - service: floorplan.text_set
-          service_data: "${state('input_boolean.dryer_running', 'on') ? ((entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown') : ''}"
+          service_data: "${(entity.state !== undefined) ? Math.round(entity.state * 10) / 10 + '°' : 'unknown'}"
         - service: floorplan.class_set
-          service_data:
-            class: 'static-temp'
+          service_data: 'static-temp'
     
     # Thermostat
     - entity: climate.downstairs

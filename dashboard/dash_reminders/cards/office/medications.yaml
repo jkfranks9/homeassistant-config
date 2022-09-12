@@ -70,6 +70,6 @@ cards:
       - entity: input_datetime.reminder_medication_methyl_b12
       - name: Methyl B12
       - icon: pill
-      - interval: 100
-      - period: 'days'
-      - service: script.set_datetime_offset_days
+      - interval: 33
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks

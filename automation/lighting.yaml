@@ -76,6 +76,34 @@
     - service: input_boolean.turn_off
       entity_id: input_boolean.sleeptime
 
+# Reset the bedtime environment when the nighttime flag turns off.
+- alias: Reset Bedtime Environment
+  id: 'reset_bedtime_environment'
+  
+  trigger:
+    - platform: state
+      entity_id: input_boolean.nighttime
+      from: 'on'
+      to: 'off'
+  
+  action:
+    - service: script.reset_bedtime_environment
+
+# Set up the correct pre-bedtime environment based on the bedroom(s) to be occupied.
+- alias: Set up Pre-bedtime Environment
+  id: 'set_up_pre_bedtime_environment'
+  
+  trigger:
+    - platform: state
+      entity_id: input_select.occupied_bedrooms  
+  
+  condition:
+    - condition: template
+      value_template: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
+  
+  action:
+    - service: script.set_up_pre_bedtime_environment
+
 #===============================#
 #     Change Daytime Lights     #
 #===============================#
@@ -344,10 +372,17 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-    - service: light.turn_on
-      entity_id: light.guest_bedroom_lamp_2
-    - service: light.turn_on
-      entity_id: light.hallway_lamp
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: input_select.occupied_bedrooms
+          state: 'Master'
+        sequence:
+          - service: light.turn_on
+            entity_id: light.master_bedroom_lamp
+      default:
+        - service: light.turn_on
+          entity_id: light.guest_bedroom_lamp_2
 
 # Turn off guest bedroom lights after bedtime when grandchildren are home.
 - alias: Turn Off Guest Bedroom Lights Bedtime
@@ -361,7 +396,7 @@
     - condition: time
       after: '22:30:00'
     - condition: template
-      value_template: "{{ is_state('group.device_tracker_sarah', 'not_home') and is_state('input_boolean.children_home', 'on') }}"
+      value_template: "{{ not is_state('person.sarah', 'home') and is_state('input_boolean.children_home', 'on') }}"
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
@@ -388,7 +423,7 @@
     - condition: time
       before: '22:00:00'
     - condition: state
-      entity_id: group.device_tracker_jon
+      entity_id: person.jon
       state: 'home'
     - condition: template
       value_template: >

@@ -18,10 +18,30 @@
   condition:
     - condition: template
       value_template: >
-        {% set skip_list = ['backup_auto_scripts_logs', 'backup_log_on_shutdown', 'delete_junk_log_files', 'log_automations', 'log_dryer_trend_sensors', 'log_notifications', 'log_scripts',
-                             'set_maximum_attic_temperature', 'set_maximum_garage_temperature', 'set_maximum_outdoor_temperature',
-                             'set_minimum_attic_temperature', 'set_minimum_garage_temperature', 'set_minimum_outdoor_temperature',
-                             'update_openuv'] %}
+        {% set skip_list = [
+                            'backup_log_on_shutdown', 
+                            'delete_junk_log_files', 
+                            'handle_shield_application_change', 
+                            'initialize_turn_on_volume', 
+                            'log_automations', 
+                            'log_dryer_trend_sensors', 
+                            'log_notifications', 
+                            'log_scripts',
+                            'perform_daily_chores',
+                            'remove_saved_notifications_on_dismiss',
+                            'restore_movie_list_on_start',
+                            'restore_notifications',
+                            'resume_cinema', 
+                            'save_notifications_on_create', 
+                            'set_maximum_attic_temperature', 
+                            'set_maximum_garage_temperature', 
+                            'set_maximum_outdoor_temperature',
+                            'set_minimum_attic_temperature', 
+                            'set_minimum_garage_temperature', 
+                            'set_minimum_outdoor_temperature',
+                            'trigger_floorplan_christmas_elements',
+                            'update_openuv'
+                           ] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list and
            'old_state' in trigger.event.data and 'new_state' in trigger.event.data and
@@ -55,9 +75,28 @@
   condition:
     - condition: template
       value_template: >
-        {% set skip_list = ['close_garage_door', 'concat_auto_log_files', 'concat_log_files', 'concat_scripts_log_files', 'evaluate_weather_condition', 'popup_light_group',
-                             'reset_smart_bulbs', 'resume_worker', 'set_datetime_offset_days', 'set_datetime_offset_months', 'set_datetime_offset_weeks', 'set_theater_dark',
-                             'start_activity', 'throttle_mobile_notification', 'turn_off_adguard', 'turn_on_adguard', 'watch_application'] %}
+        {% set skip_list = [
+                            'change_some_downstairs_lights',
+                            'close_garage_door', 
+                            'concat_auto_log_files', 
+                            'concat_log_files', 
+                            'concat_scripts_log_files', 
+                            'evaluate_weather_condition', 
+                            'popup_light_group',
+                            'position_hvac_vent',
+                            'reset_smart_bulbs', 
+                            'resume_cinema',
+                            'resume_worker', 
+                            'set_datetime_offset_days', 
+                            'set_datetime_offset_months', 
+                            'set_datetime_offset_weeks', 
+                            'set_theater_dark',
+                            'start_activity', 
+                            'throttle_mobile_notification', 
+                            'turn_off_adguard', 
+                            'turn_on_adguard', 
+                            'watch_application'
+                           ] %}
         {{ trigger.event.data.entity_id.startswith('script.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
@@ -119,11 +158,27 @@
         value: 0
     
     # Reset occupied bedrooms.
-    - service: input_select.select_option
-      target:
-        entity_id: input_select.occupied_bedrooms
-      data:
-        option: None
+    - choose:
+      
+      # If children are home without adults, default to the downstairs guest bedroom.
+      - conditions:
+        - condition: template
+          value_template: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
+        
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.occupied_bedrooms
+            data:
+              option: Downstairs
+      
+      # Otherwise, default to none.
+      default:
+        - service: input_select.select_option
+          target:
+            entity_id: input_select.occupied_bedrooms
+          data:
+            option: None
     
     # Turn off washer plug.
     - service: switch.turn_off
