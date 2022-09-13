@@ -33,6 +33,7 @@ exclude:
     - proximity
     - remote
     - scene
+    - schedule
     - script
     - select
     - sensor  

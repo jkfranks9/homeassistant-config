@@ -13,6 +13,7 @@ smart_home:
     
     exclude_domains:
       - automation
+      - binary_sensor
       - button
       - group
       - input_boolean
@@ -23,20 +24,14 @@ smart_home:
       - timer
     
     exclude_entities:
-      - binary_sensor.backups_stale
-      - binary_sensor.cc2530_router_1_led
-      - binary_sensor.cinema_projector
-      - binary_sensor.family_room_av
-      - binary_sensor.home_assistant_operating_system_update_available
-      - binary_sensor.protection_window
       - script.automate_lights_while_away
-      - script.change_some_downstairs_lights
       - script.copy_monthly_calories
       - script.evaluate_weather_condition
       - script.get_all_kodi_movies
       - script.lock_pc
       - script.popup_light_group
       - script.position_hvac_vent
+      - script.set_fan_to_speed
       - script.set_thermostat_preset
       - script.start_activity
       - script.throttle_mobile_notification
@@ -47,21 +42,8 @@ smart_home:
       - script.turn_on_theater_fan
       - script.watch_app
     
-    exclude_entity_globs:
-      - binary_sensor.*_mirror
-      - binary_sensor.*_occupancy
-      - binary_sensor.dryer_*
-      - binary_sensor.espresense*
-      - binary_sensor.guest_bath_motion_detector_*
-      - binary_sensor.laundry_room_motion_detector_*
-      - binary_sensor.master_bath_motion_detector_*
-      - binary_sensor.pixel_6*
-      - binary_sensor.shelly1_garage_*_contact
-      - binary_sensor.shelly1_garage_*_firmware_update
+    exclude_entity_globs
       - light.*_lights
-      - light.daytime_lights*
-      - light.downstairs*lights
-      - light.upstairs*lights
       - sensor.*_battery_temperature
       - sensor.*_temp
       - sensor.*_temperature
@@ -74,7 +56,7 @@ smart_home:
       - script.*_deep_sleep
       - script.*_thermostat_hold
       - script.*_worker
-      - script.change_lighting_per_weather*
+      - script.change_*
       - script.close_garage_door*
       - script.concat_*_files
       - script.mute_*_bedroom_echo
@@ -88,6 +70,7 @@ smart_home:
     #==== Inclusions
 
     include_entities:
+      - binary_sensor.alexa_ha_office_bookcase
       - scene.fans_off
       - scene.lights_out
       - script.set_theater_idle
