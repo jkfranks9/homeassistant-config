@@ -42,7 +42,7 @@ smart_home:
       - script.turn_on_theater_fan
       - script.watch_app
     
-    exclude_entity_globs
+    exclude_entity_globs:
       - light.*_lights
       - sensor.*_battery_temperature
       - sensor.*_temp

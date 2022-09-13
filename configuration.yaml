@@ -246,13 +246,13 @@ notify:
 
 # Shell commands
 shell_command:
-  backup_log:                     python /config/python/backup_log.py
-  backup_auto_log:                python /config/python/backup_auto_log.py
-  backup_dryer_trend_sensors_log: python /config/python/backup_dryer_trend_sensors_log.py
-  backup_scripts_log:             python /config/python/backup_scripts_log.py
-  concat_log_files:               python /config/python/concat_log_files.py
-  concat_auto_log_files:          python /config/python/concat_auto_log_files.py
-  concat_scripts_log_files:       python /config/python/concat_scripts_log_files.py
+  backup_log:                     'python /config/python/backup_logs.py /config/home-assistant.log'
+  backup_auto_log:                'python /config/python/backup_logs.py /config/triggered_automations.log'
+  backup_dryer_trend_sensors_log: 'python /config/python/backup_logs.py /config/dryer_trend_sensors.log'
+  backup_scripts_log:             'python /config/python/backup_logs.py /config/triggered_scripts.log'
+  concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
+  concat_auto_log_files:          'python /config/python/concat_logs.py /config/triggered_automations'
+  concat_scripts_log_files:       'python /config/python/concat_logs.py /config/triggered_scripts'
   copy_floorplan_christmas:       python /config/python/copy_floorplan_christmas.py
   copy_floorplan_normal:          python /config/python/copy_floorplan_normal.py
   delete_junk_log_files:          'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'

@@ -206,3 +206,9 @@ test_bedtime_children_both:
       data:
         option: 'Both'
     - service: script.establish_bedtime_environment
+
+test_backup_logs:
+  alias: Test Backup Logs
+  
+  sequence:
+    - service: shell_command.backup_auto_log
