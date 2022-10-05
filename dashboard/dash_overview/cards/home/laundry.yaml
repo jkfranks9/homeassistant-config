@@ -7,14 +7,22 @@ title: Laundry
 show_header_toggle: false
 entities:
   
-  - type: custom:multiple-entity-row
-    entity: input_boolean.dryer_running
-    name: Laundry State
-    state_header: Dryer
-    entities:
-      - entity: input_select.washer_state
-        name: Washer
+  # Show the washer state and dryer state (off) if the dryer isn't running.
+  - type: conditional
+    conditions:
+      - entity: input_boolean.dryer_running
+        state: 'off'
+    row:
+      type: custom:multiple-entity-row
+      entity: input_boolean.dryer_running
+      name: Laundry State
+      icon: mdi:washing-machine
+      state_header: Dryer
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
   
+  # Show the washer state and dryer temperature/humidity if the dryer is running.
   - type: conditional
     conditions:
       - entity: input_boolean.dryer_running
@@ -22,8 +30,11 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
-      name: Dryer State
+      name: Laundry State
+      icon: mdi:washing-machine
       state_header: Humidity
       entities:
+        - entity: input_select.washer_state
+          name: Washer
         - entity: sensor.dryer_temperature
           name: Temperature

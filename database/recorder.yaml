@@ -88,6 +88,7 @@ include:
     - binary_sensor.master_bath_motion_detector_occupancy
     - binary_sensor.theater_occupancy
     - binary_sensor.upstairs_occupancy
+    - person.jon
     - sensor.blue_charm_beacon
     - sensor.cyber1_status
     - sensor.cyber1_status_data

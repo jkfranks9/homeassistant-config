@@ -11,6 +11,7 @@ config:
   stylesheet: /local/floorplan/home/home.css
   #log_level: debug
   #console_log_level: info
+  
   defaults:
     hover_action: hover-info
     hover_info_filter:
@@ -36,7 +37,21 @@ config:
       - zone_id
       - hdmi_input
     tap_action: toggle
+  
   rules:
+    
+    # Show or hide Christmas elements
+    - entity: input_boolean.christmas_mode
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data:
+          elements:
+            - switch.family_room_christmas_tree
+            - switch.kitchen_christmas_tree
+            - switch.mantle_bookcase
+            - switch.stair_railing
+          class: "${(entity.state === 'on') ? 'show' : 'hide' }"
     
     # Lights and switches
     - entities:
@@ -49,6 +64,7 @@ config:
         - switch.dining_room_hutch
         - switch.dining_room_lamps
         - switch.driveway_lights
+        - switch.family_room_christmas_tree
         - switch.fire_tv
         - switch.foyer_hutch
         - switch.front_floodlight
@@ -59,19 +75,20 @@ config:
         - switch.guest_bedroom_lamp
         - switch.guest_bedroom_lamp_2
         - switch.hallway_lamp
+        - switch.island_light
+        - switch.kitchen_christmas_tree
+        - switch.kitchen_light
         - switch.laundry_room_light
+        - switch.mantle_bookcase
         - switch.master_bath_fan
         - switch.master_bath_light
         - switch.porch_light
+        - switch.sink_light
         - switch.sonoff_family_room_av
         - switch.sonoff_s31_zb  # zigbee router; can move if needed
         - switch.sonoff_treadmill
+        - switch.stair_railing
         - switch.stairway_light
-        
-        # These are hidden when Christmas mode is off.
-        #- switch.kitchen_christmas_tree
-        #- switch.mantle_bookcase
-        #- switch.stair_railing
       state_action:
         action: call-service
         service: floorplan.class_set
@@ -100,17 +117,16 @@ config:
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
         
-    # This is hidden when Christmas mode is off.
-    #- entity: binary_sensor.mantle_bookcase_mirror
-    #  tap_action:
-    #    action: call-service
-    #    service: switch.toggle
-    #    service_data:
-    #      entity_id: switch.mantle_bookcase
-    #  state_action:
-    #    action: call-service
-    #    service: floorplan.class_set
-    #    service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
+    - entity: binary_sensor.kitchen_light_mirror
+      tap_action:
+        action: call-service
+        service: switch.toggle
+        service_data:
+          entity_id: switch.kitchen_light
+      state_action:
+        action: call-service
+        service: floorplan.class_set
+        service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
     # Ceiling fans
     - entities:

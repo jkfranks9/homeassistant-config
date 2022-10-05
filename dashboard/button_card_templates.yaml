@@ -214,6 +214,7 @@ motion_button:
 #     Environment Button Card     #
 #=================================#
 
+# This is a base template for use by other templates (below) that deal with environmental controls/sensors.
 environment_button:
   variables:
     color: 'var(--card-background-color)'
@@ -458,13 +459,56 @@ temperature:
             - padding: 0 2px
             - background-color: var(--bar-low-color)
 
+#==========================#
+#     Operational Card     #
+#==========================#
+
+# This is a base template for use by other templates (below) that operate various devices.
+operational_button:
+  show_icon: true
+  show_state: true
+    
+  styles:
+    card:
+      - background-color: var(--card-background-color)
+      - padding: 2px 0 5px 2px
+      - display: flex
+      - width: fit-content
+      - border: 1px solid gray
+      - margin-right: 15px
+    grid:
+      - display: contents
+    img_cell:
+      - display: contents
+    icon:
+      - position: absolute
+      - color: silver
+      - width: 60%
+      - left: 10px
+      - display: block
+      - z-index: 10
+    state:
+      - font-size: 350%
+      - margin-top: '-10px'
+      - color: var(--card-background-color)
+      - z-index: 0
+    name:
+      - color: var(--primary-text-color)
+      - font-size: 0.75em
+      - font-weight: 500
+      - position: absolute
+      - transform: rotate(90deg)
+      - transform-origin: right top
+      - bottom: 0
+      - right: 0
+      - z-index: 10
+
 #===============================#
 #     HVAC Vent Button Card     #
 #===============================#
 
 hvac_vent:
-  show_icon: true
-  show_state: true
+  template: operational_button
       
   state_display: |-
     [[[ 
@@ -485,40 +529,6 @@ hvac_vent:
           - color: var(--paper-item-icon-color)
     
   styles:
-    card:
-      - background-color: var(--card-background-color)
-      - padding: 2px 0 5px 2px
-      - display: flex
-      - width: fit-content
-      - border: 1px solid gray
-      - margin-right: 15px
-    grid:
-      - display: contents
-    img_cell:
-      - display: contents
-    icon:
-      - position: absolute
-      - color: silver
-      - width: 70%
-      - left: 10px
-      - display: block
-      - z-index: 10
-    state:
-      - font-size: 350%
-      - margin-top: '-10px'
-      - color: var(--card-background-color)
-      - z-index: 0
-    name:
-      - color: var(--primary-text-color)
-      - font-size: 0.75em
-      - font-weight: 500
-      - position: absolute
-      - transform: rotate(90deg)
-      - transform-origin: right top
-      - bottom: 0
-      - right: 0
-      - z-index: 10
-      
     custom_fields:
       pos:
         - font-size: 0.6em
@@ -538,163 +548,114 @@ hvac_vent:
           return `<div style="line-height:1">${entity.attributes.current_position}%</div>`;
       ]]]
 
-#================================#
-#     Fan Basics Button Card     #
-#================================#
+#=================================#
+#     Ceiling Fan Button Card     #
+#=================================#
 
-fan_basics:
-  size: 70%
+ceiling_fan:
+  template: operational_button
+
+  variables:
+    light_entity: ''
   
-  hold_action:
+  # Use the previously set fan speed.
+  tap_action:
+    action: toggle
+  
+  # Allow the fan speed to be set.
+  double_tap_action:
     action: more-info
   
-  styles:
-    card:
-      - padding: 0.1em
-    name:
-      - font-size: 0.9em
-
-#================================#
-#     Fan Option Button Card     #
-#================================#
-        
-fan_option:
-  template: fan_basics
-  
-  show_icon: false
-  aspect_ratio: 1/0.7
-  
-  tap_action:
-    action: call-service
-    service: script.set_fan_to_speed
-    service_data:
-      entity_id: '[[[ return entity.entity_id ]]]'
-      speed: '[[[ return variables.set_value ]]]'
-  
-  state:
-    - operator: default
-      styles:
-        card:
-          - background-color: var(--paper-card-background-color)
-          - color: var(--primary-text-color)
+  # Access the light controls.
+  hold_action:
+    action: more-info
+    entity: |
+      [[[
+        return variables.light_entity;
+      ]]]
+      
+  # Bogus state display, needed to display the icon. It's hidden by stying.
+  state_display: |-
+    [[[ 
+      return "00°" 
+    ]]]
     
-    - operator: template
-      value: >-
-        [[[ return (entity.attributes.percentage||0) >= variables.range_start
-        && (entity.attributes.percentage||0) <= variables.range_stop ]]]
-      styles:
-        card:
-          - background-color: var(--paper-item-icon-active-color)
-          - color: var(--primary-text-color)
-  
-  styles:
-    card:
-      - border-radius: 20%
-
-#===================================#
-#     Fan Container Button Card     #
-#===================================#
-  
-fan_container:
-  template: fan_basics
-  
-  variables:
-    option1_name: 'Off'
-    option1_set_value: 0
-    option1_range_start: 0
-    option1_range_stop: 0
-    option2_name: Low
-    option2_set_value: 33
-    option2_range_start: 1
-    option2_range_stop: 50
-    option3_name: Med
-    option3_set_value: 66
-    option3_range_start: 51
-    option3_range_stop: 75
-    option4_name: High
-    option4_set_value: 99
-    option4_range_start: 76
-    option4_range_stop: 100
-  
-  color_type: icon
-  
-  tap_action:
-    action: none
-  
   state:
-    - value: 'off'
-      icon: 'mdi:fan-off'
-    
     - value: 'on'
       spin: true
-  
+      styles:
+        icon:
+          - color: var(--paper-item-icon-active-color)
+    
+    - value: 'off'
+      icon: mdi:fan-off
+      styles:
+        icon:
+          - color: var(--paper-item-icon-color)
+    
   styles:
-    grid:
-      - grid-template-areas: '"i opt1 opt2 opt3 opt4" "n opt1 opt2 opt3 opt4"'
-      - grid-template-columns: 1fr 1fr 1fr 1fr 1fr
+    custom_fields:       
+      light:
+        - z-index: 2
+        - position: absolute
+        - bottom: 0
+        - left: 0
+        - display: flex
+      speed:
+        - font-size: 0.6em
+        - position: absolute
+        - bottom: 1px
+        - right: 32px
+        - z-index: 1
     
-    custom_fields:
-      opt1:
-        - margin: 0.1em
-      
-      opt2:
-        - margin: 0.1em
-      
-      opt3:
-        - margin: 0.1em
-      
-      opt4:
-        - margin: 0.1em
+  custom_fields:
+    
+    # This custom field embeds an icon to control the fan light.
+    light:
+      card:
+        type: 'custom:button-card'
+        entity: '[[[ return variables.light_entity ]]]'
+        show_icon: true
+        icon: 'mdi:ceiling-fan-light'
+        show_name: false
+        show_state: true
+        
+        styles:
+          grid:
+            - grid-template-areas: '"i"'
+          img_cell:
+            - display: contents
+          card:
+            - padding: 0
+            - padding-left: 2px
+            #- background-color: 'var(--bar-low-color)'
+          icon:
+            #- color: |
+            #    [[[
+            #      if (states[variables.light_entity].state == 'on')
+            #        return 'var(--paper-item-icon-active-color)'
+            #      else
+            #        return 'var(--paper-item-icon-color)'
+            #    ]]]
+            - width: 28px
+            - height: 25px
+            - margin: -4px -3px 0 -4px
   
-  custom_fields:    
-    opt1:
-      card:
-        type: 'custom:button-card'
-        template: fan_option
-        
-        variables:
-          set_value: '[[[ return variables.option1_set_value ]]]'
-          range_start: '[[[ return variables.option1_range_start ]]]'
-          range_stop: '[[[ return variables.option1_range_stop ]]]'
-        
-        entity: '[[[ return entity.entity_id ]]]'
-        name: '[[[ return variables.option1_name ]]]'
+          # Hide the state display. State is needed to enable a functioning icon.
+          state:
+            - font-size: 1%
+            - color: var(--card-background-color)
+            - z-index: 0
     
-    opt2:
-      card:
-        type: 'custom:button-card'
-        template: fan_option
-        
-        variables:
-          set_value: '[[[ return variables.option2_set_value ]]]'
-          range_start: '[[[ return variables.option2_range_start ]]]'
-          range_stop: '[[[ return variables.option2_range_stop ]]]'
-        
-        entity: '[[[ return entity.entity_id ]]]'
-        name: '[[[ return variables.option2_name ]]]'
-    
-    opt3:
-      card:
-        type: 'custom:button-card'
-        template: fan_option
-        
-        variables:
-          set_value: '[[[ return variables.option3_set_value ]]]'
-          range_start: '[[[ return variables.option3_range_start ]]]'
-          range_stop: '[[[ return variables.option3_range_stop ]]]'
-        
-        entity: '[[[ return entity.entity_id ]]]'
-        name: '[[[ return variables.option3_name ]]]'
-    
-    opt4:
-      card:
-        type: 'custom:button-card'
-        template: fan_option
-        
-        variables:
-          set_value: '[[[ return variables.option4_set_value ]]]'
-          range_start: '[[[ return variables.option4_range_start ]]]'
-          range_stop: '[[[ return variables.option4_range_stop ]]]'
-        
-        entity: '[[[ return entity.entity_id ]]]'
-        name: '[[[ return variables.option4_name ]]]'
+    # This custom field displays the fan speed.
+    speed: |
+      [[[
+        if (entity.state == 'off')
+          return `<div style="line-height:1">Off</div>`;
+        else if (entity.attributes.percentage == 33)
+          return `<div style="line-height:1">Low</div>`;
+        else if (entity.attributes.percentage == 66)
+          return `<div style="line-height:1">Med</div>`;
+        else
+          return `<div style="line-height:1">High</div>`;
+      ]]]

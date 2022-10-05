@@ -97,11 +97,13 @@ logs:
   homeassistant.components.scene:                               info
   homeassistant.components.shell_command:                       info
   homeassistant.components.system_log.external:                 info # This is for logs in automations and scripts.
+  homeassistant.components.tplink:                              info
   homeassistant.components.webhook:                             info
   homeassistant.components.websocket_api:                       info
   homeassistant.components.websocket_api.http.connection:       info
 
   # Custom components
+  custom_components.alexa_media:                       info
   custom_components.hacs:                              warning
   custom_components.kodi.media_player:                 info
   custom_components.epson_projector:                   info
@@ -114,11 +116,11 @@ logs:
   aioesphomeapi.connection:                info
   androidtv.adb_manager.adb_manager_async: info
   googleapiclient.discovery:               info
+  kasa:                                    info
   pygatt.backends.gatttool.gatttool:       warning
   pylutron_caseta:                         info
   pyopenuv.client:                         warning
   sucks:                                   info
-  kasa:                                    info
 
   sleekxmppfs.xmlstream.xmlstream: info
   sleekxmppfs.stanza.rootstanza:   info

@@ -20,6 +20,17 @@ turn_off_extended_away_mode:
       data:
         datetime: "{{ (now() + timedelta(minutes = 2)).strftime('%Y-%m-%d %H:%M:%S') }}"
 
+# This is a failsafe to make sure the Jon Away flag gets reset when I return home. This should happen
+# when the Blue Charm beacon triggers Open Garage Door, but the beacon can be twitchy.
+reset_jon_away:
+  alias: Reset Jon Away
+  
+  sequence:
+    - delay: "00:10:00"
+    
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.jon_away
+
 #==========================#
 #     Computer Control     #
 #==========================#

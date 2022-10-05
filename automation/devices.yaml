@@ -171,6 +171,13 @@
   
   action:
     
+    # The Jon Away flag needs to get reset now that I'm home. This should happen when the Blue Charm beacon 
+    # triggers Open Garage Door, but the beacon can be twitchy. So this is a failsafe.
+    # Don't wait for the script, because it contains a several minute delay.
+    - service: script.turn_on
+      target:
+        entity_id: script.reset_jon_away
+    
     # Turn on automations that were possibly turned off by Leave Home, and trigger them.
     - service: automation.turn_on
       entity_id: automation.turn_on_christmas_lights
@@ -303,6 +310,10 @@
             entity_id: automation.turn_on_guest_lights_sunset
           - service: automation.turn_off
             entity_id: automation.turn_on_office_light
+    
+          # Indicate I'm  away.
+          - service: input_boolean.turn_on
+            entity_id: input_boolean.jon_away
       
       # Must be sunset.
       default:
@@ -334,6 +345,13 @@
         - device_tracker.life360_jon_franks
       from: 'not_home'
       to: 'home'
+  
+  # We only need to trigger on one of the trackers, not all of them, so use the state of the Close House
+  # automation to weed out all but the first.
+  condition:
+    - condition: state
+      entity_id: automation.close_house
+      state: 'on'
   
   action:
     
@@ -557,21 +575,34 @@
 - alias: Open Garage Door
   id: 'open_garage_door'
   
+  # Trigger on the Blue Charm beacon connecting to the house or garage.
   trigger:
-    - platform: state
-      entity_id: sensor.blue_charm_beacon
-      from: 'not_home'
-      to: 'garage'
+    #- platform: state
+    #  entity_id: sensor.blue_charm_beacon
+    #  from: 'not_home'
+    #  to:
+    #    - 'garage'
+    #    - 'house'
     
     - platform: state
-      entity_id: sensor.blue_charm_beacon
+      entity_id: person.jon
       from: 'not_home'
-      to: 'house'
+      to: 'home'
   
+  # I only want this to happen when I return home. Not, for example, walking to the mailbox with my keys in my pocket.
   condition:
+    
+    # Make sure I'm home ... this should happen as soon as I enter the home zone.
     - condition: state
       entity_id: person.jon
       state: 'home'
+    
+    # Make sure the Jon Away flag is on. This turns on when I leave home, so should be on now.
+    - condition: state
+      entity_id: input_boolean.jon_away
+      state: 'on'
+    
+    # Finally, ensure the door is actually closed before opening it.
     - condition: template
       value_template: "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
   
@@ -579,6 +610,11 @@
     - service: switch.turn_on
       target:
         entity_id: switch.shelly1_garage_north
+    
+    # Now reset the flag. Note that if this automation doesn't run for some reason, the flag is reset by a failsafe script
+    # after a delay (called by Open House). I REALLY love this kind of twitchy timing!
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.jon_away
 
 # Open garage door when family member(s) arrive home, and I'm home.
 - alias: Open Garage Door For Family
@@ -922,9 +958,12 @@
     - platform: state
       entity_id: binary_sensor.dryer_humidity_falling
       to: 'on'
+      id: humidity
+    
     - platform: state
       entity_id: binary_sensor.dryer_temperature_falling
       to: 'on'
+      id: temperature
   
   condition:
     - condition: state
@@ -933,8 +972,14 @@
   
   action:
     - delay: '00:00:01'
+    
     - service: input_boolean.turn_on
       entity_id: input_boolean.dryer_almost_done
+    
+    - service: system_log.write
+      data:
+        message: "Dryer almost done: {{ trigger.id }}"
+        level: info
 
 - alias: Turn Off Dryer Running
   id: turn_off_dryer_running
@@ -994,12 +1039,14 @@
         - service: notify.dryer_trend_sensors
           data_template:
             message: >
-             {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Humidity {{ trigger.to_state.attributes.gradient }}
+              {% set hum = states('sensor.dryer_humidity') %}
+              {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Humidity ({{ hum }}) {{ trigger.to_state.attributes.gradient }}
       else:
         - service: notify.dryer_trend_sensors
           data_template:
             message: >
-             {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Temperature {{ trigger.to_state.attributes.gradient }}
+              {% set temp = states('sensor.dryer_temperature') %}
+              {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Temperature ({{ temp }}) {{ trigger.to_state.attributes.gradient }}
 
 #=====================#
 #     Zigbee2MQTT     #
@@ -1136,7 +1183,7 @@
   
   action:
     - delay: 
-        seconds: "{{ range(2, 15) | random }}"    
+        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_on
       entity_id: input_boolean.adults_home
 
@@ -1164,7 +1211,7 @@
   
   action:
     - delay: 
-        seconds: "{{ range(2, 15) | random }}"    
+        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_off
       entity_id: input_boolean.adults_home
 
@@ -1194,7 +1241,7 @@
   
   action:
     - delay: 
-        seconds: "{{ range(2, 15) | random }}"    
+        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_on
       entity_id: input_boolean.children_home
 
@@ -1217,6 +1264,38 @@
   
   action:
     - delay: 
-        seconds: "{{ range(2, 15) | random }}"    
+        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_off
       entity_id: input_boolean.children_home
+
+#======================#
+#     Echo Devices     #
+#======================#
+
+# Mute master bedroom echo.
+- alias: Mute Master Bedroom Echo
+  id: 'mute_master_bedroom_echo'
+  
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sleeptime
+      from: 'off'
+      to: 'on'
+  
+  action:
+    - service: switch.turn_on
+      entity_id: switch.master_bedroom_echo_do_not_disturb_switch
+
+# Unmute master bedroom echo.
+- alias: Unmute Master Bedroom Echo
+  id: 'unmute_master_bedroom_echo'
+  
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sleeptime
+      from: 'on'
+      to: 'off'
+  
+  action:
+    - service: switch.turn_off
+      entity_id: switch.master_bedroom_echo_do_not_disturb_switch

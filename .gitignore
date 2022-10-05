@@ -40,15 +40,23 @@
 !dashboard/dash_reminders/cards/office
 !dashboard/dash_reminders/cards/yard
 !dashboard/dash_reminders/views
+!dashboard/ui_lovelace_minimalist/
+!dashboard/ui_lovelace_minimalist/cards
+!dashboard/ui_lovelace_minimalist/cards/home
+!dashboard/ui_lovelace_minimalist/views
 !script
 !sensor
 !template
+!ui_lovelace_minimalist/
+!ui_lovelace_minimalist/custom_actions/
+!ui_lovelace_minimalist/dashboard/
 !
 !
 
 # Ignore folders.
 .cloud
 .storage
+blueprints/automation/ui_lovelace_minimalist
 custom_components
 www
 zigbee2mqtt

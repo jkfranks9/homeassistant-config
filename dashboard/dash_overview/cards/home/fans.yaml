@@ -4,20 +4,26 @@
 
 type: custom:stack-in-card
 title: Ceiling Fans
-mode: vertical
+mode: horizontal
 cards:
   
   - type: 'custom:button-card'
-    template: fan_container
+    template: ceiling_fan
     entity: fan.family_room_fan
-    name: Family Room
+    name: Family
+    variables:
+      light_entity: light.family_room_fan
   
   - type: 'custom:button-card'
-    template: fan_container
+    template: ceiling_fan
     entity: fan.office_fan
     name: Office
+    variables:
+      light_entity: light.office_fan
   
   - type: 'custom:button-card'
-    template: fan_container
+    template: ceiling_fan
     entity: fan.theater_fan
     name: Theater
+    variables:
+      light_entity: light.theater_fan

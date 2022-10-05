@@ -11,5 +11,3 @@ cards:
   - type: entity
     entity: input_datetime.extended_away_end
     initial: '1953-10-30 00:00'
-  - type: entity
-    entity: input_boolean.extended_away_mode

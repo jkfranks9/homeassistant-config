@@ -45,6 +45,10 @@ adults_home:
 children_home:
   name: Children Home
 
+# Jon away.
+jon_away:
+  name: Jon Away
+
 #============================#
 #     Kodi Movie Control     #
 #============================#

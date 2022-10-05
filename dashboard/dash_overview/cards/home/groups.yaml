@@ -1,6 +1,6 @@
-#===================================================#
-#     Groups Lighting Card (Christmas Mode Off)     #
-#===================================================#
+#==============================#
+#     Groups Lighting Card     #
+#==============================#
 
 type: custom:stack-in-card
 title: Light Groups
@@ -19,21 +19,59 @@ cards:
           entities_title: Office Lights
           entities_group: light.office_lights
   
-      - type: 'custom:button-card'
-        template: light_group_button_name
-        name: Family
-        entity: light.family_room_lights
-        variables:
-          entities_title: Family Room Lights
-          entities_group: light.family_room_lights
-      
-      - type: 'custom:button-card'
-        template: light_group_button_name
-        name: Kitchen
-        entity: light.kitchen_lights
-        variables:
-          entities_title: Kitchen Lights
-          entities_group: light.kitchen_lights
+      # Display family room lights according to Christmas mode.
+      - type: conditional
+        conditions:
+          - entity: input_boolean.christmas_mode
+            state_not: 'off'
+        card:  
+          type: 'custom:button-card'
+          template: light_group_button_name
+          name: Family
+          entity: light.family_room_lights
+          variables:
+            entities_title: Family Room Lights
+            entities_group: light.family_room_lights
+  
+      - type: conditional
+        conditions:
+          - entity: input_boolean.christmas_mode
+            state_not: 'on'
+        card:  
+          type: 'custom:button-card'
+          template: light_group_button_name
+          name: Family
+          entity: light.family_room_christmas_lights
+          variables:
+            entities_title: Family Room Lights
+            entities_group: light.family_room_christmas_lights
+  
+      # Display kitchen lights according to Christmas mode.
+      - type: conditional
+        conditions:
+          - entity: input_boolean.christmas_mode
+            state_not: 'off'
+        card:  
+          type: 'custom:button-card'
+          template: light_group_button_name
+          name: Kitchen
+          entity: light.kitchen_lights
+          variables:
+            entities_title: Kitchen Lights
+            entities_group: light.kitchen_lights
+  
+      - type: conditional
+        conditions:
+          - entity: input_boolean.christmas_mode
+            state_not: 'on'
+        card:  
+          type: 'custom:button-card'
+          template: light_group_button_name
+          name: Kitchen
+          entity: light.kitchen_christmas_lights
+          variables:
+            entities_title: Kitchen Lights
+            entities_group: light.kitchen_christmas_lights
       
       - type: 'custom:button-card'
         template: light_group_button_name

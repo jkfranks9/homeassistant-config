@@ -253,7 +253,5 @@ shell_command:
   concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
   concat_auto_log_files:          'python /config/python/concat_logs.py /config/triggered_automations'
   concat_scripts_log_files:       'python /config/python/concat_logs.py /config/triggered_scripts'
-  copy_floorplan_christmas:       python /config/python/copy_floorplan_christmas.py
-  copy_floorplan_normal:          python /config/python/copy_floorplan_normal.py
   delete_junk_log_files:          'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
   reboot_nut_service:             bash /config/reboot_nut_server.sh

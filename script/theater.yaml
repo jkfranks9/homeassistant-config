@@ -15,6 +15,22 @@ open_cinema:
     - service: script.turn_on
       entity_id: script.set_theater_idle
     
+    # Say something appropriate.
+    - service: notify.alexa_media
+      data:
+        message: "{{ ['Cinema is open for business!', 
+                      'Enjoy the show!', 
+                      'Theater is ready!',
+                      'TV time!',
+                      'Is the popcorn ready?',
+                      'Don''t forget your drink!'
+                     ] | random }}"
+        target:
+          - media_player.family_room_echo
+          - media_player.theater_echo
+        data:
+          type: tts
+    
     # Turn on the fan if needed.
     - service: script.turn_on
       entity_id: script.turn_on_theater_fan
@@ -171,8 +187,13 @@ turn_on_theater_fan:
 #     Downstairs Lights      #
 #============================#
 
-# Turn on some downstairs lights if it's dark enough, or conditionally turn them off. This is used by the open/close cinema scripts,
-# and the 'take a break' script, because we might need to go downstairs at these times.
+# Turn on some downstairs lights if it's dark enough, or conditionally turn them off. This is used as follows,
+# either directly or via the Set Theater Idle script:
+#
+# - The Open Cinema script (turn on, delay, turn off)
+# - The Close Cinema script (turn on)
+# - The Alexa Break Time routine, which calls set_theater_idle (turn on)
+# - The Restore Lighting On Resume script (turn off)
 change_some_downstairs_lights:
   alias: Change Some Downstairs Lights
   fields:
@@ -226,6 +247,9 @@ change_some_downstairs_lights:
             - light.stairway_light
             - light.family_room_lamp
             - light.hallway_lamp
+            
+            # This light is turned on by the Alexa Break Time routine, not Home Assistant.
+            - light.island_light
 
 #==============================#
 #     Watch Shield TV App      #
@@ -442,15 +466,9 @@ resume_worker:
       data:
         command: Play
         device: "{{ device }}"
-  
-    # Establish 'dark' theater lighting.
-    - service: script.turn_on
-      entity_id: script.set_theater_dark
     
-    # Turn off some downstairs lights.
-    - service: script.change_some_downstairs_lights
-      data:
-        turn_on: false
+    # Restore theater lighting.
+    - service: script.restore_lighting_on_resume
 
 # Call the worker script with the appropriate device based on the Harmony activity.
 # Note: The turntable cannot be controlled, so all we do is turn on some lights.
@@ -492,6 +510,21 @@ resume_cinema:
           data:
             message: Current activity does not support resume command.
             level: warning
+
+# Restore the theater lighting on resume (called by the restore automation and script).
+restore_lighting_on_resume:
+  alias: Restore Lighting On Resume
+  
+  sequence:
+  
+    # Establish 'dark' theater lighting.
+    - service: script.turn_on
+      entity_id: script.set_theater_dark
+    
+    # Turn off some downstairs lights.
+    - service: script.change_some_downstairs_lights
+      data:
+        turn_on: false
 
 #============================#
 #     Kodi Movie Control     #

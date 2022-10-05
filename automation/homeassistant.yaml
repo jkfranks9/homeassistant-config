@@ -39,7 +39,6 @@
                             'set_minimum_attic_temperature', 
                             'set_minimum_garage_temperature', 
                             'set_minimum_outdoor_temperature',
-                            'trigger_floorplan_christmas_elements',
                             'update_openuv'
                            ] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
@@ -85,6 +84,7 @@
                             'popup_light_group',
                             'position_hvac_vent',
                             'reset_smart_bulbs', 
+                            'restore_lighting_on_resume',
                             'resume_cinema',
                             'resume_worker', 
                             'set_datetime_offset_days', 
@@ -351,22 +351,3 @@
       data:
         message: "notification: '{{ trigger.payload }}'"
         level: info
-
-#========================#
-#     Christmas Mode     #
-#========================#
-
-# I want to only show certain elements on the floorplan at Christmas time. This requires two different
-# floorplan image and dashboard files. When Christmas mode changes, copy the appropriate files.
-- alias: Trigger Floorplan Christmas Elements
-  id: 'trigger_floorplan_christmas_elements'
-  trigger:
-    - platform: state
-      entity_id: input_boolean.christmas_mode
-  action:
-    - choose:
-      - conditions: "{{ is_state('input_boolean.christmas_mode', 'on') }}"          
-        sequence:
-          - service: shell_command.copy_floorplan_christmas
-      default:
-        - service: shell_command.copy_floorplan_normal

@@ -630,7 +630,7 @@
     - service: notify.mobile_app_jon_galaxy
       data:
         title: 'Action required:'
-        message: 'Dryer has finished, or will be soon.'
+        message: 'Dryer has probably finished.'
         data:
           channel: Home Assistant
     - service: notify.alexa_media
@@ -639,7 +639,7 @@
           - media_player.everywhere
         data:
           type: announce
-        message: 'Dryer has finished, or will be soon.'
+        message: 'Dryer has probably finished.'
 
 # Zigbee device joined 
 - alias: Notify Zigbee Device Joined

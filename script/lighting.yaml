@@ -7,6 +7,20 @@ bedtime:
   alias: Bedtime
   sequence:
     
+    # Say something nice.
+    - service: notify.alexa_media
+      data:
+        message: "{{ ['Good night!', 
+                      'Good night, master!', 
+                      'Sweet dreams!',
+                      'See you in the morning!'
+                     ] | random }}"
+        target:
+          - media_player.family_room_echo
+          - media_player.master_bedroom_echo
+        data:
+          type: tts
+    
     # Turn on the master bedroom lamp.
     - service: light.turn_on
       entity_id: light.master_bedroom_lamp
@@ -979,7 +993,7 @@ popup_light_group:
     - service: browser_mod.popup
       data_template:
         browser_id: "{{ browser_id }}"
-        title: "{{ title }}"
+        title: "{{ state_attr(light_group, 'friendly_name') }}"
         content:
           type: entities
           show_header_toggle: true

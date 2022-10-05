@@ -1,0 +1,13 @@
+#==================#
+#     Home Tab     #
+#==================#
+
+title: Home
+path: 0
+icon: mdi:home
+#panel: true
+cards:
+  - !include /config/dashboard/ui_lovelace_minimalist/cards/home/groups.yaml
+  - !include /config/dashboard/ui_lovelace_minimalist/cards/home/fans.yaml
+  - !include /config/dashboard/ui_lovelace_minimalist/cards/home/environment.yaml
+  - !include /config/dashboard/ui_lovelace_minimalist/cards/home/presence.yaml

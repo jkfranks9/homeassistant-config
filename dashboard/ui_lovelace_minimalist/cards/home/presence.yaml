@@ -1,0 +1,54 @@
+#=======================#
+#     Presence Card     #
+#=======================#
+
+type: custom:stack-in-card
+title: Presence
+mode: vertical
+cards:
+
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+  
+      - type: 'custom:button-card'
+        template: card_input_boolean
+        entity: input_boolean.adults_home
+        variables:
+          ulm_name_tap_action: 'none'
+          ulm_card_input_boolean_name: Adults
+          ulm_card_input_boolean_icon: mdi:human-male-female
+      
+      - type: 'custom:button-card'
+        template: card_input_boolean
+        entity: input_boolean.children_home
+        variables:
+          ulm_name_tap_action: 'none'
+          ulm_card_input_boolean_name: Children
+          ulm_card_input_boolean_icon: mdi:human-child
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+  
+      - type: 'custom:button-card'
+        template: card_person
+        entity: person.jon
+        icon: mdi:human-male
+        variables:
+          ulm_name_tap_action: 'none'
+          ulm_card_person_entity: person.jon
+      
+      - type: 'custom:button-card'
+        template: card_person
+        entity: person.mike
+        icon: mdi:human-male
+        variables:
+          ulm_card_person_entity: person.mike
+      
+      - type: 'custom:button-card'
+        template: card_person
+        entity: person.sarah
+        icon: mdi:human-female
+        variables:
+          ulm_card_person_entity: person.sarah

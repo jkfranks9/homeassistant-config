@@ -37,10 +37,10 @@
       device_class: light
       state: "{{ is_state('switch.hallway_lights', 'on') }}"
     
-    - name: 'Mantle Bookcase Mirror'
-      unique_id: mantle_bookcase_mirror
+    - name: 'Kitchen Light Mirror'
+      unique_id: kitchen_light_mirror
       device_class: light
-      state: "{{ is_state('switch.mantle_bookcase', 'on') }}"
+      state: "{{ is_state('switch.kitchen_light', 'on') }}"
     
     - name: 'Snack Light Mirror'
       unique_id: snack_light_mirror

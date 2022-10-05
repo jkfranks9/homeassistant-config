@@ -1,0 +1,26 @@
+#==========================#
+#     Environment Card     #
+#==========================#
+
+type: custom:stack-in-card
+title: Environment
+mode: horizontal
+cards:
+
+  - type: "custom:button-card"
+    template: card_thermostat
+    entity: climate.downstairs
+    variables:
+      ulm_card_thermostat_enable_controls: true
+      ulm_card_thermostat_enable_background_color: true
+      ulm_card_thermostat_enable_display_temperature: true
+      ulm_card_thermostat_enable_popup: true
+      ulm_card_thermostat_preset_mode: true
+
+  - type: "custom:button-card"
+    template: card_thermostat
+    entity: climate.upstairs
+    variables:
+      ulm_card_thermostat_enable_controls: true
+      ulm_card_thermostat_enable_background_color: true
+      ulm_card_thermostat_enable_display_temperature: true

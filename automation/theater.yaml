@@ -5,6 +5,7 @@
 # Make the theater dark when the Shield TV resumes.    
 - alias: Resume Cinema
   id: resume_cinema
+  
   trigger:
     - platform: state
       entity_id: media_player.shield_tv
@@ -14,16 +15,10 @@
       to: 'playing'
       for: 00:00:02
   
-  action:
-  
-    # Establish 'dark' theater lighting.
-    - service: script.turn_on
-      entity_id: script.set_theater_dark
+  action:  
     
-    # Turn off some downstairs lights.
-    - service: script.change_some_downstairs_lights
-      data:
-        turn_on: false
+    # Restore theater lighting.
+    - service: script.restore_lighting_on_resume
 
 #======================#
 #     Cinema Close     #
