@@ -114,16 +114,6 @@ proximity:
 
 mqtt:
   
-  switch:
-    
-    # Zigbee2MQTT
-    - name: Zigbee2MQTT Permit Join
-      state_topic: "zigbee2mqtt/bridge/info"
-      value_template: "{{ value_json.permit_join | lower }}"
-      command_topic: "zigbee2mqtt/bridge/request/permit_join"
-      payload_on: "true"
-      payload_off: "false"
-  
   sensor:
     
     # Room presence ... Unfortunately, the MQTT topic for beacon devices includes the name of the scanner closest to the beacon,
@@ -218,6 +208,7 @@ thermal_comfort:
 http:
   use_x_forwarded_for: true
   trusted_proxies: 
+    - 172.30.32.0/24
     - 172.30.33.0/24
 
 # System log error detection

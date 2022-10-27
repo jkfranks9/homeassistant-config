@@ -1,0 +1,27 @@
+#===========================#
+#     Last Changed Card     #
+#===========================#
+
+type: entities
+title: Last Changed
+show_header_toggle: false
+entities:
+  - entity: sensor.ups_last_changed
+    name: UPS
+    icon: mdi:calendar
+  
+  - entity: sensor.garage_door_north_last_changed
+    name: Garage North
+    icon: mdi:calendar
+  
+  - entity: sensor.garage_door_south_last_changed
+    name: Garage South
+    icon: mdi:calendar
+  
+  - entity: sensor.treadmill_last_changed
+    name: Treadmill
+    icon: mdi:calendar
+  
+  - entity: sensor.washer_last_changed
+    name: Washer
+    icon: mdi:calendar

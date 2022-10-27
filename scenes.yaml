@@ -19,6 +19,7 @@
   name: Non Master Lights Out
   entities:
     light.master_bath_light:             'off'
+    light.master_bath_vanity_lamp:       'off'
     light.downstairs_common_lights:      'off'
     light.downstairs_guest_suite_lights: 'off'
     light.family_room_lights:            'off'
@@ -38,6 +39,7 @@
   name: Adult Bedtime Lights Out
   entities:
     light.master_bath_light:        'off'
+    light.master_bath_vanity_lamp:  'off'
     light.downstairs_common_lights: 'off'
     light.family_room_lights:       'off'
     light.kitchen_lights:           'off'
@@ -58,6 +60,7 @@
   entities:
     light.stairway_light:           'off'
     light.master_bath_light:        'off'
+    light.master_bath_vanity_lamp:  'off'
     light.guest_bath_light:         'off'
     light.guest_bedroom_lamp:       'off'
     light.guest_bedroom_lamp_2:     'off'
@@ -112,12 +115,17 @@
     light.dining_room_hutch: 'off'
     light.foyer_hutch:       'off'
 
-#======================#
-#     Ceiling Fans     #
-#======================#
+#===============================#
+#     Ceiling and Bath Fans     #
+#===============================#
 - id: 'fans_off'
   name: Fans Off
   entities:
-    fan.family_room_fan:  'off'
-    fan.office_fan:       'off'
-    fan.theater_fan:      'off'
+    fan.family_room_fan:      'off'
+    fan.office_fan:           'off'
+    fan.theater_fan:          'off'
+    
+    switch.guest_bath_fan:    'off'
+    switch.master_bath_fan:   'off'
+    switch.upstairs_bath_fan: 'off'
+    

@@ -6,6 +6,9 @@
 - alias: Resume Cinema
   id: resume_cinema
   
+  trace:
+    stored_traces: 20
+
   trigger:
     - platform: state
       entity_id: media_player.shield_tv
@@ -129,6 +132,15 @@
       appl_name: HBO Max
       volume: 0.62
 
+# Hulu
+- alias: Initialize Hulu Volume
+  id: initialize_hulu_volume
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: Hulu
+      volume: 0.60
+
 # Kodi
 - alias: Initialize Kodi Volume
   id: initialize_kodi_volume
@@ -147,15 +159,6 @@
       appl_name: Netflix
       volume: 0.62
 
-# Pandora
-- alias: Initialize Pandora Volume
-  id: initialize_pandora_volume
-  use_blueprint:
-    path: theater/shield_app_volume.yaml
-    input:
-      appl_name: Pandora
-      volume: 0.54
-
 # Paramount Plus
 - alias: Initialize Paramount Plus Volume
   id: initialize_paramount_plus_volume
@@ -163,7 +166,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Paramount+
-      volume: 0.62
+      volume: 0.61
 
 # Peacock
 - alias: Initialize Peacock Volume
@@ -181,7 +184,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Youtube TV
-      volume: 0.61
+      volume: 0.62
 
 #   -- Harmony Activities --   #
 

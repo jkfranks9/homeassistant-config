@@ -1,0 +1,47 @@
+#================================#
+#     Doors and Windows Card     #
+#================================#
+
+type: custom:stack-in-card
+title: Doors & Windows
+mode: horizontal
+cards:
+  
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+  
+            - type: 'custom:button-card'
+              template: garage_door_button
+              entity: binary_sensor.shelly1_garage_north_contact
+              variables:
+                var_entity: switch.shelly1_garage_north
+                var_name: North
+          
+            - type: 'custom:button-card'
+              template: garage_door_button
+              entity: binary_sensor.shelly1_garage_south_contact
+              variables:
+                var_entity: switch.shelly1_garage_south
+                var_name: South
+          
+            - type: 'custom:button-card'
+              template: door_window_button
+              entity: binary_sensor.back_door_sensor_contact
+              variables:
+                var_name: Back
+                var_icon_prefix: mdi:door
+          
+            - type: 'custom:button-card'
+              template: door_window_button
+              entity: binary_sensor.guest_br_window_sensor_contact
+              variables:
+                var_name: Guest BR
+                var_icon_prefix: mdi:window

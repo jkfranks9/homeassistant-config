@@ -46,15 +46,16 @@ config:
         - light.theater_sconces
         - switch.attic_light
         - switch.hallway_lights
+        - switch.shield_tv
         - switch.snack_light
         - switch.stairway_light
+        - switch.theater_av
+        - switch.upstairs_bath_fan
+        - switch.upstairs_bath_tub_light
+        - switch.upstairs_bath_vanity_light
         - switch.upstairs_bedroom_light
         - switch.upstairs_bedroom_outlet
-        - switch.upstairs_bath_vanity_light
-        - switch.upstairs_bath_tub_light
-        - switch.upstairs_bath_fan
         - switch.utility_light
-        - switch.shield_tv
       state_action:
         action: call-service
         service: floorplan.class_set

@@ -61,11 +61,13 @@ sleeptime:
     - service: input_boolean.turn_on
       entity_id: input_boolean.sleeptime
     
-    # Also, turn off the master bedroom lamp and bath light.
+    # Also, turn off the master bedroom lamp and bath lights.
     - service: light.turn_off
       entity_id: light.master_bedroom_lamp
     - service: light.turn_off
       entity_id: light.master_bath_light
+    - service: light.turn_off
+      entity_id: light.master_bath_vanity_lamp
 
 # Turn on the bathroom light during the night.
 turn_on_bathroom_light:
@@ -88,9 +90,11 @@ turn_on_bathroom_light:
         kelvin: 2700
         brightness_pct: 20
     
-    # Turn on bath light.
+    # Turn on bath lights.
     - service: light.turn_on
       entity_id: light.master_bath_light
+    - service: light.turn_on
+      entity_id: light.master_bath_vanity_lamp
     
     # Wait a few minutes then turn off the bathroom flag.
     - delay: '00:05:00'
@@ -124,6 +128,8 @@ wakeup:
     
     - service: light.turn_off
       entity_id: light.master_bath_light
+    - service: light.turn_off
+      entity_id: light.master_bath_vanity_lamp
     
     # Turn off nighttime and sleeptime modes.
     - service: input_boolean.turn_off
@@ -393,10 +399,10 @@ establish_bedtime_environment:
                 # Close the upstairs guest bedroom vents.
                 - service: script.close_upstairs_br_vents
                 
-                # Turn on the master bath light as a night light, after a delay.
+                # Turn on the master bath vanity lamp as a night light, after a delay.
                 - delay: '00:20:00'
                 - service: light.turn_on
-                  entity_id: light.master_bath_light
+                  entity_id: light.master_bath_vanity_lamp
                   
                 # Disable the motion sensor automation, so the light remains on all night.
                 - service: automation.turn_off

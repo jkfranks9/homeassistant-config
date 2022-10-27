@@ -5,6 +5,7 @@
 # Projector lamp is getting old.
 - alias: Notify Projector Lamp Aging
   id: 'notify_projector_lamp_aging'
+  
   use_blueprint:
     path: notification/maint_above_notify.yaml
     input:
@@ -15,10 +16,13 @@
       threshold2: 100
       timer_entity: timer.projector_lamp_notification
       message: 'Epson projector lamp might need replacing soon.'
+      persistent: true
+      tag: 'projector_lamp'
 
 # Printer toner is getting low.
 - alias: Notify Printer Toner Low
   id: 'notify_printer_toner_low'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -29,10 +33,13 @@
       threshold2: 1
       timer_entity: timer.printer_toner_notification
       message: 'Printer toner might need replacing soon.'
+      persistent: true
+      tag: 'printer_toner'
 
 # Vacuum main brush is getting old.
 - alias: Notify Vacuum Main Brush Aging
   id: 'notify_vacuum_main_brush_aging'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -43,10 +50,13 @@
       threshold2: 1
       timer_entity: timer.vacuum_main_brush_notification
       message: 'Vacuum main brush might need replacing soon.'
+      persistent: true
+      tag: 'vac_main_brush'
 
 # Vacuum side brush is getting old.
 - alias: Notify Vacuum Side Brush Aging
   id: 'notify_vacuum_side_brush_aging'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -57,10 +67,13 @@
       threshold2: 1
       timer_entity: timer.vacuum_side_brush_notification
       message: 'Vacuum side brush might need replacing soon.'
+      persistent: true
+      tag: 'vac_side_brush'
 
 # Vacuum filter is getting old.
 - alias: Notify Vacuum Filter Aging
   id: 'notify_vacuum_filter_aging'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -71,6 +84,46 @@
       threshold2: 1
       timer_entity: timer.vacuum_filter_notification
       message: 'Vacuum filter might need replacing soon.'
+      persistent: true
+      tag: 'vac_filter'
+
+# Pool needs chlorine tabs.
+- alias: Notify Pool Needs Chlorine
+  id: 'notify_pool_needs_chlorine'
+  
+  # Trigger if the high/low temperatures in the next 3 days forecast are below 55 degrees. Below this the salt
+  # generator stops producing chlorine, so we need to add tabs.
+  #
+  # Note that the template below is tricky. The idea is to skip the first day of the forecast, because that's today.
+  # Then bump the count if both temps are below the minimum for the next 3 days. However, due to Jinja scoping rules, 
+  # a simple scalar value for the count doesn't work. So we start with an empty array, then add items to the array 
+  # for each day that has low temps. Finally, compare the number of items in the array. Kludge alert!
+  trigger:
+    - platform: template
+      value_template: >
+        {% set num_cold_days = namespace(count = []) %}
+        
+        {% for fc in state_attr('weather.openweathermap', 'forecast') %}
+          {% if loop.index0 > 0 and loop.index0 < 4 %}
+            {% if fc.temperature < 55 and fc.templow < 55 %}
+              {% set num_cold_days.count = num_cold_days.count + [1] %}
+            {% endif %}
+          {% endif %}            
+        {% endfor %}
+        
+        {{ (num_cold_days.count) | length == 3 }}
+  
+  action:    
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Action required:'
+        message: 'Pool might need chlorine tablets.'
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0
 
 #==========================================#
 #     Abnormal Condition Notifications     #
@@ -79,64 +132,87 @@
 # Vacuum did not run.
 - alias: Notify Vacuum Lazy
   id: 'notify_vacuum_lazy'
+  
   trigger:
     - platform: time
       at: '07:00:00'
+  
   condition:
     - condition: time
       weekday:
         - mon
+  
   action:
     - condition: state
       entity_id: input_boolean.vacuum_kicked_off
       state: 'off'
-    - service: script.throttle_mobile_notification
+    
+    - service: script.send_notification
       data:
-        timer_entity: timer.vacuum_lazy_notification
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'Vacuum did not run on time.'
-        channel: Home Assistant
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0
 
 # Vacuum probably stuck.
 - alias: Notify Vacuum Stuck
   id: 'notify_vacuum_stuck'
+  
   trigger:
     - platform: time
       at: '07:01:00'
+  
   condition:
     - condition: time
       weekday:
         - mon
+  
   action:
     - condition: numeric_state
       entity_id: sensor.ecovacs_battery
       below: 90
-    - service: script.throttle_mobile_notification
+    
+    - service: script.send_notification
       data:
-        timer_entity: timer.vacuum_stuck_notification
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'Vacuum appears to be stuck (or not charging).'
-        channel: Home Assistant
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0
 
 # Vacuum needs maintenance.
 - alias: Notify Vacuum Needs Maintenance
   id: 'notify_vacuum_needs_maintenance'
+  
   trigger:
     - platform: event
       event_type: system_log_event
       event_data:
         source: 'sleekxmppfs.basexmpp'
         level: 'ERROR'
+  
   condition:
     - condition: template
       value_template: "{{ 'error' in trigger.event.data.message }}"
-  action:
-    - service: script.throttle_mobile_notification
+  
+  action:    
+    - service: script.send_notification
       data:
-        timer_entity: timer.vacuum_needs_maintenance_notification
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'Vacuum needs maintenance.'
-        channel: Home Assistant
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0
 
 #===============================#
 #     Battery Notifications     #
@@ -145,6 +221,7 @@
 # Phone battery is too low.
 - alias: Notify Phone Battery Low
   id: 'notify_phone_battery_low'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -155,10 +232,12 @@
       threshold2: 1
       timer_entity: timer.phone_battery_notification
       message: 'Phone needs recharging.'
+      persistent: false
 
 # Tablet battery is too low.
 - alias: Notify Tablet Battery Low
   id: 'notify_tablet_battery_low'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -169,40 +248,74 @@
       threshold2: 1
       timer_entity: timer.tablet_battery_notification
       message: 'Tablet needs recharging.'
+      persistent: false
 
 # Guest bath motion detector battery is too low.
 - alias: Notify Guest Bath Motion Battery Low
   id: 'notify_guest_bath_motion_battery_low'
+  
   use_blueprint:
     path: notification/maint_binary_notify.yaml
     input:
       sensor_entity: binary_sensor.guest_bath_motion_detector_battery_low
-      timer_entity: timer.guest_bath_motion_detector_battery_notification
       message: 'Guest bath motion detector battery needs replacing.'
 
 # Laundry room motion detector battery is too low.
 - alias: Notify Laundry Room Motion Battery Low
   id: 'notify_laundry_room_motion_battery_low'
+  
   use_blueprint:
     path: notification/maint_binary_notify.yaml
     input:
       sensor_entity: binary_sensor.laundry_room_motion_detector_battery_low
-      timer_entity: timer.laundry_room_motion_detector_battery_notification
       message: 'Laundry room motion detector battery needs replacing.'
 
 # Master bath motion detector battery is too low.
 - alias: Notify Master Bath Motion Battery Low
   id: 'notify_master_bath_motion_battery_low'
+  
   use_blueprint:
     path: notification/maint_binary_notify.yaml
     input:
       sensor_entity: binary_sensor.master_bath_motion_detector_battery_low
-      timer_entity: timer.master_bath_motion_detector_battery_notification
       message: 'Master bath motion detector battery needs replacing.'
+
+# Back door sensor battery is too low.
+- alias: Notify Back Door Sensor Battery Low
+  id: 'notify_back_door_sensor_battery_low'
+  
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.back_door_sensor_battery
+      threshold1: 15
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.back_door_sensor_battery_notification
+      message: 'Back door sensor battery needs replacing.'
+      persistent: false
+
+# Guest BR window sensor battery is too low.
+- alias: Notify Guest BR Window Sensor Battery Low
+  id: 'notify_guest_br_window_sensor_battery_low'
+  
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.guest_br_window_sensor_battery
+      threshold1: 15
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.guest_br_window_sensor_battery_notification
+      message: 'Guest BR window sensor battery needs replacing.'
+      persistent: false
 
 # Porch battery powered sensor needs recharging.
 - alias: Notify Porch Sensor Battery Low
   id: 'notify_porch_sensor_battery_low'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -212,10 +325,28 @@
       threshold2: 3.24
       timer_entity: timer.porch_battery_notification
       message: 'Porch sensor battery needs recharging.'
+      persistent: false
+
+# Blue Charm Beacon battery is too low.
+- alias: Notify Blue Charm Beacon Battery Low
+  id: 'notify_blue_charm_beacon_battery_low'
+  
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor1_entity: sensor.blue_charm_battery_level
+      threshold1: 15
+      # Sensor/threshold 2 unused - this can never trigger
+      sensor2_entity: sensor.count_automations
+      threshold2: 1
+      timer_entity: timer.blue_charm_beacon_battery_notification
+      message: 'Blue Charm beacon battery needs replacing.'
+      persistent: false
 
 # Upstairs BR Vent 1 batteries are too low.
 - alias: Notify Upstairs BR Vent 1 Batteries Low
   id: 'notify_upstairs_br_vent_1_batteries_low'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -226,10 +357,12 @@
       threshold2: 1
       timer_entity: timer.upstairs_br_vent_1_battery_notification
       message: 'Upstairs BR vent 1 batteries need replacing.'
+      persistent: false
 
 # Upstairs BR Vent 2 batteries are too low.
 - alias: Notify Upstairs BR Vent 2 Batteries Low
   id: 'notify_upstairs_br_vent_2_batteries_low'
+  
   use_blueprint:
     path: notification/maint_below_notify.yaml
     input:
@@ -240,6 +373,7 @@
       threshold2: 1
       timer_entity: timer.upstairs_br_vent_2_battery_notification
       message: 'Upstairs BR vent 2 batteries need replacing.'
+      persistent: false
 
 #===============================#
 #     Health Notifications      #
@@ -290,12 +424,49 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    - service: script.throttle_mobile_notification
+    - service: script.send_notification
       data:
-        timer_entity: timer.outdoors_unhealthy_notification
+        destination:
+          - mobile
         title: 'Warning:'
         message: 'Outdoor quality is unhealthy.'
-        channel: Home Assistant
+        channel: standard
+        throttled: true
+        timer_entity: timer.outdoors_unhealthy_notification
+        tag: ''
+        timeout: 0
+
+# Send a notification for overdue treadmill exercise.
+- alias: Notify Treadmill Due
+  id: 'notify_treadmill_due'
+  
+  # Trigger every 6 hours.
+  trigger:
+    - platform: time_pattern
+      hours: '/6'
+  
+  # Continue if the treadmill was last used more than 2.5 days ago (60 hours).
+  condition:
+    - condition: template
+      value_template: >
+        {% set changed = states('sensor.treadmill_last_changed') %}
+        {% set tdelta = now() - strptime(changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
+        {% set seconds = (tdelta.days * 86400) + tdelta.seconds %}
+        {% set delta = (seconds / 3600) | round(0) %}
+        {{ delta > 60 }}
+  
+  action:    
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Attention:'
+        message: 'Treadmill exercise is due.'
+        channel: standard
+        throttled: true
+        timer_entity: timer.treadmill_due_notification
+        tag: ''
+        timeout: 0
 
 #=================================#
 #     Proximity Notifications     #
@@ -344,20 +515,26 @@
 # HACS update
 - alias: Notify HACS Updated
   id: 'notify_hacs_updated'
+  
   trigger:
     - platform: state
       entity_id: sensor.hacs
     - platform: homeassistant
       event: start
+  
   condition:
     - condition: numeric_state
       entity_id: sensor.hacs
       above: 0
+  
   action:
     - delay:
         seconds: "{{ range(1, 5) | random }}"
-    - service: persistent_notification.create
-      data_template:
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - persistent
         title: 'HACS Updated'
         notification_id: 'hacs_update'
         message: |
@@ -369,49 +546,61 @@
 # Shelly1 firmware update
 - alias: Notify Shelly1 North Firmware Updated
   id: 'notify_shelly1_north_firmware_updated'
+  
   trigger:
     - platform: state
-      entity_id: binary_sensor.shelly1_garage_north_firmware_update
+      entity_id: update.shelly1_garage_north_firmware_update
       from: 'off'
       to: 'on'
     - platform: homeassistant
       event: start
+  
   condition:
     - condition: state
-      entity_id: binary_sensor.shelly1_garage_north_firmware_update
+      entity_id: update.shelly1_garage_north_firmware_update
       state: 'on'
+  
   action:
     - delay:
         seconds: "{{ range(1, 5) | random }}"
-    - service: persistent_notification.create
-      data_template:
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - persistent
         title: 'Shelly1 North Firmware Updated'
         notification_id: 'shelly1_north_update'
         message: |
-          New version is {{ state_attr('binary_sensor.shelly1_garage_north_firmware_update', 'latest_stable_version') }}, currently on {{ state_attr('binary_sensor.shelly1_garage_north_firmware_update', 'installed_version') }}
+          New version is {{ state_attr('update.shelly1_garage_north_firmware_update', 'latest_version') }}, currently on {{ state_attr('update.shelly1_garage_north_firmware_update', 'installed_version') }}
 
 - alias: Notify Shelly1 South Firmware Updated
   id: 'notify_shelly1_south_firmware_updated'
+  
   trigger:
     - platform: state
-      entity_id: binary_sensor.shelly1_garage_south_firmware_update
+      entity_id: update.shelly1_garage_south_firmware_update
       from: 'off'
       to: 'on'
     - platform: homeassistant
       event: start
+  
   condition:
     - condition: state
-      entity_id: binary_sensor.shelly1_garage_south_firmware_update
+      entity_id: update.shelly1_garage_south_firmware_update
       state: 'on'
+  
   action:
     - delay:
         seconds: "{{ range(1, 5) | random }}"
-    - service: persistent_notification.create
-      data_template:
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - persistent
         title: 'Shelly1 South Firmware Updated'
         notification_id: 'shelly1_south_update'
         message: |
-          New version is {{ state_attr('binary_sensor.shelly1_garage_south_firmware_update', 'latest_stable_version') }}, currently on {{ state_attr('binary_sensor.shelly1_garage_south_firmware_update', 'installed_version') }}
+          New version is {{ state_attr('update.shelly1_garage_south_firmware_update', 'latest_version') }}, currently on {{ state_attr('update.shelly1_garage_south_firmware_update', 'installed_version') }}
 
 #===================#
 #     Reminders     #
@@ -420,6 +609,7 @@
 # CPAP maintenance
 - alias: Notify CPAP Reminder
   id: 'notify_cpap_reminder'
+  
   trigger:
     - platform: template
       value_template: >
@@ -445,17 +635,24 @@
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: mask
+  
   action:
-    - service: script.throttle_mobile_notification
+    - service: script.send_notification
       data:
-        timer_entity: timer.cpap_reminder_notification
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'CPAP maintenance due ({{ trigger.id }}).'
-        channel: Home Assistant
+        channel: persistent
+        throttled: true
+        timer_entity: timer.cpap_reminder_notification
+        tag: ''
+        timeout: 0
 
 # HVAC maintenance
 - alias: Notify HVAC Reminder
   id: 'notify_hvac_reminder'
+  
   trigger:
     - platform: template
       value_template: >
@@ -469,17 +666,24 @@
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: upstairs
+  
   action:
-    - service: script.throttle_mobile_notification
+    - service: script.send_notification
       data:
-        timer_entity: timer.hvac_reminder_notification
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'HVAC maintenance due ({{ trigger.id }}).'
-        channel: Home Assistant
+        channel: persistent
+        throttled: true
+        timer_entity: timer.hvac_reminder_notification
+        tag: ''
+        timeout: 0
 
 # Payment due
 - alias: Notify Payment Due Reminder
   id: 'notify_payment_due_reminder'
+  
   trigger:
     - platform: template
       value_template: >
@@ -511,17 +715,24 @@
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: WF
+  
   action:
-    - service: script.throttle_mobile_notification
+    - service: script.send_notification
       data:
-        timer_entity: timer.payment_reminder_notification
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'Payment due ({{ trigger.id }}).'
-        channel: Home Assistant
+        channel: persistent
+        throttled: true
+        timer_entity: timer.payment_reminder_notification
+        tag: ''
+        timeout: 0
 
 # Medication reorder
 - alias: Notify Medication Reorder Reminder
   id: 'notify_medication_reorder_reminder'
+  
   trigger:
     - platform: template
       value_template: >
@@ -559,13 +770,19 @@
         {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
         {{ entity_date <= now_date }}
       id: B12
+  
   action:
-    - service: script.throttle_mobile_notification
+    - service: script.send_notification
       data:
-        timer_entity: timer.medication_reminder_notification
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'Medication due for reorder ({{ trigger.id }}).'
-        channel: Home Assistant
+        channel: persistent
+        throttled: true
+        timer_entity: timer.medication_reminder_notification
+        tag: ''
+        timeout: 0
 
 #================================#
 #     Calendar Notifications     #
@@ -574,22 +791,28 @@
 # Appointment
 - alias: Notify Appointment
   id: 'notify_appointment'
+  
   trigger:
     - platform: state
       entity_id: calendar.appointments
       attribute: offset_reached
       from: false
       to: true
+  
   action:
-    - service: notify.mobile_app_jon_galaxy
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
         title: 'Reminder:'
         message: >
           {% set timeobj = strptime(state_attr('calendar.appointments', 'start_time'), '%Y-%m-%d %H:%M:%S') %}
           {% set time = timeobj.strftime('%H:%M') %}
           {{ state_attr('calendar.appointments', 'message') }} tomorrow at {{ time }}
-        data:
-          channel: Home Assistant
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0
 
 #==============================#
 #     Device Notifications     #
@@ -604,19 +827,18 @@
       from: Rinse Drain
       to: Stop
   action:
-    - service: notify.mobile_app_jon_galaxy
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
+          - echo
         title: 'Action required:'
         message: 'Washer has finished.'
-        data:
-          channel: Home Assistant
-    - service: notify.alexa_media
-      data:
-        target:
-          - media_player.everywhere
-        data:
-          type: announce
-        message: 'Washer has finished.'
+        channel: temporary
+        timeout: 7200
+        throttled: false
+        media_player_entity: media_player.everywhere
+        tag: ''
 
 # Dryer cycle complete
 - alias: Notify Dryer Done
@@ -627,19 +849,18 @@
       from: 'on'
       to: 'off'
   action:
-    - service: notify.mobile_app_jon_galaxy
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
+          - echo
         title: 'Action required:'
         message: 'Dryer has probably finished.'
-        data:
-          channel: Home Assistant
-    - service: notify.alexa_media
-      data:
-        target:
-          - media_player.everywhere
-        data:
-          type: announce
-        message: 'Dryer has probably finished.'
+        channel: temporary
+        timeout: 7200
+        throttled: false
+        media_player_entity: media_player.everywhere
+        tag: ''
 
 # Zigbee device joined 
 - alias: Notify Zigbee Device Joined
@@ -651,9 +872,13 @@
     condition: template
     value_template: '{{trigger.payload_json.type == "device_interview" and trigger.payload_json.data.status == "successful" and trigger.payload_json.data.supported}}'
   action:
-    - service: persistent_notification.create
-      data_template:
-        title: Device joined the Zigbee2MQTT network
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - persistent
+        title: 'Device joined the Zigbee2MQTT network'
+        notification_id: 'zigbee_device_joined'
         message: "Name: {{trigger.payload_json.data.friendly_name}},
                   Vendor: {{trigger.payload_json.data.definition.vendor}},
                   Model: {{trigger.payload_json.data.definition.model}},

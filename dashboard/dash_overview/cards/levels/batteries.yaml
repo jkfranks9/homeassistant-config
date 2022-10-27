@@ -31,6 +31,12 @@ cards:
       - entity: sensor.master_bath_motion_detector_battery
         name: Master Bath Motion Detector
       
+      - entity: sensor.back_door_sensor_battery
+        name: Back Door Sensor
+      
+      - entity: sensor.guest_br_window_sensor_battery
+        name: Guest BR Window Sensor
+      
       - entity: sensor.blue_charm_battery_level
         name: Blue Charm Beacon
       

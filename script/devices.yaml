@@ -181,12 +181,16 @@ close_garage_door:
     - condition: "{{ is_state(contact, 'off') }}"
     
     # Send an informational notification that the door is about to be closed.
-    - service: notify.mobile_app_jon_galaxy
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
         title: 'Information:'
-        message: "Closing garage door {{ name }}."
-        data:
-          channel: Security
+        message: 'Closing garage door {{ name }}.'
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0
     
     # Close the door.
     - service: switch.turn_on
@@ -200,15 +204,16 @@ close_garage_door:
     - condition: "{{ is_state(contact, 'off') }}"
     
     # The door did not close, so send another notification.
-    - service: notify.mobile_app_jon_galaxy
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
         title: 'Action required:'
-        message: "Garage door {{ name }} did not close."
-        data:
-          channel: Security
-          importance: high
-          persistent: true
-          tag: 'persistent'
+        message: 'Garage door {{ name }} did not close.'
+        channel: critical
+        throttled: false
+        tag: '{{ name }}_close_problem'
+        timeout: 0
 
 #----------------------#
 #     Garage Doors     #
@@ -266,36 +271,6 @@ resume_deep_sleep:
       topic:   porch-sensor/ota_mode
       payload: ''
       retain: true
-
-#=====================#
-#     Zigbee2MQTT     #
-#=====================#
-
-zigbee2mqtt_rename:
-  alias: Zigbee2MQTT Rename
-  sequence:
-    
-    - service: mqtt.publish
-      data_template:
-        topic: zigbee2mqtt/bridge/request/device/rename
-        payload_template: >-
-          {
-            "from": "{{ states.input_text.zigbee2mqtt_old_name.state | string }}",
-            "to": "{{ states.input_text.zigbee2mqtt_new_name.state | string }}"
-          }
-
-zigbee2mqtt_remove:
-  alias: Zigbee2MQTT Remove
-  sequence:
-    
-    - service: mqtt.publish
-      data_template:
-        topic: zigbee2mqtt/bridge/request/device/remove
-        payload_template: >-
-          {
-            "id": "{{ states.input_text.zigbee2mqtt_remove_name.state | string }}",
-            "force": {% if states.input_boolean.zigbee2mqtt_force_remove.state == "off" %}false{% else %}true{% endif %}
-          }
 
 #====================#
 #     HVAC Vents     #
@@ -407,6 +382,7 @@ close_upstairs_br_vents:
 #     Ceiling Fans     #
 #======================#
 
+# Set a ceiling fan to a given speed.
 set_fan_to_speed:
   alias: Set Fan To Speed
   
@@ -473,3 +449,60 @@ set_fan_to_speed:
           data:
             message: "Invalid ceiling fan entity {{ state_attr(entity_id, 'friendly_name') }} specified"
             level: error
+
+# Control a fan based on temperature.
+control_fan_for_temperature:
+  alias: Control Fan For Temperature
+  
+  fields:
+    fan_entity_id:
+      description: 'The target fan.'
+      selector:
+        entity:
+          domain: fan
+    
+    temperature_entity_id:
+      description: 'The temperature sensor.'
+      selector:
+        entity:
+          domain: sensor
+    
+    timeout:
+      description: 'Time to leave the fan on, in seconds. Zero means no timeout.'
+  
+  sequence:
+    
+    # Set the fan to a speed based on the temperature.
+    - choose:
+      - conditions:      
+        - condition: template
+          value_template: "{{ states(temperature_entity_id) | float(0) > 75.0 }}"
+      
+        sequence:
+          - service: script.set_fan_to_speed
+            data:
+              entity_id: "{{ fan_entity_id }}"
+              speed: 66
+      
+      - conditions:
+        - condition: template
+          value_template: "{{ states(temperature_entity_id) | float(0) > 70.0 }}"
+      
+        sequence:
+          - service: script.set_fan_to_speed
+            data:
+              entity_id: "{{ fan_entity_id }}"
+              speed: 33
+    
+    # Continue if a valid timeout is specified.
+    - condition: "{{ timeout > 0 if is_number(timeout) }}"
+    
+    # Delay for the timeout period.
+    - delay: "{{ timeout }}" 
+    
+    # Then turn the fan off.
+    - service: fan.turn_off
+      target:
+        entity_id: "{{ fan_entity_id }}"
+    
+    

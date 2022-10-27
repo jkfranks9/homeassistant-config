@@ -33,7 +33,12 @@ open_cinema:
     
     # Turn on the fan if needed.
     - service: script.turn_on
-      entity_id: script.turn_on_theater_fan
+      entity_id: script.control_fan_for_temperature
+      data:
+        variables:
+          fan_entity_id: fan.theater_fan
+          temperature_entity_id: sensor.theater_temperature
+          timeout: 0
     
     # Set the upstairs Ecobee to home mode.
     - service: script.set_thermostat_preset
@@ -168,20 +173,6 @@ set_theater_idle:
     - service: script.change_some_downstairs_lights
       data:
         turn_on: true
-
-#======================#
-#     Theater Fan      #
-#======================#
-
-# Turn on the theater fan if it's warm enough.
-turn_on_theater_fan:
-  alias: Turn On Theater Fan
-  sequence:
-    - condition: numeric_state
-      entity_id: sensor.theater_temperature
-      above: 75.0
-    - service: fan.turn_on
-      entity_id: fan.theater_fan
 
 #============================#
 #     Downstairs Lights      #
@@ -324,6 +315,15 @@ watch_hbo_max:
         component: 'com.hbo.hbonow/com.hbo.go.LaunchActivity'
         lighting: 'script.set_theater_dark_delay'
 
+# Hulu
+watch_hulu:
+  alias: Watch Hulu
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.hulu.livingroomplus/.MainActivity'
+        lighting: 'script.set_theater_dark_delay'
+
 # Kodi
 watch_kodi:
   alias: Watch Kodi
@@ -341,15 +341,6 @@ watch_netflix:
       data:
         component: 'com.netflix.ninja/.MainActivity'
         lighting: 'script.set_theater_dark_delay'
-
-# Pandora
-watch_pandora:
-  alias: Watch Pandora
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.pandora.android.atv/com.pandora.android.MainActivity'
-        lighting: 'script.set_theater_dim'
 
 # Paramount Plus
 watch_paramount_plus:

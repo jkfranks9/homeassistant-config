@@ -95,12 +95,3 @@ dryer_almost_done:
 # Sonoff plug not on, which could indicate a power glitch.
 possible_power_glitch:
   name: Possible Power Glitch
-
-#=====================#
-#     Zigbee2MQTT     #
-#=====================#
-
-zigbee2mqtt_force_remove:
-  name: Zigbee2MQTT Force Remove
-  initial: false
-  icon: mdi:alert-remove

@@ -3,27 +3,53 @@
 #===================#
 
 type: custom:stack-in-card
-title: Ceiling Fans
-mode: horizontal
+title: Fans
+mode: vertical
 cards:
   
   - type: 'custom:button-card'
-    template: ceiling_fan
-    entity: fan.family_room_fan
-    name: Family
-    variables:
-      light_entity: light.family_room_fan
+    template: container
+    
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 3
+          square: false
+          cards:
   
-  - type: 'custom:button-card'
-    template: ceiling_fan
-    entity: fan.office_fan
-    name: Office
-    variables:
-      light_entity: light.office_fan
-  
-  - type: 'custom:button-card'
-    template: ceiling_fan
-    entity: fan.theater_fan
-    name: Theater
-    variables:
-      light_entity: light.theater_fan
+            - type: 'custom:button-card'
+              template: ceiling_fan_button
+              entity: fan.family_room_fan
+              name: Family
+              variables:
+                light_entity: light.family_room_fan
+          
+            - type: 'custom:button-card'
+              template: ceiling_fan_button
+              entity: fan.office_fan
+              name: Office
+              variables:
+                light_entity: light.office_fan
+          
+            - type: 'custom:button-card'
+              template: ceiling_fan_button
+              entity: fan.theater_fan
+              name: Theater
+              variables:
+                light_entity: light.theater_fan
+
+            - type: 'custom:button-card'
+              template: bath_fan_button
+              entity: switch.guest_bath_fan
+              name: Guest
+      
+            - type: 'custom:button-card'
+              template: bath_fan_button
+              entity: switch.master_bath_fan
+              name: Master
+      
+            - type: 'custom:button-card'
+              template: bath_fan_button
+              entity: switch.upstairs_bath_fan
+              name: Upstairs

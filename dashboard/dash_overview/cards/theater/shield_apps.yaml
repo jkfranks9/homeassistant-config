@@ -14,14 +14,14 @@ entities:
   - entity: script.watch_hbo_max
     name: HBO Max
     action_name: Watch
+  - entity: script.watch_hulu
+    name: Hulu
+    action_name: Watch
   - entity: script.watch_kodi
     name: Kodi
     action_name: Watch
   - entity: script.watch_netflix
     name: Netflix
-    action_name: Watch
-  - entity: script.watch_pandora
-    name: Pandora
     action_name: Watch
   - entity: script.watch_paramount_plus
     name: Paramount Plus

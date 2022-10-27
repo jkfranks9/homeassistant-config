@@ -25,16 +25,17 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    # Send a notification.
-    - service: notify.mobile_app_jon_galaxy
+    # Send a notification.    
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'Power is out, shutting down PC.'
-        data:
-          channel: Security
-          importance: high
-          persistent: true
-          tag: 'persistent'
+        channel: critical
+        throttled: false
+        tag: 'power_out'
+        timeout: 0
     
     # The recorder database lives on the PC, so disable it before we shutdown.
     - service: recorder.disable
@@ -52,6 +53,7 @@
 # Shut down the host if UPS runtime reaches critical level.
 - alias: Handle UPS Critical
   id: 'handle_ups_critical'
+  
   trigger:
     - platform: numeric_state
       entity_id: sensor.cyber1_battery_runtime
@@ -68,16 +70,17 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    # Send a notification.
-    - service: notify.mobile_app_jon_galaxy
+    # Send a notification.    
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'UPS battery is critical, shutting down RPi.'
-        data:
-          channel: Security
-          importance: high
-          persistent: true
-          tag: 'persistent'
+        channel: critical
+        throttled: false
+        tag: 'ups_battery'
+        timeout: 0
     
     # Goodbye.
     - service: hassio.host_shutdown
@@ -85,6 +88,7 @@
 # Turn the PC back on if power is restored.
 - alias: Handle Power Restoration
   id: 'handle_power_restoration'
+  
   trigger:
     - platform: state
       entity_id: sensor.cyber1_status_data
@@ -102,16 +106,17 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    # Send a notification.
-    - service: notify.mobile_app_jon_galaxy
+    # Send a notification.  
+    - service: script.send_notification
       data:
+        destination:
+          - mobile
         title: 'Action required:'
         message: 'Power is restored, turning on the PC.'
-        data:
-          channel: Security
-          importance: high
-          persistent: true
-          tag: 'persistent'
+        channel: critical
+        throttled: false
+        tag: 'power_restored'
+        timeout: 0
     
     # Send a magic packet to power on the PC.
     - service: wake_on_lan.send_magic_packet
@@ -575,15 +580,8 @@
 - alias: Open Garage Door
   id: 'open_garage_door'
   
-  # Trigger on the Blue Charm beacon connecting to the house or garage.
+  # Trigger on me arriving home.
   trigger:
-    #- platform: state
-    #  entity_id: sensor.blue_charm_beacon
-    #  from: 'not_home'
-    #  to:
-    #    - 'garage'
-    #    - 'house'
-    
     - platform: state
       entity_id: person.jon
       from: 'not_home'
@@ -619,6 +617,7 @@
 # Open garage door when family member(s) arrive home, and I'm home.
 - alias: Open Garage Door For Family
   id: 'open_garage_door_for_family'
+  
   trigger:
     - platform: state
       entity_id: input_boolean.adults_home
@@ -629,23 +628,22 @@
       entity_id: input_boolean.children_home
       from: 'off'
       to: 'on'
-    
-    #- platform: state
-    #  entity_id: sensor.blue_charm_beacon
-    #  from: 'not_home'
-    #  to: 'garage'
-    
-    #- platform: state
-    #  entity_id: sensor.blue_charm_beacon
-    #  from: 'not_home'
-    #  to: 'house'
+  
   condition:
     - condition: state
       entity_id: person.jon
       state: 'home'
     - condition: template
       value_template: "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
+  
   action:
+    - service: script.send_notification
+      data:
+        destination:
+          - echo
+        media_player_entity: media_player.everywhere
+        message: 'Opening garage door for family.'
+    
     - service: switch.turn_on
       target:
         entity_id: switch.shelly1_garage_north
@@ -661,7 +659,6 @@
     path: devices/monitor_device.yaml
     input:
       device_entity: switch.sonoff_refrigerator
-      notification_entity: notify.mobile_app_jon_galaxy
       component_name: sonoff
       device_name: Refrigerator
 
@@ -672,7 +669,6 @@
     path: devices/monitor_device.yaml
     input:
       device_entity: switch.sonoff_microwave
-      notification_entity: notify.mobile_app_jon_galaxy
       component_name: sonoff
       device_name: Microwave
 
@@ -1048,53 +1044,6 @@
               {% set temp = states('sensor.dryer_temperature') %}
               {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Temperature ({{ temp }}) {{ trigger.to_state.attributes.gradient }}
 
-#=====================#
-#     Zigbee2MQTT     #
-#=====================#
-
-# Send MQTT message to change log level in response to UI change.
-- alias: Zigbee2MQTT Set Log Level
-  id: 'zigbee2mqtt_set_log_level'
-  trigger:
-    platform: state
-    entity_id: input_select.zigbee2mqtt_log_level
-  action:
-    - service: mqtt.publish
-      data:
-        payload_template: "{{ states('input_select.zigbee2mqtt_log_level') }}"
-        topic: zigbee2mqtt/bridge/request/config/log_level
-
-# Start timer when enable join is turned on in the UI.
-- alias: Zigbee2MQTT Enable Join
-  id: 'zigbee2mqtt_enable_join'
-  trigger:
-    platform: state
-    entity_id: switch.zigbee2mqtt_permit_join
-    to: 'on'
-  action:
-    - service: timer.start
-      entity_id: timer.zigbee2mqtt_join_time_remaining
-      data_template:
-        duration: "{{ '00:0%i:00' % (states('input_number.zigbee2mqtt_join_minutes') | int(0) ) }}"
-
-# Stop timer and turn off enable join when the timer is finished.
-- alias: Zigbee2MQTT Disable Join
-  id: 'zigbee2mqtt_disable_join'
-  trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.zigbee2mqtt_join_time_remaining
-    - platform: state
-      entity_id: switch.zigbee2mqtt_permit_join
-      to: 'off'
-  action:
-    - service: timer.cancel
-      data:
-        entity_id: timer.zigbee2mqtt_join_time_remaining
-    - service: switch.turn_off
-      entity_id: switch.zigbee2mqtt_permit_join
-
 #=======================#
 #     General Plugs     #
 #=======================#
@@ -1148,10 +1097,13 @@
       entity_id: switch.general_plug_1
     
     # Now turn on the office fan so I can continue cooling down.
-    - service: script.set_fan_to_speed
+    - service: script.turn_on
+      entity_id: script.control_fan_for_temperature
       data:
-        entity_id: fan.office_fan
-        speed: 66
+        variables:
+          fan_entity_id: fan.office_fan
+          temperature_entity_id: sensor.office_temperature
+          timeout: 120
 
 #=================================#
 #     Device Tracker Presence     #

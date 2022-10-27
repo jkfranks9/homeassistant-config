@@ -12,13 +12,6 @@ blueprint:
       selector:
         entity:
     
-    notification_entity:
-      name: Notification Entity
-      description: Entity to be notified if the device is not powered on.
-      selector:
-        entity:
-          domain: notify
-    
     component_name:
       name: Component Name
       description: Name of the component, so it can be monitored for loading.
@@ -51,12 +44,16 @@ condition:
 action:
     
   # Send a warning notification that the device is being turned on.
-  - service: !input notification_entity
+  - service: script.send_notification
     data:
+      destination:
+        - mobile
       title: 'Warning:'
-      message: "{{ input_device_name }} off, turning it back on."
-      data:
-        channel: Home Assistant
+      message: '{{ input_device_name }} off, turning it back on.'
+      channel: standard
+      throttled: false
+      tag: ''
+      timeout: 0
     
   # Indicate a possible power glitch occurred.
   - service: input_boolean.turn_on
@@ -74,13 +71,14 @@ action:
   - condition: template
     value_template: "{{ not is_state(input_device_entity, 'on') }}"
     
-  # The device did not turn on, so send a high priority notification.
-  - service: !input notification_entity
+  # The device did not turn on, so send a critical notification.
+  - service: script.send_notification
     data:
+      destination:
+        - mobile
       title: 'Action required:'
-      message: "{{ input_device_name }} did not turn on."
-      data:
-        channel: Home Assistant
-        importance: high
-        persistent: true
-        tag: 'persistent'
+      message: '{{ input_device_name }} did not turn on.'
+      channel: critical
+      throttled: false
+      tag: '{{ input_device_name }}_power_off'
+      timeout: 0

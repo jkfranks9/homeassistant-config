@@ -1,4 +1,7 @@
-# Test something (change as needed)
+#================#
+#     Washer     #
+#================#
+
 test_washer_cycle:
   alias: Test Washer Cycle
   
@@ -14,6 +17,10 @@ test_washer_cycle:
             data:
               value: "{{ pow[repeat.index-1] }}"
           - delay: '00:00:05'
+
+#==============#
+#     Kodi     #
+#==============#
 
 test_kodi_start:
   alias: Test Kodi Start
@@ -64,7 +71,8 @@ test_kodi:
     - service: kodi.call_method
       data:
         entity_id: media_player.kodi
-        method: VideoLibrary.GetMusicVideos
+        #method: VideoLibrary.GetMusicVideos
+        method: VideoLibrary.GetMovies
     
     # Wait a bit for a good 'get movies' result, but quit if it times out.
     - wait_for_trigger:
@@ -79,6 +87,10 @@ test_kodi:
       data:
         message: "{{ wait.trigger.event.data.result }}"
         level: warning
+
+#====================#
+#     Thermostat     #
+#====================#
 
 test_thermostat_hold:
   alias: Test Thermostat Hold
@@ -105,6 +117,10 @@ test_remove_thermostat_hold:
       data_template:
         entity_id: climate.upstairs
         vacation_name: "Temporary"
+
+#=================#
+#     Bedtime     #
+#=================#
 
 test_bedtime_adults_down:
   alias: Test Bedtime Adults Down
@@ -207,8 +223,142 @@ test_bedtime_children_both:
         option: 'Both'
     - service: script.establish_bedtime_environment
 
+#================#
+#     Backup     #
+#================#
+
 test_backup_logs:
   alias: Test Backup Logs
   
   sequence:
     - service: shell_command.backup_auto_log
+
+#================#
+#     Shield     #
+#================#
+
+test_shield_app:
+  alias: Test Shield App
+  
+  sequence:
+    - service: androidtv.adb_command
+      data:
+        entity_id: media_player.shield_tv
+        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n com.hulu.livingroomplus/.MainActivity"
+
+#================#
+#     Notify     #
+#================#
+
+test_notify_echo:
+  alias: Test Notify Echo
+  
+  sequence:
+    - service: script.send_notification
+      data:
+        destination:
+          - echo
+        message: 'Testing 1 2 3'
+        media_player_entity: media_player.everywhere
+
+test_notify_persistent:
+  alias: Test Notify Persistent
+  
+  sequence:
+    - service: script.send_notification
+      data:
+        destination:
+          - persistent
+        title: 'Test:'
+        notification_id: 'testing123'
+        message: 'Testing 1 2 3'
+
+test_notify_mobile:
+  alias: Test Notify Mobile
+  
+  sequence:    
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Test:'
+        message: 'Testing 1 2 3'
+        channel: standard
+        throttled: false
+    
+    - delay: '00:00:30'
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Test:'
+        message: 'Testing 1 2 3'
+        channel: temporary
+        throttled: false
+        timeout: 15
+    
+    - delay: '00:00:30'
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Test:'
+        message: 'Testing 1 2 3'
+        channel: persistent
+        throttled: false
+        tag: 'test123'
+    
+    - delay: '00:00:15'
+    
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'test123'
+    
+    - delay: '00:00:15'
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Test:'
+        message: 'Testing 1 2 3'
+        channel: critical
+        throttled: false
+        tag: 'testing123'
+
+test_notify_all:
+  alias: Test Notify All
+  
+  sequence:    
+    - service: script.send_notification
+      data:
+        destination:
+          - echo
+          - persistent
+          - mobile
+        title: 'Test:'
+        message: 'Testing 1 2 3'
+        channel: standard
+        throttled: false
+        media_player_entity: media_player.everywhere
+        notification_id: 'testing123'
+
+#==============#
+#     Fans     #
+#==============#
+
+test_fan_control:
+  alias: Test Fan Control
+  
+  sequence:
+    - service: script.turn_on
+      entity_id: script.control_fan_for_temperature
+      data:
+        variables:
+          fan_entity_id: fan.theater_fan
+          temperature_entity_id: sensor.theater_temperature
+          timeout: 0

@@ -25,21 +25,24 @@ smart_home:
     
     exclude_entities:
       - script.automate_lights_while_away
+      - script.control_fan_for_temperature
       - script.copy_monthly_calories
       - script.evaluate_weather_condition
       - script.get_all_kodi_movies
       - script.lock_pc
+      - script.mobile_notification_worker
       - script.popup_light_group
       - script.position_hvac_vent
+      - script.publish_mqtt_automated_states
+      - script.send_notification
       - script.set_fan_to_speed
       - script.set_thermostat_preset
+      - script.set_up_mqtt_automated_config
       - script.start_activity
-      - script.throttle_mobile_notification
       - script.toggle_upstairs_br_vent
       - script.turn_off_kodi
       - script.turn_off_pc
       - script.turn_on_family_room_normal
-      - script.turn_on_theater_fan
       - script.watch_app
     
     exclude_entity_globs:
@@ -65,7 +68,6 @@ smart_home:
       - script.set_datetime_offset*
       - script.set_theater_*
       - script.test*
-      - script.zigbee2mqtt_*
 
     #==== Inclusions
 

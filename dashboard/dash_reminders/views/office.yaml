@@ -3,6 +3,7 @@
 #====================#
 
 title: Office
+path: office
 icon: mdi:desk
 panel: true
 visible:

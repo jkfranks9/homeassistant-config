@@ -1,6 +1,6 @@
-#===================#
-#     WiFi Card     #
-#===================#
+#=====================#
+#     Zigbee Card     #
+#=====================#
 
 type: custom:stack-in-card
 title: Zigbee Signal Levels
@@ -11,24 +11,39 @@ cards:
     icon: mdi:signal
     unit: lqi
     entities:
+      
       - entity: binary_sensor.guest_bath_motion_detector_occupancy
         name: Guest Bath Motion Detector
         attribute: linkquality
+      
       - entity: binary_sensor.laundry_room_motion_detector_occupancy
         name: Laundry Room Motion Detector
         attribute: linkquality
+      
       - entity: binary_sensor.master_bath_motion_detector_occupancy
         name: Master Bath Motion Detector
         attribute: linkquality
+      
+      - entity: binary_sensor.back_door_sensor_contact
+        name: Back Door Sensor
+        attribute: linkquality
+      
+      - entity: binary_sensor.guest_br_window_sensor_contact
+        name: Guest BR Window Sensor
+        attribute: linkquality
+      
       - entity: cover.upstairs_br_vent_1
         name: Upstairs BR Vent 1
         attribute: linkquality
+      
       - entity: cover.upstairs_br_vent_2
         name: Upstairs BR Vent 2
         attribute: linkquality
-      - entity: switch.sonoff_s31_zb
-        name: Sonoff Router
+      
+      - entity: switch.master_bath_vanity_lamp
+        name: Master Bath Vanity Lamp (router)
         attribute: linkquality
+      
       - entity: binary_sensor.cc2530_router_1_led
         name: CC2530 Router 1
         attribute: linkquality

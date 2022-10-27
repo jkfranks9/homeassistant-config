@@ -47,11 +47,12 @@ cards:
             name: AV
             icon: mdi:audio-video
       
-      #- type: custom:fold-entity-row
-      #  head: sensor.second_floor_measured_power
-      #  entities:
-      #    - entity: sensor.XXX
-      #      name: XXX
+      - type: custom:fold-entity-row
+        head: sensor.second_floor_measured_power
+        entities:
+          - entity: sensor.second_floor_av_measured_power
+            name: AV
+            icon: mdi:audio-video
       
       - entity: sensor.total_power
         name: Total

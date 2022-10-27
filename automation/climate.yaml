@@ -174,4 +174,41 @@
       entity_id: sun.sun
       state: above_horizon
   action:
-    - service: openuv.update_data
+    - service: homeassistant.update_entity
+      entity_id: sensor.current_uv_index
+
+#========================#
+#     Door & Windows     #
+#========================#
+
+# Turn off the downstairs HVAC system when any downstairs doors or windows are opened.
+- alias: Turn Off Downstairs HVAC
+  id: turn_off_downstairs_hvac
+  
+  trigger:
+    - platform: state
+      entity_id: group.downstairs_doors_windows
+      from: 'off'
+      to: 'on'
+      for: '00:02:00'
+
+  action:
+    - service: climate.turn_off
+      target:
+        entity_id: climate.downstairs
+
+# Turn on the downstairs HVAC system when all downstairs doors and windows are closed.
+- alias: Turn On Downstairs HVAC
+  id: turn_on_downstairs_hvac
+  
+  trigger:
+    - platform: state
+      entity_id: group.downstairs_doors_windows
+      from: 'on'
+      to: 'off'
+      for: '00:02:00'
+
+  action:
+    - service: climate.turn_on
+      target:
+        entity_id: climate.downstairs

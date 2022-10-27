@@ -2,50 +2,249 @@
 #     Notifications     #
 #=======================#
 
-# Throttle mobile notifications so that only one per day is issued. This is accomplished by using
-# a timer associated with the particular notification. We only proceed if the timer is idle. Then
-# we start the timer with a duration that ends at 7 AM the next day.
-#
-# Note that we rely on timers being restored after a restart.
-throttle_mobile_notification:
-  alias: Throttle Mobile Notification
+# Mobile worker script... this is called by the Send Notification script for both the throttled and non-throttled cases.
+mobile_notification_worker:
+  alias: Mobile Notification Worker
+  
+  fields:
+    message:
+      description: 'The message to be issued.'
+    
+    title:
+      description: 'The title of the message.'
+    
+    channel:
+      description: 'The channel to which the notification is issued.'
+      selector:
+        select:
+          options:
+            - standard
+            - temporary
+            - persistent
+            - critical
+    
+    timeout:
+      description: 'The timeout for channel "temporary".'
+    
+    tag:
+      description: 'The tag for channels "persistent" and "critical".'
+  
+  sequence:
+    
+    # Handle the different channels.
+    - choose:
+                
+      # Standard channel; use all defaults.
+      - conditions:
+        - condition: template
+          value_template: "{{ channel == 'standard' }}"
+        
+        sequence:
+          - service: notify.mobile_app_jon_galaxy
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                channel: "{{ channel }}"
+        
+      # Temporary channel; specify a timeout in seconds.
+      - conditions:
+        - condition: template
+          value_template: "{{ channel == 'temporary' }}"
+          
+        sequence:
+          - service: notify.mobile_app_jon_galaxy
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                channel: "{{ channel }}"
+                timeout: "{{ timeout }}"
+        
+      # Persistent channel; specify both sticky (notification not dismissed when tapped) and persistent (can't be swiped away).
+      # The notification must be cleared by an automation/script when it makes sense.
+      - conditions:
+        - condition: template
+          value_template: "{{ channel == 'persistent' }}"
+        
+        sequence:
+          - service: notify.mobile_app_jon_galaxy
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                channel: "{{ channel }}"
+                sticky: true
+                persistent: true
+                tag: "{{ tag }}"
+        
+      # Critical channel; used for high priority notifications.
+      - conditions:
+        - condition: template
+          value_template: "{{ channel == 'critical' }}"
+        
+        sequence:
+          - service: notify.mobile_app_jon_galaxy
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data:
+                channel: "{{ channel }}"
+                persistent: true
+                importance: high
+                tag: "{{ tag }}"
+          
+      # Invalid channel, log it.
+      default:
+        - service: system_log.write
+          data:
+            message: "Invalid channel '{{ channel }}' specified"
+            level: error
+
+# Send a notification to one or more destinations.
+send_notification:
+  alias: Send Notification
   mode: queued
   max: 10
   
   fields:
-    timer_entity:
-      description: 'The controlling timer entity used to throttle the notification.'
-      example: 'timer.vacuum'
-    title:
-      description: 'The title of the message.'
-      example: 'Warning:'
+    destination:
+      description: 'Where to send the notification.'
+      selector:
+        select:
+          options:
+            - mobile
+            - echo
+            - persistent
+    
     message:
       description: 'The message to be issued.'
-      example: 'This is only a test, do not be alarmed.'
+    
+    title:
+      description: 'The title of the message (not used for echo).'
+    
     channel:
-      description: 'The channel to which the notification is issued.'
-      example: 'Home Assistant'
+      description: 'The channel to which a mobile notification is issued.'
+      selector:
+        select:
+          options:
+            - standard
+            - temporary
+            - persistent
+            - critical
+    
+    throttled:
+      description: 'If true, throttle mobile notifications so that only one per day is issued.'
+      selector:
+        boolean:
+    
+    timer_entity:
+      description: 'The controlling timer entity used for throttled mobile notifications.'
+      selector:
+        entity:
+          domain: timer
+    
+    timeout:
+      description: 'The timeout for mobile destination channel "temporary".'
+    
+    tag:
+      description: 'The tag for mobile destination channels "persistent" and "critical".'
+    
+    media_player_entity:
+      description: 'The target entity used for echo destinations.'
+      selector:
+        entity:
+          domain: media_player
+    
+    notification_id:
+      description: 'The ID used for persistent notification destinations.'
   
   sequence:
     
-    # Wait a few seconds just in case, to be sure timers have been restored.
-    - delay: '00:00:03'
+    # Loop through all specified destinations.
+    - repeat:
+        for_each: "{{ destination }}"
+      
+        sequence:
+          - choose:
+          
+            # Handle the mobile destination.
+            - conditions:
+              - condition: template
+                value_template: "{{ repeat.item == 'mobile' }}"
+            
+              sequence:
+              
+                # Handle throttled notifications, which means only send one notification per day. This is accomplished by 
+                # using a timer associated with the particular notification. We only proceed if the timer is idle. Then
+                # we start the timer with a duration that ends at 7 AM the next day.
+                - choose:
+                  - conditions:
+                    - condition: template
+                      value_template: "{{ throttled }}"
+                  
+                    sequence:
+              
+                      # Wait a few seconds just to be sure timers have been restored.
+                      - delay: '00:00:03'
     
-    # Only continue if the input timer is idle.
-    - condition: "{{ is_state(timer_entity, 'idle') }}"
+                      # Only continue if the input timer is idle.
+                      - condition: "{{ is_state(timer_entity, 'idle') }}"
+                    
+                      - service: script.mobile_notification_worker
+                        data:
+                          title: "{{ title }}"
+                          message: "{{ message }}"
+                          channel: "{{ channel }}"
+                          timeout: "{{ timeout }}"
+                          tag: "{{ tag }}"
     
-    # Send the notification.
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        title: "{{ title }}"
-        message: "{{ message }}"
-        data:
-          channel: "{{ channel }}"
-    
-    # Start the timer, using a duration that ends tomorrow at 7 AM.
-    - service: timer.start
-      data:
-        entity_id: "{{ timer_entity }}"
-        duration: >
-          {% set next = now().today().replace(hour=7, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
-          {{ (next - now().today().replace(microsecond=0)).seconds }}
+                      # Start the timer, using a duration that ends tomorrow at 7 AM.
+                      - service: timer.start
+                        data:
+                          entity_id: "{{ timer_entity }}"
+                          duration: >
+                            {% set next = now().today().replace(hour=7, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
+                            {{ (next - now().today().replace(microsecond=0)).seconds }}
+                
+                  # Handle non-throttled notifications.
+                  default:
+                    - service: script.mobile_notification_worker
+                      data:
+                        title: "{{ title }}"
+                        message: "{{ message }}"
+                        channel: "{{ channel }}"
+                        timeout: "{{ timeout }}"
+                        tag: "{{ tag }}"
+          
+            # Handle the echo destination.
+            - conditions:
+              - condition: template
+                value_template: "{{ repeat.item == 'echo' }}"
+            
+              sequence:
+                - service: notify.alexa_media
+                  data:
+                    target: "{{ media_player_entity }}"
+                    data:
+                      type: announce
+                    message: "{{ message }}"
+          
+            # Handle the persistent destination.
+            - conditions:
+              - condition: template
+                value_template: "{{ repeat.item == 'persistent' }}"
+            
+              sequence:
+                - service: persistent_notification.create
+                  data_template:
+                    title: "{{ title }}"
+                    notification_id: "{{ notification_id }}"
+                    message: "{{ message }}"
+          
+            # Invalid destination, log it.
+            default:
+              - service: system_log.write
+                data:
+                  message: "Invalid destination '{{ destination }}' specified"
+                  level: error

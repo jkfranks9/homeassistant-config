@@ -18,5 +18,3 @@ cards:
       - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
       - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml
       - !include /config/dashboard/dash_overview/cards/controls/adguard.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/controls/zigbee2mqtt.yaml

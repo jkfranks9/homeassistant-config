@@ -7,12 +7,6 @@
     - 'date'
     - 'time'
 
-#==============#
-#     Moon     #
-#==============#
-
-- platform: moon
-
 #======================#
 #     Raspberry Pi     #
 #======================#
@@ -32,10 +26,3 @@
       arg: /
     - type: memory_use_percent
     - type: processor_use
-
-#========================#
-#     System Up Time     #
-#========================#
-
-# System up time
-- platform: uptime

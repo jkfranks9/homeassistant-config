@@ -46,6 +46,17 @@ blueprint:
     message:
       name: Notification Message
       description: Message to be issued.
+    
+    persistent:
+      name: Indicates if the notification should persist.
+      description: If true, the notification can only be removed using a future automation or script.
+      selector:
+        boolean:
+    
+    tag:
+      name: Notification Tag
+      description: (Optional) The tag for persistent notifications.
+      default: ''
 
 # Trigger when the sensor value(s) become too high, or when HA starts (in case HA was rebooting when the trigger would have occurred).
 trigger:
@@ -76,9 +87,36 @@ action:
   - delay: 
       seconds: "{{ range(2, 15) | random }}"
   
-  - service: script.throttle_mobile_notification
-    data:
-      timer_entity: !input timer_entity
-      title: 'Action required:'
-      message: !input message
-      channel: Home Assistant
+  - choose:
+    
+    # Handle a persistent notification.
+    - conditions:
+      - condition: template
+        value_template: "{{ persistent }}"
+      
+      sequence:  
+        - service: script.send_notification
+          data:
+            destination:
+              - mobile
+            title: 'Action required:'
+            message: !input message
+            channel: persistent
+            throttled: true
+            timer_entity: !input timer_entity
+            tag: !input tag
+            timeout: 0
+    
+    # Handle a non-persistent notification.
+    default: 
+      - service: script.send_notification
+        data:
+          destination:
+            - mobile
+          title: 'Action required:'
+          message: !input message
+          channel: standard
+          throttled: true
+          timer_entity: !input timer_entity
+          tag: ''
+          timeout: 0

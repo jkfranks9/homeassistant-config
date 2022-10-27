@@ -3,6 +3,7 @@
 #====================#
 
 title: Health
+path: health
 icon: mdi:run
 panel: true
 visible:

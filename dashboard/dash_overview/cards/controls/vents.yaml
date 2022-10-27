@@ -3,15 +3,27 @@
 #====================#
 
 type: custom:stack-in-card
-mode: horizontal
 title: Vents
+mode: horizontal
 cards:
-  - type: custom:button-card
-    template: hvac_vent
-    entity: cover.upstairs_br_vent_1
-    name: Up BR 1
-      
-  - type: custom:button-card
-    template: hvac_vent
-    entity: cover.upstairs_br_vent_2
-    name: Up BR 2
+  
+  - type: 'custom:button-card'
+    template: container
+    
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+  
+            - type: custom:button-card
+              template: hvac_vent_button
+              entity: cover.upstairs_br_vent_1
+              name: Upstairs BR 1
+              
+            - type: custom:button-card
+              template: hvac_vent_button
+              entity: cover.upstairs_br_vent_2
+              name: Upstairs BR 2

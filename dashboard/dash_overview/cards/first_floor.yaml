@@ -82,10 +82,11 @@ config:
         - switch.mantle_bookcase
         - switch.master_bath_fan
         - switch.master_bath_light
+        - switch.master_bath_vanity_lamp  # current zigbee router
         - switch.porch_light
         - switch.sink_light
         - switch.sonoff_family_room_av
-        - switch.sonoff_s31_zb  # zigbee router; can move if needed
+        #- switch.sonoff_s31_zb           # zigbee router; can move if needed
         - switch.sonoff_treadmill
         - switch.stair_railing
         - switch.stairway_light

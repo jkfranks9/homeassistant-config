@@ -1,77 +1,13 @@
-#============================#
-#     Toggle Button Card     #
-#============================#
+#===================#
+#     Container     #
+#===================#
 
-toggle_button:
-  show_icon: true
-  show_name: true
-  
-  tap_action:
-    action: toggle
-
-#======================================#
-#     Info Button Card (Stateless)     #
-#======================================#
-
-info_button_stateless:
-  show_icon: true
-  show_name: true
-  show_state: false
-  
-  tap_action:
-    action: 'none'
-  
-  state:
-    - value: 'off'
-      color: var(--paper-item-icon-color)
-    
-    - value: 'on'
-      color: var(--paper-item-icon-active-color)
-
-#==================================#
-#     Info Button Card (State)     #
-#==================================#
-
-info_button_state:
-  show_icon: true
-  show_name: true
-  show_state: true
-  
-  tap_action:
-    action: 'none'
-  
-  state:
-    - value: 'not_home'
-      color: var(--paper-item-icon-color)
-    
-    - value: 'home'
-      color: var(--paper-item-icon-active-color)
-    
-    - operator: default
-      color: var(--accent-color)
-
-#===========================#
-#     Blank Button Card     #
-#===========================#
-
-blank_button:
-  show_icon: false
-  show_name: false
-  show_state: false
-  
-  tap_action:
-    action: 'none'
-
-#===============================#
-#     Container Button Card     #
-#===============================#
-
-container:
-  color_type: card
-  
+# Used as a container for groups of other buttons.
+container:  
   styles:
     card:
       - padding: 0
+    
     grid:
       - grid-template-areas: '"buttons"'
       - grid-template-columns: 1fr
@@ -82,47 +18,66 @@ container:
         - margin: 0
         - padding: 0.15em
 
-#==================================#
-#     Call Service Button Card     #
-#==================================#
+#=======================#
+#     Toggle Button     #
+#=======================#
 
-call_service_button:
-  variables:
-    var_script: script.mute_guest_bedroom_echo
-  
+toggle_button:
   show_icon: true
   show_name: true
   
   tap_action:
-    action: call-service
-    service: script.turn_on
-    service_data:
-      entity_id: '[[[ return variables.var_script ]]]'
-  
-  styles:
-    icon:
-      - color: |
-          [[[
-            if (entity.state == 'on')
-              return 'var(--paper-item-icon-active-color)';
-            else
-              return 'var(--paper-item-icon-color)';
-          ]]]
+    action: toggle
 
-#=================================#
-#     Garage Door Button Card     #
-#=================================#
+#=====================#
+#     Info Button     #
+#=====================#
+
+info_button:
+  show_icon: true
+  show_name: true
+  show_state: true
+  
+  state_display: |
+    [[[
+      if (entity.state == 'on')
+        return 'Home';
+      else if (entity.state == 'off')
+        return 'Away';
+    ]]]
+  
+  tap_action:
+    action: 'none'
+  
+  state:
+    - value: 'not_home'
+      color: var(--paper-item-icon-color)
+    
+    - value: 'off'
+      color: var(--paper-item-icon-color)
+    
+    - value: 'home'
+      color: var(--paper-item-icon-active-color)
+    
+    - value: 'on'
+      color: var(--paper-item-icon-active-color)
+    
+    - operator: default
+      color: var(--accent-color)
+
+#============================#
+#     Garage Door Button     #
+#============================#
 
 garage_door_button:
   variables:
-    var_entity: switch.shelly1_garage_north
-    var_name_open: North open
-    var_name_closed: North closed
+    var_entity: ''
+    var_name: ''
   
   show_icon: true
   show_name: true
   icon: 'hass:garage'
-  size: 30%
+  size: 40%
   
   tap_action:
     action: call-service
@@ -132,46 +87,46 @@ garage_door_button:
   
   state:
     - value: 'off'
-      name: '[[[ return variables.var_name_open ]]]'
+      name: '[[[ return variables.var_name ]]]'
       icon: 'hass:garage-open'
       color: var(--paper-item-icon-active-color)
     
     - value: 'on'
-      name: '[[[ return variables.var_name_closed ]]]'
+      name: '[[[ return variables.var_name ]]]'
       color: var(--paper-item-icon-color)
 
-#=================================#
-#     Light Group Button Card     #
-#=================================#
+#==============================#
+#     Door / Window Button     #
+#==============================#
 
-light_group_button:
-  show_icon: true
-  show_name: false
+door_window_button:
+  variables:
+    var_name: ''
+    var_icon_prefix: ''
   
-  tap_action:
-    action: >
-      [[[
-        if (entity.state == 'on')
-          return 'toggle'
-        else
-          return 'none'
-      ]]]
+  show_icon: true
+  show_name: true
+  size: 40%
   
   state:
     - value: 'on'
-      icon: mdi:home-lightbulb
+      name: '[[[ return variables.var_name ]]]'
+      icon: '[[[ return variables.var_icon_prefix + "-open" ]]]'
+      color: var(--paper-item-icon-active-color)
     
     - value: 'off'
-      icon: mdi:home-lightbulb-outline
+      name: '[[[ return variables.var_name ]]]'
+      icon: '[[[ return variables.var_icon_prefix + "-closed" ]]]'
+      color: var(--paper-item-icon-color)
 
-#======================================#
-#     Light Group Button Name Card     #
-#======================================#
+#============================#
+#     Light Group Button     #
+#============================#
 
-light_group_button_name:
+light_group_button:
   variables:
-    entities_title: Lights
-    entities_group: light.dummy
+    entities_title: ''
+    entities_group: ''
   
   show_icon: true
   show_name: true
@@ -192,9 +147,9 @@ light_group_button_name:
     - value: 'off'
       icon: mdi:home-lightbulb-outline
 
-#============================#
-#     Motion Button Card     #
-#============================#
+#=======================#
+#     Motion Button     #
+#=======================#
 
 motion_button:
   show_icon: true
@@ -210,106 +165,12 @@ motion_button:
     - value: 'off'
       icon: mdi:motion-sensor-off
 
-#=================================#
-#     Environment Button Card     #
-#=================================#
+#===========================#
+#     Thermostat Button     #
+#===========================#
 
-# This is a base template for use by other templates (below) that deal with environmental controls/sensors.
-environment_button:
-  variables:
-    color: 'var(--card-background-color)'
-    humidity_entity: ''
-  
-  show_icon: true
-  show_state: true
-  show_name: false
-    
-  state:
-    - id: value_any
-      operator: '!='
-      value: all
-      spin: true
-  
-  styles:
-    card:
-      - background-color: '[[[ return variables.color || "transparent" ]]]'
-      - overflow: visible
-      - padding: 2px 0 5px 2px
-      - display: flex
-      #- width: fit-content
-      - border: 1px solid gray
-      - margin-right: 1px
-    grid:
-      - display: contents
-    img_cell:
-      - display: contents
-    icon:
-      - width: 70%
-      - position: absolute
-      - color: silver
-    state:
-      - font-size: 290%
-      - margin-top: '-10px'
-      - color: var(--primary-text-color)
-      - z-index: 1
-    
-    custom_fields:        
-      humidity:
-        - z-index: 2
-        - position: absolute
-        - bottom: 0
-        - left: 0
-        - display: flex
-  
-  custom_fields:
-    humidity:
-      card:
-        type: 'custom:button-card'
-        show_icon: true
-        icon: 'mdi:water-percent'
-        show_name: false
-        show_state: true
-        
-        state_display: |
-          [[[
-            return Math.round(states[variables.humidity_entity].state).toString();
-          ]]]
-        
-        styles:
-          grid:
-            - grid-template-areas: '"s i"'
-          img_cell:
-            - display: contents
-          state:
-            - color: 'var(--disabled-text-color)'
-            - font-size: 70%
-            - align-self: flex-end
-          card:
-            - padding: 0
-            - padding-left: 2px
-            - background-color: 'var(--bar-low-color)'
-          icon:
-            - color: 'var(--disabled-text-color)'
-            - width: 18px
-            - height: 15px
-            - margin: -4px -3px 0 -4px
-
-#================================#
-#     Thermostat Button Card     #
-#================================#
-
-thermostat:
+thermostat_button:
   template: environment_button
-  
-  variables:
-    color_setpoint_off: 'var(--bar-low-color)'
-    color_setpoint_idle: 'var(--bar-low-color)'
-    color_setpoint_cool: 'var(--bar-low-color)'
-    color_setpoint_heat: 'var(--bar-low-color)'
-    text_setpoint_off: 'var(--disabled-text-color)'
-    text_setpoint_idle: 'var(--disabled-text-color)'
-    text_setpoint_cool: 'var(--disabled-text-color)'
-    text_setpoint_heat: 'var(--disabled-text-color)'
     
   icon: 'mdi:fan'
   
@@ -357,6 +218,7 @@ thermostat:
           state:
             - font-size: 70%
             - color: var(--disabled-text-color)
+          
           card:
             - padding: 0 2px
             - background-color: var(--bar-low-color)
@@ -379,15 +241,16 @@ thermostat:
           state:
             - font-size: 70%
             - color: var(--disabled-text-color)
+          
           card:
             - padding: 0 2px
             - background-color: var(--bar-low-color)
 
-#=================================#
-#     Temperature Button Card     #
-#=================================#
+#============================#
+#     Temperature Button     #
+#============================#
 
-temperature:
+temperature_button:
   template: environment_button
   
   variables:
@@ -435,6 +298,7 @@ temperature:
           state:
             - font-size: 70%
             - color: var(--disabled-text-color)
+          
           card:
             - padding: 0 2px
             - background-color: var(--bar-low-color)
@@ -455,61 +319,19 @@ temperature:
           state:
             - font-size: 70%
             - color: var(--disabled-text-color)
+          
           card:
             - padding: 0 2px
             - background-color: var(--bar-low-color)
 
 #==========================#
-#     Operational Card     #
+#     HVAC Vent Button     #
 #==========================#
 
-# This is a base template for use by other templates (below) that operate various devices.
-operational_button:
-  show_icon: true
-  show_state: true
-    
-  styles:
-    card:
-      - background-color: var(--card-background-color)
-      - padding: 2px 0 5px 2px
-      - display: flex
-      - width: fit-content
-      - border: 1px solid gray
-      - margin-right: 15px
-    grid:
-      - display: contents
-    img_cell:
-      - display: contents
-    icon:
-      - position: absolute
-      - color: silver
-      - width: 60%
-      - left: 10px
-      - display: block
-      - z-index: 10
-    state:
-      - font-size: 350%
-      - margin-top: '-10px'
-      - color: var(--card-background-color)
-      - z-index: 0
-    name:
-      - color: var(--primary-text-color)
-      - font-size: 0.75em
-      - font-weight: 500
-      - position: absolute
-      - transform: rotate(90deg)
-      - transform-origin: right top
-      - bottom: 0
-      - right: 0
-      - z-index: 10
-
-#===============================#
-#     HVAC Vent Button Card     #
-#===============================#
-
-hvac_vent:
+hvac_vent_button:
   template: operational_button
       
+  # Bogus state display, needed to display the icon. It's hidden by stying.
   state_display: |-
     [[[ 
       return "00°" 
@@ -548,11 +370,11 @@ hvac_vent:
           return `<div style="line-height:1">${entity.attributes.current_position}%</div>`;
       ]]]
 
-#=================================#
-#     Ceiling Fan Button Card     #
-#=================================#
+#============================#
+#     Ceiling Fan Button     #
+#============================#
 
-ceiling_fan:
+ceiling_fan_button:
   template: operational_button
 
   variables:
@@ -601,6 +423,7 @@ ceiling_fan:
         - bottom: 0
         - left: 0
         - display: flex
+      
       speed:
         - font-size: 0.6em
         - position: absolute
@@ -623,20 +446,15 @@ ceiling_fan:
         styles:
           grid:
             - grid-template-areas: '"i"'
+          
           img_cell:
             - display: contents
+          
           card:
             - padding: 0
             - padding-left: 2px
-            #- background-color: 'var(--bar-low-color)'
+          
           icon:
-            #- color: |
-            #    [[[
-            #      if (states[variables.light_entity].state == 'on')
-            #        return 'var(--paper-item-icon-active-color)'
-            #      else
-            #        return 'var(--paper-item-icon-color)'
-            #    ]]]
             - width: 28px
             - height: 25px
             - margin: -4px -3px 0 -4px
@@ -659,3 +477,181 @@ ceiling_fan:
         else
           return `<div style="line-height:1">High</div>`;
       ]]]
+
+#=========================#
+#     Bath Fan Button     #
+#=========================#
+
+bath_fan_button:
+  template: operational_button
+  
+  tap_action:
+    action: toggle
+      
+  # Bogus state display, needed to display the icon. It's hidden by stying.
+  state_display: |-
+    [[[ 
+      return "00°" 
+    ]]]
+    
+  state:
+    - value: 'on'
+      icon: mdi:fan
+      spin: true
+      styles:
+        icon:
+          - color: var(--paper-item-icon-active-color)
+    
+    - value: 'off'
+      icon: mdi:fan-off
+      styles:
+        icon:
+          - color: var(--paper-item-icon-color)
+
+#
+#========================= Internal Templates =========================
+#
+
+#============================#
+#     Environment Button     #
+#============================#
+
+# This is a base template for use by other templates that deal with environmental controls/sensors.
+environment_button:
+  variables:
+    humidity_entity: ''
+  
+  show_icon: true
+  show_state: true
+  show_name: true
+    
+  state:
+    - id: value_any
+      operator: '!='
+      value: all
+      spin: true
+  
+  styles:
+    card:
+      - background-color: var(--card-background-color)
+      - padding: 18px 2px 5px 2px
+      - display: flex
+      - border: 1px solid gray
+      - margin-right: 1px
+    
+    grid:
+      - display: contents
+    
+    img_cell:
+      - display: contents
+    
+    icon:
+      - width: 70%
+      - position: absolute
+      - color: silver
+    
+    state:
+      - font-size: 290%
+      - margin-top: '-10px'
+      - color: var(--primary-text-color)
+      - z-index: 1
+    
+    name:
+      - color: var(--primary-text-color)
+      - font-size: 0.75em
+      - position: absolute
+      - top: 0
+      - left: 0
+      - z-index: 10
+    
+    custom_fields:        
+      humidity:
+        - z-index: 2
+        - position: absolute
+        - bottom: 0
+        - left: 0
+        - display: flex
+  
+  custom_fields:
+    humidity:
+      card:
+        type: 'custom:button-card'
+        show_icon: true
+        icon: 'mdi:water-percent'
+        show_name: false
+        show_state: true
+        
+        state_display: |
+          [[[
+            return Math.round(states[variables.humidity_entity].state).toString();
+          ]]]
+        
+        styles:
+          grid:
+            - grid-template-areas: '"s i"'
+          
+          img_cell:
+            - display: contents
+          
+          state:
+            - color: 'var(--disabled-text-color)'
+            - font-size: 70%
+            - align-self: flex-end
+          
+          card:
+            - padding: 0
+            - padding-left: 2px
+            - background-color: 'var(--bar-low-color)'
+          
+          icon:
+            - color: 'var(--disabled-text-color)'
+            - width: 18px
+            - height: 15px
+            - margin: -4px -3px 0 -4px
+
+#============================#
+#     Operational Button     #
+#============================#
+
+# This is a base template for use by other templates that operate various devices.
+operational_button:
+  show_icon: true
+  show_state: true
+  show_name: true
+    
+  styles:
+    card:
+      - background-color: var(--card-background-color)
+      - padding: 18px 2px 5px 2px
+      - display: flex
+      - width: fit-content
+      - border: 1px solid gray
+      - margin-right: 1px
+    
+    grid:
+      - display: contents
+    
+    img_cell:
+      - display: contents
+    
+    icon:
+      - position: absolute
+      - color: silver
+      - width: 60%
+      - bottom: 1px
+      - display: block
+      - z-index: 10
+    
+    state:
+      - font-size: 350%
+      - margin-top: '-10px'
+      - color: var(--card-background-color)
+      - z-index: 0
+    
+    name:
+      - color: var(--primary-text-color)
+      - font-size: 0.75em
+      - position: absolute
+      - top: 0
+      - left: 0
+      - z-index: 10

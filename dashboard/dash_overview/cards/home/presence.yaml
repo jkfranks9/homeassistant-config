@@ -4,32 +4,51 @@
 
 type: custom:stack-in-card
 title: Presence
-mode: horizontal
+mode: vertical
 cards:
   
   - type: 'custom:button-card'
-    template: info_button_stateless
-    entity: input_boolean.adults_home
-    name: Adults
-    icon: mdi:human-male-female
-  
-  - type: 'custom:button-card'
-    template: info_button_stateless
-    entity: input_boolean.children_home
-    name: Children
-    icon: mdi:human-child
-  
-  - type: 'custom:button-card'
-    template: info_button_state
-    entity: person.jon
-    icon: mdi:human-male
-  
-  - type: 'custom:button-card'
-    template: info_button_state
-    entity: person.mike
-    icon: mdi:human-male
-  
-  - type: 'custom:button-card'
-    template: info_button_state
-    entity: person.sarah
-    icon: mdi:human-female
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+      
+            - type: 'custom:button-card'
+              template: motion_button
+              entity: group.downstairs_motion
+            
+            - type: 'custom:button-card'
+              template: motion_button
+              entity: group.upstairs_motion
+          
+            - type: 'custom:button-card'
+              template: info_button
+              entity: input_boolean.adults_home
+              name: Adults
+              icon: mdi:human-male-female
+          
+            - type: 'custom:button-card'
+              template: info_button
+              entity: input_boolean.children_home
+              name: Children
+              icon: mdi:human-child
+          
+            - type: 'custom:button-card'
+              template: info_button
+              entity: person.jon
+              icon: mdi:human-male
+          
+            - type: 'custom:button-card'
+              template: info_button
+              entity: person.mike
+              icon: mdi:human-male
+          
+            - type: 'custom:button-card'
+              template: info_button
+              entity: person.sarah
+              icon: mdi:human-female

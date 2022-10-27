@@ -39,6 +39,7 @@
                             'set_minimum_attic_temperature', 
                             'set_minimum_garage_temperature', 
                             'set_minimum_outdoor_temperature',
+                            'set_up_mqtt_automated_config',
                             'update_openuv'
                            ] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
@@ -81,21 +82,26 @@
                             'concat_log_files', 
                             'concat_scripts_log_files', 
                             'evaluate_weather_condition', 
+                            'mobile_notification_worker',
                             'popup_light_group',
                             'position_hvac_vent',
                             'reset_smart_bulbs', 
                             'restore_lighting_on_resume',
                             'resume_cinema',
                             'resume_worker', 
+                            'send_notification',
                             'set_datetime_offset_days', 
                             'set_datetime_offset_months', 
                             'set_datetime_offset_weeks', 
                             'set_theater_dark',
+                            'set_theater_dark_delay',
+                            'set_theater_dim',
+                            'set_theater_idle',
+                            'set_up_mqtt_automated_config',
                             'start_activity', 
-                            'throttle_mobile_notification', 
                             'turn_off_adguard', 
                             'turn_on_adguard', 
-                            'watch_application'
+                            'watch_app'
                            ] %}
         {{ trigger.event.data.entity_id.startswith('script.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list }}
@@ -229,18 +235,30 @@
 # Restart HA if the kodi error loop situation exists (see above).
 - alias: Handle Kodi Error Loop
   id: handle_kodi_error_loop
+  
   trigger:
     - platform: state
       entity_id: counter.kodi_errors
+  
   condition:
     - condition: template
       value_template: "{{ trigger.to_state.state | int(0) >= 30 }}"
+  
   action:
-    - service: persistent_notification.create
+    - service: script.send_notification
       data:
+        destination:
+          - persistent
         title: 'Home Assistant Restarted'
         notification_id: 'kodi_error_loop'
         message: 'Home Assistant was restarted due to excessive Kodi media player errors.'
+    
+    # - service: persistent_notification.create
+      # data:
+        # title: 'Home Assistant Restarted'
+        # notification_id: 'kodi_error_loop'
+        # message: 'Home Assistant was restarted due to excessive Kodi media player errors.'
+    
     - service: homeassistant.restart
 
 # Reset the counter after a few minutes since we're not interested in occasional sporadic errors.
@@ -351,3 +369,100 @@
       data:
         message: "notification: '{{ trigger.payload }}'"
         level: info
+
+#========================#
+#     MQTT Discovery     #
+#========================#
+
+# Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
+- alias: Set Up MQTT Automated Config
+  id: set_up_mqtt_automated_config
+  
+  trigger:
+    - platform: homeassistant
+      event: start
+  
+  variables:
+    suffix: 'last_changed'
+    
+    items:
+      - "{{ 'ups_' ~ suffix }}"
+      - "{{ 'garage_door_north_' ~ suffix }}"
+      - "{{ 'garage_door_south_' ~ suffix }}"
+      - "{{ 'treadmill_' ~ suffix }}"
+      - "{{ 'washer_' ~ suffix }}"
+  
+  action:
+    - repeat:
+        count: "{{ items | length }}"
+        
+        sequence:
+          - service: script.set_up_mqtt_automated_config
+            data:
+              domain: sensor
+              unique_id: "{{ items[repeat.index - 1] }}"
+              device_class: timestamp
+
+# Publish state & attributes for MQTT last changed sensors.
+- alias: Publish MQTT Automated States
+  id: publish_mqtt_automated_states
+  mode: parallel
+  
+  trigger:
+    - platform: state
+      entity_id: sensor.cyber1_status_data
+      to: 'OB DISCHRG'
+      for: '00:01:00'
+      id: ups
+    
+    - platform: state
+      entity_id: cover.garage_door_north
+      from: 'closed'
+      to: 'open'
+      id: garage_door_north
+    
+    - platform: state
+      entity_id: cover.garage_door_south
+      from: 'closed'
+      to: 'open'
+      id: garage_door_south
+    
+    - platform: state
+      entity_id: input_boolean.treadmill_triggered
+      from: 'off'
+      to: 'on'
+      id: treadmill
+    
+    - platform: state
+      entity_id: input_select.washer_state
+      from: 'Stop'
+      not_to:
+        - 'Unknown'
+        - 'unknown'
+        - 'unavailable'
+      id: washer
+  
+  variables:
+    valid: >
+      {{ trigger | default(none) is not none and trigger.to_state is defined and trigger.from_state is defined }}
+    
+    timestamp: >
+      {{ (datetime | default(now())).isoformat() }}
+    
+    unique_id: >
+      {{ trigger.id }}_last_changed
+  
+  condition:
+    - condition: template
+      value_template: "{{ valid }}"
+
+  action:
+
+  # Update Door Sensors.
+
+    - service: script.publish_mqtt_automated_states
+      data:
+        domain: sensor
+        unique_id: "{{ unique_id }}"
+        state: "{{ timestamp }}"
+        attributes: {}

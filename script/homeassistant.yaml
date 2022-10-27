@@ -73,3 +73,99 @@ turn_on_adguard:
   sequence:
     - service: switch.turn_on
       entity_id: switch.adguard_protection
+
+#========================#
+#     MQTT Discovery     #
+#========================#
+
+# Publish state & attributes for MQTT last changed sensors.
+publish_mqtt_automated_states:
+  alias: Publish MQTT Automated States
+  mode: parallel
+  
+  fields: 
+    <<: &mqtt_fields
+      domain:
+        description: The entity domain.
+        selector:
+          text:
+            type: text
+      
+      unique_id:
+        description: The entity ID.
+        selector:
+          text:
+            type: text
+    
+    state:
+      description: The entity state.
+      selector:
+        text:
+          type: text
+    
+    attributes:
+      description: The entity attributes.
+      example: A dictionary {} in yaml
+      selector:
+        object:
+  
+  variables: 
+    <<: &mqtt_variables
+      root: "homeassistant"
+      
+      topic_root: >
+        {%- if domain is not defined or unique_id is not defined %}
+          {{- [ root, 'error'] | join('/') }}
+        {%- else %}
+          {{- [ root, domain, unique_id ] | join('/') }}
+        {%- endif %}
+    
+    service_data: >
+      {{ {
+        'topic': topic_root ~ '/state',
+        'payload': '' ~ { 'state': state, 'attributes': attributes | default({}) } | tojson,
+        'retain': retain | default('true')
+      } }}
+
+  sequence:
+    - service: mqtt.publish
+      data: "{{ service_data }}"
+
+# Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
+set_up_mqtt_automated_config:
+  alias: Set Up MQTT Automated Config
+  mode: parallel
+  
+  fields: 
+    <<: *mqtt_fields
+    device_class: 
+      description: The entity device class.
+      selector:
+        text:
+          type: text
+  
+  variables:
+    name: >
+      {{ unique_id | default('') | replace('_', ' ') | title }}
+    
+    <<: *mqtt_variables
+    
+    service_data: >
+      {%- set items = [
+        ( "name", name),
+        ( "unique_id", unique_id | default(none)),
+        ( "state_topic", topic_root ~ "/state"),
+        ( "value_template", "{{ value_json.state }}"),
+        ( "json_attributes_topic", topic_root ~ "/state"),
+        ( "json_attributes_template", "{{ value_json.attributes | tojson }}"),
+        ( "device_class", device_class | default(none) ),
+      ] %}
+      {% set payload = dict.from_keys(items | rejectattr('1', 'none') | list) %}
+      {{ {
+        'topic': topic_root ~ '/config',
+        'payload': '' ~ payload | tojson,
+      } }}
+  
+  sequence:
+    - service: mqtt.publish
+      data: "{{ service_data }}"

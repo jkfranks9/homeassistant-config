@@ -13,13 +13,6 @@ blueprint:
         entity:
           domain: binary_sensor
     
-    timer_entity:
-      name: Timer Entity
-      description: Timer entity associated with the notification, used for throttling.
-      selector:
-        entity:
-          domain: timer
-    
     message:
       name: Notification Message
       description: Message to be issued.
@@ -42,11 +35,15 @@ condition:
 # Send the notification after a random delay (to spread out automations done at HA start).
 action:
   - delay: 
-      seconds: "{{ range(2, 15) | random }}"
-  
-  - service: script.throttle_mobile_notification
+      seconds: "{{ range(2, 15) | random }}"  
+    
+  - service: script.send_notification
     data:
-      timer_entity: !input timer_entity
+      destination:
+        - mobile
       title: 'Action required:'
       message: !input message
-      channel: Home Assistant
+      channel: standard
+      throttled: false
+      tag: ''
+      timeout: 0

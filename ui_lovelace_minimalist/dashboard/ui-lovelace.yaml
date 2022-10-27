@@ -6,7 +6,7 @@ theme: "minimalist-desktop"
 background: "var(--background-image)"
 # views: !include_dir_merge_list "views/"
 views:
-  - !include /config/dashboard/ui-lovelace-minimalist/views/home.yaml
+  - !include /config/dashboard/ui_lovelace_minimalist/views/home.yaml
           
           #- type: "custom:button-card"
           #  template: "card_title"

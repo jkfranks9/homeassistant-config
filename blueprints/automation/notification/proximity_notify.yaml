@@ -61,11 +61,10 @@ action:
     data:
       message: "{{ input_person_name }} will be arriving soon"
       level: info
-  
-  - service: notify.alexa_media
+    
+  - service: script.send_notification
     data:
-      target:
-        - media_player.everywhere
-      data:
-        type: announce
+      destination:
+        - echo
       message: "{{ input_person_name }} will be arriving soon"
+      media_player_entity: media_player.everywhere

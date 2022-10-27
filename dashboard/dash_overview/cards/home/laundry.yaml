@@ -7,9 +7,11 @@ title: Laundry
 show_header_toggle: false
 entities:
   
-  # Show the washer state and dryer state (off) if the dryer isn't running.
+  # Washer and dryer both off.
   - type: conditional
     conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
       - entity: input_boolean.dryer_running
         state: 'off'
     row:
@@ -22,9 +24,30 @@ entities:
         - entity: input_select.washer_state
           name: Washer
   
-  # Show the washer state and dryer temperature/humidity if the dryer is running.
+  # Only washer on.
   - type: conditional
     conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'off'
+    row:
+      type: custom:multiple-entity-row
+      entity: input_boolean.dryer_running
+      name: Laundry State
+      icon: mdi:washing-machine
+      state_header: Dryer
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+  
+  # Only dryer on.
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
       - entity: input_boolean.dryer_running
         state: 'on'
     row:
@@ -37,4 +60,25 @@ entities:
         - entity: input_select.washer_state
           name: Washer
         - entity: sensor.dryer_temperature
-          name: Temperature
+          name: Temp
+  
+  # Washer and dryer both on.
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Laundry State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+        - entity: sensor.dryer_temperature
+          name: Temp

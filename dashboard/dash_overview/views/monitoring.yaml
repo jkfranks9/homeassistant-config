@@ -16,3 +16,4 @@ cards:
       - !include /config/dashboard/dash_overview/cards/monitoring/homeassistant.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/monitoring/backups.yaml
+      - !include /config/dashboard/dash_overview/cards/monitoring/last_changed.yaml

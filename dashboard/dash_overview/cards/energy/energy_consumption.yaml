@@ -32,13 +32,13 @@ cards:
           - entity: sensor.second_floor_calculated_daily_energy
             name: Daily
       
-      #- type: custom:multiple-entity-row
-      #  entity: sensor.second_floor_measured_monthly_energy
-      #  name: Second Floor Measured
-      #  state_header: Monthly
-      #  entities:
-      #    - entity: sensor.second_floor_measured_daily_energy
-      #      name: Daily
+      - type: custom:multiple-entity-row
+        entity: sensor.second_floor_measured_monthly_energy
+        name: Second Floor Measured
+        state_header: Monthly
+        entities:
+          - entity: sensor.second_floor_measured_daily_energy
+            name: Daily
       
       - type: custom:multiple-entity-row
         entity: sensor.total_monthly_energy
