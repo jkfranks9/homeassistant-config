@@ -213,22 +213,21 @@
       below: 6.0
     
     # Turn on appropriate lights.
-    - choose:
+    - if:
       
-      # It's Christmas time!
-      - conditions:
+        # It's Christmas time!
         - condition: template
           value_template: "{{ is_state('input_boolean.christmas_mode', 'on') }}"
         
-        sequence:
-          - service: homeassistant.turn_on
-            entity_id: light.daytime_christmas_lights
+      then:
+        - service: homeassistant.turn_on
+          entity_id: light.daytime_christmas_lights
           
-          - service: light.turn_on
-            entity_id: light.office_lamp
+        - service: light.turn_on
+          entity_id: light.office_lamp
       
       # No it's not!
-      default:
+      else:
         - service: homeassistant.turn_on
           entity_id: light.daytime_lights
         
@@ -284,44 +283,43 @@
       target:
         entity_id: script.close_garage_door_south
     
-    - choose:
+    - if:
       
-      # No one is home.
-      - conditions:
+        # No one is home.
         - condition: template
           value_template: >
             {{ not is_state('person.jon', 'home') and
                is_state('input_boolean.adults_home', 'off') }}
         
-        sequence:
+      then:
     
-          # Lock the PC.
-          - service: script.turn_on
-            entity_id: script.lock_pc
+        # Lock the PC.
+        - service: script.turn_on
+          entity_id: script.lock_pc
     
-          # Turn off all lights.
-          - scene: scene.lights_out
+        # Turn off all lights.
+        - scene: scene.lights_out
     
-          # Turn off all fans.
-          - scene: scene.fans_off
+        # Turn off all fans.
+        - scene: scene.fans_off
     
-          # Close the upstairs guest bedroom vents.
-          - service: script.close_upstairs_br_vents
+        # Close the upstairs guest bedroom vents.
+        - service: script.close_upstairs_br_vents
         
-          # Turn off automations that could turn on various lights.
-          - service: automation.turn_off
-            entity_id: automation.turn_on_christmas_lights
-          - service: automation.turn_off
-            entity_id: automation.turn_on_guest_lights_sunset
-          - service: automation.turn_off
-            entity_id: automation.turn_on_office_light
+        # Turn off automations that could turn on various lights.
+        - service: automation.turn_off
+          entity_id: automation.turn_on_christmas_lights
+        - service: automation.turn_off
+          entity_id: automation.turn_on_guest_lights_sunset
+        - service: automation.turn_off
+          entity_id: automation.turn_on_office_light
     
-          # Indicate I'm  away.
-          - service: input_boolean.turn_on
-            entity_id: input_boolean.jon_away
+        # Indicate I'm  away.
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.jon_away
       
       # Must be sunset.
-      default:
+      else:
         
         # Turn off certain light domains.
         - service: scene.apply
@@ -329,45 +327,6 @@
             entities:
               light.storage_lights: 'off'
               light.outdoor_lights: 'off'
-
-# Deal with the open/close house timing issue. The problem is:
-# 
-# - One tracker changes to home state, which changes the person to home, driving Open House
-# - A second tracker gets an attribute updated (but NOT the state), which changes the person back to not_home, driving Close House
-# - The second tracker then changes to home state, which again drives Open House
-#
-# Note that nothing terrible actually happens, but stuff like this makes me nuts.
-#
-# I believe this issue doesn't exist for leaving home, due to the algorithm that updates the person state.
-- alias: Handle House Timing Issue
-  id: 'handle_house_timing_issue'
-  
-  # Trigger on any of the GPS trackers changing from not_home to home.
-  trigger:
-    - platform: state
-      entity_id:
-        - device_tracker.jon_galaxy
-        - device_tracker.life360_jon_franks
-      from: 'not_home'
-      to: 'home'
-  
-  # We only need to trigger on one of the trackers, not all of them, so use the state of the Close House
-  # automation to weed out all but the first.
-  condition:
-    - condition: state
-      entity_id: automation.close_house
-      state: 'on'
-  
-  action:
-    
-    # Temporarily turn off the Close House automation, then turn it back on.
-    - service: automation.turn_off
-      entity_id: automation.close_house
-      
-    - delay: "00:02:00"
-    
-    - service: automation.turn_on
-      entity_id: automation.close_house
 
 # Close house subset when family members leave.
 - alias: Close House For Family
@@ -408,6 +367,81 @@
   
   action:
     - service: script.turn_off_extended_away_mode
+
+#=================================#
+#     House Open/Close Timing     #
+#=================================#
+
+# Deal with the open/close house timing issue. The problem is:
+# 
+# - One tracker changes to home or not_home state, which changes the person to home or not_home, driving Open House or Close House
+# - A second tracker gets an attribute updated (but NOT the state), which changes the person back to not_home or home, driving Close House or Open House
+# - The second tracker then changes to home or not_home state, which again drives Open House or Close House
+#
+# Note that nothing too terrible actually happens: I have seen the garage door get stuck partially open, and a notification that it can't be closed,
+# both due to the garage door opener being triggered twice within 1 second. I can live with that, but stuff like this drives me bonkers.
+
+# Handle the Open House variation.
+- alias: Handle Open House Timing Issue
+  id: 'handle_open_house_timing_issue'
+  
+  # Trigger on any of the GPS trackers changing from not_home to home.
+  trigger:
+    - platform: state
+      entity_id:
+        - device_tracker.jon_galaxy
+        - device_tracker.life360_jon_franks
+      from: 'not_home'
+      to: 'home'
+  
+  # We only need to trigger on one of the trackers, not all of them, so use the state of the Close House
+  # automation to weed out all but the first.
+  condition:
+    - condition: state
+      entity_id: automation.close_house
+      state: 'on'
+  
+  action:
+    
+    # Temporarily turn off the Close House automation, then turn it back on.
+    - service: automation.turn_off
+      entity_id: automation.close_house
+      
+    - delay: "00:02:00"
+    
+    - service: automation.turn_on
+      entity_id: automation.close_house
+
+# Handle the Close House variation.
+- alias: Handle Close House Timing Issue
+  id: 'handle_close_house_timing_issue'
+  
+  # Trigger on any of the GPS trackers changing from home to not_home.
+  trigger:
+    - platform: state
+      entity_id:
+        - device_tracker.jon_galaxy
+        - device_tracker.life360_jon_franks
+      from: 'home'
+      to: 'not_home'
+  
+  # We only need to trigger on one of the trackers, not all of them, so use the state of the Open House
+  # automation to weed out all but the first.
+  condition:
+    - condition: state
+      entity_id: automation.open_house
+      state: 'on'
+  
+  action:
+    
+    # Temporarily turn off the Open House automation, then turn it back on.
+    - service: automation.turn_off
+      entity_id: automation.open_house
+      
+    - delay: "00:02:00"
+    
+    - service: automation.turn_on
+      entity_id: automation.open_house
 
 #========================#
 #     Family Room AV     #
@@ -794,7 +828,7 @@
         option: >
           {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
           {% set seconds = (now().timestamp() - start) %}
-          {% if   seconds >= 240 and seconds < 350 %} Small
+          {% if   seconds >= 180 and seconds < 350 %} Small
           {% elif seconds >= 350 and seconds < 450 %} Medium
           {% elif seconds >= 450  %}                  Large
           {% endif %}

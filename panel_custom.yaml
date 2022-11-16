@@ -1,6 +1,17 @@
 #============================#
 #     Customized Sidebar     #
 #============================#
+
+# Integrations
+- name: ha_integrations
+  sidebar_title: Integrations
+  sidebar_icon: mdi:puzzle
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: 'config/integrations'
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator
   
 # First floor plan
 - name: ha_first_floor

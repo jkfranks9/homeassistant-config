@@ -138,7 +138,14 @@ mqtt:
         {% if pct > 100 %}
           {% set pct = 100 %}
         {% endif %}    
-        {{ pct }}    
+        {{ pct }}
+    
+    # InfluxDB database size for the front end.
+    - name: InfluxDB DB Size
+      unit_of_measurement: 'MB'
+      icon: hass:chart-line
+      state_topic: "homeassistant/sensor/dbsize"
+      value_template: "{{ (value.split('\t')[0]|int(0)/1000)|round(3) }}"
 
 #==========================#
 #     Computer Control     #
@@ -225,15 +232,15 @@ counter:
 notify:
   - name: triggered_automations
     platform: file
-    filename: triggered_automations.log
+    filename: debug_logs/triggered_automations.log
   
   - name: triggered_scripts
     platform: file
-    filename: triggered_scripts.log
+    filename: debug_logs/triggered_scripts.log
   
   - name: dryer_trend_sensors
     platform: file
-    filename: dryer_trend_sensors.log
+    filename: debug_logs/dryer_trend_sensors.log
 
 # Shell commands
 shell_command:

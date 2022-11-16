@@ -26,3 +26,38 @@
       arg: /
     - type: memory_use_percent
     - type: processor_use
+
+#================#
+#     Hockey     #
+#================#
+
+# Next Canes Game
+- platform: rest
+  name: Next Canes Game
+  json_attributes_path: "$.teams[0].nextGameSchedule.dates[0].games[0]"
+  json_attributes:
+    - gameDate
+    - teams
+  resource: https://statsapi.web.nhl.com/api/v1/teams/12?expand=team.schedule.next
+  value_template: >
+    {% if value_json is defined and value_json | length %}
+      {{ as_timestamp(value_json.teams[0].nextGameSchedule.dates[0].games[0].gameDate) | timestamp_custom('%b %d %I:%M%p') }}
+    {% else %}
+      {{ as_timestamp(now().today() + timedelta(days = 5)) | timestamp_custom('%b %d %I:%M%p') }}
+    {% endif %}
+
+# Next Flyers Game
+- platform: rest
+  name: Next Flyers Game
+  json_attributes_path: "$.teams[0].nextGameSchedule.dates[0].games[0]"
+  json_attributes:
+    - gameDate
+    - teams
+  resource: https://statsapi.web.nhl.com/api/v1/teams/4?expand=team.schedule.next
+  value_template: >    
+    {% if value_json is defined and value_json | length %}
+      {{ as_timestamp(value_json.teams[0].nextGameSchedule.dates[0].games[0].gameDate) | timestamp_custom('%b %d %I:%M%p') }}
+    {% else %}
+      {{ as_timestamp(now().today() + timedelta(days = 5)) | timestamp_custom('%b %d %I:%M%p') }}
+    {% endif %}
+    

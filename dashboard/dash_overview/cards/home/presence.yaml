@@ -21,10 +21,12 @@ cards:
             - type: 'custom:button-card'
               template: motion_button
               entity: group.downstairs_motion
+              name: Downstairs
             
             - type: 'custom:button-card'
               template: motion_button
               entity: group.upstairs_motion
+              name: Upstairs
           
             - type: 'custom:button-card'
               template: info_button

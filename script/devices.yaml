@@ -313,17 +313,17 @@ toggle_upstairs_br_vent:
         message: "vent_entity: {{vent_entity}}"
         level: debug
     
-    - choose:
-      - conditions:
+    - if:
         - condition: template
           value_template: "{{ state_attr(vent_entity, 'current_position') == 0 }}"
-        sequence:
-          - service: script.position_hvac_vent
-            data:
-              vent: "{{ state_attr(vent_entity, 'friendly_name') }}"
-              position: 100
       
-      default:
+      then:
+        - service: script.position_hvac_vent
+          data:
+            vent: "{{ state_attr(vent_entity, 'friendly_name') }}"
+            position: 100
+      
+      else:
         - service: script.position_hvac_vent
           data:
             vent: "{{ state_attr(vent_entity, 'friendly_name') }}"

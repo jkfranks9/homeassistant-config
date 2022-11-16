@@ -178,37 +178,36 @@ send_notification:
                 # Handle throttled notifications, which means only send one notification per day. This is accomplished by 
                 # using a timer associated with the particular notification. We only proceed if the timer is idle. Then
                 # we start the timer with a duration that ends at 7 AM the next day.
-                - choose:
-                  - conditions:
+                - if:
                     - condition: template
                       value_template: "{{ throttled }}"
                   
-                    sequence:
+                  then:
               
-                      # Wait a few seconds just to be sure timers have been restored.
-                      - delay: '00:00:03'
+                    # Wait a few seconds just to be sure timers have been restored.
+                    - delay: '00:00:03'
     
-                      # Only continue if the input timer is idle.
-                      - condition: "{{ is_state(timer_entity, 'idle') }}"
+                    # Only continue if the input timer is idle.
+                    - condition: "{{ is_state(timer_entity, 'idle') }}"
                     
-                      - service: script.mobile_notification_worker
-                        data:
-                          title: "{{ title }}"
-                          message: "{{ message }}"
-                          channel: "{{ channel }}"
-                          timeout: "{{ timeout }}"
-                          tag: "{{ tag }}"
+                    - service: script.mobile_notification_worker
+                      data:
+                        title: "{{ title }}"
+                        message: "{{ message }}"
+                        channel: "{{ channel }}"
+                        timeout: "{{ timeout }}"
+                        tag: "{{ tag }}"
     
-                      # Start the timer, using a duration that ends tomorrow at 7 AM.
-                      - service: timer.start
-                        data:
-                          entity_id: "{{ timer_entity }}"
-                          duration: >
-                            {% set next = now().today().replace(hour=7, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
-                            {{ (next - now().today().replace(microsecond=0)).seconds }}
+                    # Start the timer, using a duration that ends tomorrow at 7 AM.
+                    - service: timer.start
+                      data:
+                        entity_id: "{{ timer_entity }}"
+                        duration: >
+                          {% set next = now().today().replace(hour=7, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
+                          {{ (next - now().today().replace(microsecond=0)).seconds }}
                 
                   # Handle non-throttled notifications.
-                  default:
+                  else:
                     - service: script.mobile_notification_worker
                       data:
                         title: "{{ title }}"

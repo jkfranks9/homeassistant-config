@@ -92,6 +92,7 @@ logs:
   homeassistant.components.bluetooth_le_tracker.device_tracker: warning
   homeassistant.components.cover:                               info
   homeassistant.components.device_tracker:                      info
+  homeassistant.components.device_tracker.unifi:                info
   homeassistant.components.ecovacs:                             info
   homeassistant.components.esphome:                             info
   homeassistant.components.fan:                                 info
@@ -105,8 +106,10 @@ logs:
   homeassistant.components.proximity:                           warning
   homeassistant.components.scene:                               info
   homeassistant.components.shell_command:                       info
+  homeassistant.components.switch.unifi:                        info
   homeassistant.components.system_log.external:                 info # This is for logs in automations and scripts.
   homeassistant.components.tplink:                              info
+  homeassistant.components.unifi:                               info
   homeassistant.components.webhook:                             info
   homeassistant.components.websocket_api:                       info
   homeassistant.components.websocket_api.http.connection:       info
@@ -123,6 +126,7 @@ logs:
 
   # Other
   aioesphomeapi.connection:                info
+  aiounifi:                                info
   androidtv.adb_manager.adb_manager_async: info
   googleapiclient.discovery:               info
   kasa:                                    info
@@ -239,6 +243,9 @@ filters:
   homeassistant.setup:
     - "Setup of .* is taking over 10 seconds"
 
+  music_assistant:
+    - "Finished job [Cleanup cache] in .* seconds"
+  
   oauth2client.client:
     - "Refreshing access_token"
   

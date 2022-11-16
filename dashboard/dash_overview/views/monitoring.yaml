@@ -14,6 +14,7 @@ cards:
       - !include /config/dashboard/dash_overview/cards/monitoring/system.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/monitoring/homeassistant.yaml
+      - !include /config/dashboard/dash_overview/cards/monitoring/hockey.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/monitoring/backups.yaml
       - !include /config/dashboard/dash_overview/cards/monitoring/last_changed.yaml

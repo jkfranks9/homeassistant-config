@@ -38,8 +38,45 @@
     
     # If we've started a new year (previous month is December), copy the current year's history to the previous year.
     # We only keep two year's worth of history.
-    - condition: "{{ month == 'dec' }}"
-    - service: script.copy_monthly_calories
+    - if:
+        - condition: template
+          value_template: "{{ month == 'dec' }}"
+      
+      then:
+        - variables:
+            months:
+              - jan
+              - feb
+              - mar
+              - apr
+              - may
+              - jun
+              - jul
+              - aug
+              - sep
+              - oct
+              - nov
+              - dec
+    
+        # Repeat for all months.
+        - repeat:
+            count: 12
+            
+            sequence:
+              
+              # Copy the current year value to the previous year for the corresponding month.
+              - service: input_number.set_value
+                target:
+                  entity_id: "input_number.calories_prev_year_{{ months[repeat.index-1] }}"
+                data:
+                  value: "{{ states('input_number.calories_curr_year_' + months[repeat.index-1]) }}"
+              
+              # Rest the current year value to zero.
+              - service: input_number.set_value
+                target:
+                  entity_id: "input_number.calories_curr_year_{{ months[repeat.index-1] }}"
+                data:
+                  value: 0
 
 #==========================#
 #     Manual Exercise      #

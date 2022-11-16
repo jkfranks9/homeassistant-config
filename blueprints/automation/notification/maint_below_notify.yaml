@@ -58,6 +58,10 @@ blueprint:
       description: (Optional) The tag for persistent notifications.
       default: ''
 
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_persistent: !input persistent
+
 # Trigger when the sensor value(s) become too low, or when HA starts (in case HA is rebooting when the trigger would have occurred).
 trigger:
   - platform: numeric_state
@@ -87,28 +91,27 @@ action:
   - delay: 
       seconds: "{{ range(2, 15) | random }}"
   
-  - choose:
+  - if:
     
-    # Handle a persistent notification.
-    - conditions:
+      # Handle a persistent notification.
       - condition: template
-        value_template: "{{ persistent }}"
+        value_template: "{{ input_persistent }}"
       
-      sequence:  
-        - service: script.send_notification
-          data:
-            destination:
-              - mobile
-            title: 'Action required:'
-            message: !input message
-            channel: persistent
-            throttled: true
-            timer_entity: !input timer_entity
-            tag: !input tag
-            timeout: 0
+    then:  
+      - service: script.send_notification
+        data:
+          destination:
+            - mobile
+          title: 'Action required:'
+          message: !input message
+          channel: persistent
+          throttled: true
+          timer_entity: !input timer_entity
+          tag: !input tag
+          timeout: 0
     
     # Handle a non-persistent notification.
-    default: 
+    else: 
       - service: script.send_notification
         data:
           destination:

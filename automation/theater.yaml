@@ -274,22 +274,6 @@
       data_template:
         entity_id: input_text.current_feature
         value: "{{ ( trigger.to_state.state ) }}"
- 
-#=======================#
-#     Turn Off Kodi     #
-#=======================#
-
-# This should be called when the Kodi media player is turned off.
-- alias: Turn Off Kodi
-  id: turn_off_kodi
-  trigger:
-    - platform: device
-      device_id: 7000b71050bd8b00ed5ae05567e931c5
-      domain: kodi
-      entity_id: media_player.kodi
-      type: turn_off
-  action:
-    - service: script.turn_off_kodi
 
 #===================================#
 #     Shield Application Change     #
@@ -308,32 +292,28 @@
   action:
     
     # Paramount Plus cannot function if Adguard protection is turned on.
-    - choose:
+    - if:
       
-      # Turn off Adguard if the application is Paramount.
-      - conditions:
+        # Turn off Adguard if the application is Paramount.
         - condition: template
           value_template: "{{ is_state_attr('media_player.shield_tv', 'app_name', 'Paramount+') }}"
-        sequence:
-          - service: script.turn_off_adguard
+      
+      then:
+        - service: script.turn_off_adguard
       
       # Turn on Adguard for all other applications. Note that it's also turned on when the cinema
       # is closed, in case Paramount was the last application used.
-      default:
+      else:
         - service: script.turn_on_adguard  
     
     # The Kodi media player needs to be turned off if we're changing from Kodi to something else.
-    - choose:
+    - if:
       
-      # Kill the Kodi app if needed, else do nothing.
-      - conditions:
+        # Kill the Kodi app if needed, else do nothing.
         - condition: template
           value_template: "{{ trigger.from_state and trigger.from_state.attributes.app_name == 'Kodi' }}"
-        sequence:
-          #- service: androidtv.adb_command
-          #  data:
-          #    entity_id: media_player.shield_tv
-          #    command: "am force-stop org.xbmc.kodi"
-          - service: media_player.turn_off
-            data:
-              entity_id: media_player.kodi
+        
+      then:
+        - service: media_player.turn_off
+          data:
+            entity_id: media_player.kodi

@@ -31,7 +31,7 @@ next_event:
         {% set ts_delta = (-86400) %}
       {% endif %}
       ha-card {
-        border: solid 2px {% if (ts_delta >= 0) %}red {% elif ts_delta > (-86400) %}yellow {% else %}var(--card-background-color) {% endif %};
+        color: {% if (ts_delta >= 0) %}red {% elif ts_delta > (-86400) %}yellow {% else %}var(--primary-text-color) {% endif %};
       }
 
 #==================#

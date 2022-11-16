@@ -4,8 +4,6 @@
 
 type: custom:stack-in-card
 title: Medications
-keep:
-  margin: true
 cards:
       
   # Eliquis

@@ -20,10 +20,7 @@ open_cinema:
       data:
         message: "{{ ['Cinema is open for business!', 
                       'Enjoy the show!', 
-                      'Theater is ready!',
-                      'TV time!',
-                      'Is the popcorn ready?',
-                      'Don''t forget your drink!'
+                      'Theater is ready!'
                      ] | random }}"
         target:
           - media_player.family_room_echo
@@ -104,17 +101,20 @@ close_cinema:
       entity_id: remote.harmony_hub
     
     # Set the upstairs Ecobee to away or sleep mode, depending on the time of day.
-    - choose:
-      - conditions:
+    - if:
         - condition: time
           after:  '18:30:00'
           before: '23:30:00'
-        sequence:
-          - service: script.set_thermostat_preset
-            data:
-              thermostat_entity: climate.upstairs
-              preset: 'Sleep'
-      default:
+        
+      then:
+          
+        - service: script.set_thermostat_preset
+          data:
+            thermostat_entity: climate.upstairs
+            preset: 'Sleep'
+      
+      else:
+        
         - service: script.set_thermostat_preset
           data:
             thermostat_entity: climate.upstairs
@@ -192,35 +192,35 @@ change_some_downstairs_lights:
       description: Whether to turn the lights on (true) or off (false).
   
   sequence:
-    - choose:
+    - if:
       
-      # Turn on lights.
-      - conditions:
+        # Turn on lights.
         - condition: template
           value_template: "{{ turn_on == true }}"
         
-        sequence:
+      then:
           
-          # Turn on automations that might have been turned off.
-          - service: automation.turn_on
-            entity_id:
-              - automation.check_daytime_lights_sunset_minimum
-              - automation.check_daytime_lights_sunset_medium
-              - automation.check_daytime_lights_sunset_maximum
+        # Turn on automations that might have been turned off.
+        - service: automation.turn_on
+          entity_id:
+            - automation.check_daytime_lights_sunset_minimum
+            - automation.check_daytime_lights_sunset_medium
+            - automation.check_daytime_lights_sunset_maximum
           
-          # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
-          - condition: numeric_state
-            entity_id: sun.sun
-            attribute: elevation
-            below: 4.0
-          - service: homeassistant.turn_on
-            entity_id:
-              - light.stairway_light
-              - light.family_room_lamp
-              - light.hallway_lamp
+        # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
+        - condition: numeric_state
+          entity_id: sun.sun
+          attribute: elevation
+          below: 4.0
+        
+        - service: homeassistant.turn_on
+          entity_id:
+            - light.stairway_light
+            - light.family_room_lamp
+            - light.hallway_lamp
         
       # Turn off lights, but only if no family members present.
-      default:
+      else:
         - condition: state
           entity_id: input_boolean.adults_home
           state: 'off'
@@ -655,15 +655,3 @@ play_feature_movie:
     # Darken the theater.
     - service: script.turn_on
       entity_id: script.set_theater_dark_delay
- 
-#=======================#
-#     Turn Off Kodi     #
-#=======================#
-turn_off_kodi:
-  alias: Turn Off Kodi
-  sequence:
-    - service: kodi.call_method
-      target:
-        entity_id: media_player.kodi
-      data:
-        method: Application.Quit

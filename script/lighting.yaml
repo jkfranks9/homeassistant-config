@@ -7,20 +7,6 @@ bedtime:
   alias: Bedtime
   sequence:
     
-    # Say something nice.
-    - service: notify.alexa_media
-      data:
-        message: "{{ ['Good night!', 
-                      'Good night, master!', 
-                      'Sweet dreams!',
-                      'See you in the morning!'
-                     ] | random }}"
-        target:
-          - media_player.family_room_echo
-          - media_player.master_bedroom_echo
-        data:
-          type: tts
-    
     # Turn on the master bedroom lamp.
     - service: light.turn_on
       entity_id: light.master_bedroom_lamp
@@ -38,6 +24,18 @@ bedtime:
     # Lock the PC.
     - service: script.turn_on
       entity_id: script.lock_pc
+    
+    # Say something nice.
+    - service: notify.alexa_media
+      data:
+        message: "{{ ['Good night!', 
+                      'Pleasant dreams!',
+                      'See you in the morning!'
+                     ] | random }}"
+        target:
+          - media_player.master_bedroom_echo
+        data:
+          type: tts
       
     - delay: '00:00:07'
       
@@ -66,8 +64,6 @@ sleeptime:
       entity_id: light.master_bedroom_lamp
     - service: light.turn_off
       entity_id: light.master_bath_light
-    - service: light.turn_off
-      entity_id: light.master_bath_vanity_lamp
 
 # Turn on the bathroom light during the night.
 turn_on_bathroom_light:
@@ -93,8 +89,6 @@ turn_on_bathroom_light:
     # Turn on bath lights.
     - service: light.turn_on
       entity_id: light.master_bath_light
-    - service: light.turn_on
-      entity_id: light.master_bath_vanity_lamp
     
     # Wait a few minutes then turn off the bathroom flag.
     - delay: '00:05:00'
@@ -122,15 +116,6 @@ wakeup:
   alias: Wakeup
   sequence:
     
-    # Turn off the master bedroom and bath lights.
-    - service: light.turn_off
-      entity_id: light.master_bedroom_lamp    
-    
-    - service: light.turn_off
-      entity_id: light.master_bath_light
-    - service: light.turn_off
-      entity_id: light.master_bath_vanity_lamp
-    
     # Turn off nighttime and sleeptime modes.
     - service: input_boolean.turn_off
       entity_id: input_boolean.nighttime    
@@ -138,11 +123,27 @@ wakeup:
     - service: input_boolean.turn_off
       entity_id: input_boolean.sleeptime
     
-    # Turn on family room lamp if needed.
+    # Turn on wakeup lights if needed.
     - service: script.change_lighting_per_weather
       data:
-        light_entity: light.family_room_lamp
+        light_entity: light.wakeup_lights
         wakeup: true
+    
+    # Transition from bedroom to wakeup lights using a delay.
+    - delay: '00:00:07'
+    
+    # Turn off the master bedroom and bath lights.
+    - service: light.turn_off
+      entity_id: light.master_bedroom_lamp    
+    
+    - service: light.turn_off
+      entity_id: light.master_bath_light
+    
+    # Turn off the island light after a few minutes (lets me get breakfast).
+    - delay: '00:10:00'
+    
+    - service: light.turn_off
+      entity_id: light.island_light
 
 #=================================#
 #     Pre-Bedtime Environment     #
@@ -170,14 +171,13 @@ set_up_pre_bedtime_environment:
   sequence:
     
     # Delay until 8 PM if needed.
-    - choose:
-      - conditions:
+    - if:
         - condition: template
           value_template: "{{ evening_delta > 0 }}"
         
-        sequence:
-          - delay:
-              minutes: "{{ evening_delta }}"
+      then:
+        - delay:
+            minutes: "{{ evening_delta }}"
     
     # Determine which bedroom will be used. The default is the downstairs guest bedroom, which is already set up.
     - choose:
@@ -190,6 +190,7 @@ set_up_pre_bedtime_environment:
         sequence:
           - service: light.turn_on
             entity_id: light.master_bedroom_lamp
+          
           - service: light.turn_off
             entity_id:
               - light.guest_bedroom_lamp
@@ -203,6 +204,7 @@ set_up_pre_bedtime_environment:
         sequence:
           - service: light.turn_on
             entity_id: light.upstairs_bedroom_outlet
+          
           - service: light.turn_off
             entity_id:
               - light.guest_bedroom_lamp
@@ -399,10 +401,10 @@ establish_bedtime_environment:
                 # Close the upstairs guest bedroom vents.
                 - service: script.close_upstairs_br_vents
                 
-                # Turn on the master bath vanity lamp as a night light, after a delay.
+                # Turn on the master bath light as a night light, after a delay.
                 - delay: '00:20:00'
                 - service: light.turn_on
-                  entity_id: light.master_bath_vanity_lamp
+                  entity_id: light.master_bath_light
                   
                 # Disable the motion sensor automation, so the light remains on all night.
                 - service: automation.turn_off
@@ -603,7 +605,6 @@ change_lighting_per_weather:
   fields:
     light_entity:
       description: 'The entity ID of the target lights.'
-      example: 'light.daytime_lights'
     
     wakeup:
       description: 'Whether or not the caller is the wakeup script.'
@@ -615,54 +616,53 @@ change_lighting_per_weather:
     - service: script.evaluate_weather_condition
     
     # Perform the appropriate actions based on the caller, sun rising state and weather.
-    - choose:
+    - if:
         
-      # Sun rising
-      - conditions:
+        # Sun rising
         - condition: template
           value_template: "{{ state_attr('sun.sun', 'rising') == true }}"
         
-        sequence:
+      then:
           
-          - choose:
+        - if:
                 
             # Called for wakeup
-            - conditions:
-              - condition: template
-                value_template: "{{ wakeup == true }}"
+            - condition: template
+              value_template: "{{ wakeup == true }}"
               
-              sequence:
+          then:
                 
-                - condition: template
-                  value_template: >
-                    {{  state_attr('sun.sun', 'elevation') <= (states('input_number.min_elevation') | float(3)) or 
-                       (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
-                        states('input_select.weather_condition') != 'clear') or
-                       (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
-                        state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
-                        states('input_select.weather_condition') == 'gloomy') }}
+            - condition: template
+              value_template: >
+                {{  state_attr('sun.sun', 'elevation') <= (states('input_number.min_elevation') | float(3)) or 
+                   (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+                    state_attr('sun.sun', 'elevation') <= (states('input_number.med_elevation') | float(6)) and
+                    states('input_select.weather_condition') != 'clear') or
+                   (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+                    state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+                    states('input_select.weather_condition') == 'gloomy') }}
                 
-                - service: homeassistant.turn_on
-                  data_template:
-                    entity_id: "{{ light_entity }}"
+            - service: homeassistant.turn_on
+              data_template:
+                entity_id: "{{ light_entity }}"
               
-            # Not called for wakeup
-            default:
+          # Not called for wakeup
+          else:
               
-              - condition: template
-                value_template: >
-                  {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
-                      states('input_select.weather_condition') == 'clear') or
-                     (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
-                      states('input_select.weather_condition') == 'hazy') or
-                      state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+            - condition: template
+              value_template: >
+                {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+                    states('input_select.weather_condition') == 'clear') or
+                   (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+                    states('input_select.weather_condition') == 'hazy') or
+                    state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
               
-              - service: homeassistant.turn_off
-                data_template:
-                  entity_id: "{{ light_entity }}"
+            - service: homeassistant.turn_off
+              data_template:
+                entity_id: "{{ light_entity }}"
       
       # Sun setting
-      default:
+      else:
         
         - condition: template
           value_template: >
@@ -688,7 +688,6 @@ change_lighting_per_weather_simple:
   fields:
     light_entity:
       description: 'The entity ID of the target lights.'
-      example: 'light.daytime_lights'
     
     turn_on:
       description: 'True if the lights should be turned on.'
@@ -700,41 +699,40 @@ change_lighting_per_weather_simple:
     - service: script.evaluate_weather_condition
     
     # Perform the appropriate action based on turning on or off, sun rising state and weather.
-    - choose:
+    - if:
       
-      # Turn on lighting.
-      - conditions:
+        # Turn on lighting.
         - condition: template
           value_template: "{{ turn_on == true }}"
         
-        sequence:
+      then:
           
-          - condition: template
-            value_template: >
-              {{ (state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
-                  states('input_select.weather_condition') == 'gloomy') or
-                 (state_attr('sun.sun', 'elevation') < (states('input_number.med_elevation') | float(6)) and
-                  states('input_select.weather_condition') == 'hazy') or
-                  state_attr('sun.sun', 'elevation') < (states('input_number.min_elevation') | float(3)) }}
+        - condition: template
+          value_template: >
+            {{ (state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+                states('input_select.weather_condition') == 'gloomy') or
+               (state_attr('sun.sun', 'elevation') < (states('input_number.med_elevation') | float(6)) and
+                states('input_select.weather_condition') == 'hazy') or
+                state_attr('sun.sun', 'elevation') < (states('input_number.min_elevation') | float(3)) }}
           
-          - service: homeassistant.turn_on
-            data_template:
-              entity_id: "{{ light_entity }}"
+        - service: homeassistant.turn_on
+          data_template:
+            entity_id: "{{ light_entity }}"
       
       # Turn off lighting.
-      default:
+      else:
           
-          - condition: template
-            value_template: >
-              {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
-                  states('input_select.weather_condition') == 'clear') or
-                 (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
-                  states('input_select.weather_condition') == 'hazy') or
-                  state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+        - condition: template
+          value_template: >
+            {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+                states('input_select.weather_condition') == 'clear') or
+               (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+                states('input_select.weather_condition') == 'hazy') or
+                state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
           
-          - service: homeassistant.turn_off
-            data_template:
-              entity_id: "{{ light_entity }}"    
+        - service: homeassistant.turn_off
+          data_template:
+            entity_id: "{{ light_entity }}"    
 
 #==============================#
 #     Extended Away Lights     #

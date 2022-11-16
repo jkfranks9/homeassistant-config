@@ -2,32 +2,43 @@
 #     Backup Statistics Card     #
 #================================#
 
-type: entities
-title: Backups
-show_header_toggle: false
-entities:
-  - type: attribute
-    entity: sensor.backup_state
-    attribute: last_backup
-    name: Last Backup
-    icon: mdi:calendar
-  
-  - type: custom:multiple-entity-row
-    entity: sensor.backup_state
-    attribute: size_in_google_drive
-    name: Google Drive
-    icon: mdi:harddisk
-    state_header: Size
+type: custom:stack-in-card
+title: Power Usage
+cards:
+  - type: entities
+    title: Backups
+    show_header_toggle: false
     entities:
-      - attribute: backups_in_google_drive
-        name: Number
-  
-  - type: custom:multiple-entity-row
-    entity: sensor.backup_state
-    attribute: size_in_home_assistant
-    name: Home Assistant
-    icon: mdi:harddisk
-    state_header: Size
-    entities:
-      - attribute: backups_in_home_assistant
-        name: Number
+      - type: attribute
+        entity: sensor.backup_state
+        attribute: last_backup
+        name: Last Backup
+        icon: mdi:calendar
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.google_drive_free_percent
+        name: Google Drive
+        icon: mdi:harddisk
+        state_header: Used
+        entities:
+          - entity: sensor.backup_state
+            attribute: backups_in_google_drive
+            name: Number
+          - entity: sensor.backup_state
+            attribute: size_in_google_drive
+            name: Size
+          - entity: sensor.backup_state
+            attribute: free_space_in_google_drive
+            name: Free
+      
+      - type: custom:multiple-entity-row
+        entity: sensor.backup_state
+        attribute: size_in_home_assistant
+        name: Home Assistant
+        icon: mdi:harddisk
+        state_header: Size
+        entities:
+          - attribute: backups_in_home_assistant
+            name: Number
+      
+      - entity: sensor.influxdb_db_size

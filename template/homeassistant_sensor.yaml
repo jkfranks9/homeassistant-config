@@ -13,6 +13,16 @@
       unique_id: nighttime
       state: "{{ iif(is_state('input_boolean.nighttime', 'on'), 1, 0) }}"
 
+    #-------------------#
+    #   -- Backups --   #
+    #-------------------#
+    
+    # Google Drive free percent
+    - name: 'Google Drive Free Percent'
+      unique_id: google_drive_free_percent
+      unit_of_measurement: '%'
+      state: "{{ ((1 - (state_attr('sensor.backup_state', 'free_space_in_google_drive') | replace(' GB', '') | float(0) / 15)) * 100) | round(2) }}"
+
     #----------------------#
     #   -- Statistics --   #
     #----------------------#
@@ -214,3 +224,67 @@
       state: >
         {% set n = now() %}
         {{ n.month > 2 and n.month < 11 }}
+
+    - name: 'Canes Game Status'
+      unique_id: canes_game_status
+      state: >
+        {% if states.sensor.next_canes_game.attributes.teams is defined %}
+          {{ iif(state_attr('sensor.next_canes_game', 'teams')['home']['team']['name'] == 'Carolina Hurricanes', 'Home', 'Away') }}
+        {% else %}
+          'Unknown'
+        {% endif %}
+
+    - name: 'Canes Opponent'
+      unique_id: canes_opponent
+      state: >
+        {% if states('sensor.canes_game_status') == 'Home' %}
+          {% set opp_team_list = (state_attr('sensor.next_canes_game', 'teams')['away']['team']['name']).split() %}
+        {% elif states('sensor.canes_game_status') == 'Away' %}
+          {% set opp_team_list = (state_attr('sensor.next_canes_game', 'teams')['home']['team']['name']).split() %}
+        {% else %}
+          {% set opp_team_list = ['Unknown'] %}
+        {% endif %}
+        
+        {% if opp_team_list | wordcount > 2 %}
+          {% if opp_team_list[-1] == 'Leafs' or opp_team_list[-1] == 'Wings' or opp_team_list[-1] == 'Jackets' or opp_team_list[-1] == 'Nights' %}
+            {% set opp_team = opp_team_list[-2] ~ ' ' ~ opp_team_list[-1] %}
+          {% else %}
+            {% set opp_team = opp_team_list[-1] %}
+          {% endif %}
+        {% else %}
+          {% set opp_team = opp_team_list[-1] %}
+        {% endif %}
+        
+        {{ opp_team }}
+
+    - name: 'Flyers Game Status'
+      unique_id: flyers_game_status
+      state: >
+        {% if states.sensor.next_flyers_game.attributes.teams is defined %}
+          {{ iif(state_attr('sensor.next_flyers_game', 'teams')['home']['team']['name'] == 'Philadelphia Flyers', 'Home', 'Away') }}
+        {% else %}
+          'Unknown'
+        {% endif %}
+
+    - name: 'Flyers Opponent'
+      unique_id: flyers_opponent
+      state: >
+        {% if states('sensor.flyers_game_status') == 'Home' %}
+          {% set opp_team_list = (state_attr('sensor.next_flyers_game', 'teams')['away']['team']['name']).split() %}
+        {% elif states('sensor.flyers_game_status') == 'Away' %}
+          {% set opp_team_list = (state_attr('sensor.next_flyers_game', 'teams')['home']['team']['name']).split() %}
+        {% else %}
+          {% set opp_team_list = ['Unknown'] %}
+        {% endif %}
+        
+        {% if opp_team_list | wordcount > 2 %}
+          {% if opp_team_list[-1] == 'Leafs' or opp_team_list[-1] == 'Wings' or opp_team_list[-1] == 'Jackets' or opp_team_list[-1] == 'Nights' %}
+            {% set opp_team = opp_team_list[-2] ~ ' ' ~ opp_team_list[-1] %}
+          {% else %}
+            {% set opp_team = opp_team_list[-1] %}
+          {% endif %}
+        {% else %}
+          {% set opp_team = opp_team_list[-1] %}
+        {% endif %}
+        
+        {{ opp_team }}

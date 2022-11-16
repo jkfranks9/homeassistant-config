@@ -1,0 +1,31 @@
+#=====================#
+#     Hockey Card     #
+#=====================#
+
+type: entities
+title: Hockey
+show_header_toggle: false
+entities:
+  - type: custom:multiple-entity-row
+    entity: sensor.canes_game_status
+    name: Canes
+    icon: mdi:hockey-sticks
+    state_header: Location
+    entities:
+      - entity: sensor.next_canes_game
+        name: Date
+        format: datetime
+      - entity: sensor.canes_opponent
+        name: Opponent
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.flyers_game_status
+    name: Flyers
+    icon: mdi:hockey-sticks
+    state_header: Location
+    entities:
+      - entity: sensor.next_flyers_game
+        name: Date
+        format: datetime
+      - entity: sensor.flyers_opponent
+        name: Opponent

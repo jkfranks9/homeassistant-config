@@ -280,35 +280,77 @@
 
 - alias: Run Extended Away Lights
   id: run_extended_away_lights
+  
   trigger:
     - platform: state
       entity_id: input_boolean.extended_away_mode
       to: 'on'
+    
     - platform: state
       entity_id: input_boolean.nighttime
       to: 'off'
+    
     - platform: state
       entity_id: sun.sun
       to: below_horizon
+    
     - platform: homeassistant
       event: start
+  
   condition:
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'on'
+    
     - condition: state
       entity_id: input_boolean.nighttime
       state: 'off'
+    
     - condition: state
       entity_id: sun.sun
       state: below_horizon
+  
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    # The script randomly toggles lights in the away group until the above conditions are
-    # no longer met. We wait here until that happens.
-    - service: script.automate_lights_while_away
+    # Repeat until the conditions are no longer met.
+    - repeat:
+      
+        sequence:
+        
+          - variables:
+              group_id: 'light.away_lights'
+              max_on: 3
+              lights_on_count: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | list | length }}"
+              lights_on_entities: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | map(attribute = 'entity_id') | list }}"
+              group_lights_entities: "{{ expand(group_id) | map(attribute = 'entity_id') | list }}"
+              toggle_entity: >
+                {% if lights_on_count > max_on %}
+                  {{ lights_on_entities | random }}
+                {% else %}
+                  {{ group_lights_entities | random }}
+                {% endif %}
+        
+          # Toggle a random light from the away group. We picked an entity above as follows:
+          #
+          # - If the number of lights currently on exceeds the maximum, pick an entity from those that are already on.
+          # - Otherwise, pick any entity from the away group.
+          - service: homeassistant.toggle
+            data:
+              entity_id: "{{ toggle_entity }}"
+     
+          # Delay for a random number of minutes.
+          - delay: 
+              minutes: "{{ range(10, 60) | random }}"
+      
+        # Conditions that cause us to end the repeat sequence.
+        until:        
+          - condition: template
+            value_template: >
+              {{ is_state('input_boolean.extended_away_mode', 'off') or
+                 is_state('input_boolean.nighttime', 'on') or
+                 states('sun.sun') == 'above_horizon' }}
     
     # The conditions are no longer true, so turn off all of the away lights.
     - service: homeassistant.turn_off
@@ -384,39 +426,48 @@
 # Turn on guest lights near sunset when grandchildren arrive or are already home.
 - alias: Turn On Guest Lights Sunset
   id: 'turn_on_guest_lights_sunset'
+  
   trigger:
     - platform: numeric_state
       entity_id: sun.sun
       attribute: elevation
       below: 4.0
+    
     - platform: state
       entity_id: input_boolean.children_home
       to: 'on'
+    
     - platform: homeassistant
       event: start
+  
   condition:
     - condition: numeric_state
       entity_id: sun.sun
       attribute: elevation
       below: 4.0
+    
     - condition: state
       entity_id: input_boolean.children_home
       state: 'on'
+    
     - condition: state
       entity_id: input_boolean.nighttime
       state: 'off'
+  
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-    - choose:
-      - conditions:
+    
+    - if:
         - condition: state
           entity_id: input_select.occupied_bedrooms
           state: 'Master'
-        sequence:
-          - service: light.turn_on
-            entity_id: light.master_bedroom_lamp
-      default:
+      
+      then:
+        - service: light.turn_on
+          entity_id: light.master_bedroom_lamp
+      
+      else:
         - service: light.turn_on
           entity_id: light.guest_bedroom_lamp_2
 

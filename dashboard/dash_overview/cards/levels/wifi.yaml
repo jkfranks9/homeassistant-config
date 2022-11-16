@@ -13,17 +13,41 @@ cards:
     entities:
       - entity: sensor.porch_wifi_signal
         name: Porch Sensor
+      
       - entity: sensor.attic_wifi_signal
         name: Attic Sensor
+      
+      - entity: sensor.dryer_wifi_signal
+        name: Dryer Sensor
+      
       - entity: sensor.garage_wifi_signal
         name: Garage Sensor
+      
       - entity: sensor.shelly1_garage_north_rssi
         name: Garage North
+      
       - entity: sensor.shelly1_garage_south_rssi
         name: Garage South
+      
+      - entity: sensor.sonoff_family_room_av_rssi
+        name: Family Room AV
+      
+      - entity: sensor.sonoff_microwave_rssi
+        name: Microwave
+      
+      - entity: sensor.sonoff_refrigerator_rssi
+        name: Refrigerator
+      
+      - entity: sensor.sonoff_treadmill_rssi
+        name: Treadmill
+      
+      - entity: sensor.sonoff_washer_rssi
+        name: Washer
+      
       - entity: binary_sensor.espresense_garage
         name: ESPresense Garage
         attribute: rssi
+      
       - entity: binary_sensor.espresense_house
         name: ESPresense House
         attribute: rssi

@@ -26,7 +26,6 @@ smart_home:
     exclude_entities:
       - script.automate_lights_while_away
       - script.control_fan_for_temperature
-      - script.copy_monthly_calories
       - script.evaluate_weather_condition
       - script.get_all_kodi_movies
       - script.lock_pc
@@ -40,7 +39,6 @@ smart_home:
       - script.set_up_mqtt_automated_config
       - script.start_activity
       - script.toggle_upstairs_br_vent
-      - script.turn_off_kodi
       - script.turn_off_pc
       - script.turn_on_family_room_normal
       - script.watch_app

@@ -10,7 +10,7 @@
     path: notification/maint_above_notify.yaml
     input:
       sensor1_entity: sensor.epson_lamp_hours
-      threshold1: 2999
+      threshold1: 1999
       # Sensor/threshold 2 unused - this can never trigger
       sensor2_entity: sensor.jon_galaxy_battery_level
       threshold2: 100
@@ -18,6 +18,22 @@
       message: 'Epson projector lamp might need replacing soon.'
       persistent: true
       tag: 'projector_lamp'
+
+# Clear persistent notification.
+- alias: Clear Projector Lamp Notification
+  id: 'clear_projector_lamp_notification'
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.epson_lamp_hours
+      below: 2999
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'projector_lamp'
 
 # Printer toner is getting low.
 - alias: Notify Printer Toner Low
@@ -36,6 +52,22 @@
       persistent: true
       tag: 'printer_toner'
 
+# Clear persistent notification.
+- alias: Clear Printer Toner Notification
+  id: 'clear_printer_toner_notification'
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.brother_printer_black_toner_remaining
+      above: 10
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'printer_toner'
+
 # Vacuum main brush is getting old.
 - alias: Notify Vacuum Main Brush Aging
   id: 'notify_vacuum_main_brush_aging'
@@ -52,6 +84,22 @@
       message: 'Vacuum main brush might need replacing soon.'
       persistent: true
       tag: 'vac_main_brush'
+
+# Clear persistent notification.
+- alias: Clear Vacuum Main Brush Notification
+  id: 'clear_vacuum_main_brush_notification'
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ecovacs_main_brush_remaining_life
+      above: 20
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'vac_main_brush'
 
 # Vacuum side brush is getting old.
 - alias: Notify Vacuum Side Brush Aging
@@ -70,6 +118,22 @@
       persistent: true
       tag: 'vac_side_brush'
 
+# Clear persistent notification.
+- alias: Clear Vacuum Side Brush Notification
+  id: 'clear_vacuum_side_brush_notification'
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ecovacs_side_brush_remaining_life
+      above: 20
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'vac_side_brush'
+
 # Vacuum filter is getting old.
 - alias: Notify Vacuum Filter Aging
   id: 'notify_vacuum_filter_aging'
@@ -87,6 +151,22 @@
       persistent: true
       tag: 'vac_filter'
 
+# Clear persistent notification.
+- alias: Clear Vacuum Filter Notification
+  id: 'clear_vacuum_filter_notification'
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ecovacs_filter_remaining_life
+      above: 20
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'vac_filter'
+
 # Pool needs chlorine tabs.
 - alias: Notify Pool Needs Chlorine
   id: 'notify_pool_needs_chlorine'
@@ -101,15 +181,18 @@
   trigger:
     - platform: template
       value_template: >
+        {% set forecast = state_attr('weather.openweathermap', 'forecast') %}
         {% set num_cold_days = namespace(count = []) %}
+        {% if forecast != None %}
         
-        {% for fc in state_attr('weather.openweathermap', 'forecast') %}
-          {% if loop.index0 > 0 and loop.index0 < 4 %}
-            {% if fc.temperature < 55 and fc.templow < 55 %}
-              {% set num_cold_days.count = num_cold_days.count + [1] %}
-            {% endif %}
-          {% endif %}            
-        {% endfor %}
+          {% for fc in forecast %}
+            {% if loop.index0 > 0 and loop.index0 < 4 %}
+              {% if fc.temperature < 55 and fc.templow < 55 %}
+                {% set num_cold_days.count = num_cold_days.count + [1] %}
+              {% endif %}
+            {% endif %}            
+          {% endfor %}
+        {% endif %}
         
         {{ (num_cold_days.count) | length == 3 }}
   
@@ -543,65 +626,6 @@
           {% for repo in states.sensor.hacs.attributes.repositories %}{{ repo.name }} ({{ repo.installed_version }} -> {{ repo.available_version }})
           {% endfor %}
 
-# Shelly1 firmware update
-- alias: Notify Shelly1 North Firmware Updated
-  id: 'notify_shelly1_north_firmware_updated'
-  
-  trigger:
-    - platform: state
-      entity_id: update.shelly1_garage_north_firmware_update
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - condition: state
-      entity_id: update.shelly1_garage_north_firmware_update
-      state: 'on'
-  
-  action:
-    - delay:
-        seconds: "{{ range(1, 5) | random }}"
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - persistent
-        title: 'Shelly1 North Firmware Updated'
-        notification_id: 'shelly1_north_update'
-        message: |
-          New version is {{ state_attr('update.shelly1_garage_north_firmware_update', 'latest_version') }}, currently on {{ state_attr('update.shelly1_garage_north_firmware_update', 'installed_version') }}
-
-- alias: Notify Shelly1 South Firmware Updated
-  id: 'notify_shelly1_south_firmware_updated'
-  
-  trigger:
-    - platform: state
-      entity_id: update.shelly1_garage_south_firmware_update
-      from: 'off'
-      to: 'on'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - condition: state
-      entity_id: update.shelly1_garage_south_firmware_update
-      state: 'on'
-  
-  action:
-    - delay:
-        seconds: "{{ range(1, 5) | random }}"
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - persistent
-        title: 'Shelly1 South Firmware Updated'
-        notification_id: 'shelly1_south_update'
-        message: |
-          New version is {{ state_attr('update.shelly1_garage_south_firmware_update', 'latest_version') }}, currently on {{ state_attr('update.shelly1_garage_south_firmware_update', 'installed_version') }}
-
 #===================#
 #     Reminders     #
 #===================#
@@ -609,6 +633,7 @@
 # CPAP maintenance
 - alias: Notify CPAP Reminder
   id: 'notify_cpap_reminder'
+  mode: queued
   
   trigger:
     - platform: template
@@ -646,12 +671,50 @@
         channel: persistent
         throttled: true
         timer_entity: timer.cpap_reminder_notification
-        tag: ''
+        tag: 'cpap_maintenance_{{ trigger.id }}'
         timeout: 0
+
+# Clear persistent notification.
+- alias: Clear CPAP Reminder Notification
+  id: 'clear_cpap_reminder_notification'
+  
+  trigger:
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_filter'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: filter
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_headgear_humidifier'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: headgear
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_hose'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: hose
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_cpap_mask'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: mask
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'cpap_maintenance_{{ trigger.id }}'
 
 # HVAC maintenance
 - alias: Notify HVAC Reminder
   id: 'notify_hvac_reminder'
+  mode: queued
   
   trigger:
     - platform: template
@@ -677,12 +740,38 @@
         channel: persistent
         throttled: true
         timer_entity: timer.hvac_reminder_notification
-        tag: ''
+        tag: 'hvac_maintenance_{{ trigger.id }}'
         timeout: 0
+
+# Clear persistent notification.
+- alias: Clear HVAC Reminder Notification
+  id: 'clear_hvac_reminder_notification'
+  
+  trigger:
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_downstairs'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: downstairs
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_hvac_filters_upstairs'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: upstairs
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'hvac_maintenance_{{ trigger.id }}'
 
 # Payment due
 - alias: Notify Payment Due Reminder
   id: 'notify_payment_due_reminder'
+  mode: queued
   
   trigger:
     - platform: template
@@ -726,12 +815,56 @@
         channel: persistent
         throttled: true
         timer_entity: timer.payment_reminder_notification
-        tag: ''
+        tag: 'payment_due_{{ trigger.id }}'
         timeout: 0
+
+# Clear persistent notification.
+- alias: Clear Payment Reminder Notification
+  id: 'clear_payment_reminder_notification'
+  
+  trigger:
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_amazon'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: Amazon
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_credit_union'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: CU
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_mortgage'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: mortgage
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_randolph'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: Randolph
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_payment_wells_fargo'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: WF
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'payment_due_{{ trigger.id }}'
 
 # Medication reorder
 - alias: Notify Medication Reorder Reminder
   id: 'notify_medication_reorder_reminder'
+  mode: queued
   
   trigger:
     - platform: template
@@ -781,23 +914,77 @@
         channel: persistent
         throttled: true
         timer_entity: timer.medication_reminder_notification
-        tag: ''
+        tag: 'medication_reorder_{{ trigger.id }}'
         timeout: 0
+
+# Clear persistent notification.
+- alias: Clear Medication Reminder Notification
+  id: 'clear_medication_reminder_notification'
+  
+  trigger:
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_eliquis'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: Eliquis
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_gabapentin'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: gabapentin
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_metoprolol'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: metoprolol
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_rosuvastatin'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: rosuvastatin
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_blood_builder_minis'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: blood builder
+    - platform: template
+      value_template: >
+        {% set entity_date = as_local(now().fromtimestamp(as_timestamp(states('input_datetime.reminder_medication_methyl_b12'), 0))).replace(hour=6) %}
+        {% set now_date = as_local(now().fromtimestamp(as_timestamp(states('sensor.date'), 0))).replace(hour=6) %}
+        {{ entity_date > now_date }}
+      id: B12
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'medication_reorder_{{ trigger.id }}'
 
 #================================#
 #     Calendar Notifications     #
 #================================#
 
-# Appointment
-- alias: Notify Appointment
-  id: 'notify_appointment'
+# Notify about an appointment type of calendar event, identified using the tag "(appt)" in the event title.
+# I want to see these 4 hours before the event, to allow ample driving time, etc.
+- alias: Notify Calendar Appointment
+  id: 'notify_calendar_appointment'
+  mode: queued
   
   trigger:
-    - platform: state
-      entity_id: calendar.appointments
-      attribute: offset_reached
-      from: false
-      to: true
+    - platform: calendar
+      event: start
+      entity_id: calendar.calendar
+      offset: -04:00:00
+  
+  condition:
+    - condition: template
+      value_template: "{{ '(appt)' in trigger.calendar_event.summary }}"
   
   action:
     - service: script.send_notification
@@ -806,13 +993,199 @@
           - mobile
         title: 'Reminder:'
         message: >
-          {% set timeobj = strptime(state_attr('calendar.appointments', 'start_time'), '%Y-%m-%d %H:%M:%S') %}
+          {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
           {% set time = timeobj.strftime('%H:%M') %}
-          {{ state_attr('calendar.appointments', 'message') }} tomorrow at {{ time }}
+          {{ trigger.calendar_event.summary | replace(' (appt)', '') }} at {{ time }}
         channel: standard
         throttled: false
         tag: ''
         timeout: 0
+
+# Notify about a home type of calendar event, identified using the tag "(home)" in the event title.
+# These are things like a worker coming to the house, or a live stream to be joined. 15 minutes before the event is good.
+- alias: Notify Calendar Home Event
+  id: 'notify_calendar_home_event'
+  mode: queued
+  
+  trigger:
+    - platform: calendar
+      event: start
+      entity_id: calendar.calendar
+      offset: -00:15:00
+  
+  condition:
+    - condition: template
+      value_template: "{{ '(home)' in trigger.calendar_event.summary }}"
+  
+  action:
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Reminder:'
+        message: >
+          {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
+          {% set time = timeobj.strftime('%H:%M') %}
+          {{ trigger.calendar_event.summary | replace(' (home)', '') }} at {{ time }}
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0
+
+# Notify about an astronomy type of calendar event, identified using the tag "(astro)" in the event title.
+# Processing of these is more complex than the simple appointment and home events above:
+#
+# - I'm assuming the maximum dark window of 14 hours (about 5 PM to 7 AM), so that's the offset needed for the calendar trigger
+# - I'm assuming there will be a maximum of 2 events per day
+# - For an event outside the hours of 10 PM to 6 AM, I want a notification 15 minutes prior to the event
+# - For an event between 10 PM and 6 AM I want the notification at 10 PM, so I can decide to either stay up or set an alarm
+# - Timers need to be set for when the notification should be issued, and the text of the message needs to be saved (up to 2 timers/texts for 2 separate events)
+# - The timer expirations are thus additional triggers
+- alias: Notify Calendar Astronomy Event
+  id: 'notify_calendar_astronomy_event'
+  mode: queued
+  
+  trigger:
+    - platform: calendar
+      event: start
+      entity_id: calendar.calendar
+      offset: -14:00:00
+      id: event
+    
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.calendar_astronomy_notification_1
+      id: timer1
+    
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.calendar_astronomy_notification_2
+      id: timer2
+  
+  condition:
+    - condition: template
+      value_template: "{{ (trigger.id == 'event' and '(astro)' in trigger.calendar_event.summary) or 'timer' in trigger.id }}"
+  
+  action:
+    - variables:
+        event_hour: >
+          {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
+          {{ timeobj.hour }}
+    
+    - if:
+      
+        # For the calendar event trigger, save the message text and set a timer to send the notification later.
+        - condition: template
+          value_template: "{{ trigger.id == 'event' }}"
+        
+      then:
+        - if:
+          
+            # Handle an event time outside the hours of 10 PM to 6 AM.
+            - condition: template
+              value_template: "{{ event_hour < 22 or event_hour >= 6 }}"
+          
+          then:
+            - variables:
+                text: >
+                  {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
+                  {% set time = timeobj.strftime('%H:%M') %}
+                  {{ trigger.calendar_event.summary | replace(' (astro)', '') }} at {{ time }}
+                
+            - if:
+                - condition: state
+                  entity_id: timer.calendar_astronomy_notification_1
+                  state: 'idle'
+              
+              then:
+                - service: input_text.set_value
+                  target:
+                    entity_id: input_text.calendar_astronomy_notification_message_1
+                  data:
+                    value: "{{ text }}"
+                    
+                - service: timer.start
+                  data:
+                    entity_id: timer.calendar_astronomy_notification_1
+                    duration: '13:45:00'
+              
+              else:
+                - service: input_text.set_value
+                  target:
+                    entity_id: input_text.calendar_astronomy_notification_message_2
+                  data:
+                    value: "{{ text }}"
+                    
+                - service: timer.start
+                  data:
+                    entity_id: timer.calendar_astronomy_notification_2
+                    duration: '13:45:00'
+          
+          # Handle an event time between 10 PM and 6 AM.
+          else:
+            - variables:
+                minutes: "{{ ((as_timestamp(now().replace(hour = 22, minute = 0, second = 0, microsecond = 0)) - as_timestamp(now().replace(microsecond = 0))) / 60) | round }}"
+            
+            - if:
+                - condition: state
+                  entity_id: timer.calendar_astronomy_notification_1
+                  state: 'idle'
+              
+              then:
+                - service: input_text.set_value
+                  target:
+                    entity_id: input_text.calendar_astronomy_notification_message_1
+                  data:
+                    value: "{{ text }}"
+                    
+                - service: timer.start
+                  data:
+                    entity_id: timer.calendar_astronomy_notification_1
+                    duration: "{{ minutes }}"
+              
+              else:
+                - service: input_text.set_value
+                  target:
+                    entity_id: input_text.calendar_astronomy_notification_message_2
+                  data:
+                    value: "{{ text }}"
+                  
+                - service: timer.start
+                  data:
+                    entity_id: timer.calendar_astronomy_notification_2
+                    duration: "{{ minutes }}"
+        
+      # For the timer expiration trigger, send the notification.
+      else:
+        - if:
+            condition: template
+            value_template: "{{ trigger.id == 'timer1' }}"
+          
+          then:
+            - service: script.send_notification
+              data:
+                destination:
+                  - mobile
+                title: 'Reminder:'
+                message: "{{ states('input_text.calendar_astronomy_notification_message_1') }}"
+                channel: standard
+                throttled: false
+                tag: ''
+                timeout: 0
+          
+          else:
+            - service: script.send_notification
+              data:
+                destination:
+                  - mobile
+                title: 'Reminder:'
+                message: "{{ states('input_text.calendar_astronomy_notification_message_2') }}"
+                channel: standard
+                throttled: false
+                tag: ''
+                timeout: 0
 
 #==============================#
 #     Device Notifications     #
@@ -862,24 +1235,34 @@
         media_player_entity: media_player.everywhere
         tag: ''
 
-# Zigbee device joined 
-- alias: Notify Zigbee Device Joined
-  id: 'notify_zigbee_device_joined'
+#================#
+#     Hockey     #
+#================#
+
+# Next Canes game
+- alias: Notify Next Canes Game
+  id: 'notify_next_canes_game'
+  
   trigger:
-    platform: mqtt
-    topic: 'zigbee2mqtt/bridge/event'
-  condition:
-    condition: template
-    value_template: '{{trigger.payload_json.type == "device_interview" and trigger.payload_json.data.status == "successful" and trigger.payload_json.data.supported}}'
+    - platform: template
+      value_template: >
+        {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'gameDate')) %}
+        {% set now =  as_timestamp(now()) %}
+        {{ (((next - now) / 3600) | round(0)) < 12 }}
+  
   action:
-    
     - service: script.send_notification
       data:
         destination:
-          - persistent
-        title: 'Device joined the Zigbee2MQTT network'
-        notification_id: 'zigbee_device_joined'
-        message: "Name: {{trigger.payload_json.data.friendly_name}},
-                  Vendor: {{trigger.payload_json.data.definition.vendor}},
-                  Model: {{trigger.payload_json.data.definition.model}},
-                  Description: {{trigger.payload_json.data.definition.description}}"
+          - mobile
+        title: 'Reminder:'
+        message: >
+          {% if states('sensor.canes_game_status') == 'Home' %}
+            {{ states('sensor.canes_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }}
+          {% else %}
+            Hurricanes at {{ states('sensor.canes_opponent') }}, {{ states('sensor.next_canes_game') }}
+          {% endif %}
+        channel: standard
+        throttled: false
+        tag: ''
+        timeout: 0

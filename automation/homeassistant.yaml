@@ -44,9 +44,10 @@
                            ] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list and
-           'old_state' in trigger.event.data and 'new_state' in trigger.event.data and
-           'last_triggered' in trigger.event.data.new_state.attributes and 'last_triggered' in trigger.event.data.old_state.attributes and
-           trigger.event.data.new_state.attributes.last_triggered != trigger.event.data.old_state.attributes.last_triggered }}
+           trigger.event.data.old_state is not none and
+           trigger.event.data.new_state is not none and
+           'last_triggered' in trigger.event.data.old_state.attributes and 'last_triggered' in trigger.event.data.new_state.attributes and
+           trigger.event.data.old_state.attributes.last_triggered != trigger.event.data.new_state.attributes.last_triggered }}
   
   action:
     
@@ -164,22 +165,21 @@
         value: 0
     
     # Reset occupied bedrooms.
-    - choose:
+    - if:
       
-      # If children are home without adults, default to the downstairs guest bedroom.
-      - conditions:
+        # If children are home without adults, default to the downstairs guest bedroom.
         - condition: template
           value_template: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
         
-        sequence:
-          - service: input_select.select_option
-            target:
-              entity_id: input_select.occupied_bedrooms
-            data:
-              option: Downstairs
+      then:
+        - service: input_select.select_option
+          target:
+            entity_id: input_select.occupied_bedrooms
+          data:
+            option: Downstairs
       
       # Otherwise, default to none.
-      default:
+      else:
         - service: input_select.select_option
           target:
             entity_id: input_select.occupied_bedrooms

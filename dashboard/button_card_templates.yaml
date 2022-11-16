@@ -108,6 +108,9 @@ door_window_button:
   show_name: true
   size: 40%
   
+  tap_action:
+    action: none
+  
   state:
     - value: 'on'
       name: '[[[ return variables.var_name ]]]'
@@ -153,7 +156,7 @@ light_group_button:
 
 motion_button:
   show_icon: true
-  show_name: false
+  show_name: true
   
   tap_action:
     action: 'none'
@@ -512,25 +515,16 @@ bath_fan_button:
 #========================= Internal Templates =========================
 #
 
-#============================#
-#     Environment Button     #
-#============================#
+#=====================#
+#     Base Button     #
+#=====================#
 
-# This is a base template for use by other templates that deal with environmental controls/sensors.
-environment_button:
-  variables:
-    humidity_entity: ''
-  
+# This contains common configuration for the other internal templates below.
+base_button:
   show_icon: true
   show_state: true
   show_name: true
     
-  state:
-    - id: value_any
-      operator: '!='
-      value: all
-      spin: true
-  
   styles:
     card:
       - background-color: var(--card-background-color)
@@ -545,6 +539,32 @@ environment_button:
     img_cell:
       - display: contents
     
+    name:
+      - color: var(--primary-text-color)
+      - font-size: 0.75em
+      - position: absolute
+      - top: 0
+      - left: 2
+      - z-index: 10
+
+#============================#
+#     Environment Button     #
+#============================#
+
+# This is a base template for use by other templates that deal with environmental controls/sensors.
+environment_button:
+  template: base_button
+  
+  variables:
+    humidity_entity: ''  
+    
+  state:
+    - id: value_any
+      operator: '!='
+      value: all
+      spin: true
+  
+  styles:    
     icon:
       - width: 70%
       - position: absolute
@@ -555,14 +575,6 @@ environment_button:
       - margin-top: '-10px'
       - color: var(--primary-text-color)
       - z-index: 1
-    
-    name:
-      - color: var(--primary-text-color)
-      - font-size: 0.75em
-      - position: absolute
-      - top: 0
-      - left: 0
-      - z-index: 10
     
     custom_fields:        
       humidity:
@@ -615,24 +627,11 @@ environment_button:
 
 # This is a base template for use by other templates that operate various devices.
 operational_button:
-  show_icon: true
-  show_state: true
-  show_name: true
+  template: base_button
     
   styles:
     card:
-      - background-color: var(--card-background-color)
-      - padding: 18px 2px 5px 2px
-      - display: flex
       - width: fit-content
-      - border: 1px solid gray
-      - margin-right: 1px
-    
-    grid:
-      - display: contents
-    
-    img_cell:
-      - display: contents
     
     icon:
       - position: absolute
@@ -647,11 +646,3 @@ operational_button:
       - margin-top: '-10px'
       - color: var(--card-background-color)
       - z-index: 0
-    
-    name:
-      - color: var(--primary-text-color)
-      - font-size: 0.75em
-      - position: absolute
-      - top: 0
-      - left: 0
-      - z-index: 10

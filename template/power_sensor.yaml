@@ -43,7 +43,11 @@
       unique_id: family_room_fan_power
       unit_of_measurement: 'W'
       state: >
-        {% set speed = states.input_number.family_room_fan_speed.state | float(0) %}
+        {% set speed = 0 %}
+        {% if states('fan.family_room_fan') == 'on' %}
+          {% set speed = states.input_number.family_room_fan_speed.state | float(0) %}
+        {% endif %}
+        
         {% if speed == 33.0 %}
           4
         {% elif speed == 66.0%}
@@ -113,7 +117,11 @@
       unique_id: office_fan_power
       unit_of_measurement: 'W'
       state: >
-        {% set speed = states.input_number.office_fan_speed.state | float(0) %}
+        {% set speed = 0 %}
+        {% if states('fan.office_fan') == 'on' %}
+          {% set speed = states.input_number.office_fan_speed.state | float(0) %}
+        {% endif %}
+        
         {% if speed == 33.0 %}
           4
         {% elif speed == 66.0%}
@@ -133,11 +141,6 @@
       unique_id: master_bath_light_power
       unit_of_measurement: 'W'
       state: "{{ iif(is_state('light.master_bath_light', 'on'), 12, 0) }}"
-
-    - name: 'Master Bath Vanity Lamp Power'
-      unique_id: master_bath_vanity_lamp_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.master_bath_vanity_lamp', 'on'), 10, 0) }}"
 
     - name: 'Office Bookcase Light Power'
       unique_id: office_bookcase_light_power
@@ -174,7 +177,11 @@
       unique_id: theater_fan_power
       unit_of_measurement: 'W'
       state: >
-        {% set speed = states.input_number.theater_fan_speed.state | float(0) %}
+        {% set speed = 0 %}
+        {% if states('fan.theater_fan') == 'on' %}
+          {% set speed = states.input_number.theater_fan_speed.state | float(0) %}
+        {% endif %}
+        
         {% if speed == 33.0 %}
           4
         {% elif speed == 66.0%}
@@ -266,7 +273,6 @@
                   states('sensor.hallway_lamp_power') | float(0) +
                   states('sensor.laundry_room_light_power') | float(0) +
                   states('sensor.master_bath_light_power') | float(0) +
-                  states('sensor.master_bath_vanity_lamp_power') | float(0) +
                   states('sensor.office_bookcase_light_power') | float(0) +
                   states('sensor.porch_light_power') | float(0) +
                   states('sensor.stairway_light_power') | float(0)
@@ -495,7 +501,6 @@
                   states('sensor.laundry_room_light_daily_energy') | float(0) +
                   states('sensor.master_bath_fan_daily_energy') | float(0) +
                   states('sensor.master_bath_light_daily_energy') | float(0) +
-                  states('sensor.master_bath_vanity_lamp_daily_energy') | float(0) +
                   states('sensor.office_bookcase_light_daily_energy') | float(0) +
                   states('sensor.office_fan_daily_energy') | float(0) +
                   states('sensor.porch_light_daily_energy') | float(0) +
@@ -589,7 +594,6 @@
                   states('sensor.laundry_room_light_monthly_energy') | float(0) +
                   states('sensor.master_bath_fan_monthly_energy') | float(0) +
                   states('sensor.master_bath_light_monthly_energy') | float(0) +
-                  states('sensor.master_bath_vanity_lamp_monthly_energy') | float(0) +
                   states('sensor.office_bookcase_light_monthly_energy') | float(0) +
                   states('sensor.office_fan_monthly_energy') | float(0) +
                   states('sensor.porch_light_monthly_energy') | float(0) +

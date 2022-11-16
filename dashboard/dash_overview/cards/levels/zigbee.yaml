@@ -40,10 +40,6 @@ cards:
         name: Upstairs BR Vent 2
         attribute: linkquality
       
-      - entity: switch.master_bath_vanity_lamp
-        name: Master Bath Vanity Lamp (router)
-        attribute: linkquality
-      
-      - entity: binary_sensor.cc2530_router_1_led
-        name: CC2530 Router 1
-        attribute: linkquality
+      #- entity: binary_sensor.cc2530_router_1_led
+      #  name: CC2530 Router 1
+      #  attribute: linkquality

@@ -81,20 +81,20 @@ trigger:
 action:
 
   # Determine if the light needs to be turned on.
-  - choose:
+  - if:
     
-    # The room is windowless, so always turn on the light.
-    - conditions:
+      # The room is windowless, so always turn on the light.
       - condition: template
         value_template: "{{ input_windowed == false }}"
       
-      sequence:
-        # Turn on the light.
-        - service: light.turn_on
-          entity_id: !input light_entity
+    then:
+      
+      # Turn on the light.
+      - service: light.turn_on
+        entity_id: !input light_entity
     
     # The room has a window, so use the sun elevation and weather conditions to decide.
-    default:
+    else:
       - service: script.change_lighting_per_weather_simple
         data:
           light_entity: !input light_entity
@@ -108,27 +108,26 @@ action:
       to: "off"
   
   # Turn off the light (and fan) based on fan usage.
-  - choose:
+  - if:
     
-    # The fan is on.
-    - conditions:
+      # The fan is on.
       - condition: state
         entity_id: !input fan_entity
         state: 'on'
       
-      sequence:
-        - delay: !input no_motion_wait_fan_on
+    then:
+      - delay: !input no_motion_wait_fan_on
         
-        - service: light.turn_off
-          entity_id: !input light_entity
+      - service: light.turn_off
+        entity_id: !input light_entity
         
-        - delay: !input additional_fan_wait
+      - delay: !input additional_fan_wait
         
-        - service: homeassistant.turn_off
-          entity_id: !input fan_entity
+      - service: homeassistant.turn_off
+        entity_id: !input fan_entity
     
     # The fan is off.
-    default:
+    else:
       - delay: !input no_motion_wait_fan_off
       
       - service: light.turn_off

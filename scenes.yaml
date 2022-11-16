@@ -19,7 +19,6 @@
   name: Non Master Lights Out
   entities:
     light.master_bath_light:             'off'
-    light.master_bath_vanity_lamp:       'off'
     light.downstairs_common_lights:      'off'
     light.downstairs_guest_suite_lights: 'off'
     light.family_room_lights:            'off'
@@ -39,7 +38,6 @@
   name: Adult Bedtime Lights Out
   entities:
     light.master_bath_light:        'off'
-    light.master_bath_vanity_lamp:  'off'
     light.downstairs_common_lights: 'off'
     light.family_room_lights:       'off'
     light.kitchen_lights:           'off'
@@ -60,7 +58,6 @@
   entities:
     light.stairway_light:           'off'
     light.master_bath_light:        'off'
-    light.master_bath_vanity_lamp:  'off'
     light.guest_bath_light:         'off'
     light.guest_bedroom_lamp:       'off'
     light.guest_bedroom_lamp_2:     'off'
