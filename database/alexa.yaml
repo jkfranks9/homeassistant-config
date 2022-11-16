@@ -24,7 +24,6 @@ smart_home:
       - timer
     
     exclude_entities:
-      - script.automate_lights_while_away
       - script.control_fan_for_temperature
       - script.evaluate_weather_condition
       - script.get_all_kodi_movies
