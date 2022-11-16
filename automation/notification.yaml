@@ -26,7 +26,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.epson_lamp_hours
-      below: 2999
+      below: 1999
   
   action:
     - service: notify.mobile_app_jon_galaxy
