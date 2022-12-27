@@ -181,8 +181,7 @@ remove_thermostat_hold:
   sequence:
     
     # Verify a vacation exists on the thermostat first.
-    - condition: template
-      value_template: "{{ state_attr(thermostat_entity, 'preset_mode') == 'vacation' }}"
+    - condition: "{{ state_attr(thermostat_entity, 'preset_mode') == 'vacation' }}"
     
     # Remove the vacation on the thermostat. Note that the name is limited to 12 characters.
         

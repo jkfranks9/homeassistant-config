@@ -12,25 +12,20 @@ cards:
     unit: lqi
     entities:
       
-      - entity: binary_sensor.guest_bath_motion_detector_occupancy
+      - entity: sensor.guest_bath_motion_detector_linkquality
         name: Guest Bath Motion Detector
-        attribute: linkquality
       
-      - entity: binary_sensor.laundry_room_motion_detector_occupancy
+      - entity: sensor.laundry_room_motion_detector_linkquality
         name: Laundry Room Motion Detector
-        attribute: linkquality
       
-      - entity: binary_sensor.master_bath_motion_detector_occupancy
+      - entity: sensor.master_bath_motion_detector_linkquality
         name: Master Bath Motion Detector
-        attribute: linkquality
       
-      - entity: binary_sensor.back_door_sensor_contact
+      - entity: sensor.back_door_sensor_linkquality
         name: Back Door Sensor
-        attribute: linkquality
       
-      - entity: binary_sensor.guest_br_window_sensor_contact
+      - entity: sensor.guest_br_window_sensor_linkquality
         name: Guest BR Window Sensor
-        attribute: linkquality
       
       - entity: cover.upstairs_br_vent_1
         name: Upstairs BR Vent 1
@@ -39,7 +34,3 @@ cards:
       - entity: cover.upstairs_br_vent_2
         name: Upstairs BR Vent 2
         attribute: linkquality
-      
-      #- entity: binary_sensor.cc2530_router_1_led
-      #  name: CC2530 Router 1
-      #  attribute: linkquality

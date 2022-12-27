@@ -10,9 +10,5 @@ cards:
     entities:
       - entity: input_boolean.christmas_mode
         icon: mdi:pine-tree
-  
-  - type: 'custom:select-list-card'
-    entity: input_select.occupied_bedrooms
-    title: Occupied Bedrooms
-    show_toggle: true
-    max_options: 2
+      
+      - entity: input_select.occupied_bedrooms

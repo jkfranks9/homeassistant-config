@@ -212,27 +212,13 @@
       attribute: elevation
       below: 6.0
     
-    # Turn on appropriate lights.
-    - if:
-      
-        # It's Christmas time!
-        - condition: template
-          value_template: "{{ is_state('input_boolean.christmas_mode', 'on') }}"
-        
-      then:
-        - service: homeassistant.turn_on
-          entity_id: light.daytime_christmas_lights
-          
-        - service: light.turn_on
-          entity_id: light.office_lamp
-      
-      # No it's not!
-      else:
-        - service: homeassistant.turn_on
-          entity_id: light.daytime_lights
-        
-        - service: light.turn_on
-          entity_id: light.office_lamp
+    # Turn on appropriate lights.        
+    - service: light.turn_on
+      entity_id: light.office_lamp
+    
+    - service: light.turn_on
+      data_template:
+        entity_id: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 # Close up the house when needed.
 - alias: Close House
@@ -266,10 +252,8 @@
       - condition: state
         entity_id: sun.sun
         state: 'below_horizon'
-      - condition: template
-        value_template: >
-          {{ not is_state('person.jon', 'home') and
-             is_state('input_boolean.adults_home', 'off') }}
+      
+      - "{{ not is_state('person.jon', 'home') and is_state('input_boolean.adults_home', 'off') }}"
   
   action:
     - delay: 
@@ -279,6 +263,7 @@
     - service: script.turn_on
       target:
         entity_id: script.close_garage_door_north
+    
     - service:  script.turn_on
       target:
         entity_id: script.close_garage_door_south
@@ -286,10 +271,7 @@
     - if:
       
         # No one is home.
-        - condition: template
-          value_template: >
-            {{ not is_state('person.jon', 'home') and
-               is_state('input_boolean.adults_home', 'off') }}
+        - "{{ not is_state('person.jon', 'home') and is_state('input_boolean.adults_home', 'off') }}"
         
       then:
     
@@ -361,9 +343,7 @@
     - platform: template
       value_template: "{{ is_state('proximity.jon_home') < 13000 if is_number('proximity.jon_home') }}"
       
-  condition:
-    - condition: template
-      value_template: "{{ is_state_attr('proximity.jon_home', 'dir_of_travel', 'towards') }}"
+  condition: "{{ is_state_attr('proximity.jon_home', 'dir_of_travel', 'towards') }}"
   
   action:
     - service: script.turn_off_extended_away_mode
@@ -635,8 +615,7 @@
       state: 'on'
     
     # Finally, ensure the door is actually closed before opening it.
-    - condition: template
-      value_template: "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
+    - "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
   
   action:
     - service: switch.turn_on
@@ -667,8 +646,8 @@
     - condition: state
       entity_id: person.jon
       state: 'home'
-    - condition: template
-      value_template: "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
+    
+    - "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
   
   action:
     - service: script.send_notification
@@ -820,7 +799,7 @@
   
   action:
     
-    # Set the washer load size.
+    # Set the washer load size. Default to medium if the calculation for seconds is unreasonably small.
     - service: input_select.select_option
       target:
         entity_id: input_select.washer_load_size
@@ -828,9 +807,14 @@
         option: >
           {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
           {% set seconds = (now().timestamp() - start) %}
-          {% if   seconds >= 180 and seconds < 350 %} Small
-          {% elif seconds >= 350 and seconds < 450 %} Medium
-          {% elif seconds >= 450  %}                  Large
+          {% if   seconds >= 180 and seconds < 350 %}
+            Small
+          {% elif seconds >= 350 and seconds < 450 %}
+            Medium
+          {% elif seconds >= 450  %}
+            Large
+          {% else %}
+            Medium
           {% endif %}
 
 # Start the washer rinse fill blackout timer. This is used to ignore the fabric softener injection
@@ -920,13 +904,12 @@
 # - Stop
 - alias: Set Washer Operation
   id: 'set_washer_operation'
+  
   trigger:
     - platform: state 
       entity_id: sensor.washer_power_state
   
-  condition:
-    - condition: template
-      value_template: "{{ trigger.from_state and trigger.from_state.state != 'unavailable' }}"
+  condition: "{{ trigger.from_state and trigger.from_state.state != 'unavailable' }}"
   
   action:
     
@@ -1065,12 +1048,14 @@
     - if:
         - condition: trigger
           id: humidity
+      
       then:
         - service: notify.dryer_trend_sensors
           data_template:
             message: >
               {% set hum = states('sensor.dryer_humidity') %}
               {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Humidity ({{ hum }}) {{ trigger.to_state.attributes.gradient }}
+      
       else:
         - service: notify.dryer_trend_sensors
           data_template:
@@ -1093,7 +1078,8 @@
     - choose:
       - conditions:
         - condition: numeric_state
-          entity_id: sensor.office_temperature
+          entity_id: climate.downstairs
+          attribute: current_temperature
           below: 70.0
         sequence:
           - delay: '00:10:00'
@@ -1102,7 +1088,8 @@
       
       - conditions:
         - condition: numeric_state
-          entity_id: sensor.office_temperature
+          entity_id: climate.downstairs
+          attribute: current_temperature
           below: 75.0
         sequence:
           - delay: '00:05:00'

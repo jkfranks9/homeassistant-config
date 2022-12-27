@@ -11,12 +11,13 @@ cards:
     layout_type: custom:vertical-layout
     cards:
       - !include /config/dashboard/dash_overview/cards/home/environment.yaml
+      - !include /config/dashboard/dash_overview/cards/home/doors_windows.yaml
       - !include /config/dashboard/dash_overview/cards/home/groups.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/fans.yaml
-      - !include /config/dashboard/dash_overview/cards/home/doors_windows.yaml
+      - !include /config/dashboard/dash_overview/cards/home/presence.yaml
       - !include /config/dashboard/dash_overview/cards/home/laundry.yaml
+      - !include /config/dashboard/dash_overview/cards/home/ups.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
-      - !include /config/dashboard/dash_overview/cards/home/presence.yaml
-      - !include /config/dashboard/dash_overview/cards/home/ups.yaml
+      - !include /config/dashboard/dash_overview/cards/home/deliveries.yaml

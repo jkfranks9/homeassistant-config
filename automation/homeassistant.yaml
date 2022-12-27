@@ -77,7 +77,7 @@
     - condition: template
       value_template: >
         {% set skip_list = [
-                            'change_some_downstairs_lights',
+                            'change_downstairs_lighting',
                             'close_garage_door', 
                             'concat_auto_log_files', 
                             'concat_log_files', 
@@ -168,8 +168,7 @@
     - if:
       
         # If children are home without adults, default to the downstairs guest bedroom.
-        - condition: template
-          value_template: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
+        - "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
         
       then:
         - service: input_select.select_option
@@ -240,9 +239,7 @@
     - platform: state
       entity_id: counter.kodi_errors
   
-  condition:
-    - condition: template
-      value_template: "{{ trigger.to_state.state | int(0) >= 30 }}"
+  condition: "{{ trigger.to_state.state | int(0) >= 30 }}"
   
   action:
     - service: script.send_notification
@@ -264,12 +261,13 @@
 # Reset the counter after a few minutes since we're not interested in occasional sporadic errors.
 - alias: Reset Kodi Error Counter
   id: reset_kodi_error_counter
+  
   trigger:
     - platform: time_pattern
       minutes: '/7'
-  condition:
-    - condition: template
-      value_template: "{{ states('counter.kodi_errors')|int(0) > 0 }}"      
+  
+  condition: "{{ states('counter.kodi_errors')|int(0) > 0 }}"      
+  
   action:
     - service: counter.reset
       entity_id: counter.kodi_errors
@@ -284,16 +282,16 @@
 # Save notifications to MQTT when they are created.
 - alias: Save Notifications On Create
   id: save_notifications_on_create
+  
   trigger:
     - platform: event
       event_type: call_service
       event_data:
         domain: persistent_notification
         service: create
-  condition:
-    - condition: template
-      value_template: >-
-        {{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}
+  
+  condition: "{{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}"
+  
   action:
     - service: mqtt.publish
       data_template:
@@ -309,16 +307,16 @@
 # Remove saved notifications from MQTT when they are dismissed.
 - alias: Remove Saved Notifications On Dismiss
   id: remove_saved_notifications_on_dismiss
+  
   trigger:
     - platform: event
       event_type: call_service
       event_data:
         domain: persistent_notification
         service: dismiss
-  condition:
-    - condition: template
-      value_template: >-
-        {{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}
+  
+  condition: "{{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}"
+  
   action:
     - service: mqtt.publish
       data_template:
@@ -341,13 +339,13 @@
 #   - Note that dashes in the notification ID are changed to underscores, presumably to prevent some problem.
 - alias: Restore Notifications
   id: restore_notifications
+  
   trigger:
     - platform: mqtt
       topic: home-assistant/notifications/+
-  condition:
-    - condition: template
-      value_template: >-
-        {{ trigger.payload != '' and state_attr('persistent_notification.' + trigger.payload_json.notification_id | replace('-','_'),'message') != trigger.payload_json.message }}
+  
+  condition: "{{ trigger.payload != '' and state_attr('persistent_notification.' + trigger.payload_json.notification_id | replace('-','_'),'message') != trigger.payload_json.message }}"
+  
   action:
     - service: persistent_notification.create
       data_template:
@@ -452,14 +450,9 @@
     unique_id: >
       {{ trigger.id }}_last_changed
   
-  condition:
-    - condition: template
-      value_template: "{{ valid }}"
+  condition: "{{ valid }}"
 
   action:
-
-  # Update Door Sensors.
-
     - service: script.publish_mqtt_automated_states
       data:
         domain: sensor

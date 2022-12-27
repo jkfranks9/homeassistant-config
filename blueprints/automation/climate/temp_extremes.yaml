@@ -41,9 +41,7 @@ trigger:
 
 # It's possible that the temperature sensor can't be contacted, resulting (I believe) in the entity having a state
 # of 0.0, so ignore such a value and just wait for the next sensor update.
-condition:
-  - condition: template
-    value_template: "{{ trigger.to_state.state | float(0) != 0.0 }}"
+condition: "{{ trigger.to_state.state | float(0) != 0.0 }}"
 
 action:
   
@@ -51,9 +49,8 @@ action:
   - choose:
     
     # Min calculation.
-    - conditions:
-      - condition: template
-        value_template: "{{ input_type == 'Min' }}"
+    - conditions: "{{ input_type == 'Min' }}"
+      
       sequence:
     
         # Set the (possible) new minimum value.
@@ -64,9 +61,8 @@ action:
             value: "{{ min(trigger.to_state.state | float(0), states(input_result_entity) | float(0)) }}"
     
     # Max calculation.
-    - conditions:
-      - condition: template
-        value_template: "{{ input_type == 'Max' }}"
+    - conditions: "{{ input_type == 'Max' }}"
+      
       sequence:
     
         # Set the (possible) new maximum value.

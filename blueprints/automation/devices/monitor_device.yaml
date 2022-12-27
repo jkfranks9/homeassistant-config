@@ -30,6 +30,7 @@ trigger:
   - platform: state
     entity_id: !input device_entity
     to:
+  
   - platform: event
     event_type: component_loaded
     event_data:
@@ -37,9 +38,7 @@ trigger:
 
 # Continue if the device is not on. We deliberately do not use off state in case the state is
 # some weird value, like unknown.
-condition:
-  - condition: template
-    value_template: "{{ not is_state(input_device_entity, 'on') }}"
+condition: "{{ not is_state(input_device_entity, 'on') }}"
 
 action:
     
@@ -68,8 +67,7 @@ action:
   - delay: '00:10:00'
     
   # Confirm that the device is on. If so, we're done.
-  - condition: template
-    value_template: "{{ not is_state(input_device_entity, 'on') }}"
+  - condition: "{{ not is_state(input_device_entity, 'on') }}"
     
   # The device did not turn on, so send a critical notification.
   - service: script.send_notification

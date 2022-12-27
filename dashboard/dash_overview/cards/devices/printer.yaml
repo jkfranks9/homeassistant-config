@@ -15,5 +15,5 @@ cards:
   - type: gauge
     name: Pages Printed
     min: 100
-    max: 500
+    max: 1500
     entity: sensor.brother_printer_page_counter

@@ -18,6 +18,7 @@ cards:
           square: false
           cards:
           
+            # Master suite lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Master
@@ -44,14 +45,31 @@ cards:
               conditions:
                 - entity: input_boolean.christmas_mode
                   state: 'on'
+                - entity: light.stair_railing
+                  state: 'unavailable'
               card:  
                 type: 'custom:button-card'
                 template: light_group_button
                 name: Family
-                entity: light.family_room_christmas_lights
+                entity: light.dashboard_family_room_christmas_lights_1
                 variables:
                   entities_title: Family Room Lights
-                  entities_group: light.family_room_christmas_lights
+                  entities_group: light.dashboard_family_room_christmas_lights_1
+      
+            - type: conditional
+              conditions:
+                - entity: input_boolean.christmas_mode
+                  state: 'on'
+                - entity: light.stair_railing
+                  state_not: 'unavailable'
+              card:  
+                type: 'custom:button-card'
+                template: light_group_button
+                name: Family
+                entity: light.dashboard_family_room_christmas_lights_2
+                variables:
+                  entities_title: Family Room Lights
+                  entities_group: light.dashboard_family_room_christmas_lights_2
       
             # Display kitchen lights according to Christmas mode.
             - type: conditional
@@ -75,11 +93,12 @@ cards:
                 type: 'custom:button-card'
                 template: light_group_button
                 name: Kitchen
-                entity: light.kitchen_christmas_lights
+                entity: light.dashboard_kitchen_christmas_lights
                 variables:
                   entities_title: Kitchen Lights
-                  entities_group: light.kitchen_christmas_lights
-      
+                  entities_group: light.dashboard_kitchen_christmas_lights
+                
+            # Office lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Office
@@ -87,7 +106,8 @@ cards:
               variables:
                 entities_title: Office Lights
                 entities_group: light.office_lights
-      
+                
+            # Laundry room lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Laundry
@@ -96,14 +116,34 @@ cards:
                 entities_title: Laundry Room Lights
                 entities_group: light.laundry_room_lights
       
-            - type: 'custom:button-card'
-              template: light_group_button
-              name: Outdoor
-              entity: light.outdoor_lights
-              variables:
-                entities_title: Outdoor Lights
-                entities_group: light.outdoor_lights
-          
+            # Display outdoor lights according to Christmas mode.
+            - type: conditional
+              conditions:
+                - entity: input_boolean.christmas_mode
+                  state: 'off'
+              card:  
+                type: 'custom:button-card'
+                template: light_group_button
+                name: Outdoor
+                entity: light.outdoor_lights
+                variables:
+                  entities_title: Outdoor Lights
+                  entities_group: light.outdoor_lights
+      
+            - type: conditional
+              conditions:
+                - entity: input_boolean.christmas_mode
+                  state: 'on'
+              card:  
+                type: 'custom:button-card'
+                template: light_group_button
+                name: Outdoor
+                entity: light.dashboard_outdoor_christmas_lights
+                variables:
+                  entities_title: Outdoor Lights
+                  entities_group: light.dashboard_outdoor_christmas_lights
+                    
+            # Downstairs guest suite lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Guest (1st)
@@ -112,14 +152,51 @@ cards:
                 entities_title: Downstairs Guest Suite Lights
                 entities_group: light.downstairs_guest_suite_lights
       
-            - type: 'custom:button-card'
-              template: light_group_button             
-              name: Common (1st)
-              entity: light.downstairs_common_lights
-              variables:
-                entities_title: Downstairs Common Lights
-                entities_group: light.downstairs_common_lights
-          
+            # Display downstairs common lights according to Christmas mode.
+            - type: conditional
+              conditions:
+                - entity: input_boolean.christmas_mode
+                  state: 'off'
+              card:  
+                type: 'custom:button-card'
+                template: light_group_button
+                name: Common (1st)
+                entity: light.downstairs_common_lights
+                variables:
+                  entities_title: Downstairs Common Lights
+                  entities_group: light.downstairs_common_lights
+      
+            - type: conditional
+              conditions:
+                - entity: input_boolean.christmas_mode
+                  state: 'on'
+                - entity: light.christmas_village_1
+                  state: 'unavailable'
+              card:  
+                type: 'custom:button-card'
+                template: light_group_button
+                name: Common (1st)
+                entity: light.downstairs_common_lights
+                variables:
+                  entities_title: Downstairs Common Lights
+                  entities_group: light.downstairs_common_lights
+      
+            - type: conditional
+              conditions:
+                - entity: input_boolean.christmas_mode
+                  state: 'on'
+                - entity: light.christmas_village_1
+                  state_not: 'unavailable'
+              card:  
+                type: 'custom:button-card'
+                template: light_group_button
+                name: Common (1st)
+                entity: light.dashboard_downstairs_common_christmas_lights
+                variables:
+                  entities_title: Downstairs Common Lights
+                  entities_group: light.dashboard_downstairs_common_christmas_lights
+                    
+            # Storage lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Storage
@@ -127,7 +204,8 @@ cards:
               variables:
                 entities_title: Storage Lights
                 entities_group: light.storage_lights
-          
+                    
+            # Upstairs guest suite lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Guest (2nd)
@@ -135,7 +213,8 @@ cards:
               variables:
                 entities_title: Upstairs Guest Suite Lights
                 entities_group: light.upstairs_guest_suite_lights
-      
+                
+            # Upstairs common lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Common (2nd)
@@ -143,7 +222,8 @@ cards:
               variables:
                 entities_title: Upstairs Common Lights
                 entities_group: light.upstairs_common_lights
-      
+                
+            # Theater lights.
             - type: 'custom:button-card'
               template: light_group_button
               name: Theater

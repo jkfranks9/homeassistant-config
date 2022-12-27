@@ -49,9 +49,10 @@ open_cinema:
     
     # If no family are home, delay, then turn off some downstairs lights.
     - delay: '00:05:00'
-    - service: script.change_some_downstairs_lights
+    - service: script.change_downstairs_lighting
       data:
         turn_on: false
+        christmas: true
     
     # Turn off the family room AV system if it's late enough and no one else is home.
     - condition:
@@ -78,9 +79,10 @@ close_cinema:
       entity_id: input_boolean.theater_open
     
     # Turn on automations/lights that were possibly turned off by the open cinema script.
-    - service: script.change_some_downstairs_lights
+    - service: script.change_downstairs_lighting
       data:
         turn_on: true
+        christmas: false
     
     # Turn on some lights. There's some overlap in entities with the above service, but that's OK.
     - service: script.turn_on
@@ -159,9 +161,10 @@ set_theater_bright:
   alias: Set Theater Bright
   sequence:
     - scene: scene.theater_aux_partial
-    - service: script.change_some_downstairs_lights
+    - service: script.change_downstairs_lighting
       data:
         turn_on: true
+        christmas: false
     - scene: scene.lutron_bright
 
 # Make the theater idle, meaning it's on but we need lights to see.
@@ -170,9 +173,10 @@ set_theater_idle:
   sequence:
     - scene: scene.theater_aux_partial
     - scene: scene.lutron_idle
-    - service: script.change_some_downstairs_lights
+    - service: script.change_downstairs_lighting
       data:
         turn_on: true
+        christmas: false
 
 #============================#
 #     Downstairs Lights      #
@@ -183,20 +187,22 @@ set_theater_idle:
 #
 # - The Open Cinema script (turn on, delay, turn off)
 # - The Close Cinema script (turn on)
-# - The Alexa Break Time routine, which calls set_theater_idle (turn on)
+# - The Alexa Break Time routine, which calls Set Theater Idle (turn on)
 # - The Restore Lighting On Resume script (turn off)
-change_some_downstairs_lights:
-  alias: Change Some Downstairs Lights
+change_downstairs_lighting:
+  alias: Change Downstairs Lighting
   fields:
     turn_on:
       description: Whether to turn the lights on (true) or off (false).
+    
+    christmas:
+      description: Whether to change the Christmas lights (true) or not (false).
   
   sequence:
     - if:
       
         # Turn on lights.
-        - condition: template
-          value_template: "{{ turn_on == true }}"
+        - "{{ turn_on == true }}"
         
       then:
           
@@ -212,12 +218,18 @@ change_some_downstairs_lights:
           entity_id: sun.sun
           attribute: elevation
           below: 4.0
+    
+        - service: light.turn_on
+          data_template:
+            entity_id: >
+              {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
+                {{ 'light.daytime_lights' }}
+              {% else %}
+                {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
+              {% endif %}
         
-        - service: homeassistant.turn_on
-          entity_id:
-            - light.stairway_light
-            - light.family_room_lamp
-            - light.hallway_lamp
+        - service: light.turn_on
+          entity_id: light.stairway_light
         
       # Turn off lights, but only if no family members present.
       else:
@@ -230,14 +242,21 @@ change_some_downstairs_lights:
           entity_id:
             - automation.check_daytime_lights_sunset_minimum
             - automation.check_daytime_lights_sunset_medium
-            - automation.check_daytime_lights_sunset_maximum
+            - automation.check_daytime_lights_sunset_maximum    
         
         # Now, turn them off.
-        - service: homeassistant.turn_off
-          entity_id:
+        - service: light.turn_off
+          data_template:
+            entity_id: >
+              {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
+                {{ 'light.daytime_lights' }}
+              {% else %}
+                {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
+              {% endif %}
+        
+        - service: light.turn_off
+          entity_id: 
             - light.stairway_light
-            - light.family_room_lamp
-            - light.hallway_lamp
             
             # This light is turned on by the Alexa Break Time routine, not Home Assistant.
             - light.island_light
@@ -465,37 +484,36 @@ resume_worker:
 # Note: The turntable cannot be controlled, so all we do is turn on some lights.
 resume_cinema:
   alias: Resume Cinema
+  
   sequence:
     - choose:
-      - conditions:
-        - condition: template
-          value_template: >
-            {{ is_state('sensor.harmony_hub', 'Stream Player') or
-               is_state('sensor.harmony_hub', 'Enable Streaming') }}
+      - conditions: "{{ is_state('sensor.harmony_hub', 'Stream Player') or is_state('sensor.harmony_hub', 'Enable Streaming') }}"
+        
         sequence:
           - service: script.resume_worker
             data:
               device: 'NVIDIA Shield TV'
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('sensor.harmony_hub', 'BD Player') }}"
+      
+      - conditions: "{{ is_state('sensor.harmony_hub', 'BD Player') }}"
+        
         sequence:
           - service: script.resume_worker
             data:
               device: 'Sony DVD/Blu-ray Player'
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('sensor.harmony_hub', 'LD Player') }}"
+      
+      - conditions: "{{ is_state('sensor.harmony_hub', 'LD Player') }}"
+        
         sequence:
           - service: script.resume_worker
             data:
               device: 'Panasonic Laserdisc Player'
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('sensor.harmony_hub', 'LP Player') }}"
+      
+      - conditions: "{{ is_state('sensor.harmony_hub', 'LP Player') }}"
+        
         sequence:
           - service: script.turn_on
             entity_id: script.set_theater_dim
+      
       default:
         - service: system_log.write
           data:
@@ -513,9 +531,10 @@ restore_lighting_on_resume:
       entity_id: script.set_theater_dark
     
     # Turn off some downstairs lights.
-    - service: script.change_some_downstairs_lights
+    - service: script.change_downstairs_lighting
       data:
         turn_on: false
+        christmas: false
 
 #============================#
 #     Kodi Movie Control     #

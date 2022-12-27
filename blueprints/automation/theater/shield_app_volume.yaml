@@ -21,27 +21,22 @@ blueprint:
           max: 0.64
           mode: slider
 
-# The !input tag cannot be used in templates, so assign variables to the inputs.
 variables:
   input_appl_name: !input appl_name
   input_volume: !input volume
 
-# Sigh. It seems that the trigger is evaluated before variables are assigned, so just trigger on the 
-# app name changing, and check the input app name in a condition.
 trigger:
   - platform: state
     entity_id: media_player.shield_tv
     attribute: app_name
-
-condition:
-  - condition: template
-    value_template: "{{ is_state_attr('media_player.shield_tv', 'app_name', input_appl_name) }}"
+    to: !input appl_name
 
 action:
   - service: system_log.write
     data:
       message: "Setting volume for {{ input_appl_name }} to {{ input_volume }}"
       level: debug
+  
   - service: media_player.volume_set
     data:
       entity_id: media_player.marantz_sr7012

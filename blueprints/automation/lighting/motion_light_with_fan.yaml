@@ -84,8 +84,7 @@ action:
   - if:
     
       # The room is windowless, so always turn on the light.
-      - condition: template
-        value_template: "{{ input_windowed == false }}"
+      - "{{ input_windowed == false }}"
       
     then:
       

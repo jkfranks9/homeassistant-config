@@ -52,8 +52,7 @@ condition:
       {{ (to_state < input_proximity_meters) and (from_state >= input_proximity_meters) if is_number(to_state) }}
   
   # And is traveling towards home.
-  - condition: template
-    value_template: "{{ is_state_attr(input_proximity_entity, 'dir_of_travel', 'towards') }}"
+  - "{{ is_state_attr(input_proximity_entity, 'dir_of_travel', 'towards') }}"
 
 # Write a log message, and announce using all Alexa media players.
 action:

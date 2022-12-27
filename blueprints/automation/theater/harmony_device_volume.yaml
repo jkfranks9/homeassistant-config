@@ -21,26 +21,21 @@ blueprint:
           max: 0.64
           mode: slider
 
-# The !input tag cannot be used in templates, so assign variables to the inputs.
 variables:
   input_device_name: !input device_name
   input_volume: !input volume
 
-# Sigh. It seems that the trigger is evaluated before variables are assigned, so just trigger on the 
-# Harmony activity changing, and check the device name in a condition.
 trigger:
   - platform: state
     entity_id: sensor.harmony_hub
-
-condition:
-  - condition: template
-    value_template: "{{ trigger.to_state.state == input_device_name }}"
+    to: !input device_name
 
 action:
   - service: system_log.write
     data:
       message: "Setting volume for {{ input_device_name }} to {{ input_volume }}"
       level: debug
+  
   - service: media_player.volume_set
     data:
       entity_id: media_player.marantz_sr7012

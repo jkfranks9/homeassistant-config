@@ -314,8 +314,7 @@ toggle_upstairs_br_vent:
         level: debug
     
     - if:
-        - condition: template
-          value_template: "{{ state_attr(vent_entity, 'current_position') == 0 }}"
+        - "{{ state_attr(vent_entity, 'current_position') == 0 }}"
       
       then:
         - service: script.position_hvac_vent
@@ -408,9 +407,7 @@ set_fan_to_speed:
     - choose:
         
       # Family room
-      - conditions:
-        - condition: template
-          value_template: "{{ state_attr(entity_id, 'friendly_name') == 'Family Room Fan' }}"
+      - conditions: "{{ state_attr(entity_id, 'friendly_name') == 'Family Room Fan' }}"
         
         sequence:
           - service: input_number.set_value
@@ -420,9 +417,7 @@ set_fan_to_speed:
               value: "{{ speed }}"
         
       # Office
-      - conditions:
-        - condition: template
-          value_template: "{{ state_attr(entity_id, 'friendly_name') == 'Office Fan' }}"
+      - conditions: "{{ state_attr(entity_id, 'friendly_name') == 'Office Fan' }}"
         
         sequence:
           - service: input_number.set_value
@@ -432,9 +427,7 @@ set_fan_to_speed:
               value: "{{ speed }}"
         
       # Theater
-      - conditions:
-        - condition: template
-          value_template: "{{ state_attr(entity_id, 'friendly_name') == 'Theater Fan' }}"
+      - conditions: "{{ state_attr(entity_id, 'friendly_name') == 'Theater Fan' }}"
         
         sequence:
           - service: input_number.set_value
@@ -474,9 +467,7 @@ control_fan_for_temperature:
     
     # Set the fan to a speed based on the temperature.
     - choose:
-      - conditions:      
-        - condition: template
-          value_template: "{{ states(temperature_entity_id) | float(0) > 75.0 }}"
+      - conditions: "{{ states(temperature_entity_id) | float(0) > 75.0 }}"
       
         sequence:
           - service: script.set_fan_to_speed
@@ -484,9 +475,7 @@ control_fan_for_temperature:
               entity_id: "{{ fan_entity_id }}"
               speed: 66
       
-      - conditions:
-        - condition: template
-          value_template: "{{ states(temperature_entity_id) | float(0) > 70.0 }}"
+      - conditions: "{{ states(temperature_entity_id) | float(0) > 70.0 }}"
       
         sequence:
           - service: script.set_fan_to_speed

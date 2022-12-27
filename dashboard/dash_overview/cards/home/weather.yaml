@@ -32,10 +32,12 @@ cards:
       max_uv_index: sensor.max_uv_index
   
   # Thermal comfort values
-  - type: custom:multiple-entity-row
-    name: Thermal Comfort
-    entity: sensor.outdoor_dewpoint
-    state_header: Dew Point
+  - type: entities
     entities:
-      - entity: sensor.outdoor_heatindex
-        name: Heat Index
+      - type: custom:multiple-entity-row
+        name: Thermal Comfort
+        entity: sensor.outdoor_dewpoint
+        state_header: Dew Point
+        entities:
+          - entity: sensor.outdoor_heatindex
+            name: Heat Index

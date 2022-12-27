@@ -24,23 +24,19 @@ bedtime:
     # Lock the PC.
     - service: script.turn_on
       entity_id: script.lock_pc
-    
-    # Say something nice.
-    - service: notify.alexa_media
-      data:
-        message: "{{ ['Good night!', 
-                      'Pleasant dreams!',
-                      'See you in the morning!'
-                     ] | random }}"
-        target:
-          - media_player.master_bedroom_echo
-        data:
-          type: tts
       
     - delay: '00:00:07'
       
     # Establish the proper bedtime environment (lights, thermostats, echo devices, smart vents, vacuum).
     - service: script.establish_bedtime_environment
+    
+    # Turn off Christmas lights if needed.
+    - if:
+        - "{{ is_state('input_boolean.christmas_mode', 'on') }}"
+      
+      then:
+        - service: light.turn_off
+          entity_id: light.all_christmas_lights
     
     # Turn off all fans.
     - scene: scene.fans_off
@@ -172,8 +168,7 @@ set_up_pre_bedtime_environment:
     
     # Delay until 8 PM if needed.
     - if:
-        - condition: template
-          value_template: "{{ evening_delta > 0 }}"
+        - "{{ evening_delta > 0 }}"
         
       then:
         - delay:
@@ -183,9 +178,7 @@ set_up_pre_bedtime_environment:
     - choose:
       
       # Master: turn on master bedroom lamp and turn off downstairs guest bedroom lights.
-      - conditions:
-        - condition: template
-          value_template: "{{ target_bedroom == 'Master' }}"
+      - conditions: "{{ target_bedroom == 'Master' }}"
         
         sequence:
           - service: light.turn_on
@@ -197,9 +190,7 @@ set_up_pre_bedtime_environment:
               - light.guest_bedroom_lamp_2
       
       # Upstairs guest: turn on upstairs guest bedroom lamp and turn off downstairs guest bedroom lights.
-      - conditions:
-        - condition: template
-          value_template: "{{ target_bedroom == 'Upstairs' }}"
+      - conditions: "{{ target_bedroom == 'Upstairs' }}"
         
         sequence:
           - service: light.turn_on
@@ -353,9 +344,7 @@ establish_bedtime_environment:
                   level: error
       
       # Children home (without adults).
-      - conditions:
-        - condition: template
-          value_template: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
+      - conditions: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
         
         sequence:
           
@@ -579,8 +568,7 @@ reset_bedtime_environment:
     
     # Close the upstairs guest bedroom vents if the room is unoccupied. If it is occupied the vents will be closed by an automation
     # when family members leave.
-    - condition: template
-      value_template: "{{ not is_state('input_select.occupied_bedrooms', 'Upstairs') and not is_state('input_select.occupied_bedrooms', 'Both') }}"
+    - condition: "{{ not is_state('input_select.occupied_bedrooms', 'Upstairs') and not is_state('input_select.occupied_bedrooms', 'Both') }}"
     
     - service: script.close_upstairs_br_vents
 
@@ -619,16 +607,14 @@ change_lighting_per_weather:
     - if:
         
         # Sun rising
-        - condition: template
-          value_template: "{{ state_attr('sun.sun', 'rising') == true }}"
+        - "{{ state_attr('sun.sun', 'rising') == true }}"
         
       then:
           
         - if:
                 
             # Called for wakeup
-            - condition: template
-              value_template: "{{ wakeup == true }}"
+            - "{{ wakeup == true }}"
               
           then:
                 
@@ -702,8 +688,7 @@ change_lighting_per_weather_simple:
     - if:
       
         # Turn on lighting.
-        - condition: template
-          value_template: "{{ turn_on == true }}"
+        - "{{ turn_on == true }}"
         
       then:
           
@@ -896,13 +881,14 @@ reset_smart_bulb_lux_sensor:
     # the sky conditions check.
     - if:
         - "{{ wait.completed }}"
+      
       then:
-        - condition: template
-          value_template: "{{ states(lux_entity) > lux_value }}"
+        - condition: "{{ states(lux_entity) | int(0) > lux_value }}"
         
         - service: homeassistant.turn_off
           target:
             entity_id: "{{ light_entity }}"
+      
       else:
         - service: script.reset_smart_bulb_sky_conditions
           data:
@@ -937,9 +923,7 @@ start_rainbow:
     - alias: Repeat Rainbow
       
       repeat:
-        while:
-          - condition: template
-            value_template: "{{ repeat.index <= 30 }}"
+        while: "{{ repeat.index <= 30 }}"
         
         sequence:
           
@@ -972,7 +956,16 @@ turn_on_christmas_lights:
       entity_id: input_boolean.christmas_mode
       state: 'on'
     
-    - scene: scene.christmas_lights_on
+    - if:
+      - "{{ state_attr('sun.sun', 'elevation') <= 3 }}"
+    
+      then:    
+        - service: light.turn_on
+          entity_id: light.all_christmas_lights
+    
+      else:    
+        - service: light.turn_on
+          entity_id: light.indoor_christmas_lights
 
 turn_off_christmas_lights:
   alias: Turn Off Christmas Lights
@@ -983,7 +976,8 @@ turn_off_christmas_lights:
       entity_id: input_boolean.christmas_mode
       state: 'on'
     
-    - scene: scene.christmas_lights_off
+    - service: light.turn_off
+      entity_id: light.all_christmas_lights
 
 #===========================#
 #     Light Group Popup     #
@@ -1007,7 +1001,7 @@ popup_light_group:
 #     Bath Time     #
 #===================#
 
-# Prevent the bath light turning off while taking a bath.
+# Prevent the bath light turning off while taking a bath. Automation with the same name triggers when the timer expires.
 start_bath_time:
   alias: Start Bath Time
   
@@ -1015,11 +1009,8 @@ start_bath_time:
     
     - service: automation.turn_off
       entity_id: automation.run_guest_bath_motion_based_light
-
-stop_bath_time:
-  alias: Stop Bath Time
-  
-  sequence:
     
-    - service: automation.turn_on
-      entity_id: automation.run_guest_bath_motion_based_light
+    - service: timer.start
+      data:
+        entity_id: timer.bath_time
+        duration: '00:45:00'

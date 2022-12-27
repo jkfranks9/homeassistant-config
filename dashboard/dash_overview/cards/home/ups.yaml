@@ -3,10 +3,11 @@
 #==================#
 
 type: entities
+title: UPS
 entities:
   - type: custom:multiple-entity-row
     entity: sensor.cyber1_load
-    name: UPS
+    name: Cyber Power
     state_header: Load
     entities:
       - entity: sensor.cyber1_battery_charge

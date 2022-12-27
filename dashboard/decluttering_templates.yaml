@@ -61,3 +61,35 @@ severity_colors:
       - color: 'var(--bar-high-color)'
         from: '[[range3_from]]'
         to:   '[[range3_to]]'
+
+#========================#
+#     Satellite Pass     #
+#========================#
+
+satellite_pass:
+  card:
+    type: conditional
+    conditions:
+      - entity: '[[entity]]'
+        state_not: unknown
+    card:
+      type: horizontal-stack
+      cards:
+        - type: 'custom:button-card'
+          template: satellite_pass
+          entity: '[[entity]]'
+          name: Next Pass
+        - type: vertical-stack
+          cards:
+            - type: 'custom:gauge-card'
+              entity: '[[entity]]'
+              attribute: max_elevation
+              measurement: °
+              scale: 15px
+              severity:
+                red: 0
+                yellow: 45
+                green: 65
+            - type: 'custom:button-card'
+              template: satellite_compass
+              entity: '[[entity]]'

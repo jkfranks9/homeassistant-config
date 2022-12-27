@@ -1,0 +1,69 @@
+# Notify for periodic reminders, such as maintenance due.
+
+blueprint:
+  name: Reminder Notification
+  description: Notify for periodic reminders, such as maintenance due.
+  domain: automation
+  
+  input:
+    trigger_time:
+      name: Trigger Time
+      description: Time of day to trigger. This allows us to run at slightly different times for different categories.
+    
+    date_entities:
+      name: Date Entities
+      description: List of entities to check. We take action when one or more of these date objects are due or overdue.
+      selector:
+        entity:
+          multiple: true
+          domain: input_datetime
+    
+    message_prefix:
+      name: Message Prefix
+      description: Message prefix; the suffix is formed dynamically.
+
+    tag_prefix:
+      name: Tag Prefix
+      description: Tag prefix; the suffix is formed dynamically.
+  
+# Trigger daily at the specified time.
+trigger:
+  - platform: time
+    at: !input trigger_time
+
+variables:
+  input_date_entities: !input date_entities
+  actionable_entities: >
+    {% set actionable_list = namespace(list = []) %}
+    {% for entity in input_date_entities %}
+      {% if states(entity) <= states('sensor.date') %}
+        {% set actionable_list.list = actionable_list.list + [entity] %}
+      {% endif %}
+    {% endfor %}    
+    {{ actionable_list.list }}
+  input_message_prefix: !input message_prefix
+  input_tag_prefix: !input tag_prefix
+  
+condition:
+  - condition: template
+    value_template: "{{ actionable_entities | length > 0 }}"
+
+action:
+  - repeat:
+      for_each: "{{ actionable_entities }}"
+      sequence:
+        - variables:
+            entity_category: "{{ (repeat.item).split('_')[-2] }}"
+            entity_suffix: "{{ (repeat.item).split('_')[-1] }}"
+        
+        - service: script.send_notification
+          data:
+            destination:
+              - mobile
+            title: 'Action required:'
+            message: "{{ input_message_prefix ~ ' (' ~ entity_suffix ~ ').' }}"
+            channel: persistent
+            throttled: true
+            timer_entity: "{{ 'timer.reminder_' ~ entity_category ~ '_' ~ entity_suffix }}"
+            tag: "{{ input_tag_prefix ~ entity_suffix }}"
+            timeout: 0

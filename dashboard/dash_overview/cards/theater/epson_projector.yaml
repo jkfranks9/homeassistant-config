@@ -3,9 +3,10 @@
 #==============================#
 
 type: entities
+title: Projector
 entities:
   - entity: media_player.epson_projector
-    name: Projector lamp hours
+    name: Lamp hours
     icon: mdi:projector
     type: attribute
     attribute: lamp_hours

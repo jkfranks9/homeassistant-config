@@ -1,0 +1,39 @@
+# Clear a reminder notification from my mobile device.
+
+blueprint:
+  name: Reminder Notification Clear
+  description: Clear a reminder notification from my mobile device.
+  domain: automation
+  
+  input:
+    date_entities:
+      name: Date Entities
+      description: List of entities to check. We take action when one of these date objects are changed.
+      selector:
+        entity:
+          multiple: true
+          domain: input_datetime
+
+    tag_prefix:
+      name: Tag Prefix
+      description: Tag prefix; the suffix is formed dynamically.
+
+# Allow for multiple simultaneous changes. Probably impossible, but it doesn't hurt.
+mode: queued
+  
+# Trigger when the state of any of the date entities change. This should normally happen only when changed via the UI.
+trigger:
+  - platform: state
+    entity_id: !input date_entities
+    to:
+
+variables:
+  entity_suffix: "{{ (trigger.entity_id).split('_')[-1] }}"
+  input_tag_prefix: !input tag_prefix
+
+action:
+  - service: notify.mobile_app_jon_galaxy
+    data:
+      message: 'clear_notification'
+      data:
+        tag: "{{ input_tag_prefix ~ entity_suffix }}"

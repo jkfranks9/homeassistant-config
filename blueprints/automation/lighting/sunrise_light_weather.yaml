@@ -38,6 +38,7 @@ trigger:
     entity_id: sun.sun
     attribute: elevation
     above: !input elevation
+  
   - platform: homeassistant
     event: start
     id: 'ha_start'
@@ -49,8 +50,9 @@ condition:
     entity_id: sun.sun
     attribute: elevation
     above: !input elevation
-  - condition: template
-    value_template: "{{ state_attr('sun.sun', 'rising') == true }}"
+  
+  - "{{ state_attr('sun.sun', 'rising') == true }}"
+  
   - condition: state
     entity_id: input_boolean.nighttime
     state: 'off'
@@ -76,11 +78,9 @@ action:
           
         # Use the maximum elevation value.
         - conditions:
-          - condition: template
-            value_template: "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.max_elevation') | float(9)) }}"
+          - "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.max_elevation') | float(9)) }}"
           
-          - condition: template
-            value_template: "{{ input_elevation == (states('input_number.max_elevation') | float(9)) }}"
+          - "{{ input_elevation == (states('input_number.max_elevation') | float(9)) }}"
           
           sequence:
             - service: script.change_lighting_per_weather
@@ -90,11 +90,9 @@ action:
           
         # Use the medium elevation value.
         - conditions:
-          - condition: template
-            value_template: "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.med_elevation') | float(6)) }}"
+          - "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.med_elevation') | float(6)) }}"
           
-          - condition: template
-            value_template: "{{ input_elevation == (states('input_number.med_elevation') | float(6)) }}"
+          - "{{ input_elevation == (states('input_number.med_elevation') | float(6)) }}"
           
           sequence:
             - service: script.change_lighting_per_weather
@@ -104,8 +102,7 @@ action:
           
         # Use the minimum elevation value by default.
         default:
-          - condition: template
-            value_template: "{{ input_elevation == (states('input_number.min_elevation') | float(3)) }}"
+          - condition: "{{ input_elevation == (states('input_number.min_elevation') | float(3)) }}"
           
           - service: script.change_lighting_per_weather
             data:

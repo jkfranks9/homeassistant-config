@@ -55,7 +55,7 @@ logs:
   homeassistant.components.script.bedtime:                            warning
   homeassistant.components.script.change_lighting_per_weather:        warning
   homeassistant.components.script.change_lighting_per_weather_simple: warning
-  homeassistant.components.script.change_some_downstairs_lights:      warning
+  homeassistant.components.script.change_downstairs_lighting:         warning
   homeassistant.components.script.close_garage_door:                  warning
   homeassistant.components.script.concat_auto_log_files:              warning
   homeassistant.components.script.concat_log_files:                   warning
@@ -116,9 +116,10 @@ logs:
 
   # Custom components
   custom_components.alexa_media:                       info
+  custom_components.epson_projector:                   info
   custom_components.hacs:                              warning
   custom_components.kodi.media_player:                 info
-  custom_components.epson_projector:                   info
+  custom_components.mail_and_packages:                 warning
   custom_components.pyscript.file.populate_all_movies: info
   custom_components.pyscript.file.restore_all_movies:  info
   custom_components.sonoff.sonoff_cloud:               info
@@ -128,6 +129,7 @@ logs:
   aioesphomeapi.connection:                info
   aiounifi:                                info
   androidtv.adb_manager.adb_manager_async: info
+  frontend.js.latest:                      fatal
   googleapiclient.discovery:               info
   kasa:                                    info
   pygatt.backends.gatttool.gatttool:       warning
@@ -144,34 +146,39 @@ filters:
 
   ##################################################################
   #
-  # NOTE: This smart bulb still operates but produces these errors.
-  homeassistant.components.tplink.coordinator:
-    - "Error fetching 192.168.1.241 data: Unable to connect to the device: 192.168.1.241"
-    - "Fetching 192.168.1.241 data recovered"
-  ##################################################################
-
-  ##################################################################
-  #
   # NOTE: These should be commented out when Christmas mode is on. 
-  homeassistant.helpers.service:
-    - "Unable to find referenced entities switch.kitchen_christmas_tree"
-    - "Unable to find referenced entities switch.mantle_bookcase"
-    - "Unable to find referenced entities switch.stair_railing"
+  #homeassistant.helpers.service:
+  #  - "Unable to find referenced entities switch.kitchen_christmas_tree"
+  #  - "Unable to find referenced entities switch.mantle_bookcase"
+  #  - "Unable to find referenced entities switch.stair_railing"
   
-  homeassistant.components.switch.reproduce_state:
-    - "Unable to find entity switch.kitchen_christmas_tree"
-    - "Unable to find entity switch.mantle_bookcase"
-    - "Unable to find entity switch.stair_railing"
+  #homeassistant.components.switch.reproduce_state:
+  #  - "Unable to find entity switch.kitchen_christmas_tree"
+  #  - "Unable to find entity switch.mantle_bookcase"
+  #  - "Unable to find entity switch.stair_railing"
   ##################################################################
   
   androidtv.adb_manager.adb_manager_async:
     - "Couldn't connect to .*  TcpTimeoutException: Reading from .*:5555 timed out (30.0 seconds)"
   
+  
+  custom_components.mail_and_packages:
+    - "Timeout fetching Mail and Packages (imap.gmail.com) data"
+  
+  custom_components.mail_and_packages.camera:
+    - "Update to update camera image. Unavailable."
+    - "Could not read camera Mail USPS Camera image from file: .*"
+  
+  custom_components.mail_and_packages.helpers:
+    - "No mail found."
+    - "Mail image generated."
+  
+  custom_components.satellitetracker:
+    - "Unexpected error fetching .* data: Server disconnected"
+    - "Unexpected error fetching .* data: Cannot connect to host .* [Try again]"
+  
   custom_components.watchman:
     - "Watchman sensors updated"
-  
-  frontend.js.latest:
-    - ".* ResizeObserver loop completed with undelivered notifications."
   
   homeassistant.bootstrap:
     - "Waiting on integrations to complete setup"
@@ -182,6 +189,9 @@ filters:
   homeassistant.components.alexa.state_report:
     - "Timeout sending report to Alexa"
 
+  homeassistant.components.androidtv.media_player:
+    - ".* ADB connection re-establishing attempt in the next update. .*"
+  
   homeassistant.components.automation:
     - "Error evaluating condition in 'Restore Notifications':"
 
@@ -216,6 +226,10 @@ filters:
   homeassistant.components.scene:
     - "Setup of scene platform .* is taking over 10 seconds"
 
+  homeassistant.components.sensor:
+    - "Platform .* not ready yet: [Errno -3] Try again; Retrying in background in 30 seconds"
+    - "Setup of sensor platform .* is taking over 10 seconds."
+  
   homeassistant.components.shelly:
     - "Timeout fetching shelly1.* data"
   
@@ -230,6 +244,9 @@ filters:
 
   homeassistant.components.websocket_api.http.connection:
     - "Disconnected: Did not receive auth message within 10 seconds"
+    - ".* Connection closed by client"
+    - ".* Received unknown command: browser_mod/update"
+    - ".* Received unknown command: mobile_app/push_notification_channel"
   
   homeassistant.config_entries:
     - "Config entry .* for .* integration not ready yet:"

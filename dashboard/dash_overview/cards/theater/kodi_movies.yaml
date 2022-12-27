@@ -4,15 +4,10 @@
 
 type: vertical-stack
 cards:
-  - type: 'custom:select-list-card'
-    entity: input_select.kodi_movies
-    title: Feature Movie List
-    icon: mdi:movie-open-outline
-    show_toggle: true
-    max_options: 4
-  
   - type: entities
     entities:
       - entity: script.play_feature_movie
         name: Feature Movie
         action_name: Play
+      
+      - entity: input_select.kodi_movies

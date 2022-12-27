@@ -511,6 +511,83 @@ bath_fan_button:
         icon:
           - color: var(--paper-item-icon-color)
 
+#===========================#
+#     Satellite Buttons     #
+#===========================#
+
+satellite_pass:
+  show_label: false
+  styles:
+    card:
+      - width: 250px
+      - height: 100%
+    grid:
+      - grid-template-areas: '"n date" "i time" "i duration"'
+      - grid-template-columns: 1fr 1fr
+      - grid-template-rows: min-content min-content min-content
+    name:
+      - align-self: start
+      - justify-self: center
+      - font-weight: bold
+    icon:
+      - width: 40px
+    custom_fields:
+      date:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      time:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      duration:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      startdir:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      enddir:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+  custom_fields:
+    date: |
+      [[[
+        var passdate = new Date(entity.attributes.pass_start_unix * 1000);
+        var options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Intl.DateTimeFormat('en-US', options).format(passdate);
+      ]]]
+    time: |
+      [[[
+        var passdate = new Date(entity.attributes.pass_start_unix * 1000);
+        var options = { hour: '2-digit', minute: '2-digit' };
+        return new Intl.DateTimeFormat('en-US', options).format(passdate);
+      ]]]
+    duration: |
+      [[[
+        return entity.state + " seconds"
+      ]]]
+
+satellite_compass:
+  show_icon: false
+  show_name: false
+  styles:
+    grid:
+      - grid-template-areas: '"path"'
+      - grid-template-columns: 1fr
+      - grid-template-rows: min-content
+    custom_fields:
+      path:
+        - align-self: start
+        - font-size: 14px
+  custom_fields:
+    path: |
+      [[[
+        return entity.attributes.start_compass + " > " + entity.attributes.end_compass
+      ]]]
+
 #
 #========================= Internal Templates =========================
 #

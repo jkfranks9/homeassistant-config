@@ -35,9 +35,7 @@ mobile_notification_worker:
     - choose:
                 
       # Standard channel; use all defaults.
-      - conditions:
-        - condition: template
-          value_template: "{{ channel == 'standard' }}"
+      - conditions: "{{ channel == 'standard' }}"
         
         sequence:
           - service: notify.mobile_app_jon_galaxy
@@ -48,9 +46,7 @@ mobile_notification_worker:
                 channel: "{{ channel }}"
         
       # Temporary channel; specify a timeout in seconds.
-      - conditions:
-        - condition: template
-          value_template: "{{ channel == 'temporary' }}"
+      - conditions: "{{ channel == 'temporary' }}"
           
         sequence:
           - service: notify.mobile_app_jon_galaxy
@@ -63,9 +59,7 @@ mobile_notification_worker:
         
       # Persistent channel; specify both sticky (notification not dismissed when tapped) and persistent (can't be swiped away).
       # The notification must be cleared by an automation/script when it makes sense.
-      - conditions:
-        - condition: template
-          value_template: "{{ channel == 'persistent' }}"
+      - conditions: "{{ channel == 'persistent' }}"
         
         sequence:
           - service: notify.mobile_app_jon_galaxy
@@ -79,9 +73,7 @@ mobile_notification_worker:
                 tag: "{{ tag }}"
         
       # Critical channel; used for high priority notifications.
-      - conditions:
-        - condition: template
-          value_template: "{{ channel == 'critical' }}"
+      - conditions: "{{ channel == 'critical' }}"
         
         sequence:
           - service: notify.mobile_app_jon_galaxy
@@ -169,9 +161,7 @@ send_notification:
           - choose:
           
             # Handle the mobile destination.
-            - conditions:
-              - condition: template
-                value_template: "{{ repeat.item == 'mobile' }}"
+            - conditions: "{{ repeat.item == 'mobile' }}"
             
               sequence:
               
@@ -179,8 +169,7 @@ send_notification:
                 # using a timer associated with the particular notification. We only proceed if the timer is idle. Then
                 # we start the timer with a duration that ends at 7 AM the next day.
                 - if:
-                    - condition: template
-                      value_template: "{{ throttled }}"
+                    - "{{ throttled }}"
                   
                   then:
               
@@ -217,9 +206,7 @@ send_notification:
                         tag: "{{ tag }}"
           
             # Handle the echo destination.
-            - conditions:
-              - condition: template
-                value_template: "{{ repeat.item == 'echo' }}"
+            - conditions: "{{ repeat.item == 'echo' }}"
             
               sequence:
                 - service: notify.alexa_media
@@ -230,9 +217,7 @@ send_notification:
                     message: "{{ message }}"
           
             # Handle the persistent destination.
-            - conditions:
-              - condition: template
-                value_template: "{{ repeat.item == 'persistent' }}"
+            - conditions: "{{ repeat.item == 'persistent' }}"
             
               sequence:
                 - service: persistent_notification.create

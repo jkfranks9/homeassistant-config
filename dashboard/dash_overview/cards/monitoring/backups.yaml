@@ -3,7 +3,6 @@
 #================================#
 
 type: custom:stack-in-card
-title: Power Usage
 cards:
   - type: entities
     title: Backups

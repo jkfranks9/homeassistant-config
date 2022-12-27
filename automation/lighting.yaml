@@ -97,9 +97,7 @@
     - platform: state
       entity_id: input_select.occupied_bedrooms  
   
-  condition:
-    - condition: template
-      value_template: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
+  condition: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
   
   action:
     - service: script.set_up_pre_bedtime_environment
@@ -174,12 +172,7 @@
     path: lighting/sunset_light_weather.yaml
     input:
       elevation: input_number.max_elevation
-      light_entity: >
-        {% if is_state('input_boolean.christmas_mode', 'off') %}
-          light.daytime_lights
-        {% else %}
-          light.daytime_christmas_lights
-        {% endif %}
+      light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 # Check at a medium sun elevation.
 - alias: Check Daytime Lights Sunset Medium
@@ -192,12 +185,7 @@
     path: lighting/sunset_light_weather.yaml
     input:
       elevation: input_number.med_elevation
-      light_entity: >
-        {% if is_state('input_boolean.christmas_mode', 'off') %}
-          light.daytime_lights
-        {% else %}
-          light.daytime_christmas_lights
-        {% endif %}
+      light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 # Check at a minimum sun elevation.
 - alias: Check Daytime Lights Sunset Minimum
@@ -210,12 +198,7 @@
     path: lighting/sunset_light_weather.yaml
     input:
       elevation: input_number.min_elevation
-      light_entity: >
-        {% if is_state('input_boolean.christmas_mode', 'off') %}
-          light.daytime_lights
-        {% else %}
-          light.daytime_christmas_lights
-        {% endif %}
+      light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 #======================#
 #     Lux Sensors      #
@@ -474,21 +457,27 @@
 # Turn off guest bedroom lights after bedtime when grandchildren are home.
 - alias: Turn Off Guest Bedroom Lights Bedtime
   id: 'turn_off_guest_bedroom_lights_bedtime'
+  
   trigger:
     - platform: time
       at: '22:30:00'
+    
     - platform: homeassistant
       event: start
+  
   condition:
     - condition: time
       after: '22:30:00'
-    - condition: template
-      value_template: "{{ not is_state('person.sarah', 'home') and is_state('input_boolean.children_home', 'on') }}"
+    
+    - "{{ not is_state('person.sarah', 'home') and is_state('input_boolean.children_home', 'on') }}"
+  
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
+    
     - service: light.turn_off
       entity_id: light.guest_bedroom_lamp
+    
     - service: light.turn_off
       entity_id: light.guest_bedroom_lamp_2
 
@@ -508,7 +497,7 @@
     - condition: time
       after: '08:00:00'
     - condition: time
-      before: '22:00:00'
+      before: '22:30:00'
     - condition: state
       entity_id: person.jon
       state: 'home'
@@ -516,7 +505,6 @@
       value_template: >
         {{ now().strftime('%m-%d') == '12-24' or
            now().strftime('%m-%d') == '12-25' or
-           now().strftime('%m-%d') == '12-26' or
            now().strftime('%m-%d') == '12-31' or
            now().strftime('%m-%d') == '01-01' }}
   action:
@@ -529,19 +517,18 @@
   id: 'turn_off_christmas_lights'
   trigger:
     - platform: time
-      at: '22:00:00'
+      at: '22:30:00'
     - platform: homeassistant
       event: start
   condition:
     - condition: time
-      after: '22:00:00'
+      after: '22:30:00'
     - condition: time
       before: '08:00:00'
     - condition: template
       value_template: >
         {{ now().strftime('%m-%d') == '12-24' or
            now().strftime('%m-%d') == '12-25' or
-           now().strftime('%m-%d') == '12-26' or
            now().strftime('%m-%d') == '12-31' or
            now().strftime('%m-%d') == '01-01' }}
   action:
@@ -566,3 +553,21 @@
     - service: script.reset_smart_bulbs
     - service: input_boolean.turn_off
       entity_id: input_boolean.possible_power_glitch
+
+#===================#
+#     Bath Time     #
+#===================#
+
+# Prevent the bath light turning off while taking a bath. Script by the same name kicks off the timer used here.
+- alias: Stop Bath Time
+  id: 'stop_bath_time'
+  
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.bath_time
+  
+  action:
+    - service: automation.turn_on
+      entity_id: automation.run_guest_bath_motion_based_light

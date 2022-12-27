@@ -1,0 +1,128 @@
+#=========================#
+#     Deliveries Card     #
+#=========================#
+
+type: custom:stack-in-card
+mode: vertical
+cards:
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    title: Deliveries
+    cards:
+          
+      - type: custom:mushroom-template-card
+        primary: Amazon Packages
+        secondary: >-
+          {{ states('sensor.mail_amazon_packages') }} ➤ 
+          {{ states('sensor.mail_amazon_packages_delivered') }}
+        icon: mdi:alpha-a-box-outline
+        icon_color: >-
+          {% if states('sensor.mail_amazon_packages_delivered') | int(0) > 0 %}
+            green
+          {% elif states('sensor.mail_amazon_packages') | int(0) > 0 %}
+            yellow
+          {% elif states('sensor.mail_amazon_packages') | int(0) == 0 %}
+            white
+          {% else %}
+            gray
+          {% endif %}
+      
+      - type: custom:mushroom-template-card
+        primary: USPS Packages
+        secondary: >-
+          {{ states('sensor.mail_usps_packages') }} ➤ 
+          {{ states('sensor.mail_usps_delivering') }} ➤ 
+          {{ states('sensor.mail_usps_delivered') }}
+        icon: mdi:package-variant-closed
+        icon_color: |-
+          {% if states('sensor.mail_usps_delivered') | int(0) > 0 %}
+            green
+          {% elif states('sensor.mail_usps_delivering') | int(0) > 0 %}
+            blue
+          {% elif states('sensor.mail_usps_packages') | int(0) > 0 %}
+            yellow
+          {% elif states('sensor.mail_usps_packages') | int(0) == 0 %}
+            white
+          {% else %}
+            gray
+          {% endif %}
+  
+  - type: custom:stack-in-card
+    mode: horizontal
+    cards:
+      
+      - type: custom:mushroom-template-card
+        primary: UPS Packages
+        secondary: >-
+          {{ states('sensor.mail_ups_packages') }} ➤ 
+          {{ states('sensor.mail_ups_delivering') }} ➤ 
+          {{ states('sensor.mail_ups_delivered') }}
+        icon: mdi:alpha-u-box-outline
+        icon_color: |-
+          {% if states('sensor.mail_ups_delivered') | int(0) > 0 %}
+            green
+          {% elif states('sensor.mail_ups_delivering') | int(0) > 0 %}
+            blue
+          {% elif states('sensor.mail_ups_packages') | int(0) > 0 %}
+            yellow
+          {% elif states('sensor.mail_ups_packages') | int(0) == 0 %}
+            white
+          {% else %}
+            gray
+          {% endif %}
+      
+      - type: custom:mushroom-template-card
+        primary: Fedex Packages
+        secondary: >-
+          {{ states('sensor.mail_fedex_packages') }} ➤ 
+          {{ states('sensor.mail_fedex_delivering') }} ➤ 
+          {{ states('sensor.mail_fedex_delivered') }}
+        icon: mdi:alpha-f-box-outline
+        icon_color: |-
+          {% if states('sensor.mail_fedex_delivered') | int(0) > 0 %}
+            green
+          {% elif states('sensor.mail_fedex_delivering') | int(0) > 0 %}
+            blue
+          {% elif states('sensor.mail_fedex_packages') | int(0) > 0 %}
+            yellow
+          {% elif states('sensor.mail_fedex_packages')  |int(0) == 0 %}
+            white
+          {% else %}
+            gray
+          {% endif %}
+      
+  - type: custom:mushroom-template-card
+    primary: USPS Mail
+    secondary: "{{ states('sensor.mail_usps_mail') }} {{ 'piece' if states('sensor.mail_usps_mail') | int(0) == 1 else 'pieces' }}"
+    icon: |-
+      {% if states('sensor.mail_usps_mail') | int(0) > 0 %}
+        mdi:mailbox-open-up
+      {% else %}
+        mdi:mailbox
+      {% endif %}
+    icon_color: white
+  
+  - type: conditional
+    conditions:
+      - entity: sensor.mail_usps_mail
+        state_not: '0'
+      - entity: sensor.mail_usps_mail
+        state_not: 'unavailable'
+    card:
+      type: picture-entity
+      entity: camera.mail_usps_camera
+      show_name: false
+      show_state: false
+  
+  - type: conditional
+    conditions:
+      - entity: sensor.mail_amazon_packages_delivered
+        state_not: '0'
+      - entity: sensor.mail_amazon_packages_delivered
+        state_not: 'unavailable'
+    card:  
+      type: picture-entity
+      entity: camera.mail_amazon_delivery_camera
+      show_name: false
+      show_state: false

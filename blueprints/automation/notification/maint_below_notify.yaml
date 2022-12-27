@@ -1,36 +1,21 @@
-# Notify for device attribute(s) being low enough to require maintenance, such as replacing a device filter.
+# Notify for device attribute being low enough to require maintenance, such as replacing a device filter.
 
 blueprint:
   name: Maintenance Low Notification
-  description: Notify when device attribute(s) cross a low threshold.
+  description: Notify when device attribute crosses a low threshold.
   domain: automation
   
   input:
-    sensor1_entity:
-      name: Sensor 1 Entity
-      description: First sensor entity to be checked.
-      selector:
-        entity:
-          domain: sensor
-    
-    sensor2_entity:
-      name: Sensor 2 Entity
-      description: Second sensor entity to be checked.
+    sensor_entity:
+      name: Sensor Entity
+      description: Sensor entity to be checked.
       selector:
         entity:
           domain: sensor
           
-    threshold1:
-      name: Threshold 1 Value
-      description: First sensor threshold value to trigger the notification.
-      selector:
-        number:
-          min: 0
-          max: 3000
-          
-    threshold2:
-      name: Threshold 2 Value
-      description: Second sensor threshold value to trigger the notification.
+    threshold:
+      name: Threshold Value
+      description: Sensor threshold value to trigger the notification.
       selector:
         number:
           min: 0
@@ -62,29 +47,20 @@ blueprint:
 variables:
   input_persistent: !input persistent
 
-# Trigger when the sensor value(s) become too low, or when HA starts (in case HA is rebooting when the trigger would have occurred).
+# Trigger when the sensor value becomes too low, or when HA starts (in case HA is rebooting when the trigger would have occurred).
 trigger:
   - platform: numeric_state
-    entity_id: !input sensor1_entity
-    below: !input threshold1
-  
-  - platform: numeric_state
-    entity_id: !input sensor2_entity
-    below: !input threshold2
+    entity_id: !input sensor_entity
+    below: !input threshold
   
   - platform: homeassistant
     event: start
 
 # Guard against HA start triggers.
 condition:
-  - or:
-    - condition: numeric_state
-      entity_id: !input sensor1_entity
-      below: !input threshold1
-
-    - condition: numeric_state
-      entity_id: !input sensor2_entity
-      below: !input threshold2
+  - condition: numeric_state
+    entity_id: !input sensor_entity
+    below: !input threshold
 
 # Send the notification after a random delay (to spread out automations done at HA start).
 action:
@@ -94,8 +70,7 @@ action:
   - if:
     
       # Handle a persistent notification.
-      - condition: template
-        value_template: "{{ input_persistent }}"
+      - "{{ input_persistent }}"
       
     then:  
       - service: script.send_notification

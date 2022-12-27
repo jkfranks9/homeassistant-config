@@ -6,9 +6,12 @@ title: Maintenance
 icon: mdi:wrench
 panel: true
 cards:
+  
   - type: custom:layout-card
     layout_type: custom:vertical-layout
+    
     cards:
       - !include /config/dashboard/dash_reminders/cards/maintenance/cpap.yaml
-      - type: custom:layout-break
       - !include /config/dashboard/dash_reminders/cards/maintenance/filters.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_reminders/cards/maintenance/misc.yaml

@@ -20,6 +20,7 @@ views:
   - !include /config/dashboard/dash_overview/views/devices.yaml
   - !include /config/dashboard/dash_overview/views/levels.yaml
   - !include /config/dashboard/dash_overview/views/monitoring.yaml
+  - !include /config/dashboard/dash_overview/views/hobbies.yaml
   
   # NOTE: The following two tabs are invisible, and are shown in the sidebar instead. The definitions
   # are needed to provide a URL for the sidebar items.

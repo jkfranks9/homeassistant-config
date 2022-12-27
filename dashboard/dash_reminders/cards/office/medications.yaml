@@ -54,7 +54,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_medication_blood_builder_minis
+      - entity: input_datetime.reminder_medication_bloodbuilder
       - name: Blood Builder Minis
       - icon: pill
       - interval: 72
@@ -65,7 +65,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_medication_methyl_b12
+      - entity: input_datetime.reminder_medication_methylb12
       - name: Methyl B12
       - icon: pill
       - interval: 33

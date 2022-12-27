@@ -18,20 +18,16 @@
 - url: /local/community/decluttering-card/decluttering-card.js
   type: module
 
+# Gauge Card
+- url: /local/community/gauge-card/gauge-card.js
+  type: module
+
 # HA Card Weather Conditions
 - url: /local/community/ha-card-weather-conditions/ha-card-weather-conditions.js
   type: module
 
 # HA Floorplan
 - url: /local/community/ha-floorplan/floorplan.js
-  type: module
-
-# Light Entity Card
-- url: /local/community/light-entity-card/light-entity-card.js
-  type: module
-
-# Lovelace Auto Entities
-- url: /local/community/lovelace-auto-entities/auto-entities.js
   type: module
 
 # Lovelace Card Mod (NOTE: installed as a frontend module for performance improvements)
@@ -54,6 +50,10 @@
 - url: /local/community/lovelace-multiple-entity-row/multiple-entity-row.js
   type: module
 
+# Lovelace Mushroom Card
+- url: /local/community/lovelace-mushroom/mushroom.js
+  type: module
+
 # Lovelace Template Entity Row
 - url: /local/community/lovelace-template-entity-row/template-entity-row.js
   type: module
@@ -64,18 +64,6 @@
 
 # Mini Media Player
 - url: /local/community/mini-media-player/mini-media-player-bundle.js
-  type: module
-
-# My Cards
-- url: /local/community/my-cards/my-cards.js
-  type: module
-
-# Select List Card
-- url: /local/community/select-list-card/select-list-card.js
-  type: module
-
-# Simple Weather Card
-- url: /local/community/simple-weather-card/simple-weather-card-bundle.js
   type: module
 
 # Stack In Card

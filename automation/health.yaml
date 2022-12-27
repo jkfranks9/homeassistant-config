@@ -14,10 +14,9 @@
   # This should ensure we are actually changing from a valid state, and not just triggering because
   # the current value is 0, and that's it's the first day of the month.
   condition:
-    - condition: template
-      value_template: "{{ now().day == 1 }}"
-    - condition: template
-      value_template: "{{ trigger.from_state and trigger.from_state.state | float(0) > 0.0 }}"
+    - "{{ now().day == 1 }}"
+    
+    - "{{ trigger.from_state and trigger.from_state.state | float(0) > 0.0 }}"
   
   # Determine the previous month using the 'from' state's last changed value.
   variables:
@@ -39,8 +38,7 @@
     # If we've started a new year (previous month is December), copy the current year's history to the previous year.
     # We only keep two year's worth of history.
     - if:
-        - condition: template
-          value_template: "{{ month == 'dec' }}"
+        - "{{ month == 'dec' }}"
       
       then:
         - variables:

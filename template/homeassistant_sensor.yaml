@@ -228,7 +228,7 @@
     - name: 'Canes Game Status'
       unique_id: canes_game_status
       state: >
-        {% if states.sensor.next_canes_game.attributes.teams is defined %}
+        {% if states.sensor.next_canes_game is defined %}
           {{ iif(state_attr('sensor.next_canes_game', 'teams')['home']['team']['name'] == 'Carolina Hurricanes', 'Home', 'Away') }}
         {% else %}
           'Unknown'
@@ -260,7 +260,7 @@
     - name: 'Flyers Game Status'
       unique_id: flyers_game_status
       state: >
-        {% if states.sensor.next_flyers_game.attributes.teams is defined %}
+        {% if states.sensor.next_flyers_game is defined %}
           {{ iif(state_attr('sensor.next_flyers_game', 'teams')['home']['team']['name'] == 'Philadelphia Flyers', 'Home', 'Away') }}
         {% else %}
           'Unknown'

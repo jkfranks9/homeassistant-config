@@ -18,24 +18,28 @@
 # Transition to Sleep mode.
 - alias: Transition To Sleep Mode
   id: transition_to_sleep_mode
+  
   trigger:
     - platform: time
       at: '20:00:00'
+    
     - platform: homeassistant
       event: start
   
   condition:
-    - condition: template
-      value_template: "{{ states('sensor.projector_power') | float(0) == 0 }}"
+    - "{{ states('sensor.projector_power') | float(0) == 0 }}"
+    
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'off'
+    
     - condition: time
       after: '20:00:00'
   
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
+    
     - service: climate.set_preset_mode
       target:
         entity_id: climate.upstairs

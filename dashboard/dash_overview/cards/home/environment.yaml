@@ -21,14 +21,14 @@ cards:
             - type: 'custom:button-card'
               template: thermostat_button
               entity: climate.downstairs
-              name: Downstairs
+              name: HVAC Down
               variables:
                 humidity_entity: sensor.downstairs_humidity
           
             - type: 'custom:button-card'
               template: thermostat_button
               entity: climate.upstairs
-              name: Upstairs
+              name: HVAC Up
               variables:
                 humidity_entity: sensor.upstairs_humidity
           
