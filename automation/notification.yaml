@@ -819,7 +819,7 @@
       weekday:
         - sun
     
-    - condition: "{{ actionable_entities | length > 0 }}"
+    - "{{ actionable_entities | length > 0 }}"
   
   action:
     
