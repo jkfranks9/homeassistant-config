@@ -3,11 +3,7 @@
 #==========================#
 
 # Sun elevation angles used for lighting blueprints, automations and scripts.
-#
-# HEAVY SIGH. I created these to have one place to update if I want to change these values. However, they are used
-# in templates with the float filter, which now requires a default value, as in float(0). Since these are indeed
-# constants, the float values have been changed with the proper default, as in float(3). Which means I still have
-# to update them everywhere if they ever change. Waaaaaa!
+
 min_elevation:
   name: Minimum Sun Elevation
   initial: 3.0

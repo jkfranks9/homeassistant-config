@@ -5,16 +5,6 @@
 - binary_sensor:
 
     #-----------------------------#
-    #   -- Amazon Smart Plug --   #
-    #-----------------------------#
-    
-    # See the input boolean of the same name for details on how this works.
-    - name: 'Alexa HA - Office Bookcase'
-      unique_id: alexa_ha_plug
-      device_class: garage_door
-      state: "{{ is_state('input_boolean.alexa_ha_plug', 'on') }}"
-
-    #-----------------------------#
     #   -- Floorplan Mirrors --   #
     #-----------------------------#
 

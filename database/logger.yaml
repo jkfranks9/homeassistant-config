@@ -208,7 +208,7 @@ filters:
     - "Timeout connecting to .* at host .* Device is unavailable"
   
   homeassistant.components.input_select:
-    - "Current option: Select no longer valid"
+    - "Current option:.* no longer valid"
   
   homeassistant.components.life360.device_tracker:
     - "get_circles: .* Max retries exceeded"

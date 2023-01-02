@@ -601,7 +601,13 @@ change_lighting_per_weather:
   sequence:
     
     # Evaluate the weather condition and set the result in an input_select.
-    - service: script.evaluate_weather_condition
+    - service: script.evaluate_weather_condition   
+        
+    - variables:
+        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
+        min_elevation: "{{ states('input_number.min_elevation') }}"
+        med_elevation: "{{ states('input_number.min_elevation') }}"
+        max_elevation: "{{ states('input_number.max_elevation') }}"
     
     # Perform the appropriate actions based on the caller, sun rising state and weather.
     - if:
@@ -620,12 +626,12 @@ change_lighting_per_weather:
                 
             - condition: template
               value_template: >
-                {{  state_attr('sun.sun', 'elevation') <= (states('input_number.min_elevation') | float(3)) or 
-                   (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
-                    state_attr('sun.sun', 'elevation') <= (states('input_number.med_elevation') | float(6)) and
+                {{  sun_elevation <= min_elevation | float(min_elevation) or 
+                   (sun_elevation > min_elevation | float(min_elevation) and
+                    sun_elevation <= med_elevation | float(med_elevation) and
                     states('input_select.weather_condition') != 'clear') or
-                   (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
-                    state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+                   (sun_elevation > med_elevation | float(med_elevation) and
+                    sun_elevation < max_elevation | float(max_elevation) and
                     states('input_select.weather_condition') == 'gloomy') }}
                 
             - service: homeassistant.turn_on
@@ -637,11 +643,11 @@ change_lighting_per_weather:
               
             - condition: template
               value_template: >
-                {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+                {{ (sun_elevation > min_elevation | float(min_elevation) and
                     states('input_select.weather_condition') == 'clear') or
-                   (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+                   (sun_elevation > med_elevation | float(med_elevation) and
                     states('input_select.weather_condition') == 'hazy') or
-                    state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+                    sun_elevation > max_elevation | float(max_elevation) }}
               
             - service: homeassistant.turn_off
               data_template:
@@ -652,11 +658,11 @@ change_lighting_per_weather:
         
         - condition: template
           value_template: >
-            {{ (state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+            {{ (sun_elevation < max_elevation | float(max_elevation) and
                 states('input_select.weather_condition') == 'gloomy') or
-               (state_attr('sun.sun', 'elevation') < (states('input_number.med_elevation') | float(6)) and
+               (sun_elevation < med_elevation | float(med_elevation) and
                 states('input_select.weather_condition') == 'hazy') or
-                state_attr('sun.sun', 'elevation') < (states('input_number.min_elevation') | float(3)) }}
+                sun_elevation < min_elevation | float(min_elevation) }}
         
         - service: homeassistant.turn_on
           data_template:
@@ -682,7 +688,13 @@ change_lighting_per_weather_simple:
   sequence:
     
     # Evaluate the weather condition and set the result in an input_select.
-    - service: script.evaluate_weather_condition
+    - service: script.evaluate_weather_condition  
+        
+    - variables:
+        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
+        min_elevation: "{{ states('input_number.min_elevation') }}"
+        med_elevation: "{{ states('input_number.min_elevation') }}"
+        max_elevation: "{{ states('input_number.max_elevation') }}"
     
     # Perform the appropriate action based on turning on or off, sun rising state and weather.
     - if:
@@ -694,11 +706,11 @@ change_lighting_per_weather_simple:
           
         - condition: template
           value_template: >
-            {{ (state_attr('sun.sun', 'elevation') < (states('input_number.max_elevation') | float(9)) and
+            {{ (sun_elevation < max_elevation | float(max_elevation) and
                 states('input_select.weather_condition') == 'gloomy') or
-               (state_attr('sun.sun', 'elevation') < (states('input_number.med_elevation') | float(6)) and
+               (sun_elevation < med_elevation | float(med_elevation) and
                 states('input_select.weather_condition') == 'hazy') or
-                state_attr('sun.sun', 'elevation') < (states('input_number.min_elevation') | float(3)) }}
+                sun_elevation < min_elevation | float(min_elevation) }}
           
         - service: homeassistant.turn_on
           data_template:
@@ -709,11 +721,11 @@ change_lighting_per_weather_simple:
           
         - condition: template
           value_template: >
-            {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+            {{ (sun_elevation > min_elevation | float(min_elevation) and
                 states('input_select.weather_condition') == 'clear') or
-               (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+               (sun_elevation > med_elevation | float(med_elevation) and
                 states('input_select.weather_condition') == 'hazy') or
-                state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+                sun_elevation > max_elevation | float(max_elevation) }}
           
         - service: homeassistant.turn_off
           data_template:
@@ -812,16 +824,22 @@ reset_smart_bulb_sky_conditions:
   sequence:
         
     # Evaluate the weather condition and set the result in an input_select.
-    - service: script.evaluate_weather_condition
+    - service: script.evaluate_weather_condition  
+        
+    - variables:
+        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
+        min_elevation: "{{ states('input_number.min_elevation') }}"
+        med_elevation: "{{ states('input_number.min_elevation') }}"
+        max_elevation: "{{ states('input_number.max_elevation') }}"
     
     # Use the evaluated weather conditions and sun elevation.
     - condition: template
       value_template: >
-        {{ (state_attr('sun.sun', 'elevation') > (states('input_number.min_elevation') | float(3)) and
+        {{ (sun_elevation > min_elevation | float(min_elevation) and
             states('input_select.weather_condition') == 'clear') or
-           (state_attr('sun.sun', 'elevation') > (states('input_number.med_elevation') | float(6)) and
+           (sun_elevation > med_elevation | float(med_elevation) and
             states('input_select.weather_condition') == 'hazy') or
-            state_attr('sun.sun', 'elevation') > (states('input_number.max_elevation') | float(9)) }}
+            sun_elevation > max_elevation | float(max_elevation) }}
     
     - service: homeassistant.turn_off
       target:
@@ -957,7 +975,7 @@ turn_on_christmas_lights:
       state: 'on'
     
     - if:
-      - "{{ state_attr('sun.sun', 'elevation') <= 3 }}"
+      - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
     
       then:    
         - service: light.turn_on

@@ -62,9 +62,13 @@ kodi_movie_list_restoration:
 #     Amazon Smart Plug Control     #
 #===================================#
 
-# We don't know about the plug itself. This input boolean controls a binary sensor with the same name, 
-# defined as a garage door opener. Alexa has a routine that operates the plug based on the binary sensor 
-# (seen as a device in Alexa) being opened or closed.
+# We don't know about the Amazon plug itself (it's proprietary). So this input boolean is used as an analog.
+# Automations detect when this is turned on/off, and use the Alexa Media Player integration to send voice  
+# commands to Alexa that trigger routines to operate the actual plug.
+#
+# A template switch is also defined that is based on this input boolean, which is then changed via switch-as-x
+# to a light, which then allows the plug to be placed in a light group. Thus the input boolean, switch and light
+# all reflect the same state, and any of those entities can be used to control the plug.
 alexa_ha_plug:
   name: Office Bookcase
   icon: mdi:lightbulb-on-outline

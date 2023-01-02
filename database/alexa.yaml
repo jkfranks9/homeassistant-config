@@ -15,61 +15,60 @@ smart_home:
       - automation
       - binary_sensor
       - button
+      - camera
+      - cover
       - group
       - input_boolean
       - input_number
       - media_player
       - scene
+      - script
+      - sensor
       - switch
       - timer
     
     exclude_entities:
-      - script.control_fan_for_temperature
-      - script.evaluate_weather_condition
-      - script.get_all_kodi_movies
-      - script.lock_pc
-      - script.mobile_notification_worker
-      - script.popup_light_group
-      - script.position_hvac_vent
-      - script.publish_mqtt_automated_states
-      - script.send_notification
-      - script.set_fan_to_speed
-      - script.set_thermostat_preset
-      - script.set_up_mqtt_automated_config
-      - script.start_activity
-      - script.toggle_upstairs_br_vent
-      - script.turn_off_pc
-      - script.turn_on_family_room_normal
-      - script.watch_app
+      - light.family_room_fan
+      - light.office_fan
+      - light.theater_fan
     
     exclude_entity_globs:
       - light.*_lights
-      - sensor.*_battery_temperature
-      - sensor.*_temp
-      - sensor.*_temperature
-      - sensor.*_temp_max
-      - sensor.*_temp_min
-      - sensor.*_temp_stats
-      - sensor.openweathermap*
-      - sensor.outdoor_*
-      - script.*_bedtime_environment
-      - script.*_deep_sleep
-      - script.*_thermostat_hold
-      - script.*_worker
-      - script.change_*
-      - script.close_garage_door*
-      - script.concat_*_files
-      - script.mute_*_bedroom_echo
-      - script.position_upstairs_br_vent_*
-      - script.reset_smart_bulb*
-      - script.set_datetime_offset*
-      - script.set_theater_*
-      - script.test*
+      - light.dashboard_*
 
     #==== Inclusions
 
     include_entities:
-      - binary_sensor.alexa_ha_office_bookcase
-      - scene.fans_off
       - scene.lights_out
+      - script.awake
+      - script.bedtime
+      - script.play_feature_movie
       - script.set_theater_idle
+      - script.set_weight_training_time
+      - script.sleeptime
+      - script.start_bluray
+      - script.start_laserdisc
+      - script.start_rainbow
+      - script.start_streaming
+      - script.start_turntable
+      - script.switch_grandchild_sleep_location
+      - script.turn_on_bathroom_light
+      - script.wakeup
+      - script.watch_amazon_prime
+      - script.watch_disney_plus
+      - script.watch_hbo_max
+      - script.watch_hulu
+      - script.watch_kodi
+      - script.watch_netflix
+      - script.watch_pandora
+      - script.watch_paramount_plus
+      - script.watch_peacock
+      - script.watch_youtube_tv
+
+    include_entity_globs:
+      - script.*_cinema
+      - script.*_family_room_av
+      - script.restart_*_tv
+      - script.*_bath_time
+      - script.turn_*_adguard
+      - script.turn_*_christmas_lights

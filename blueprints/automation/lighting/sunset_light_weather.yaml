@@ -74,6 +74,12 @@ action:
     
     then:
         
+      - variables:
+          sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
+          min_elevation: "{{ states('input_number.min_elevation') }}"
+          med_elevation: "{{ states('input_number.min_elevation') }}"
+          max_elevation: "{{ states('input_number.max_elevation') }}"
+        
       # Pick one invocation on which to take action. Each stanza below corresponds to one of the
       # possible input elevations. The second condition in each stanza (or only one for the default)
       # ensures that we only take action when the chosen stanza elevation matches the one with
@@ -82,9 +88,8 @@ action:
           
         # Use the maximum elevation value.
         - conditions:
-          - "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.max_elevation') | float(9)) }}"
-          
-          - "{{ input_elevation == (states('input_number.max_elevation') | float(9)) }}"
+          - "{{ sun_elevation | float(0) > max_elevation | float(max_elevation) }}"          
+          - "{{ input_elevation == max_elevation | float(max_elevation) }}"
           
           sequence:
             - service: script.change_lighting_per_weather
@@ -94,9 +99,8 @@ action:
           
         # Use the medium elevation value.
         - conditions:
-          - "{{ state_attr('sun.sun', elevation) | float(0) > (states('input_number.med_elevation') | float(6)) }}"
-          
-          - "{{ input_elevation == (states('input_number.med_elevation') | float(6)) }}"
+          - "{{ sun_elevation | float(0) > med_elevation | float(med_elevation) }}"          
+          - "{{ input_elevation == med_elevation | float(med_elevation) }}"
           
           sequence:
             - service: script.change_lighting_per_weather
@@ -106,7 +110,7 @@ action:
           
         # Use the minimum elevation value by default.
         default:
-          - condition: "{{ input_elevation == (states('input_number.min_elevation') | float(3)) }}"
+          - condition: "{{ input_elevation == min_elevation | float(min_elevation) }}"
           
           - service: script.change_lighting_per_weather
             data:

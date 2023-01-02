@@ -242,6 +242,19 @@ notify:
     platform: file
     filename: debug_logs/dryer_trend_sensors.log
 
+  - name: gmail
+    platform: smtp
+    server: "smtp.gmail.com"
+    port: 587
+    timeout: 15
+    sender: !secret gmail_email_address
+    encryption: starttls
+    username: !secret gmail_email_address
+    password: !secret gmail_app_password
+    recipient:
+      - !secret gmail_email_address
+    sender_name: Jon Franks
+
 # Shell commands
 shell_command:
   backup_log:                     'python /config/python/backup_logs.py /config/home-assistant.log'

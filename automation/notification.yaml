@@ -769,6 +769,107 @@
                      ]
       tag_prefix: medication_reorder_
 
+#======================================#
+#     Weekly Cleaning Notification     #
+#======================================#
+
+# Send an email once a week with the following week's cleaning chores.
+
+- alias: Notify Weekly Cleaning
+  id: 'notify_weekly_cleaning'
+  
+  # Trigger once each Sunday afternoon (the weekday is specified in the conditions).
+  trigger:
+    - platform: time
+      at: '16:00:00'
+  
+  variables:
+    
+    # This is the list of datetime objects for all the cleaning chores.
+    date_entities: [
+                    'input_datetime.reminder_cleaning_dining_foyer',
+                    'input_datetime.reminder_cleaning_family_room',
+                    'input_datetime.reminder_cleaning_guest_bath',
+                    'input_datetime.reminder_cleaning_guest_bedroom',
+                    'input_datetime.reminder_cleaning_kitchen',
+                    'input_datetime.reminder_cleaning_laundry_room',
+                    'input_datetime.reminder_cleaning_master_bath',
+                    'input_datetime.reminder_cleaning_master_bedroom',
+                    'input_datetime.reminder_cleaning_office',
+                    'input_datetime.reminder_cleaning_snack_bar',
+                    'input_datetime.reminder_cleaning_theater',
+                    'input_datetime.reminder_cleaning_upstairs_bath',
+                    'input_datetime.reminder_cleaning_upstairs_bedroom',
+                    'input_datetime.reminder_cleaning_utility'
+                   ]
+    
+    # This is the list of actionable cleaning chores (those overdue or due within the next week).
+    actionable_entities: >
+      {% set actionable_list = namespace(list = []) %}
+      {% for entity in date_entities %}
+        {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(states('sensor.date')) + timedelta(days = 7), 0) %}
+          {% set actionable_list.list = actionable_list.list + [entity] %}
+        {% endif %}
+      {% endfor %}    
+      {{ actionable_list.list }}
+  
+  # Continue if it's Sunday and the list of actionable cleaning chores is not empty.
+  condition:
+    - condition: time
+      weekday:
+        - sun
+    
+    - condition: "{{ actionable_entities | length > 0 }}"
+  
+  action:
+    
+    # First, set the input select that we use for the email body (list of friendly names for cleaning chores) to a single null entry.
+    - service: input_select.set_options
+      target:
+        entity_id: input_select.weekly_cleaning_items
+      data:
+        options: ['']
+    
+    # Process each actionable chore entity.
+    - repeat:
+        for_each: "{{ actionable_entities }}"
+        
+        sequence:
+          
+          # Add the chore friendly name for the current actionable entity to the input select. Note that we skip the single
+          # null item we added above, by checking for an option length of zero.
+          - service: input_select.set_options
+            target:
+              entity_id: input_select.weekly_cleaning_items
+            data:
+              options: >
+                {% set item_list = namespace(list = []) %}
+                {% for opt in state_attr('input_select.weekly_cleaning_items', 'options') %}
+                  {% set item_list.list = item_list.list + [opt] %}
+                  {% if loop.last %}
+                    {% if opt | length == 0 %}
+                      {% set item_list.list = [(state_attr(repeat.item, 'friendly_name').split('Reminder Cleaning ')[-1])] %}
+                    {% else %}
+                      {% set item_list.list = item_list.list + [(state_attr(repeat.item, 'friendly_name').split('Reminder Cleaning ')[-1])] %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                {{ item_list.list }}
+    
+    # Send the email. The HTML body contains a list of the friendly names, using the input select we created above. The message is unused (we use the HTML instead),
+    # but I believe is a required parameter (at least it is using the developer tools Service tab).
+    - service: notify.gmail
+      data:
+        title: Weekly Cleaning Chores
+        message: Test
+        data:
+          html: >
+            <p>This week's cleaning chores:</p><ul>
+            {% for opt in state_attr('input_select.weekly_cleaning_items', 'options') %}
+              <li>{{ opt }}</li>
+            {% endfor %}
+            </ul>
+
 #================================#
 #     Calendar Notifications     #
 #================================#
@@ -879,7 +980,7 @@
         - if:
           
             # Handle an event time outside the hours of 10 PM to 6 AM.
-            - "{{ (event_hour >= 17 and event_hour < 22) or (event_hour >= 6 and event_hour < 7) }}"
+            - "{{ (event_hour | int(0) >= 17 and event_hour | int(0) < 22) or (event_hour | int(0) >= 6 and event_hour | int(0) < 7) }}"
           
           then:
                 
