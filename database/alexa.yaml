@@ -51,7 +51,6 @@ smart_home:
       - script.start_rainbow
       - script.start_streaming
       - script.start_turntable
-      - script.switch_grandchild_sleep_location
       - script.turn_on_bathroom_light
       - script.wakeup
       - script.watch_amazon_prime
@@ -60,7 +59,6 @@ smart_home:
       - script.watch_hulu
       - script.watch_kodi
       - script.watch_netflix
-      - script.watch_pandora
       - script.watch_paramount_plus
       - script.watch_peacock
       - script.watch_youtube_tv

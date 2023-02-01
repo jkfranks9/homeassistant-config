@@ -1,0 +1,9 @@
+#=======================#
+#     Starlink Card     #
+#=======================#
+
+type: entities
+title: Starlink
+entities:
+  - entity: sensor.home_overhead_satellites
+    name: Overhead

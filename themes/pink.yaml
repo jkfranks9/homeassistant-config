@@ -1,0 +1,104 @@
+# Based on sweetpink theme by Erik Stiens
+# https://github.com/estiens/sweet_pink_hass_theme
+
+Pink:
+  
+  # Colors by name
+  light: '#dbebfb'
+  dark: '#32334a'
+  pink: '#e83e8c'
+  gray: '#1d1e2f'
+  dark-gray: '#11111d'
+  indigo: '#6610f2'
+  purple: '#6f42c1'
+  teal: '#20c997'
+  cyan: '#17a2b8'
+  orange: '#fd7e14'
+
+  # Main Interface Colors
+  primary-color: var(--pink)
+  light-primary-color: var(--cyan)
+  accent-color: var(--teal)
+  primary-background-color: var(--dark)
+  secondary-background-color: var(--gray)
+  divider-color: rgba(255, 255, 255, 0.12)
+  
+  # Header
+  
+  # Text
+  primary-text-color: var(--light)
+  secondary-text-color: var(--cyan)
+  disabled-text-color: var(--gray)
+  mdc-text-field-ink-color: var(--light)
+  
+  # Sidebar Menu
+  sidebar-icon-color: var(--light)
+  sidebar-text-color: var(--light)
+  sidebar-background-color: var(--dark-gray)
+  sidebar-selected-background-color: var(--cyan)
+  sidebar-selected-icon-color: var(--light)
+  sidebar-selected-text-color: var(--light)
+  
+  # Buttons
+  paper-item-icon-color: var(--pink)
+  paper-item-icon-active-color: var(--cyan)
+
+  # Radio Buttons
+  
+  # States and Badges
+  state-icon-color: var(--pink)
+  state-icon-active-color: var(--cyan)
+  
+  # Sliders
+  paper-slider-knob-color: var(--teal)
+  paper-slider-knob-start-color: var(--purple)
+  
+  # Labels
+  label-badge-background-color: var(--secondary-background-color)
+  label-badge-text-color: var(--text-primary-color)
+  
+  # Cards
+  card-background-color: var(--paper-card-background-color)
+  ha-card-background: var(--paper-card-background-color)
+  paper-dialog-button-color: var(--light)
+  paper-listbox-color: var(--light)
+  paper-listbox-background-color: var(--purple)
+  paper-card-background-color: var(--dark-gray)
+  paper-card-header-color: var(--paper-item-icon-color)
+  
+  # Switches
+  switch-unchecked-color: var(--teal)
+  switch-unchecked-button-color: var(--teal)
+  
+  # Toggles
+  
+  # Table
+  
+  # Dropdowns
+  
+  # Scrollbar
+  
+  # Pre/Code
+
+  # Misc
+  paper-progress-active-color: var(--pink)
+  paper-progress-container-color: var(--purple)
+  code-editor-background-color: var(--paper-card-background-color)
+  iron-icon-fill-color: var(--light)
+  input-fill-color: var(--purple)
+  update-heading: var(--light)
+  paper-grey-50: var(--primary-text-color)
+  paper-grey-200: var(-gray)
+  google-red-500: var(--orange)
+
+  # Themable CCS vars in HACS (https://hacs.xyz/docs/basic/theming)
+  link-text-color: var(--cyan)
+  hacs-status-installed: var(--teal)
+  hacs-status-pending-restart: var(--indigo)
+  hacs-status-pending-update: var(--purple)
+  hacs-status-not-loaded: var(--indigo)  
+  
+  # Bar/graph gradients ... used for bar and graph cards (these are unique to my configuration)
+  bar-low-color: var(--cyan)
+  bar-medium-color: var(--teal)
+  bar-high-color: var(--purple)

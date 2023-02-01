@@ -24,6 +24,6 @@ cards:
       - entity: input_datetime.reminder_hvac_upstairs
       - name: Upstairs
       - icon: air-filter
-      - interval: 6
+      - interval: 8
       - period: 'months'
       - service: script.set_datetime_offset_months

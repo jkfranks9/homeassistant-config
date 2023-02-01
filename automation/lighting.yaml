@@ -89,19 +89,6 @@
   action:
     - service: script.reset_bedtime_environment
 
-# Set up the correct pre-bedtime environment based on the bedroom(s) to be occupied.
-- alias: Set up Pre-bedtime Environment
-  id: 'set_up_pre_bedtime_environment'
-  
-  trigger:
-    - platform: state
-      entity_id: input_select.occupied_bedrooms  
-  
-  condition: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
-  
-  action:
-    - service: script.set_up_pre_bedtime_environment
-
 #===============================#
 #     Change Daytime Lights     #
 #===============================#
@@ -395,18 +382,61 @@
 #     Guest Lights     #
 #======================#
 
-# Turn off guest lights when grandchildren leave home.
-- alias: Turn Off Guest Lights
-  id: 'turn_off_guest_lights'
+# Set up the correct pre-bedtime environment based on the bedroom to be occupied.
+# Pre-bedtime is meant only for children.
+- alias: Set Up Pre-bedtime Environment
+  id: 'set_up_pre_bedtime_environment'
+  
+  # The occupied bedroom is defaulted to downstairs when children arrive. Trigger here if it is manually changed.
   trigger:
     - platform: state
-      entity_id: input_boolean.children_home
-      to: 'off'
-  action:
-    - service: light.turn_off
-      entity_id: light.guest_bedroom_lamp_2
+      entity_id: input_select.occupied_bedrooms
+  
+  # Ensure that only children are home.
+  condition: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
+  
+  action:  
+    - variables:
+    
+        # This is the time in seconds between now and 8 PM. If we run before that time, we delay until then to do anything.
+        evening_delta: >
+          {% set evening = as_timestamp(now().today().replace(hour=20, minute=0, second=0, microsecond=0)) %}
+          {% set current = as_timestamp(now().today().replace(microsecond=0)) %}
+          {{ (evening - current) | round(0) }}
+    
+    # Delay until 8 PM if needed.
+    - if:
+        - "{{ evening_delta > 0 }}"
+        
+      # Delay needed: start a timer and execute when it expires (next automation).
+      then:
+        - service: timer.start
+          data:
+            entity_id: timer.pre_bedtime_delay
+            duration: "{{ evening_delta }}"
+      
+      # No delay needed, execute now.
+      else:    
+        - service: script.set_up_children_only_bedtime_environment
+          data:
+            stage: 'pre'
 
-# Turn on guest lights near sunset when grandchildren arrive or are already home.
+# Execute the pre-bedtime environment at 8 PM, when the associated timer expires.
+- alias: Execute Pre-bedtime Environment
+  id: 'execute_pre_bedtime_environment'
+  
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.pre_bedtime_delay
+  
+  action:    
+    - service: script.set_up_children_only_bedtime_environment
+      data:
+        stage: 'pre'
+
+# Turn on guest lights near sunset when children are home.
 - alias: Turn On Guest Lights Sunset
   id: 'turn_on_guest_lights_sunset'
   
@@ -415,10 +445,6 @@
       entity_id: sun.sun
       attribute: elevation
       below: 4.0
-    
-    - platform: state
-      entity_id: input_boolean.children_home
-      to: 'on'
     
     - platform: homeassistant
       event: start
@@ -441,22 +467,13 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    - if:
-        - condition: state
-          entity_id: input_select.occupied_bedrooms
-          state: 'Master'
-      
-      then:
-        - service: light.turn_on
-          entity_id: light.master_bedroom_lamp
-      
-      else:
-        - service: light.turn_on
-          entity_id: light.guest_bedroom_lamp_2
+    - service: script.set_up_children_only_bedtime_environment
+      data:
+        stage: 'pre'
 
-# Turn off guest bedroom lights after bedtime when grandchildren are home.
-- alias: Turn Off Guest Bedroom Lights Bedtime
-  id: 'turn_off_guest_bedroom_lights_bedtime'
+# Turn off guest lights after bedtime when grandchildren are home.
+- alias: Turn Off Guest Lights Bedtime
+  id: 'turn_off_guest_lights_bedtime'
   
   trigger:
     - platform: time
@@ -469,17 +486,15 @@
     - condition: time
       after: '22:30:00'
     
-    - "{{ not is_state('person.sarah', 'home') and is_state('input_boolean.children_home', 'on') }}"
+    - "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
   
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    - service: light.turn_off
-      entity_id: light.guest_bedroom_lamp
-    
-    - service: light.turn_off
-      entity_id: light.guest_bedroom_lamp_2
+    - service: script.set_up_children_only_bedtime_environment
+      data:
+        stage: 'post'
 
 #==========================#
 #     Christmas Lights     #

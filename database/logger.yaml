@@ -56,7 +56,7 @@ logs:
   homeassistant.components.script.change_lighting_per_weather:        warning
   homeassistant.components.script.change_lighting_per_weather_simple: warning
   homeassistant.components.script.change_downstairs_lighting:         warning
-  homeassistant.components.script.close_garage_door:                  warning
+  homeassistant.components.script.operate_garage_door:                warning
   homeassistant.components.script.concat_auto_log_files:              warning
   homeassistant.components.script.concat_log_files:                   warning
   homeassistant.components.script.concat_scripts_log_files:           warning
@@ -172,6 +172,7 @@ filters:
   custom_components.mail_and_packages.helpers:
     - "No mail found."
     - "Mail image generated."
+    - "Unexpected html format found."
   
   custom_components.satellitetracker:
     - "Unexpected error fetching .* data: Server disconnected"

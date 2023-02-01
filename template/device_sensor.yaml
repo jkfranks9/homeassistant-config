@@ -30,21 +30,6 @@
       unit_of_measurement: '%'
       state: "{{ state_attr('vacuum.ecovacs_deebot', 'battery_level') }}"
 
-    - name: 'Ecovacs Main Brush Remaining Life'
-      unique_id: ecovacs_main_brush_remaining_life
-      unit_of_measurement: '%'
-      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_main_brush') }}"
-
-    - name: 'Ecovacs Side Brush Remaining Life'
-      unique_id: ecovacs_side_brush_remaining_life
-      unit_of_measurement: '%'
-      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_side_brush') }}"
-
-    - name: 'Ecovacs Filter Remaining Life'
-      unique_id: ecovacs_filter_remaining_life
-      unit_of_measurement: '%'
-      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_filter') }}"
-
     #---------------------------#
     #   -- Epson Projector --   #
     #---------------------------#
@@ -76,7 +61,6 @@
     # Washer power states, determined via the power level:
     #
     # - stop        <-- stopped/off
-    # - pause       <-- brief pause between wash and rinse
     # - fill        <-- filling
     # - drop        <-- power dip
     # - raise       <-- power spike
@@ -90,12 +74,8 @@
         {# --Power level indicates stopped-- #}
         {% if p < 3 %} stop
           
-        {# --Power level indicates paused--  #}
-        {% elif 4 <= p <= 7.10 %} pause
-          
-        {# --Power level indicates filling if the current state is stopped or paused--  #}
-        {% elif 7.15 <= p <= 13 %}
-          {{ 'fill' if s in ['stop', 'pause', 'unknown'] else s }}
+        {# --Power level indicates filling if the current state is stopped--  #}
+        {% elif 7 <= p <= 13 %} fill
         
         {# --Power level indicates a drop to a lower level--  #}
         {% elif 20 <= p <= 80 %}
@@ -107,3 +87,42 @@
         {# --Power level outside the above ranges, so keep the current state #}
         {% else %} {{ s }}
         {% endif %}
+
+    #-------------------------------------#
+    #   -- Zigbee Device Unavailable --   #
+    #-------------------------------------#
+    
+    #
+    - name: 'Zigbee Device Unavailable'
+      unique_id: zigbee_device_unavailable
+      state: >
+        {# --List of device entities, associated last seen sensors, and friendly names-- #}
+        {% set device_list = [
+                              ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen', 'Back Door Sensor'],
+                              ['binary_sensor.guest_br_window_sensor_contact', 'sensor.guest_br_window_sensor_last_seen', 'Guest BR Window Sensor'],
+                              ['binary_sensor.guest_bath_motion_detector_occupancy', 'sensor.guest_bath_motion_detector_last_seen', 'Guest Bath Motion Detector'],
+                              ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen', 'Laundry Room Motion Detector'],
+                              ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen', 'Master Bath Motion Detector'],
+                              ['cover.upstairs_br_vent_1', 'sensor.upstairs_br_vent_1_last_seen', 'Upstairs BR Vent 1'],
+                              ['cover.upstairs_br_vent_2', 'sensor.upstairs_br_vent_2_last_seen', 'Upstairs BR Vent 2']
+                             ] %}
+        
+        {# --Create an empty list to start-- #}
+        {% set unavail_device_list = namespace(list = []) %}
+        
+        {# --Walk through all devices-- #}
+        {% for device in device_list %}
+          
+          {# --Set variables-- #}
+          {% set device_entity = device[0] %}
+          {% set sensor_entity = device[1] %}
+          {% set device_name = device[2] %}
+          
+          {# --Add a device to the list if the device entity is unavailable, or hasn't been seen in the last 2 hours-- #}
+          {% if states(device_entity) in ['unknown', 'unavailable']
+                or as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (60 * 60 * 2) %}
+            {% set unavail_device_list.list = unavail_device_list.list + [device_name] %}
+          {% endif %}
+        {% endfor %}
+        
+        {{ unavail_device_list.list }}

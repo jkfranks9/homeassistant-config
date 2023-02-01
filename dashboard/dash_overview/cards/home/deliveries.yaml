@@ -102,27 +102,3 @@ cards:
         mdi:mailbox
       {% endif %}
     icon_color: white
-  
-  - type: conditional
-    conditions:
-      - entity: sensor.mail_usps_mail
-        state_not: '0'
-      - entity: sensor.mail_usps_mail
-        state_not: 'unavailable'
-    card:
-      type: picture-entity
-      entity: camera.mail_usps_camera
-      show_name: false
-      show_state: false
-  
-  - type: conditional
-    conditions:
-      - entity: sensor.mail_amazon_packages_delivered
-        state_not: '0'
-      - entity: sensor.mail_amazon_packages_delivered
-        state_not: 'unavailable'
-    card:  
-      type: picture-entity
-      entity: camera.mail_amazon_delivery_camera
-      show_name: false
-      show_state: false

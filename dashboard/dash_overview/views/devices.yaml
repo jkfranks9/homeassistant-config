@@ -18,4 +18,3 @@ cards:
       - !include /config/dashboard/dash_overview/cards/devices/storage.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/devices/printer.yaml
-      - !include /config/dashboard/dash_overview/cards/devices/vacuum.yaml

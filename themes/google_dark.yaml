@@ -1,0 +1,112 @@
+# Based on Google Dark Theme by Juan - @juanmtech
+# https://github.com/JuanMTech/google_dark_theme
+
+Google Dark:
+  
+  # Colors by name
+  light: rgb(198, 203, 210)
+  dark: rgb(23, 23, 23)
+  light-blue: rgb(138, 180, 248)
+  lightest-gray: rgba(184, 190, 199, 0.4)
+  light-gray: rgb(169, 177, 188)
+  medium-gray: rgb(154, 160, 166)
+  gray: rgb(166, 166, 166)
+  dark-gray: rgb(32, 33, 36)
+  white: rgb(242, 242, 242)
+  
+  # Main Interface Colors
+  primary-color: var(--light-blue)
+  light-primary-color: var(--primary-color)
+  accent-color: var(--light-blue)
+  primary-background-color: var(--dark)
+  secondary-background-color: var(--dark-gray)
+  divider-color: var(--primary-background-color)
+  
+  # Header
+  app-header-background-color: var(--dark)
+  app-header-text-color: var(--light)
+  
+  # Text
+  primary-text-color: var(--white)
+  secondary-text-color: var(--gray)
+  text-primary-color: var(--primary-text-color)
+  disabled-text-color: var(--lightest-gray)
+  
+  # Sidebar Menu
+  sidebar-icon-color: var(--light-gray)
+  sidebar-text-color: var(--light)
+  sidebar-background-color: var(--dark-gray)
+  sidebar-selected-background-color: var(--primary-background-color)
+  sidebar-selected-icon-color: var(--light-blue)
+  sidebar-selected-text-color: var(--sidebar-selected-icon-color)
+  
+  # Buttons
+  paper-item-icon-color: var(--light-gray)
+  paper-item-icon-active-color: var(--light-blue)
+
+  # Radio Buttons
+  
+  # States and Badges
+  state-icon-color: var(--light-blue)
+  state-icon-active-color: var(--light-gray)
+  state-icon-unavailable-color: var(--disabled-text-color)
+  
+  # Sliders
+  paper-slider-knob-color: var(--light-blue)
+  paper-slider-knob-start-color: var(--paper-slider-knob-color)
+  paper-slider-pin-color: var(--paper-slider-knob-color)
+  paper-slider-active-color: var(--paper-slider-knob-color)
+  paper-slider-secondary-color: var(--light-primary-color)
+  
+  # Labels
+  label-badge-background-color: var(--dark-gray)
+  label-badge-text-color: var(--light)
+  label-badge-red: rgb(208, 101, 104)
+  label-badge-green: rgb(128, 200, 132)
+  label-badge-blue: var(--light-blue)
+  label-badge-yellow: rgb(223, 194, 113)
+  label-badge-gray: rgb(95, 98, 103)
+  
+  # Cards
+  card-background-color: var(--dark-gray)
+  ha-card-border-radius: "10px"
+  ha-card-box-shadow: 1px 1px 5px 0px rgb(12, 12, 14)
+  paper-dialog-background-color: var(--card-background-color)
+  paper-listbox-background-color: var(--card-background-color)
+  paper-card-background-color: var(--card-background-color)
+  
+  # Switches
+  switch-checked-button-color: var(--light-blue)
+  switch-checked-track-color: var(--light-blue)
+  switch-unchecked-button-color: var(--light-gray)
+  switch-unchecked-track-color: var(--medium-gray)
+  
+  # Toggles
+  paper-toggle-button-checked-button-color: var(--switch-checked-button-color)
+  paper-toggle-button-checked-bar-color: var(--switch-checked-track-color)
+  paper-toggle-button-unchecked-button-color: var(--switch-unchecked-button-color)
+  paper-toggle-button-unchecked-bar-color: var(--switch-unchecked-track-color)
+  
+  # Table
+  table-row-background-color: var(--primary-background-color)
+  table-row-alternative-background-color: var(--secondary-background-color)
+  data-table-background-color: var(--primary-background-color)
+  mdc-checkbox-unchecked-color: var(--light-gray)
+  
+  # Dropdowns
+  material-background-color: var(--secondary-background-color)
+  material-secondary-background-color: var(--primary-background-color)
+  mdc-theme-surface: var(--primary-background-color)
+  
+  # Scrollbar
+  
+  # Pre/Code
+  markdown-code-background-color: var(--dark)
+  
+  # Misc
+  input-fill-color: var(--light-gray)
+  
+  # Bar/graph gradients ... used for bar and graph cards (these are unique to my configuration)
+  bar-low-color: var(--dark-gray)
+  bar-medium-color: var(--dark-gray)
+  bar-high-color: var(--dark-gray)

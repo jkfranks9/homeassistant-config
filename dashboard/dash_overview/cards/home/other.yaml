@@ -1,0 +1,16 @@
+#====================#
+#     Other Card     #
+#====================#
+
+type: custom:stack-in-card
+mode: horizontal
+title: Other
+
+cards:
+  - type: 'custom:button-card'
+    template: toggle_button
+    entity: switch.adguard_protection
+    name: Adguard
+  
+  - type: entity
+    entity: input_select.occupied_bedrooms

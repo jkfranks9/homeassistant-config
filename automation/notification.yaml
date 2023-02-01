@@ -62,96 +62,6 @@
         data:
           tag: 'printer_toner'
 
-# Vacuum main brush is getting old.
-- alias: Notify Vacuum Main Brush Aging
-  id: 'notify_vacuum_main_brush_aging'
-  
-  use_blueprint:
-    path: notification/maint_below_notify.yaml
-    input:
-      sensor_entity: sensor.ecovacs_main_brush_remaining_life
-      threshold: 20
-      timer_entity: timer.vacuum_main_brush_notification
-      message: 'Vacuum main brush might need replacing soon.'
-      persistent: true
-      tag: 'vac_main_brush'
-
-# Clear persistent notification.
-- alias: Clear Vacuum Main Brush Notification
-  id: 'clear_vacuum_main_brush_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.ecovacs_main_brush_remaining_life
-      above: 20
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'vac_main_brush'
-
-# Vacuum side brush is getting old.
-- alias: Notify Vacuum Side Brush Aging
-  id: 'notify_vacuum_side_brush_aging'
-  
-  use_blueprint:
-    path: notification/maint_below_notify.yaml
-    input:
-      sensor_entity: sensor.ecovacs_side_brush_remaining_life
-      threshold: 20
-      timer_entity: timer.vacuum_side_brush_notification
-      message: 'Vacuum side brush might need replacing soon.'
-      persistent: true
-      tag: 'vac_side_brush'
-
-# Clear persistent notification.
-- alias: Clear Vacuum Side Brush Notification
-  id: 'clear_vacuum_side_brush_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.ecovacs_side_brush_remaining_life
-      above: 20
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'vac_side_brush'
-
-# Vacuum filter is getting old.
-- alias: Notify Vacuum Filter Aging
-  id: 'notify_vacuum_filter_aging'
-  
-  use_blueprint:
-    path: notification/maint_below_notify.yaml
-    input:
-      sensor_entity: sensor.ecovacs_filter_remaining_life
-      threshold: 20
-      timer_entity: timer.vacuum_filter_notification
-      message: 'Vacuum filter might need replacing soon.'
-      persistent: true
-      tag: 'vac_filter'
-
-# Clear persistent notification.
-- alias: Clear Vacuum Filter Notification
-  id: 'clear_vacuum_filter_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.ecovacs_filter_remaining_life
-      above: 20
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'vac_filter'
-
 # Pool needs chlorine tabs.
 - alias: Notify Pool Needs Chlorine
   id: 'notify_pool_needs_chlorine'
@@ -439,7 +349,7 @@
 #     Health Notifications      #
 #===============================#
 
-# Send a notification if the UV index or dew point rise above an unhealthy threshold.
+# Send a notification if the UV index or humidity index rise above an unhealthy threshold.
 - alias: Notify Outdoors Unhealthy
   id: 'notify_outdoors_unhealthy'
   
@@ -450,9 +360,9 @@
       entity_id: sensor.current_uv_index
       above: 7.9999
     
-    # Dew point rises to unhealthy level
+    # Humidity index rises to unhealthy level
     - platform: numeric_state
-      entity_id: sensor.outdoor_dewpoint
+      entity_id: sensor.thermal_comfort_humidex
       above: 70.0
     
     # Once in the morning in case the levels are already high
@@ -477,8 +387,8 @@
             entity_id: sensor.current_uv_index
             above: 7.9999
           - condition: numeric_state
-            entity_id: sensor.outdoor_dewpoint
-            above: 65.0
+            entity_id: sensor.thermal_comfort_humidex
+            above: 70.0
   
   action:
     - delay: 
@@ -496,24 +406,26 @@
         tag: ''
         timeout: 0
 
-# Send a notification for overdue treadmill exercise.
-- alias: Notify Treadmill Due
-  id: 'notify_treadmill_due'
+# Send a notification for overdue exercise.
+- alias: Notify Exercise Due
+  id: 'notify_exercise_due'
   
-  # Trigger every 6 hours.
+  # Trigger every day in the morning.
   trigger:
-    - platform: time_pattern
-      hours: '/6'
+    - platform: time
+      at: '08:00:00'
   
-  # Continue if the treadmill was last used more than 2.5 days ago (60 hours).
+  # Continue if the treadmill or weight training were last used more than 3 days ago (72 hours).
   condition:
     - condition: template
       value_template: >
-        {% set changed = states('sensor.treadmill_last_changed') %}
-        {% set tdelta = now() - strptime(changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
-        {% set seconds = (tdelta.days * 86400) + tdelta.seconds %}
-        {% set delta = (seconds / 3600) | round(0) %}
-        {{ delta > 60 }}
+        {% set t_changed = states('sensor.treadmill_last_changed') %}
+        {% set w_changed = states('sensor.exercise_last_changed') %}
+        {% set t_delta = now() - strptime(t_changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
+        {% set w_delta = now() - strptime(w_changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
+        {% set t_hours = (((t_delta.days * 86400) + t_delta.seconds) / 3600) | round(0) %}
+        {% set w_hours = (((w_delta.days * 86400) + w_delta.seconds) / 3600) | round(0) %}
+        {{ t_hours > 72 and w_hours > 72 }}
   
   action:    
     - service: script.send_notification
@@ -521,10 +433,10 @@
         destination:
           - mobile
         title: 'Attention:'
-        message: 'Treadmill exercise is due.'
+        message: 'Exercise is overdue.'
         channel: standard
         throttled: true
-        timer_entity: timer.treadmill_due_notification
+        timer_entity: timer.exercise_overdue_notification
         tag: ''
         timeout: 0
 
@@ -559,14 +471,14 @@
       proximity_meters: 12000
       person_name: Sarah
 
-#- alias: Notify David Arriving Soon
-#  id: 'notify_david_arriving_soon'
-#  use_blueprint:
-#    path: notification/proximity_notify.yaml
-#    input:
-#      proximity_entity: proximity.david_home
-#      proximity_meters: 12000
-#      person_name: David
+- alias: Notify David Arriving Soon
+  id: 'notify_david_arriving_soon'
+  use_blueprint:
+    path: notification/proximity_notify.yaml
+    input:
+      proximity_entity: proximity.david_home
+      proximity_meters: 12000
+      person_name: David
 
 #==========================#
 #     Software Updates     #
@@ -579,8 +491,6 @@
   trigger:
     - platform: state
       entity_id: sensor.hacs
-    - platform: homeassistant
-      event: start
   
   condition:
     - condition: numeric_state
@@ -588,9 +498,6 @@
       above: 0
   
   action:
-    - delay:
-        seconds: "{{ range(1, 5) | random }}"
-    
     - service: script.send_notification
       data:
         destination:
@@ -1237,3 +1144,31 @@
         media_player_entity: media_player.everywhere
         tag: ''
         timeout: 0
+
+#========================#
+#     Zigbee Devices     #
+#========================#
+
+- alias: Notify Zigbee Device Unavailable
+  id: 'notify_zigbee_device_unavailable'
+  
+  trigger:
+    - platform: template
+      value_template: "{{ states('sensor.zigbee_device_unavailable') | length > 0 }}"
+  
+  action:
+    - variables:
+        num_devices: "{{ states('sensor.zigbee_device_unavailable') | length }}"
+    
+    - service: script.send_notification
+      data:
+        destination:
+          - persistent
+        title: |
+          Zigbee Device{% if num_devices > 1 %}s{% endif %} Unavailable'
+        notification_id: 'zigbee_device_unavail'
+        message: |
+          Zigbee device{% if num_devices > 1 %}s{% endif %}:{{"\n"}}
+          {% for device in states('sensor.zigbee_device_unavailable') %}
+            {{ device }}{% if not loop.last %},{% endif %}
+          {% endfor %}

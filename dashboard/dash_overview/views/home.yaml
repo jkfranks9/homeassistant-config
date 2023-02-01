@@ -16,8 +16,9 @@ cards:
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/fans.yaml
       - !include /config/dashboard/dash_overview/cards/home/presence.yaml
-      - !include /config/dashboard/dash_overview/cards/home/laundry.yaml
-      - !include /config/dashboard/dash_overview/cards/home/ups.yaml
+      - !include /config/dashboard/dash_overview/cards/home/deliveries.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
-      - !include /config/dashboard/dash_overview/cards/home/deliveries.yaml
+      - !include /config/dashboard/dash_overview/cards/home/laundry.yaml
+      - !include /config/dashboard/dash_overview/cards/home/ups.yaml
+      - !include /config/dashboard/dash_overview/cards/home/other.yaml

@@ -1,0 +1,116 @@
+# Based on synthwave theme by bbbenji
+# https://github.com/bbbenji/synthwave-hass
+
+Synth Wave:
+  
+  # Colors by name
+  hot-pink: '#f92aad'
+  darker-purple: '#241b2f'
+  dark-purple: '#2a2139'
+  white: '#fff'
+  off-white: '#f4eee4'
+  transparent-white: '#ffffffca'
+  transparent-blue: '#49549539'
+  gray: '#bdbdbd'
+  transparent-green: '#72f1b8cc'
+  transparent-purple: '#34294fe6'
+
+  # Main Interface Colors
+  primary-color: var(--hot-pink)
+  light-primary-color: var(--darker-purple)
+  dark-primary-color: var(--hot-pink)
+  accent-color: var(--hot-pink)
+  primary-background-color: var(--dark-purple)
+  secondary-background-color: var(--light-primary-color) # behind the cards on state
+  divider-color: var(--transparent-blue)
+  paper-dialog-button-color: var(--white)
+  
+  # Header
+  app-header-background-color: var(--primary-background-color)
+  
+  # Text
+  primary-text-color: var(--white)
+  secondary-text-color: var(--transparent-white)
+  text-primary-color: var(--off-white)
+  text-light-primary-color: var(--off-white)
+  disabled-text-color: var(--gray)
+  
+  # Sidebar Menu
+  sidebar-icon-color: var(--secondary-text-color)
+  sidebar-text-color: var(--secondary-text-color)
+  sidebar-background-color: var(--transparent-purple)
+  sidebar-selected-icon-color: var(--primary-text-color)
+  sidebar-selected-text-color: var(--primary-text-color)
+  
+  # Buttons
+  paper-item-icon-color: var(--secondary-text-color)  # Off
+  paper-item-icon-active-color: var(--primary-color) # On
+  mdc-theme-primary: var(--dark-primary-color)
+  mdc-theme-secondary: var(--dark-primary-color)
+
+  # Radio Buttons
+  paper-radio-button-checked-color: var(--paper-toggle-button-checked-button-color)
+  paper-radio-button-unchecked-color: var(--paper-toggle-button-unchecked-button-color)
+  
+  # States and Badges
+  state-icon-color: var(--transparent-green)
+  
+  # Sliders
+  paper-slider-knob-color: var(--accent-color)
+  paper-slider-knob-start-color: var(--accent-color)
+  paper-slider-pin-color: var(--accent-color)
+  paper-slider-active-color: var(--dark-primary-color)
+  paper-slider-secondary-color: var(--secondary-background-color)
+  paper-slider-disabled-active-color: var(--disabled-text-color)
+  paper-slider-disabled-secondary-color: var(--disabled-text-color)
+  slider-color: var(--primary-color)
+  slider-secondary-color: var(--light-primary-color)
+  slider-bar-color: var(--disabled-text-color)
+  
+  # Labels
+  
+  # Cards
+  card-background-color: var(--transparent-purple)
+  ha-card-border-radius: '8px'
+  ha-card-box-shadow: '0'
+  paper-listbox-background-color: var(--light-primary-color) # Background
+  paper-card-background-color: var(--card-background-color)
+  paper-card-header-color: var(--text-primary-color) # Title in settings
+  
+  # Switches
+  switch-checked-color: var(--dark-primary-color) # Background On
+  switch-unchecked-button-color: var(--white)
+  switch-unchecked-track-color: var(--primary-text-color)
+  
+  # Toggles
+  paper-toggle-button-checked-button-color: var(--primary-text-color) # Knob On
+  paper-toggle-button-checked-bar-color: var(--dark-primary-color) # Background On
+  paper-toggle-button-unchecked-button-color: var(--primary-text-color) # Knob Off
+  paper-toggle-button-unchecked-bar-color: var(--disabled-text-color) # Background Off
+  toggle-button-color: var(--primary-color)
+ 
+  # Table
+  table-row-background-color: var(--divider-color)
+  table-row-alternative-background-color: var(--light-primary-color)
+  
+  # Dropdowns
+  material-background-color: var(--light-primary-color)
+
+  # Scrollbar
+  scrollbar-thumb-color: var(--divider-color)
+  
+  # Pre/Code
+  
+  # Misc
+
+  # Bar-card compatibility
+  custom-bar-card-color: var(--accent-color)
+
+  # Simple-thermostat buttons
+  st-mode-background: var(--primary-background-color)
+  st-mode-active-background: var(--dark-primary-color)
+  
+  # Bar/graph gradients ... used for bar and graph cards (these are unique to my configuration)
+  bar-low-color: var(--transparent-green)
+  bar-medium-color: var(--transparent-blue)
+  bar-high-color: var(--hot-pink)

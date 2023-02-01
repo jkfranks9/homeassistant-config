@@ -63,6 +63,8 @@ condition:
 
 # Call the script with the given light/group entity.
 action:
+  - delay: 
+      seconds: "{{ range(2, 15) | random }}"
 
   - if:
     

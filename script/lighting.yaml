@@ -141,65 +141,116 @@ wakeup:
     - service: light.turn_off
       entity_id: light.island_light
 
-#=================================#
-#     Pre-Bedtime Environment     #
-#=================================#
+#===========================================#
+#     Children-Only Bedtime Environment     #
+#===========================================#
 
-# Pre-Bedtime environment: this is driven by an automation with the same name when the occupied bedrooms select is changed,
-# and children are home without parents. The idea is to create the correct lighting environment before my normal bedtime.
+# Children-only bedtime environment: this is driven by an automations when children are home without parents.
+# The idea is to create the correct lighting environment before my normal bedtime, or after children are asleep.
 
-set_up_pre_bedtime_environment:
-  alias: Set up Pre-bedtime Environment
+set_up_children_only_bedtime_environment:
+  alias: Set Up Children-Only Bedtime Environment
   
-  variables:
-    
-    # This is the time in minutes between now and 8 PM. If we run before that time, we delay until then to do anything.
-    evening_delta: >
-      {% set evening = as_timestamp(now().today().replace(hour=20, minute=0, second=0, microsecond=0)) %}
-      {% set current = as_timestamp(now().today().replace(microsecond=0)) %}
-      {{ ((evening - current) / 60) | round(0) }}
-
   fields:
-    target_bedroom:
-      description: 'The target occupied bedroom.'
-      example: 'Master'
+    stage:
+      description: 'Whether to perform pre-bedtime or post-asleep operation.'
+      selector:
+        select:
+          options:
+            - 'pre'
+            - 'post'
   
   sequence:
+  
+    # Verify that only children are home. If we're here after a delay until 8PM, things could have changed.
+    - condition: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
     
-    # Delay until 8 PM if needed.
+    # Pre-bedtime stage: turn on the appropriate bedroom light.
     - if:
-        - "{{ evening_delta > 0 }}"
-        
-      then:
-        - delay:
-            minutes: "{{ evening_delta }}"
+        - "{{ stage == 'pre' }}"
     
-    # Determine which bedroom will be used. The default is the downstairs guest bedroom, which is already set up.
-    - choose:
+      then:
+    
+        # Determine which bedroom will be used.
+        - choose:
       
-      # Master: turn on master bedroom lamp and turn off downstairs guest bedroom lights.
-      - conditions: "{{ target_bedroom == 'Master' }}"
-        
-        sequence:
-          - service: light.turn_on
-            entity_id: light.master_bedroom_lamp
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'Downstairs'
           
-          - service: light.turn_off
-            entity_id:
-              - light.guest_bedroom_lamp
-              - light.guest_bedroom_lamp_2
+            sequence:
+              - service: scene.apply
+                data:
+                  entities:
+                    light.guest_bedroom_lamp:      'off'
+                    light.guest_bedroom_lamp_2:    'on'
+                    light.upstairs_bedroom_outlet: 'off'
+                    light.master_bedroom_lamp:     'off'
       
-      # Upstairs guest: turn on upstairs guest bedroom lamp and turn off downstairs guest bedroom lights.
-      - conditions: "{{ target_bedroom == 'Upstairs' }}"
-        
-        sequence:
-          - service: light.turn_on
-            entity_id: light.upstairs_bedroom_outlet
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'Upstairs'
           
-          - service: light.turn_off
-            entity_id:
-              - light.guest_bedroom_lamp
-              - light.guest_bedroom_lamp_2
+            sequence:
+              - service: scene.apply
+                data:
+                  entities:
+                    light.guest_bedroom_lamp:      'off'
+                    light.guest_bedroom_lamp_2:    'off'
+                    light.upstairs_bedroom_outlet: 'on'
+                    light.master_bedroom_lamp:     'off'
+      
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'Master'
+          
+            sequence:
+              - service: scene.apply
+                data:
+                  entities:
+                    light.guest_bedroom_lamp:      'off'
+                    light.guest_bedroom_lamp_2:    'off'
+                    light.upstairs_bedroom_outlet: 'off'
+                    light.master_bedroom_lamp:     'on'
+    
+      # Post-asleep stage: reset bedroom light and turn on appropriate night light if needed.
+      else:
+    
+        # Determine which bedroom is being used.
+        # NOTE: No need to worry about the master because that's handled at bedtime by Establish Bedtime Environment.
+        - choose:      
+        
+          # Downstairs: the night lights here are the daytime lights, which we don't need to touch, so just turn
+          # off the bedroom light.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'Downstairs'
+          
+            sequence:
+              - service: light.turn_off
+                entity_id: light.guest_bedroom_lamp_2
+      
+          # Upstairs: I'm assuming I'm also using the same bedroom. Turn on the night light, but don't turn off the bedroom
+          # light if it's nighttime.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'Upstairs'
+          
+            sequence:
+              - service: light.turn_on
+                entity_id: light.upstairs_bath_vanity_light
+            
+              - condition: state
+                entity_id: input_boolean.nighttime
+                state: 'off'
+            
+              - service: light.turn_off
+                entity_id: light.upstairs_bedroom_outlet
 
 #=============================#
 #     Bedtime Environment     #

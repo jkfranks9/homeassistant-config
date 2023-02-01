@@ -229,7 +229,9 @@ change_downstairs_lighting:
               {% endif %}
         
         - service: light.turn_on
-          entity_id: light.stairway_light
+          entity_id:
+            - light.stairway_light
+            - light.island_light
         
       # Turn off lights, but only if no family members present.
       else:
@@ -257,8 +259,6 @@ change_downstairs_lighting:
         - service: light.turn_off
           entity_id: 
             - light.stairway_light
-            
-            # This light is turned on by the Alexa Break Time routine, not Home Assistant.
             - light.island_light
 
 #==============================#

@@ -78,7 +78,7 @@
       value_template: >
         {% set skip_list = [
                             'change_downstairs_lighting',
-                            'close_garage_door', 
+                            'operate_garage_door', 
                             'concat_auto_log_files', 
                             'concat_log_files', 
                             'concat_scripts_log_files', 
@@ -163,27 +163,6 @@
         entity_id: input_number.weight_training_time
       data:
         value: 0
-    
-    # Reset occupied bedrooms.
-    - if:
-      
-        # If children are home without adults, default to the downstairs guest bedroom.
-        - "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
-        
-      then:
-        - service: input_select.select_option
-          target:
-            entity_id: input_select.occupied_bedrooms
-          data:
-            option: Downstairs
-      
-      # Otherwise, default to none.
-      else:
-        - service: input_select.select_option
-          target:
-            entity_id: input_select.occupied_bedrooms
-          data:
-            option: None
     
     # Turn off washer plug.
     - service: switch.turn_off
@@ -389,6 +368,7 @@
       - "{{ 'garage_door_south_' ~ suffix }}"
       - "{{ 'treadmill_' ~ suffix }}"
       - "{{ 'washer_' ~ suffix }}"
+      - "{{ 'exercise_' ~ suffix }}"
   
   action:
     - repeat:
@@ -439,6 +419,11 @@
         - 'unknown'
         - 'unavailable'
       id: washer
+    
+    - platform: numeric_state
+      entity_id: input_number.weight_training_time
+      above: 0
+      id: exercise
   
   variables:
     valid: >

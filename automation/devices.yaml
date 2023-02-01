@@ -162,10 +162,6 @@
 - alias: Open House
   id: 'open_house'
   
-  # Hopefully temporary, to assist debugging open/close house timing issue.
-  trace:
-    stored_traces: 25
-  
   trigger:
     
     # Jon arrives home.
@@ -176,12 +172,20 @@
   
   action:
     
-    # The Jon Away flag needs to get reset now that I'm home. This should happen when the Blue Charm beacon 
-    # triggers Open Garage Door, but the beacon can be twitchy. So this is a failsafe.
-    # Don't wait for the script, because it contains a several minute delay.
+    # Make sure the Jon Away flag is on. This turns on when I leave home, so should be on now.
+    - condition: state
+      entity_id: input_boolean.jon_away
+      state: 'on'
+    
+    # The Jon Away flag needs to get reset now that I'm home. Don't wait for the script, because it contains a several minute delay.
     - service: script.turn_on
       target:
         entity_id: script.reset_jon_away
+    
+    # Open garage door.
+    - service: script.turn_on
+      target:
+        entity_id: script.open_garage_door_north
     
     # Turn on automations that were possibly turned off by Leave Home, and trigger them.
     - service: automation.turn_on
@@ -224,10 +228,6 @@
 - alias: Close House
   id: 'close_house'
   
-  # Hopefully temporary, to assist debugging open/close house timing issue.
-  trace:
-    stored_traces: 25
-  
   trigger:
     
     # Jon leaves home.
@@ -250,10 +250,12 @@
   condition:
     - or:
       - condition: state
+        entity_id: person.jon
+        state: 'not_home'
+      
+      - condition: state
         entity_id: sun.sun
         state: 'below_horizon'
-      
-      - "{{ not is_state('person.jon', 'home') and is_state('input_boolean.adults_home', 'off') }}"
   
   action:
     - delay: 
@@ -270,35 +272,42 @@
     
     - if:
       
-        # No one is home.
-        - "{{ not is_state('person.jon', 'home') and is_state('input_boolean.adults_home', 'off') }}"
+        # I'm not home.
+        - "{{ not is_state('person.jon', 'home') }}"
         
       then:
-    
-        # Lock the PC.
-        - service: script.turn_on
-          entity_id: script.lock_pc
-    
-        # Turn off all lights.
-        - scene: scene.lights_out
-    
-        # Turn off all fans.
-        - scene: scene.fans_off
-    
-        # Close the upstairs guest bedroom vents.
-        - service: script.close_upstairs_br_vents
-        
-        # Turn off automations that could turn on various lights.
-        - service: automation.turn_off
-          entity_id: automation.turn_on_christmas_lights
-        - service: automation.turn_off
-          entity_id: automation.turn_on_guest_lights_sunset
-        - service: automation.turn_off
-          entity_id: automation.turn_on_office_light
     
         # Indicate I'm  away.
         - service: input_boolean.turn_on
           entity_id: input_boolean.jon_away
+    
+        - if:
+          
+            # No one else is home.
+            - "{{ is_state('input_boolean.adults_home', 'off') }}"
+        
+          then:
+    
+            # Lock the PC.
+            - service: script.turn_on
+              entity_id: script.lock_pc
+        
+            # Turn off all lights.
+            - scene: scene.lights_out
+        
+            # Turn off all fans.
+            - scene: scene.fans_off
+        
+            # Close the upstairs guest bedroom vents.
+            - service: script.close_upstairs_br_vents
+            
+            # Turn off automations that could turn on various lights.
+            - service: automation.turn_off
+              entity_id: automation.turn_on_christmas_lights
+            - service: automation.turn_off
+              entity_id: automation.turn_on_guest_lights_sunset
+            - service: automation.turn_off
+              entity_id: automation.turn_on_office_light
       
       # Must be sunset.
       else:
@@ -310,11 +319,98 @@
               light.storage_lights: 'off'
               light.outdoor_lights: 'off'
 
-# Close house subset when family members leave.
+# Open the house for family.
+- alias: Open House For Family
+  id: 'open_house_for_family'
+  mode: queued
+  
+  trigger:
+    
+    # Anyone arrives.
+    - platform: state
+      entity_id: person.sarah
+      to: 'home'
+
+    - platform: state
+      entity_id: person.david
+      to: 'home'
+
+    - platform: state
+      entity_id: person.mike
+      to: 'home'
+  
+    - platform: state
+      entity_id: input_boolean.children_home
+      from: 'off'
+      to: 'on'
+  
+  action:
+    
+    # Set the default occupied bedrooms.
+    - choose:
+      
+      # Sarah plus (David or Mike) = both.
+      - conditions: "{{ is_state('person.sarah', 'home') and (is_state('person.david', 'home') or is_state('person.mike', 'home')) }}"
+      
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.occupied_bedrooms
+            data:
+              option: 'Both'
+      
+      # David or Mike without Sarah = up.
+      - conditions: "{{ not is_state('person.sarah', 'home') and (is_state('person.david', 'home') or is_state('person.mike', 'home')) }}"
+      
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.occupied_bedrooms
+            data:
+              option: 'Upstairs'
+      
+      # Otherwise = down.
+      default:
+        - service: input_select.select_option
+          target:
+            entity_id: input_select.occupied_bedrooms
+          data:
+            option: 'Downstairs'
+    
+    # Perform tasks for adults.
+    - if:
+        - condition: state
+          entity_id: input_boolean.adults_home
+          state: 'on'
+      
+      then:
+        
+        # Open garage door.
+        - service: script.turn_on
+          target:
+            entity_id: script.open_garage_door_north
+    
+    # Perform tasks for children.
+    - if:
+        - condition: state
+          entity_id: input_boolean.children_home
+          state: 'on'
+      
+      then:
+        
+        # Turn on bedroom light if needed.
+        - service: script.change_lighting_per_weather_simple
+          data:
+            light_entity: light.guest_bedroom_lamp_2
+            turn_on: true
+
+# Close house when family members leave.
 - alias: Close House For Family
   id: 'close_house_for_family'
   
   trigger:
+    
+    # Anyone leaves.
     - platform: state
       entity_id: input_boolean.adults_home
       from: 'on'
@@ -325,14 +421,37 @@
       from: 'on'
       to: 'off'
   
+  condition:
+    
+    # Everyone must be gone.
+    - condition: state
+      entity_id: input_boolean.adults_home
+      state: 'off'
+    
+    - condition: state
+      entity_id: input_boolean.children_home
+      state: 'off'
+  
   action:
     
     # Close the upstairs guest bedroom vents.
     - service: script.close_upstairs_br_vents
     
-    # Turn off upstairs guest suite lights.
-    - service: light.turn_off
-      entity_id: light.upstairs_guest_suite_lights
+    # Turn off guest suite lights.
+    - service: scene.apply
+      data:
+        entities:
+          light.guest_bedroom_lamp:      'off'
+          light.guest_bedroom_lamp_2:    'off'
+          light.upstairs_bedroom_light:  'off'
+          light.upstairs_bedroom_outlet: 'off'
+    
+    # Reset occupied bedrooms to none.
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.occupied_bedrooms
+      data:
+        option: 'None'
 
 # Turn off extended away mode when Jon is nearing home (proximity is somewhat unreliable, so if this doesn't trigger we have a failsafe 
 # below in Open House).
@@ -586,81 +705,6 @@
             {{ cooldown     + (( (kph**3 * 0.0221) -  (kph**2 * 0.1349) +  (kph * 0.8025) + 2.1000) * wkg *  time) | int(0) }}
           {% endif %}
 
-#======================#
-#     Garage Doors     #
-#======================#
-
-# Open garage door for me.
-- alias: Open Garage Door
-  id: 'open_garage_door'
-  
-  # Trigger on me arriving home.
-  trigger:
-    - platform: state
-      entity_id: person.jon
-      from: 'not_home'
-      to: 'home'
-  
-  # I only want this to happen when I return home. Not, for example, walking to the mailbox with my keys in my pocket.
-  condition:
-    
-    # Make sure I'm home ... this should happen as soon as I enter the home zone.
-    - condition: state
-      entity_id: person.jon
-      state: 'home'
-    
-    # Make sure the Jon Away flag is on. This turns on when I leave home, so should be on now.
-    - condition: state
-      entity_id: input_boolean.jon_away
-      state: 'on'
-    
-    # Finally, ensure the door is actually closed before opening it.
-    - "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
-  
-  action:
-    - service: switch.turn_on
-      target:
-        entity_id: switch.shelly1_garage_north
-    
-    # Now reset the flag. Note that if this automation doesn't run for some reason, the flag is reset by a failsafe script
-    # after a delay (called by Open House). I REALLY love this kind of twitchy timing!
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.jon_away
-
-# Open garage door when family member(s) arrive home, and I'm home.
-- alias: Open Garage Door For Family
-  id: 'open_garage_door_for_family'
-  
-  trigger:
-    - platform: state
-      entity_id: input_boolean.adults_home
-      from: 'off'
-      to: 'on'
-    
-    - platform: state
-      entity_id: input_boolean.children_home
-      from: 'off'
-      to: 'on'
-  
-  condition:
-    - condition: state
-      entity_id: person.jon
-      state: 'home'
-    
-    - "{{ is_state('binary_sensor.shelly1_garage_north_contact', 'on') }}"
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - echo
-        media_player_entity: media_player.everywhere
-        message: 'Opening garage door for family.'
-    
-    - service: switch.turn_on
-      target:
-        entity_id: switch.shelly1_garage_north
-
 #====================#
 #     Appliances     #
 #====================#
@@ -692,29 +736,27 @@
 # Launch the vacuum.
 - alias: Start Vacuum
   id: 'start_vacuum'
+  
   trigger:
     - platform: time
       at: '03:19:00'
-    - platform: homeassistant
-      event: start
+  
   condition:
-    - condition: time
-      after: '03:19:00'
-    - condition: time
-      before: '04:19:00'
     - condition: time
       weekday:
         - mon
+    
     - condition: state
       entity_id: timer.vacuum
       state: 'idle'
+  
   action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_off
       entity_id: input_boolean.vacuum_kicked_off
+    
     - service: vacuum.turn_on
       entity_id: vacuum.ecovacs_deebot
+    
     - service: timer.start
       data:
         entity_id: timer.vacuum
@@ -761,15 +803,14 @@
 # Set the washer start time, based on the power state changing from stop to fill (or a potential unknown to fill).
 - alias: Start Washer
   id: 'start_washer'
+  
   trigger:
     - platform: state 
       entity_id: sensor.washer_power_state
       from:
         - 'stop'
         - 'unknown'
-      to:
-        - 'fill'
-        - 'pause'
+      to: 'fill'
   
   action:
     
@@ -781,15 +822,14 @@
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
 
 # Set the washer load size, based on the amount of time spent on the initial fill. This is triggered only
-# when the power state changes from fill/pause to raise, and the washer state is Wash Fill.
+# when the power state changes from fill to raise, and the washer state is Wash Fill.
 - alias: Set Washer Load Size
   id: 'set_washer_load_size'
+  
   trigger:
     - platform: state
       entity_id: sensor.washer_power_state
-      from:
-        - 'fill'
-        - 'pause'
+      from: 'fill'
       to: 'raise'
   
   condition:
@@ -798,6 +838,11 @@
       state: 'Wash Fill'
   
   action:
+    - variables:
+        washer_fill_seconds: >
+          {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
+          {% set seconds = (now().timestamp() - start) %}
+          {{ seconds }}
     
     # Set the washer load size. Default to medium if the calculation for seconds is unreasonably small.
     - service: input_select.select_option
@@ -805,17 +850,38 @@
         entity_id: input_select.washer_load_size
       data:
         option: >
-          {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
-          {% set seconds = (now().timestamp() - start) %}
-          {% if   seconds >= 180 and seconds < 350 %}
+          {% if   washer_fill_seconds >= 180 and washer_fill_seconds < 350 %}
             Small
-          {% elif seconds >= 350 and seconds < 450 %}
+          {% elif washer_fill_seconds >= 350 and washer_fill_seconds < 450 %}
             Medium
-          {% elif seconds >= 450  %}
+          {% elif washer_fill_seconds >= 450  %}
             Large
           {% else %}
             Medium
           {% endif %}
+    
+    # Save the washer fill seconds for diagnosis/tweaking.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.washer_fill_seconds
+      data:
+        value: "{{ washer_fill_seconds }}"
+
+# Start the washer wash blackout timer. This is used to ignore a potential early drop,
+# which would shorten the wash cycle dramatically.
+- alias: Start Washer Wash Blackout Timer
+  id: 'start_washer_wash_blackout_timer'
+  trigger:
+    - platform: state 
+      entity_id: input_select.washer_state
+      from: 'Wash Fill'
+      to: 'Wash'
+  
+  action:
+    - service: timer.start
+      data:
+        entity_id: timer.washer_wash_blackout
+        duration: '00:01:00'
 
 # Start the washer rinse fill blackout timer. This is used to ignore the fabric softener injection
 # during the rinse fill, which otherwise wreaks havoc on the operation control algorithm.
@@ -927,23 +993,23 @@
           {% set to = trigger.to_state.state %}
           {% set t1 = states('timer.washer_rinse_fill_blackout') %}
           {% set t2 = states('timer.washer_rinse_blackout') %}
+          {% set t3 = states('timer.washer_wash_blackout') %}
           
           {# --Ignore everything if one of the timers is running-- #}
-          {% if t1 == 'active' or t2 == 'active'%} {{ s }}
+          {% if t1 == 'active' or t2 == 'active' or t3 == 'active' %} {{ s }}
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
-          {% elif fr in ['stop', 'unknown']       and to in ['fill', 'pause'] %}                         Wash Fill
-          {% elif fr in ['fill', 'pause']         and to == 'raise'   and s == 'Wash Fill' %}            Wash
-          {% elif fr == 'raise'                   and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
-          {% elif fr == 'pause'                   and to == 'fill'    and s == 'Wash Drain' %}           Rinse Fill
-          {% elif fr in ['fill', 'pause', 'drop'] and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
-          {% elif fr == 'raise'                   and to == 'drop'    and s == 'Rinse' %}                Rinse Drain     
+          {% elif fr in ['stop', 'unknown'] and to == 'fill' %}                                    Wash Fill
+          {% elif fr == 'fill'              and to == 'raise'   and s == 'Wash Fill' %}            Wash
+          {% elif fr == 'raise'             and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
+          {% elif fr in ['drop', 'raise']   and to == 'fill'    and s == 'Wash Drain' %}           Rinse Fill
+          {% elif fr in ['fill', 'drop']    and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
+          {% elif fr == 'raise'             and to == 'drop'    and s == 'Rinse' %}                Rinse Drain     
           
           {# --Some washer power state sensor changes just remain in the current state-- #}
-          {% elif fr == 'drop'  and to in ['fill', 'raise', 'pause'] %} {{ s }}
-          {% elif fr == 'fill'  and to in ['pause', 'drop', 'raise'] %} {{ s }}
-          {% elif fr == 'raise' and to in ['drop', 'pause'] %}          {{ s }}
-          {% elif fr == 'pause' and to in ['fill', 'drop', 'raise'] %}  {{ s }}
+          {% elif fr == 'drop'  and to in ['fill', 'raise'] %} {{ s }}
+          {% elif fr == 'fill'  and to in ['drop', 'raise'] %} {{ s }}
+          {% elif fr == 'raise' and to in ['drop'] %}          {{ s }}
           
           {# --Catch-all, default to Stop-- #}
           {% else %} Stop
@@ -1175,12 +1241,13 @@
       event: start
   
   condition:
-    - condition: state
-      entity_id: person.mike
-      state: 'not_home'
-    - condition: state
-      entity_id: person.sarah
-      state: 'not_home'
+    not:
+      - condition: state
+        entity_id: person.mike
+        state: 'home'
+      - condition: state
+        entity_id: person.sarah
+        state: 'home'
   
   action:
     - delay: 

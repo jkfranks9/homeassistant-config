@@ -4,11 +4,10 @@
 
 type: custom:stack-in-card
 title: Switches
+
 cards:
   - type: entities
     show_header_toggle: false
     entities:
       - entity: input_boolean.christmas_mode
         icon: mdi:pine-tree
-      
-      - entity: input_select.occupied_bedrooms

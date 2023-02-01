@@ -27,10 +27,8 @@ cards:
       - entity: sensor.guest_br_window_sensor_linkquality
         name: Guest BR Window Sensor
       
-      - entity: cover.upstairs_br_vent_1
+      - entity: sensor.upstairs_br_vent_1_linkquality
         name: Upstairs BR Vent 1
-        attribute: linkquality
       
-      - entity: cover.upstairs_br_vent_2
+      - entity: sensor.upstairs_br_vent_2_linkquality
         name: Upstairs BR Vent 2
-        attribute: linkquality

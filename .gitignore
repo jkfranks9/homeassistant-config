@@ -5,7 +5,10 @@
 !*.yaml
 !.gitignore
 !*.md
+!*.py
+
 !automation
+
 !blueprints/
 !blueprints/automation/
 !blueprints/automation/climate
@@ -17,10 +20,7 @@
 !blueprints/script/
 !blueprints/script/devices
 !blueprints/script/notification
-!database
-!esphome
-!esphome/common/
-!group
+
 !dashboard/
 !dashboard/dash_overview/
 !dashboard/dash_overview/cards/
@@ -28,6 +28,7 @@
 !dashboard/dash_overview/cards/devices
 !dashboard/dash_overview/cards/energy
 !dashboard/dash_overview/cards/health
+!dashboard/dash_overview/cards/hobbies
 !dashboard/dash_overview/cards/home
 !dashboard/dash_overview/cards/levels
 !dashboard/dash_overview/cards/monitoring
@@ -40,30 +41,20 @@
 !dashboard/dash_reminders/cards/office
 !dashboard/dash_reminders/cards/yard
 !dashboard/dash_reminders/views
-!dashboard/ui_lovelace_minimalist/
-!dashboard/ui_lovelace_minimalist/cards
-!dashboard/ui_lovelace_minimalist/cards/home
-!dashboard/ui_lovelace_minimalist/views
+
+!database
+
+!esphome
+!esphome/common/
+
+!group
+!pyscript
+!pyscript_modules
+!python
 !script
 !sensor
 !template
-!ui_lovelace_minimalist/
-!ui_lovelace_minimalist/custom_actions/
-!ui_lovelace_minimalist/dashboard/
-!
-!
-
-# Ignore folders.
-.cloud
-.storage
-blueprints/automation/ui_lovelace_minimalist
-custom_components
-www
-zigbee2mqtt
-
-# Ignore files.
-.google.token
-.google_maps_location_sharing.cookies.darkeves_gmail_com
+!themes
 
 # Ensure these YAML files are ignored.
 google_calendars.yaml

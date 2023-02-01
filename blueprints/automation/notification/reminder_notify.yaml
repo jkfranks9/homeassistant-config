@@ -26,13 +26,16 @@ blueprint:
       name: Tag Prefix
       description: Tag prefix; the suffix is formed dynamically.
   
-# Trigger daily at the specified time.
+# Trigger daily at the specified time, or when HA starts (in case HA is rebooting when the trigger would have occurred).
 trigger:
   - platform: time
     at: !input trigger_time
+  
+  - platform: homeassistant
+    event: start
 
 variables:
-  input_date_entities: !input date_entities
+  input_date_entities: !input date_entities  
   actionable_entities: >
     {% set actionable_list = namespace(list = []) %}
     {% for entity in input_date_entities %}
@@ -40,17 +43,25 @@ variables:
         {% set actionable_list.list = actionable_list.list + [entity] %}
       {% endif %}
     {% endfor %}    
-    {{ actionable_list.list }}
-  input_message_prefix: !input message_prefix
+    {{ actionable_list.list }}  
+  input_message_prefix: !input message_prefix  
   input_tag_prefix: !input tag_prefix
   
 condition:
   - condition: template
     value_template: "{{ actionable_entities | length > 0 }}"
+  
+  # Guard against HA start triggers.
+  - condition: time
+    after: !input trigger_time
 
 action:
+  - delay: 
+      seconds: "{{ range(2, 15) | random }}" 
+  
   - repeat:
       for_each: "{{ actionable_entities }}"
+      
       sequence:
         - variables:
             entity_category: "{{ (repeat.item).split('_')[-2] }}"

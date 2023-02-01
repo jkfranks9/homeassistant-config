@@ -1,6 +1,6 @@
-#==========================#
-#     Calories History     #
-#==========================#
+#==============================#
+#     Weight Training Time     #
+#==============================#
 
 # Set weight training time.
 set_weight_training_time:
@@ -11,4 +11,4 @@ set_weight_training_time:
       target:
         entity_id: input_number.weight_training_time
       data:
-        value: 20
+        value: 25

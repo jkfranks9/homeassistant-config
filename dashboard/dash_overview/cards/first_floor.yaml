@@ -47,9 +47,13 @@ config:
         service: floorplan.class_set
         service_data:
           elements:
-            - switch.sonoff_family_room_christmas_tree
+            - switch.christmas_village_1
+            - switch.christmas_village_2
+            - switch.christmas_village_3
             - switch.kitchen_christmas_tree
             - switch.mantle_bookcase
+            - switch.outdoor_christmas
+            - switch.sonoff_family_room_christmas_tree
             - switch.stair_railing
           class: "${(entity.state === 'on') ? 'show' : 'hide' }"
     
@@ -61,10 +65,12 @@ config:
         - light.office_lamp
         - switch.back_floodlight
         - switch.back_yard_light
+        - switch.christmas_village_1
+        - switch.christmas_village_2
+        - switch.christmas_village_3
         - switch.dining_room_hutch
         - switch.dining_room_lamps
         - switch.driveway_lights
-        - switch.sonoff_family_room_christmas_tree
         - switch.fire_tv
         - switch.foyer_hutch
         - switch.front_floodlight
@@ -82,8 +88,10 @@ config:
         - switch.mantle_bookcase
         - switch.master_bath_fan
         - switch.master_bath_light
+        - switch.outdoor_christmas
         - switch.porch_light
         - switch.sink_light
+        - switch.sonoff_family_room_christmas_tree
         - switch.sonoff_family_room_av
         #- switch.sonoff_s31_zb           # zigbee router; can move if needed
         - switch.sonoff_treadmill

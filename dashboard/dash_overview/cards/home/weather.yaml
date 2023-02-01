@@ -36,8 +36,30 @@ cards:
     entities:
       - type: custom:multiple-entity-row
         name: Thermal Comfort
-        entity: sensor.outdoor_dewpoint
-        state_header: Dew Point
+        unit: false
+        entity: sensor.thermal_comfort_frost_point
+        state_header: Frost
         entities:
-          - entity: sensor.outdoor_heatindex
-            name: Heat Index
+          - entity: sensor.thermal_comfort_heat_index
+            name: Heat
+            unit: false
+          - entity: sensor.thermal_comfort_humidex
+            name: Humid
+            unit: false
+          - entity: sensor.thermal_comfort_summer_simmer_index
+            name: Simmer
+            unit: false
+          - entity: sensor.thermal_comfort_dew_point
+            name: Dew
+            unit: false
+  
+  # Thermal comfort perception
+  - type: entities
+    entities:
+      - type: custom:multiple-entity-row
+        name: Perception
+        entity: sensor.thermal_comfort_summer_simmer_perception
+        state_header: Simmer
+        entities:
+          - entity: sensor.thermal_comfort_humidex_perception
+            name: Humid

@@ -21,7 +21,7 @@ turn_off_extended_away_mode:
         datetime: "{{ (now() + timedelta(minutes = 2)).strftime('%Y-%m-%d %H:%M:%S') }}"
 
 # This is a failsafe to make sure the Jon Away flag gets reset when I return home. This should happen
-# when the Blue Charm beacon triggers Open Garage Door, but the beacon can be twitchy.
+# when the Open Garage Door runs, but you never know.
 reset_jon_away:
   alias: Reset Jon Away
   
@@ -151,13 +151,13 @@ mute_upstairs_bedroom_echo:
         {% set next = now().today().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
         {{ (next - now().today().replace(microsecond=0)).seconds }}
 
-#===========================#
-#     Garage Door Close     #
-#===========================#
+#===============================#
+#     Garage Door Operation     #
+#===============================#
 
 # Template script that does the work.
-close_garage_door:
-  alias: Close Garage Door
+operate_garage_door:
+  alias: Operate Garage Door
   
   # Allow multiple independent runs.
   mode: parallel
@@ -165,7 +165,14 @@ close_garage_door:
   fields:
     name:
       description: 'The garage door user friendly name.'
-      example: 'my door'
+    
+    operation:
+      description: 'Whether to open or close the door.'
+      selector:
+        select:
+          options:
+            - Open
+            - Close
     
     contact:
       description: 'The garage door contact sensor entity.'
@@ -177,69 +184,96 @@ close_garage_door:
   
   sequence:
   
-    # Action is only required if the door is currently open.
-    - condition: "{{ is_state(contact, 'off') }}"
+    - variables:
+        msg_operation: "{{ iif(operation == 'Open', 'Opening', 'Closing') }}"
     
-    # Send an informational notification that the door is about to be closed.
+    # Action is only required if the door is currently in the opposite state (contact on means closed).
+    - condition: "{{ iif(operation == 'Open', is_state(contact, 'on'), is_state(contact, 'off')) }}"
+    
+    # Send an informational notification that the door is about to be operated.
     - service: script.send_notification
       data:
         destination:
           - mobile
         title: 'Information:'
-        message: 'Closing garage door {{ name }}.'
+        message: '{{ msg_operation }} garage door {{ name }}.'
         channel: standard
         throttled: false
         tag: ''
         timeout: 0
     
-    # Close the door.
+    # Operate the door.
     - service: switch.turn_on
       target:
         entity_id: "{{ switch }}"
     
-    # Wait for the door to close.
-    - delay: '00:05:00'
+    # Wait a bit before confirming.
+    - delay: '00:01:00'
     
-    # Confirm that the door is closed. If so, we're done.
-    - condition: "{{ is_state(contact, 'off') }}"
+    # Confirm that the door is in the proper state. If so, we're done.
+    - condition: "{{ iif(operation == 'Open', is_state(contact, 'off'), is_state(contact, 'on')) }}"
     
-    # The door did not close, so send another notification.
+    # The operation did not succeed, so send another notification.
     - service: script.send_notification
       data:
         destination:
           - mobile
         title: 'Action required:'
-        message: 'Garage door {{ name }} did not close.'
+        message: 'Garage door {{ name }} operation did not succeed.'
         channel: critical
         throttled: false
-        tag: '{{ name }}_close_problem'
+        tag: '{{ name }}_operation_problem'
         timeout: 0
 
 #----------------------#
 #     Garage Doors     #
 #----------------------#
 
-# Garage door north
+# Open garage door
+open_garage_door_north:
+  alias: Open Garage Door North
+  sequence:
+    
+    - service: script.operate_garage_door
+      data:
+        name:      'north'
+        operation: 'Open'
+        contact:   'binary_sensor.shelly1_garage_north_contact'
+        switch:    'switch.shelly1_garage_north'
+
+open_garage_door_south:
+  alias: Open Garage Door South
+  sequence:
+    
+    - service: script.operate_garage_door
+      data:
+        name:      'south'
+        operation: 'Open'
+        contact:   'binary_sensor.shelly1_garage_south_contact'
+        switch:    'switch.shelly1_garage_south'
+
+# Close garage door
 close_garage_door_north:
   alias: Close Garage Door North
   sequence:
     
-    - service: script.close_garage_door
+    - service: script.operate_garage_door
       data:
-        name:    'north'
-        contact: 'binary_sensor.shelly1_garage_north_contact'
-        switch:  'switch.shelly1_garage_north'
+        name:      'north'
+        operation: 'Close'
+        contact:   'binary_sensor.shelly1_garage_north_contact'
+        switch:    'switch.shelly1_garage_north'
 
-# Garage door south
 close_garage_door_south:
   alias: Close Garage Door South
   sequence:
     
-    - service: script.close_garage_door
+    - service: script.operate_garage_door
       data:
-        name:    'south'
-        contact: 'binary_sensor.shelly1_garage_south_contact'
-        switch:  'switch.shelly1_garage_south'
+        name:      'south'
+        operation: 'Close'
+        contact:   'binary_sensor.shelly1_garage_south_contact'
+        switch:    'switch.shelly1_garage_south'
 
 #============================#
 #     Deep Sleep Control     #
