@@ -26,7 +26,6 @@ cards:
       - icon: card-account-details
       - interval: 1
       - period: 'month'
-      - amount: '(702)'
       - service: script.set_datetime_offset_months
       
   # Mortgage
@@ -60,5 +59,4 @@ cards:
       - icon: card-account-details
       - interval: 1
       - period: 'month'
-      - amount: '(148)'
       - service: script.set_datetime_offset_months

@@ -183,6 +183,9 @@
         entity_id: script.reset_jon_away
     
     # Open garage door.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.garage_door_info_message
+    
     - service: script.turn_on
       target:
         entity_id: script.open_garage_door_north
@@ -262,6 +265,9 @@
         seconds: "{{ range(2, 15) | random }}"
     
     # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.garage_door_info_message
+    
     - service: script.turn_on
       target:
         entity_id: script.close_garage_door_north
@@ -386,6 +392,9 @@
       then:
         
         # Open garage door.
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.garage_door_info_message
+        
         - service: script.turn_on
           target:
             entity_id: script.open_garage_door_north
@@ -647,6 +656,11 @@
     - service: switch.turn_off
       target:
         entity_id: switch.sonoff_treadmill
+    
+    # Indicate we used the treadmill today.
+    - service: input_boolean.turn_on
+      target:
+        entity_id: "{{ 'input_boolean.treadmill_' ~ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
     
     # Calculate the amount of time spent walking. I always walk some multiple of 5 minutes with a 1 minute cooldown, so round
     # down to the nearest 5 minutes (there could be an extra minute or two during a workout pause). The cooldown period

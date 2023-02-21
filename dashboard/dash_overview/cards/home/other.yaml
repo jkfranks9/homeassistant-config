@@ -14,3 +14,12 @@ cards:
   
   - type: entity
     entity: input_select.occupied_bedrooms
+    name: Beds
+  
+  - type: entity
+    entity: sensor.weekly_treadmill_total
+    name: Walk
+  
+  - type: entity
+    entity: sensor.weekly_workout_total
+    name: Workout

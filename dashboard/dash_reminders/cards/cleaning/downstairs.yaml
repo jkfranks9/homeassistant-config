@@ -35,7 +35,7 @@ cards:
       - entity: input_datetime.reminder_cleaning_guest_bath
       - name: Guest Bath
       - icon: bathtub
-      - interval: 3
+      - interval: 2
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       
@@ -57,9 +57,9 @@ cards:
       - entity: input_datetime.reminder_cleaning_kitchen
       - name: Kitchen
       - icon: fridge-industrial
-      - interval: 3
-      - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
+      - interval: 10
+      - period: 'days'
+      - service: script.set_datetime_offset_days
       
   # Laundry Room
   - type: 'custom:decluttering-card'
@@ -79,7 +79,7 @@ cards:
       - entity: input_datetime.reminder_cleaning_master_bath
       - name: Master Bath
       - icon: bathtub
-      - interval: 3
+      - interval: 2
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       

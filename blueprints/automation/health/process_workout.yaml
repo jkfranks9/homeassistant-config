@@ -1,0 +1,83 @@
+# Process a workout for simple exercise types.
+
+blueprint:
+  name: Process Workout
+  description: Calculate calories and perform other tasks for simple exercises.
+  domain: automation
+  
+  input:
+    exercise_type:
+      name: Exercise Type
+      description: Type of exercise performed.
+      selector:
+        select:
+          options:
+            - Yard
+            - Weight
+    
+    time_entity:
+      name: Time Entity
+      description: Entity that contains the amount of time spent on the exercise, in minutes.
+      selector:
+        entity:
+          domain: input_number
+    
+    calories_entity:
+      name: Calories Entity
+      description: Entity to be updated with the calculated calories.
+      selector:
+        entity:
+          domain: input_number
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_exercise_type: !input exercise_type
+  input_time_entity: !input time_entity
+  
+  yard_calories_per_hour: 250
+  weight_calories_per_hour: 200
+
+# Trigger when the time entity is updated.
+trigger:
+  - platform: state
+    entity_id: !input time_entity
+
+action:
+  
+  # Short delay just to be safe.
+  - delay:  '00:00:01'
+    
+  # Process the specified exercise type.
+  - choose:
+    - conditions: "{{ input_exercise_type == 'Yard' }}"
+    
+      sequence:
+  
+        # Calculate the calories.
+        - service: input_number.set_value
+          target:
+            entity_id: !input calories_entity
+          data:
+            value: "{{ ((states(input_time_entity) | int(0) / 60) * yard_calories_per_hour) | int(0) }}"
+    
+    - conditions: "{{ input_exercise_type == 'Weight' }}"
+    
+      sequence:
+  
+        # Calculate the calories.
+        - service: input_number.set_value
+          target:
+            entity_id: !input calories_entity
+          data:
+            value: "{{ ((states(input_time_entity) | int(0) / 60) * weight_calories_per_hour) | int(0) }}"
+  
+        # Indicate that we exercised today.
+        - service: input_boolean.turn_on
+          target:
+            entity_id: "{{ 'input_boolean.workout_' ~ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
+    
+    default:
+      - service: system_log.write
+        data:
+          message: "Invalid input exercise type {{ input_exercise_type }} specified"
+          level: error

@@ -13,7 +13,7 @@ cards:
       - entity: input_datetime.reminder_cleaning_snack_bar
       - name: Snack Bar
       - icon: fridge-industrial
-      - interval: 6
+      - interval: 7
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       
@@ -24,7 +24,7 @@ cards:
       - entity: input_datetime.reminder_cleaning_theater
       - name: Theater
       - icon: theater
-      - interval: 6
+      - interval: 5
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       
@@ -35,7 +35,7 @@ cards:
       - entity: input_datetime.reminder_cleaning_upstairs_bath
       - name: Bath
       - icon: bathtub
-      - interval: 3
+      - interval: 4
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       
@@ -46,7 +46,7 @@ cards:
       - entity: input_datetime.reminder_cleaning_upstairs_bedroom
       - name: Bedroom
       - icon: bed
-      - interval: 7
+      - interval: 8
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       

@@ -80,22 +80,22 @@
 #     Manual Exercise      #
 #==========================#
 
-# Set yard work calories.
-- alias: Set Yard Work Calories
-  id: 'set_yard_work_calories'
+# Yard work exercise.
+- alias: Process Workout For Yard Work
+  id: 'process_workout_for_yard_work'
   use_blueprint:
-    path: health/calories_calculator.yaml
+    path: health/process_workout.yaml
     input:
+      exercise_type: Yard
       time_entity: input_number.yard_work_time
       calories_entity: input_number.yard_work_calories
-      calorie_rate: 250
 
-# Set weight training calories.
-- alias: Set Weight Training Calories
-  id: 'set_weight_training_calories'
+# Weight training exercise.
+- alias: Process Workout For Weight Training
+  id: 'process_workout_for_weight_training'
   use_blueprint:
-    path: health/calories_calculator.yaml
+    path: health/process_workout.yaml
     input:
+      exercise_type: Weight
       time_entity: input_number.weight_training_time
       calories_entity: input_number.weight_training_calories
-      calorie_rate: 200

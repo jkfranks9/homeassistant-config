@@ -44,6 +44,6 @@ action:
       title: 'Action required:'
       message: !input message
       channel: standard
-      throttled: false
+      throttled: true
       tag: ''
       timeout: 0

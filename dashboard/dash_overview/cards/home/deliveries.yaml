@@ -8,7 +8,7 @@ cards:
   
   - type: custom:stack-in-card
     mode: horizontal
-    title: Deliveries
+    title: Deliveries & Mail
     cards:
           
       - type: custom:mushroom-template-card

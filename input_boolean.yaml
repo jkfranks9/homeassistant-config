@@ -99,3 +99,7 @@ dryer_almost_done:
 # Sonoff plug not on, which could indicate a power glitch.
 possible_power_glitch:
   name: Possible Power Glitch
+
+# Whether or not to issue an informational message when a garage door is operated.
+garage_door_info_message:
+  name: Garage Door Info Message

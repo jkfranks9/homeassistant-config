@@ -92,37 +92,40 @@
     #   -- Zigbee Device Unavailable --   #
     #-------------------------------------#
     
-    #
+    # Captures any unavailable zigbee devices. The state is a count of all such devices.
     - name: 'Zigbee Device Unavailable'
       unique_id: zigbee_device_unavailable
-      state: >
-        {# --List of device entities, associated last seen sensors, and friendly names-- #}
-        {% set device_list = [
-                              ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen', 'Back Door Sensor'],
-                              ['binary_sensor.guest_br_window_sensor_contact', 'sensor.guest_br_window_sensor_last_seen', 'Guest BR Window Sensor'],
-                              ['binary_sensor.guest_bath_motion_detector_occupancy', 'sensor.guest_bath_motion_detector_last_seen', 'Guest Bath Motion Detector'],
-                              ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen', 'Laundry Room Motion Detector'],
-                              ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen', 'Master Bath Motion Detector'],
-                              ['cover.upstairs_br_vent_1', 'sensor.upstairs_br_vent_1_last_seen', 'Upstairs BR Vent 1'],
-                              ['cover.upstairs_br_vent_2', 'sensor.upstairs_br_vent_2_last_seen', 'Upstairs BR Vent 2']
-                             ] %}
-        
-        {# --Create an empty list to start-- #}
-        {% set unavail_device_list = namespace(list = []) %}
-        
-        {# --Walk through all devices-- #}
-        {% for device in device_list %}
+      state: "{{ this.attributes.device_list | length }}"
+      attributes:
+        device_list: >
+          {# --List of device entities, associated last seen sensors, and friendly names-- #}
+          {% set device_list = [
+                                ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen', 'Back Door Sensor'],
+                                ['binary_sensor.guest_br_window_sensor_contact', 'sensor.guest_br_window_sensor_last_seen', 'Guest BR Window Sensor'],
+                                ['binary_sensor.guest_bath_motion_detector_occupancy', 'sensor.guest_bath_motion_detector_last_seen', 'Guest Bath Motion Detector'],
+                                ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen', 'Laundry Room Motion Detector'],
+                                ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen', 'Master Bath Motion Detector'],
+                                ['cover.upstairs_br_vent_1', 'sensor.upstairs_br_vent_1_last_seen', 'Upstairs BR Vent 1'],
+                                ['cover.upstairs_br_vent_2', 'sensor.upstairs_br_vent_2_last_seen', 'Upstairs BR Vent 2']
+                               ] %}
+                               
+          {# --Create an empty list to start-- #}
+          {% set unavail_device_list = namespace(list = []) %}
           
-          {# --Set variables-- #}
-          {% set device_entity = device[0] %}
-          {% set sensor_entity = device[1] %}
-          {% set device_name = device[2] %}
+          {# --Walk through all devices-- #}
+          {% for device in device_list %}
           
-          {# --Add a device to the list if the device entity is unavailable, or hasn't been seen in the last 2 hours-- #}
-          {% if states(device_entity) in ['unknown', 'unavailable']
-                or as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (60 * 60 * 2) %}
-            {% set unavail_device_list.list = unavail_device_list.list + [device_name] %}
-          {% endif %}
-        {% endfor %}
-        
-        {{ unavail_device_list.list }}
+            {# --Set variables-- #}
+            {% set device_entity = device[0] %}
+            {% set sensor_entity = device[1] %}
+            {% set device_name = device[2] %}
+            {% set timeout_minutes = 150 %}
+          
+            {# --Add a device to the list if the device entity is unavailable, or hasn't been seen in the timeout window-- #}
+            {% if states(device_entity) in ['unknown', 'unavailable']
+                  or as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (timeout_minutes * 60) %}
+              {% set unavail_device_list.list = unavail_device_list.list + [device_name] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ unavail_device_list.list }}

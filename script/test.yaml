@@ -362,3 +362,13 @@ test_fan_control:
           fan_entity_id: fan.theater_fan
           temperature_entity_id: sensor.theater_temperature
           timeout: 0
+
+test_exercise_reset:
+  alias: Test Exercise Reset
+  
+  sequence:
+    - service: input_boolean.turn_off
+      target:
+        entity_id:
+          - input_boolean.treadmill_sun
+          - input_boolean.workout_sun

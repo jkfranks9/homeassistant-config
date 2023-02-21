@@ -87,3 +87,65 @@
       unique_id: weight_training_monthly_calories_rounded
       unit_of_measurement: 'Kcal'
       state: "{{ states('sensor.weight_training_monthly_calories') | float(0) | round(2) }}"
+
+    #----------------------------#
+    #   -- Exercise History --   #
+    #----------------------------#
+    
+    - name: 'Weekly Treadmill Total'
+      unique_id: weekly_treadmill_total
+      icon: mdi:walk
+      state: >
+        {% set count = 0 %}
+        {% if states('input_boolean.treadmill_mon') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.treadmill_tue') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.treadmill_wed') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.treadmill_thu') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.treadmill_fri') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.treadmill_sat') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.treadmill_sun') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        
+        {{ count }}
+    
+    - name: 'Weekly Workout Total'
+      unique_id: weekly_workout_total
+      icon: mdi:weight-lifter
+      state: >
+        {% set count = 0 %}
+        {% if states('input_boolean.workout_mon') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.workout_tue') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.workout_wed') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.workout_thu') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.workout_fri') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.workout_sat') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        {% if states('input_boolean.workout_sun') == 'on' %}
+          {% set count = count + 1 %}
+        {% endif %}
+        
+        {{ count }}

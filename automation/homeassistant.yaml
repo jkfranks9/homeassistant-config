@@ -78,14 +78,12 @@
       value_template: >
         {% set skip_list = [
                             'change_downstairs_lighting',
-                            'operate_garage_door', 
                             'concat_auto_log_files', 
                             'concat_log_files', 
                             'concat_scripts_log_files', 
                             'evaluate_weather_condition', 
                             'mobile_notification_worker',
                             'popup_light_group',
-                            'position_hvac_vent',
                             'reset_smart_bulbs', 
                             'restore_lighting_on_resume',
                             'resume_cinema',
@@ -178,14 +176,27 @@
       entity_id: input_boolean.dryer_running
     
     # Backup the dryer trend sensors log file if indicated.
-    - condition: state
-      entity_id: input_boolean.backup_dryer_trend_sensors_log
-      state: 'on'
+    - if:
+        - condition: state
+          entity_id: input_boolean.backup_dryer_trend_sensors_log
+          state: 'on'
+      
+      then:
     
-    - service: shell_command.backup_dryer_trend_sensors_log
+        - service: shell_command.backup_dryer_trend_sensors_log
+        
+        - service: input_boolean.turn_off
+          entity_id: input_boolean.backup_dryer_trend_sensors_log
+    
+    # Reset the exercise flags for the current day, so we won't count this day if no exercise is done.
+    - variables:
+        day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
     
     - service: input_boolean.turn_off
-      entity_id: input_boolean.backup_dryer_trend_sensors_log
+      target:
+        entity_id: 
+          - "{{ 'input_boolean.treadmill_' ~ day_of_week }}" 
+          - "{{ 'input_boolean.workout_' ~ day_of_week }}"
 
 #===================================#
 #     Kodi Media Player Logging     #
@@ -444,3 +455,35 @@
         unique_id: "{{ unique_id }}"
         state: "{{ timestamp }}"
         attributes: {}
+
+#========================#
+#     Zigbee Devices     #
+#========================#
+
+# The Zigbee device unavailable notification is triggered unintentionally when the Zigbee2MQTT add-on is updated.
+# Detect that here and disable the notification automation; re-enable it after the update is complete.
+- alias: Disable Zigbee Unavailable Notification
+  id: 'disable_zigbee_unavailable_notification'
+  
+  trigger:
+    - platform: state
+      entity_id: update.zigbee2mqtt_update
+      from: 'off'
+      to: 'on'
+  
+  action:
+    - service: automation.turn_off
+      entity_id: automation.notify_zigbee_device_unavailable
+
+- alias: Enable Zigbee Unavailable Notification
+  id: 'enable_zigbee_unavailable_notification'
+  
+  trigger:
+    - platform: state
+      entity_id: update.zigbee2mqtt_update
+      from: 'on'
+      to: 'off'
+  
+  action:
+    - service: automation.turn_on
+      entity_id: automation.notify_zigbee_device_unavailable

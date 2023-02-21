@@ -327,7 +327,7 @@
     path: notification/maint_below_notify.yaml
     input:
       sensor_entity: sensor.upstairs_br_vent_1_battery
-      threshold: 15
+      threshold: 26
       timer_entity: timer.upstairs_br_vent_1_battery_notification
       message: 'Upstairs BR vent 1 batteries need replacing.'
       persistent: false
@@ -340,7 +340,7 @@
     path: notification/maint_below_notify.yaml
     input:
       sensor_entity: sensor.upstairs_br_vent_2_battery
-      threshold: 15
+      threshold: 26
       timer_entity: timer.upstairs_br_vent_2_battery_notification
       message: 'Upstairs BR vent 2 batteries need replacing.'
       persistent: false
@@ -584,7 +584,14 @@
       trigger_time: '06:02:00'
       date_entities: [
                       'input_datetime.reminder_misc_smokedetectors', 
-                      'input_datetime.reminder_misc_9vbatteries'
+                      'input_datetime.reminder_misc_9vbatteries',
+                      'input_datetime.reminder_misc_cleanfridge',
+                      'input_datetime.reminder_misc_cleanoven',
+                      'input_datetime.reminder_misc_cleanmicrowavefilter',
+                      'input_datetime.reminder_misc_cleandishwasher',
+                      'input_datetime.reminder_misc_cleanhvacregs',
+                      'input_datetime.reminder_misc_rechargeclipper',
+                      'input_datetime.reminder_misc_lubegaragedoors'
                      ]
       message_prefix: Miscellaneous maintenance due      
       tag_prefix: misc_maintenance_
@@ -598,7 +605,14 @@
     input:
       date_entities: [
                       'input_datetime.reminder_misc_smokedetectors', 
-                      'input_datetime.reminder_misc_9vbatteries'
+                      'input_datetime.reminder_misc_9vbatteries',
+                      'input_datetime.reminder_misc_cleanfridge',
+                      'input_datetime.reminder_misc_cleanoven',
+                      'input_datetime.reminder_misc_cleanmicrowavefilter',
+                      'input_datetime.reminder_misc_cleandishwasher',
+                      'input_datetime.reminder_misc_cleanhvacregs',
+                      'input_datetime.reminder_misc_rechargeclipper',
+                      'input_datetime.reminder_misc_lubegaragedoors'
                      ]
       tag_prefix: misc_maintenance_
 
@@ -800,6 +814,7 @@
       data:
         destination:
           - mobile
+          - echo
         title: 'Reminder:'
         message: >
           {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
@@ -807,6 +822,7 @@
           {{ trigger.calendar_event.summary | replace(' (appt)', '') }} at {{ time }}
         channel: standard
         throttled: false
+        media_player_entity: media_player.everywhere
         tag: ''
         timeout: 0
 
@@ -829,6 +845,7 @@
       data:
         destination:
           - mobile
+          - echo
         title: 'Reminder:'
         message: >
           {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
@@ -836,6 +853,7 @@
           {{ trigger.calendar_event.summary | replace(' (home)', '') }} at {{ time }}
         channel: standard
         throttled: false
+        media_player_entity: media_player.everywhere
         tag: ''
         timeout: 0
 
@@ -844,8 +862,8 @@
 #
 # - I'm assuming the maximum dark window of 14 hours (about 5 PM to 7 AM), so that's the offset needed for the calendar trigger
 # - I'm assuming there will be a maximum of 2 events per day
-# - For an event outside the hours of 10 PM to 6 AM, I want a notification 15 minutes prior to the event
-# - For an event between 10 PM and 6 AM I want the notification at 10 PM, so I can decide to either stay up or set an alarm
+# - For an event outside the hours of 10 PM to 7 AM, I want a notification 15 minutes prior to the event
+# - For an event between 10 PM and 7 AM I want the notification at 10 PM, so I can decide to either stay up or set an alarm
 # - Timers need to be set for when the notification should be issued, and the text of the message needs to be saved (up to 2 timers/texts for 2 separate events)
 # - The timer expirations are thus additional triggers
 - alias: Notify Calendar Astronomy Event
@@ -886,8 +904,8 @@
             text: "{{ trigger.calendar_event.summary | replace(' (astro)', '') }} at {{ event_time_string }}"
         - if:
           
-            # Handle an event time outside the hours of 10 PM to 6 AM.
-            - "{{ (event_hour | int(0) >= 17 and event_hour | int(0) < 22) or (event_hour | int(0) >= 6 and event_hour | int(0) < 7) }}"
+            # Handle an event time outside the hours of 10 PM to 7 AM (meaning 5:00 PM to 9:59 PM).
+            - "{{ event_hour | int(0) >= 17 and event_hour | int(0) < 22 }}"
           
           then:
                 
@@ -920,7 +938,7 @@
                     entity_id: timer.calendar_astronomy_notification_2
                     duration: '13:45:00'
           
-          # Handle an event time between 10 PM and 6 AM.
+          # Handle an event time between 10 PM and 7 AM.
           else:
             - variables:
                 minutes: "{{ ((as_timestamp(now().replace(hour = 22, minute = 0, second = 0, microsecond = 0)) - as_timestamp(now().replace(microsecond = 0))) / 60) | round }}"
@@ -964,24 +982,28 @@
               data:
                 destination:
                   - mobile
+                  - echo
                 title: 'Reminder:'
                 message: "{{ states('input_text.calendar_astronomy_notification_message_1') }}"
-                channel: standard
+                channel: temporary
+                timeout: 1800
                 throttled: false
+                media_player_entity: media_player.everywhere
                 tag: ''
-                timeout: 0
           
           else:
             - service: script.send_notification
               data:
                 destination:
                   - mobile
+                  - echo
                 title: 'Reminder:'
                 message: "{{ states('input_text.calendar_astronomy_notification_message_2') }}"
-                channel: standard
+                channel: temporary
+                timeout: 1800
                 throttled: false
+                media_player_entity: media_player.everywhere
                 tag: ''
-                timeout: 0
 
 #==============================#
 #     Device Notifications     #
@@ -1003,11 +1025,11 @@
           - echo
         title: 'Action required:'
         message: 'Washer has finished.'
-        channel: temporary
-        timeout: 7200
+        channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
         tag: ''
+        timeout: 0
 
 # Dryer cycle complete
 - alias: Notify Dryer Done
@@ -1025,11 +1047,11 @@
           - echo
         title: 'Action required:'
         message: 'Dryer has probably finished.'
-        channel: temporary
-        timeout: 7200
+        channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
         tag: ''
+        timeout: 0
 
 #================#
 #     Hockey     #
@@ -1153,22 +1175,23 @@
   id: 'notify_zigbee_device_unavailable'
   
   trigger:
-    - platform: template
-      value_template: "{{ states('sensor.zigbee_device_unavailable') | length > 0 }}"
+    - platform: numeric_state
+      entity_id: sensor.zigbee_device_unavailable
+      above: 0
   
   action:
     - variables:
-        num_devices: "{{ states('sensor.zigbee_device_unavailable') | length }}"
+        unavail_devices: "{{ trigger.to_state.state }}"
+        devices_str: "Device{% if unavail_devices > 1 %}s{% endif %}"
     
     - service: script.send_notification
       data:
         destination:
           - persistent
         title: |
-          Zigbee Device{% if num_devices > 1 %}s{% endif %} Unavailable'
+          Zigbee {{ devices_str }} Unavailable:
         notification_id: 'zigbee_device_unavail'
         message: |
-          Zigbee device{% if num_devices > 1 %}s{% endif %}:{{"\n"}}
-          {% for device in states('sensor.zigbee_device_unavailable') %}
+          {% for device in state_attr('sensor.zigbee_device_unavailable', 'device_list') %}
             {{ device }}{% if not loop.last %},{% endif %}
           {% endfor %}

@@ -1,0 +1,36 @@
+# Operate HVAC vents.
+
+blueprint:
+  name: HVAC Vent Operation
+  description: Open, close or position HVAC vents.
+  domain: script
+  
+  input:
+    vent_entity:
+      name: Vent Entity
+      description: 'Single vent entity ID, or a list.'
+    
+    position:
+      name: Vent Position
+      description: 'Vent desired position.'
+      selector:
+        number:
+          min: 0
+          max: 100
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_vent_entity: !input vent_entity
+  input_position: !input position
+
+sequence:
+  
+  # Operate on all input vents.
+  - repeat:
+      for_each: "{{ input_vent_entity }}"
+      
+      sequence:
+        - service: mqtt.publish
+          data_template:
+            topic: "zigbee2mqtt/{{ state_attr(repeat.item, 'friendly_name') }}/set"
+            payload_template: "{\"position\": {{ input_position }}}"

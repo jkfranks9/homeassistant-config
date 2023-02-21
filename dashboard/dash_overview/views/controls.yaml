@@ -14,6 +14,7 @@ cards:
       - !include /config/dashboard/dash_overview/cards/controls/treadmill.yaml
       - !include /config/dashboard/dash_overview/cards/controls/vents.yaml
       - !include /config/dashboard/dash_overview/cards/controls/switches.yaml
+      - !include /config/dashboard/dash_overview/cards/controls/payment_amounts.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
       - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml
