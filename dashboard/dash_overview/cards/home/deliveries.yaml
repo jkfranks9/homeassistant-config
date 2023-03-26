@@ -3,102 +3,133 @@
 #=========================#
 
 type: custom:stack-in-card
+title: Deliveries & Mail
 mode: vertical
+
 cards:
   
-  - type: custom:stack-in-card
-    mode: horizontal
-    title: Deliveries & Mail
-    cards:
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 2
+          square: false
+          cards:
           
-      - type: custom:mushroom-template-card
-        primary: Amazon Packages
-        secondary: >-
-          {{ states('sensor.mail_amazon_packages') }} ➤ 
-          {{ states('sensor.mail_amazon_packages_delivered') }}
-        icon: mdi:alpha-a-box-outline
-        icon_color: >-
-          {% if states('sensor.mail_amazon_packages_delivered') | int(0) > 0 %}
-            green
-          {% elif states('sensor.mail_amazon_packages') | int(0) > 0 %}
-            yellow
-          {% elif states('sensor.mail_amazon_packages') | int(0) == 0 %}
-            white
-          {% else %}
-            gray
-          {% endif %}
-      
-      - type: custom:mushroom-template-card
-        primary: USPS Packages
-        secondary: >-
-          {{ states('sensor.mail_usps_packages') }} ➤ 
-          {{ states('sensor.mail_usps_delivering') }} ➤ 
-          {{ states('sensor.mail_usps_delivered') }}
-        icon: mdi:package-variant-closed
-        icon_color: |-
-          {% if states('sensor.mail_usps_delivered') | int(0) > 0 %}
-            green
-          {% elif states('sensor.mail_usps_delivering') | int(0) > 0 %}
-            blue
-          {% elif states('sensor.mail_usps_packages') | int(0) > 0 %}
-            yellow
-          {% elif states('sensor.mail_usps_packages') | int(0) == 0 %}
-            white
-          {% else %}
-            gray
-          {% endif %}
-  
-  - type: custom:stack-in-card
-    mode: horizontal
-    cards:
-      
-      - type: custom:mushroom-template-card
-        primary: UPS Packages
-        secondary: >-
-          {{ states('sensor.mail_ups_packages') }} ➤ 
-          {{ states('sensor.mail_ups_delivering') }} ➤ 
-          {{ states('sensor.mail_ups_delivered') }}
-        icon: mdi:alpha-u-box-outline
-        icon_color: |-
-          {% if states('sensor.mail_ups_delivered') | int(0) > 0 %}
-            green
-          {% elif states('sensor.mail_ups_delivering') | int(0) > 0 %}
-            blue
-          {% elif states('sensor.mail_ups_packages') | int(0) > 0 %}
-            yellow
-          {% elif states('sensor.mail_ups_packages') | int(0) == 0 %}
-            white
-          {% else %}
-            gray
-          {% endif %}
-      
-      - type: custom:mushroom-template-card
-        primary: Fedex Packages
-        secondary: >-
-          {{ states('sensor.mail_fedex_packages') }} ➤ 
-          {{ states('sensor.mail_fedex_delivering') }} ➤ 
-          {{ states('sensor.mail_fedex_delivered') }}
-        icon: mdi:alpha-f-box-outline
-        icon_color: |-
-          {% if states('sensor.mail_fedex_delivered') | int(0) > 0 %}
-            green
-          {% elif states('sensor.mail_fedex_delivering') | int(0) > 0 %}
-            blue
-          {% elif states('sensor.mail_fedex_packages') | int(0) > 0 %}
-            yellow
-          {% elif states('sensor.mail_fedex_packages')  |int(0) == 0 %}
-            white
-          {% else %}
-            gray
-          {% endif %}
-      
-  - type: custom:mushroom-template-card
-    primary: USPS Mail
-    secondary: "{{ states('sensor.mail_usps_mail') }} {{ 'piece' if states('sensor.mail_usps_mail') | int(0) == 1 else 'pieces' }}"
-    icon: |-
-      {% if states('sensor.mail_usps_mail') | int(0) > 0 %}
-        mdi:mailbox-open-up
-      {% else %}
-        mdi:mailbox
-      {% endif %}
-    icon_color: white
+            - type: 'custom:button-card'
+              template: delivery_button
+              name: Amazon
+              label: >
+                [[[
+                  return states['sensor.mail_amazon_packages'].state + " ➤ " + states['sensor.mail_amazon_packages_delivered'].state;
+                ]]]
+              icon: mdi:alpha-a-box-outline
+              styles:
+                icon:
+                  - color: >
+                      [[[
+                        if (states['sensor.mail_amazon_packages_delivered'].state > 0)
+                          return 'var(--success-color)';
+                        else if (states['sensor.mail_amazon_packages'].state > 0)
+                          return 'var(--accent-color)';
+                        else if (states['sensor.mail_amazon_packages'].state == 0)
+                          return 'var(--paper-item-icon-color)';
+                        else
+                          return 'var(--secondary-text-color)';
+                      ]]]
+              
+            - type: 'custom:button-card'
+              template: delivery_button
+              name: USPS
+              label: >
+                [[[
+                  return states['sensor.mail_usps_packages'].state + " ➤ " + states['sensor.mail_usps_delivering'].state + " ➤ " + states['sensor.mail_usps_delivered'].state;
+                ]]]
+              icon: mdi:package-variant-closed
+              styles:
+                icon:
+                  - color: >
+                      [[[
+                        if (states['sensor.mail_usps_delivered'].state > 0)
+                          return 'var(--success-color)';
+                        else if (states['sensor.mail_usps_delivering'].state > 0)
+                          return 'var(--primary-color)';
+                        else if (states['sensor.mail_usps_packages'].state > 0)
+                          return 'var(--accent-color)';
+                        else if (states['sensor.mail_usps_packages'].state == 0)
+                          return 'var(--paper-item-icon-color)';
+                        else
+                          return 'var(--secondary-text-color)';
+                      ]]]
+          
+            - type: 'custom:button-card'
+              template: delivery_button
+              name: UPS
+              label: >
+                [[[
+                  return states['sensor.mail_ups_packages'].state + " ➤ " + states['sensor.mail_ups_delivering'].state + " ➤ " + states['sensor.mail_ups_delivered'].state;
+                ]]]
+              icon: mdi:alpha-u-box-outline
+              styles:
+                icon:
+                  - color: >
+                      [[[
+                        if (states['sensor.mail_ups_delivered'].state > 0)
+                          return 'var(--success-color)';
+                        else if (states['sensor.mail_ups_delivering'].state > 0)
+                          return 'var(--primary-color)';
+                        else if (states['sensor.mail_ups_packages'].state > 0)
+                          return 'var(--accent-color)';
+                        else if (states['sensor.mail_ups_packages'].state == 0)
+                          return 'var(--paper-item-icon-color)';
+                        else
+                          return 'var(--secondary-text-color)';
+                      ]]]
+              
+            - type: 'custom:button-card'
+              template: delivery_button
+              name: Fedex
+              label: >
+                [[[
+                  return states['sensor.mail_fedex_packages'].state + " ➤ " + states['sensor.mail_fedex_delivering'].state + " ➤ " + states['sensor.mail_fedex_delivered'].state;
+                ]]]
+              icon: mdi:alpha-f-box-outline
+              styles:
+                icon:
+                  - color: >
+                      [[[
+                        if (states['sensor.mail_fedex_delivered'].state > 0)
+                          return 'var(--success-color)';
+                        else if (states['sensor.mail_fedex_delivering'].state > 0)
+                          return 'var(--primary-color)';
+                        else if (states['sensor.mail_fedex_packages'].state > 0)
+                          return 'var(--accent-color)';
+                        else if (states['sensor.mail_fedex_packages'].state == 0)
+                          return 'var(--paper-item-icon-color)';
+                        else
+                          return 'var(--secondary-text-color)';
+                      ]]]
+          
+            - type: 'custom:button-card'
+              template: delivery_button
+              name: Mail
+              label: >
+                [[[
+                  if (states['sensor.mail_usps_mail'].state == 1)
+                    return states['sensor.mail_usps_mail'].state + " piece";
+                  else
+                    return states['sensor.mail_usps_mail'].state + " pieces";
+                ]]]
+              icon: |-
+                [[[
+                  if (states['sensor.mail_usps_mail'].state > 0)
+                    return "mdi:mailbox-open-up";
+                  else
+                    return "mdi:mailbox";
+                ]]]
+              styles:
+                icon:
+                  - color: var(--paper-item-icon-color)

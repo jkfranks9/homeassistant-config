@@ -169,3 +169,90 @@ set_up_mqtt_automated_config:
   sequence:
     - service: mqtt.publish
       data: "{{ service_data }}"
+
+#=======================#
+#     Debug Logging     #
+#=======================#
+
+# Log laundry events to assist with debugging.
+log_laundry_event:
+  alias: Log Laundry Event
+  
+  fields:
+    event_type:
+      description: The type of event to be logged.
+      selector:
+        select:
+          options:
+            - basic
+            - metric
+            - metric_plus_gradient
+            - fill_plus_load
+            - timer
+    
+    prefix:
+      description: The message prefix that indicates a washer or dryer event.
+    
+    message:
+      description: The message to be logged.
+    
+    entity_id_1:
+      description: The first entity required (if any) for the message.
+    
+    entity_id_2:
+      description: The second entity required (if any) for the message.
+  
+  sequence:
+    - variables:
+        timestamp: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') }}:"
+    
+    # Take action based on the event type.
+    - choose:
+      
+      # A basic message just has a text component.
+      - conditions: "{{ event_type == 'basic' }}"
+        
+        sequence:
+          - service: notify.laundry_events
+            data_template:
+              message: "{{ timestamp }} {{ prefix }} {{ message }}"
+    
+      # A metric message adds a single metric, such as a temperature or humidity.
+      - conditions: "{{ event_type == 'metric' }}"
+        
+        sequence:
+          - service: notify.laundry_events
+            data_template:
+              message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }})"
+    
+      # A metric plus gradient message includes both a single metric plus a trend sensor gradient. Obviously this only applies to the dryer.
+      - conditions: "{{ event_type == 'metric_plus_gradient' }}"
+        
+        sequence:
+          - service: notify.laundry_events
+            data_template:
+              message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }}) {{ state_attr(entity_id_2, 'gradient') | round(5) }}"
+    
+      # A fill plus load message includes both the washer fill seconds and calculated load size.
+      - conditions: "{{ event_type == 'fill_plus_load' }}"
+        
+        sequence:
+          - service: notify.laundry_events
+            data_template:
+              message: "{{ timestamp }} {{ prefix }} {{ message }} {{ states(entity_id_1) }}, {{ states(entity_id_2) }}"
+    
+      # A timer message indicates the name of the timer.
+      - conditions: "{{ event_type == 'timer' }}"
+        
+        sequence:
+          - service: notify.laundry_events
+            data_template:
+              message: "{{ timestamp }} {{ prefix }} {{ message }}: {{ state_attr(entity_id_1, 'friendly_name') }}"
+            
+      # Should not occur.
+      default:
+          
+        - service: system_log.write
+          data:
+            message: "Event type invalid value ({{ event_type }})"
+            level: error

@@ -33,12 +33,14 @@ cards:
               entity: input_boolean.adults_home
               name: Adults
               icon: mdi:human-male-female
+              show_state: false
           
             - type: 'custom:button-card'
               template: info_button
               entity: input_boolean.children_home
               name: Children
               icon: mdi:human-child
+              show_state: false
           
             - type: 'custom:button-card'
               template: info_button

@@ -79,3 +79,14 @@
            (is_state('switch.harmony_hub_stream_player', 'off') or
              (is_state('switch.harmony_hub_stream_player', 'on') and
               is_state('media_player.shield_tv', 'playing'))) }}
+
+    #-------------------------#
+    #   -- Dryer Control --   #
+    #-------------------------#
+    
+    # This sensor controls when we turn off the dryer. There are trend sensors to detect temperature and humidity falling,
+    # but sometimes these can be spurious, for example getting 2 humidity falling events, then a temperature falling event.
+    # So we have a counter for each type of event, and only turn this sensor on when both counters are above zero.
+    - name: 'Dryer Done'
+      unique_id: dryer_done
+      state: "{{ states('counter.dryer_temperature_count') | int(0) > 0 and states('counter.dryer_humidity_count') | int(0) > 0 }}"

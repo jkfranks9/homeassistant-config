@@ -18,6 +18,21 @@ container:
         - margin: 0
         - padding: 0.15em
 
+#=========================#
+#     Delivery Button     #
+#=========================#
+
+delivery_button:
+  show_icon: true
+  show_name: true
+  show_label: true
+  show_state: false
+  layout: icon_name_state2nd
+  size: 30%
+  
+  tap_action:
+    action: none
+
 #=======================#
 #     Toggle Button     #
 #=======================#
@@ -25,9 +40,22 @@ container:
 toggle_button:
   show_icon: true
   show_name: true
+  show_state: true
   
   tap_action:
     action: toggle
+
+#=======================#
+#     Sensor Button     #
+#=======================#
+
+sensor_button:
+  show_icon: true
+  show_name: true
+  show_state: true
+  
+  tap_action:
+    action: none
 
 #=====================#
 #     Info Button     #
@@ -47,7 +75,7 @@ info_button:
     ]]]
   
   tap_action:
-    action: 'none'
+    action: more-info
   
   state:
     - value: 'not_home'
@@ -220,11 +248,11 @@ thermostat_button:
         styles:
           state:
             - font-size: 70%
-            - color: var(--disabled-text-color)
+            - color: var(--text-primary-color)
           
           card:
             - padding: 0 2px
-            - background-color: var(--bar-low-color)
+            - background-color: var(--dark-primary-color)
     
     high:
       card:
@@ -243,11 +271,11 @@ thermostat_button:
         styles:
           state:
             - font-size: 70%
-            - color: var(--disabled-text-color)
+            - color: var(--text-primary-color)
           
           card:
             - padding: 0 2px
-            - background-color: var(--bar-low-color)
+            - background-color: var(--dark-primary-color)
 
 #============================#
 #     Temperature Button     #
@@ -300,11 +328,11 @@ temperature_button:
         styles:
           state:
             - font-size: 70%
-            - color: var(--disabled-text-color)
+            - color: var(--text-primary-color)
           
           card:
             - padding: 0 2px
-            - background-color: var(--bar-low-color)
+            - background-color: var(--dark-primary-color)
       
     max:
       card:
@@ -321,11 +349,11 @@ temperature_button:
         styles:
           state:
             - font-size: 70%
-            - color: var(--disabled-text-color)
+            - color: var(--text-primary-color)
           
           card:
             - padding: 0 2px
-            - background-color: var(--bar-low-color)
+            - background-color: var(--dark-primary-color)
 
 #==========================#
 #     HVAC Vent Button     #
@@ -683,17 +711,17 @@ environment_button:
             - display: contents
           
           state:
-            - color: 'var(--disabled-text-color)'
+            - color: 'var(--text-primary-color)'
             - font-size: 70%
             - align-self: flex-end
           
           card:
             - padding: 0
             - padding-left: 2px
-            - background-color: 'var(--bar-low-color)'
+            - background-color: 'var(--dark-primary-color)'
           
           icon:
-            - color: 'var(--disabled-text-color)'
+            - color: 'var(--text-primary-color)'
             - width: 18px
             - height: 15px
             - margin: -4px -3px 0 -4px

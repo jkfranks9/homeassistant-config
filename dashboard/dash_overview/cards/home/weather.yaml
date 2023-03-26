@@ -39,19 +39,24 @@ cards:
         unit: false
         entity: sensor.thermal_comfort_frost_point
         state_header: Frost
+        format: precision1
         entities:
           - entity: sensor.thermal_comfort_heat_index
             name: Heat
             unit: false
+            format: precision1
           - entity: sensor.thermal_comfort_humidex
             name: Humid
             unit: false
+            format: precision1
           - entity: sensor.thermal_comfort_summer_simmer_index
             name: Simmer
             unit: false
+            format: precision1
           - entity: sensor.thermal_comfort_dew_point
             name: Dew
             unit: false
+            format: precision1
   
   # Thermal comfort perception
   - type: entities

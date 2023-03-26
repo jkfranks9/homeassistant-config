@@ -52,13 +52,13 @@ severity_colors:
     min: '[[min]]'
     max: '[[max]]'
     severity:
-      - color: 'var(--bar-low-color)'
+      - color: 'var(--success-color)'
         from: '[[range1_from]]'
         to:   '[[range1_to]]'
-      - color: 'var(--bar-medium-color)'
+      - color: 'var(--warning-color)'
         from: '[[range2_from]]'
         to:   '[[range2_to]]'
-      - color: 'var(--bar-high-color)'
+      - color: 'var(--error-color)'
         from: '[[range3_from]]'
         to:   '[[range3_to]]'
 

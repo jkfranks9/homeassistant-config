@@ -3,23 +3,38 @@
 #====================#
 
 type: custom:stack-in-card
-mode: horizontal
 title: Other
+mode: vertical
 
 cards:
+  
   - type: 'custom:button-card'
-    template: toggle_button
-    entity: switch.adguard_protection
-    name: Adguard
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
   
-  - type: entity
-    entity: input_select.occupied_bedrooms
-    name: Beds
-  
-  - type: entity
-    entity: sensor.weekly_treadmill_total
-    name: Walk
-  
-  - type: entity
-    entity: sensor.weekly_workout_total
-    name: Workout
+            - type: custom:button-card
+              template: toggle_button
+              entity: switch.adguard_protection
+              name: Adguard
+          
+            - type: custom:button-card
+              template: sensor_button
+              entity: sensor.weekly_treadmill_total
+              name: Treadmill
+          
+            - type: custom:button-card
+              template: sensor_button
+              entity: sensor.weekly_workout_total
+              name: Workout
+          
+            - type: custom:button-card
+              template: sensor_button
+              entity: sensor.cpap_ahi_events_per_hour
+              name: AHI

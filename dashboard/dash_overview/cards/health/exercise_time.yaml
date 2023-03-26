@@ -9,36 +9,36 @@ cards:
     entities:
       
       - type: custom:multiple-entity-row
-        entity: sensor.treadmill_monthly_time
+        entity: input_number.treadmill_monthly_time
         name: Treadmill
         icon: mdi:walk
         state_header: Monthly
         entities:
-          - entity: sensor.treadmill_daily_time
+          - entity: input_number.treadmill_daily_time
             name: Daily
-          - entity: sensor.treadmill_weekly_time
+          - entity: input_number.treadmill_weekly_time
             name: Weekly
       
       - type: custom:multiple-entity-row
-        entity: sensor.yard_work_monthly_time
+        entity: input_number.workout_monthly_time
+        name: Workout
+        icon: mdi:weight-lifter
+        state_header: Monthly
+        entities:
+          - entity: input_number.workout_daily_time
+            name: Daily
+          - entity: input_number.workout_weekly_time
+            name: Weekly
+      
+      - type: custom:multiple-entity-row
+        entity: input_number.yard_work_monthly_time
         name: Yard Work
         icon: mdi:shovel
         state_header: Monthly
         entities:
-          - entity: sensor.yard_work_daily_time
+          - entity: input_number.yard_work_daily_time
             name: Daily
-          - entity: sensor.yard_work_weekly_time
-            name: Weekly
-      
-      - type: custom:multiple-entity-row
-        entity: sensor.weight_training_monthly_time
-        name: Weight Training
-        icon: mdi:weight-lifter
-        state_header: Monthly
-        entities:
-          - entity: sensor.weight_training_daily_time
-            name: Daily
-          - entity: sensor.weight_training_weekly_time
+          - entity: input_number.yard_work_weekly_time
             name: Weekly
       
       - type: custom:multiple-entity-row

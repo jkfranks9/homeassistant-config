@@ -1,14 +1,84 @@
-#==============================#
-#     Weight Training Time     #
-#==============================#
+#============================#
+#     Workout Daily Time     #
+#============================#
 
-# Set weight training time.
-set_weight_training_time:
-  alias: Set Weight Training Time
+set_workout_daily_time:
+  alias: Set Workout Daily Time
   
   sequence:
     - service: input_number.set_value
       target:
-        entity_id: input_number.weight_training_time
+        entity_id: input_number.workout_daily_time
       data:
-        value: 25
+        value: "{{ states('input_number.variables_workout_time') }}"
+
+#==========================#
+#     Exercise Metrics     #
+#==========================#
+
+# Here we use the daily exercise time/calories values to update the weekly and monthly metrics. This is called when any exercise
+# type is performed, after the corresponding daily values have been set.
+# NOTE: We depend on the weekly and monthly values being reset as needed, so we can start with fresh (0) values at the start of
+# a new week or month. This happens in the Perform Daily Chores automation.
+register_exercise_metrics:
+  alias: Register Exercise Metrics
+  
+  fields:
+    exercise_type:
+      description: 'The type of exercise performed.'
+      selector:
+        select:
+          options:
+            - treadmill
+            - workout
+            - yard_work
+  
+  variables:
+    valid: "{{ exercise_type in ['treadmill', 'workout', 'yard_work'] }}"
+    weekly_time_entity: "{{ 'input_number.' ~ exercise_type ~ '_weekly_time' }}"
+    weekly_calories_entity: "{{ 'input_number.' ~ exercise_type ~ '_weekly_calories' }}"
+    monthly_time_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_time' }}"
+    monthly_calories_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_calories' }}"
+    daily_time: "{{ states('input_number.' ~ exercise_type ~ '_daily_time') | int(0) }}"
+    daily_calories: "{{ states('input_number.' ~ exercise_type ~ '_daily_calories') | int(0) }}"
+  
+  sequence:
+    
+    # Continue if we have a valid input.
+    - if:
+        - "{{ valid }}"
+      
+      then:
+        
+        # Update the weekly metrics.
+        - service: input_number.set_value
+          target:
+            entity_id: "{{ weekly_time_entity }}"
+          data:
+            value: "{{ states(weekly_time_entity) | int(0) + daily_time }}"
+        
+        - service: input_number.set_value
+          target:
+            entity_id: "{{ weekly_calories_entity }}"
+          data:
+            value: "{{ states(weekly_calories_entity) | int(0) + daily_calories }}"
+        
+        # Update the monthly metrics.
+        - service: input_number.set_value
+          target:
+            entity_id: "{{ monthly_time_entity }}"
+          data:
+            value: "{{ states(monthly_time_entity) | int(0) + daily_time }}"
+        
+        - service: input_number.set_value
+          target:
+            entity_id: "{{ monthly_calories_entity }}"
+          data:
+            value: "{{ states(monthly_calories_entity) | int(0) + daily_calories }}"
+      
+      # Invalid exercise type, log it.
+      else:
+        - service: system_log.write
+          data:
+            message: "Invalid exercise type '{{ exercise_type }}' specified"
+            level: error

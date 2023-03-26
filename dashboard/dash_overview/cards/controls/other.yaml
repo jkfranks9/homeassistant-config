@@ -1,9 +1,9 @@
-#=======================#
-#     Switches Card     #
-#=======================#
+#====================#
+#     Other Card     #
+#====================#
 
 type: custom:stack-in-card
-title: Switches
+title: Other
 
 cards:
   - type: entities
@@ -11,3 +11,6 @@ cards:
     entities:
       - entity: input_boolean.christmas_mode
         icon: mdi:pine-tree
+      
+      - entity: input_select.occupied_bedrooms
+        name: Beds

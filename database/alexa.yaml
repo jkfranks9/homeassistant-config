@@ -42,9 +42,10 @@ smart_home:
       - scene.lights_out
       - script.awake
       - script.bedtime
+      - script.log_dryer_start
       - script.play_feature_movie
       - script.set_theater_idle
-      - script.set_weight_training_time
+      - script.set_workout_daily_time
       - script.sleeptime
       - script.start_bluray
       - script.start_laserdisc

@@ -9,36 +9,36 @@ cards:
     entities:
       
       - type: custom:multiple-entity-row
-        entity: sensor.treadmill_monthly_calories
+        entity: input_number.treadmill_monthly_calories
         name: Treadmill
         icon: mdi:walk
         state_header: Monthly
         entities:
-          - entity: sensor.treadmill_daily_calories
+          - entity: input_number.treadmill_daily_calories
             name: Daily
-          - entity: sensor.treadmill_weekly_calories
+          - entity: input_number.treadmill_weekly_calories
             name: Weekly
       
       - type: custom:multiple-entity-row
-        entity: sensor.yard_work_monthly_calories_rounded
+        entity: input_number.workout_monthly_calories
+        name: Workout
+        icon: mdi:weight-lifter
+        state_header: Monthly
+        entities:
+          - entity: input_number.workout_daily_calories
+            name: Daily
+          - entity: input_number.workout_weekly_calories
+            name: Weekly
+      
+      - type: custom:multiple-entity-row
+        entity: input_number.yard_work_monthly_calories
         name: Yard Work
         icon: mdi:shovel
         state_header: Monthly
         entities:
-          - entity: sensor.yard_work_daily_calories_rounded
+          - entity: input_number.yard_work_daily_calories
             name: Daily
-          - entity: sensor.yard_work_weekly_calories_rounded
-            name: Weekly
-      
-      - type: custom:multiple-entity-row
-        entity: sensor.weight_training_monthly_calories_rounded
-        name: Weight Training
-        icon: mdi:weight-lifter
-        state_header: Monthly
-        entities:
-          - entity: sensor.weight_training_daily_calories_rounded
-            name: Daily
-          - entity: sensor.weight_training_weekly_calories_rounded
+          - entity: input_number.yard_work_weekly_calories
             name: Weekly
       
       - type: custom:multiple-entity-row

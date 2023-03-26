@@ -13,6 +13,15 @@
       unit_of_measurement: 'm'
       state: "{{ '%.0f' | format(states('sensor.cyber1_battery_runtime') | float(0) / 60) }}"
 
+    #----------------------------#
+    #   -- CPAP Usage Hours --   #
+    #----------------------------#
+    
+    - name: 'CPAP Usage Hours'
+      unique_id: cpap_usage_hours
+      #unit_of_measurement: 'h'
+      state: "{{ '%.2f' | format(states('sensor.cpap_usage_minutes') | float(0) / 60) }}"
+
     #-----------------------#
     #   -- Harmony Hub --   #
     #-----------------------#
@@ -88,14 +97,16 @@
         {% else %} {{ s }}
         {% endif %}
 
-    #-------------------------------------#
-    #   -- Zigbee Device Unavailable --   #
-    #-------------------------------------#
+    #--------------------------------------#
+    #   -- Zigbee Unavailable Devices --   #
+    #--------------------------------------#
     
-    # Captures any unavailable zigbee devices. The state is a count of all such devices.
-    - name: 'Zigbee Device Unavailable'
-      unique_id: zigbee_device_unavailable
+    # Current list of unavailable zigbee device friendly names. This is updated whenever a device becomes unavailable, or has not been heard
+    # from in a while. The state is a count of all such devices.
+    - name: 'Current Zigbee Unavailable Devices'
+      unique_id: current_zigbee_unavailable_devices
       state: "{{ this.attributes.device_list | length }}"
+      
       attributes:
         device_list: >
           {# --List of device entities, associated last seen sensors, and friendly names-- #}
@@ -124,6 +135,43 @@
             {# --Add a device to the list if the device entity is unavailable, or hasn't been seen in the timeout window-- #}
             {% if states(device_entity) in ['unknown', 'unavailable']
                   or as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (timeout_minutes * 60) %}
+              {% set unavail_device_list.list = unavail_device_list.list + [device_name] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ unavail_device_list.list }}
+    
+    # Previous list of unavailable zigbee device friendly names. This allows us to detect which of a list of unavailable devices is new when the 
+    # Notify Zigbee Device Unavailable automation runs. The state is a count of all such devices.
+    - name: 'Previous Zigbee Unavailable Devices'
+      unique_id: previous_zigbee_unavailable_devices
+      state: "{{ this.attributes.device_list | length }}"
+      
+      attributes:
+        device_list: >
+          {# --List of timestamp entities and friendly names-- #}
+          {% set device_list = [
+                                ['input_number.back_door_sensor', 'Back Door Sensor'],
+                                ['input_number.guest_br_window_sensor', 'Guest BR Window Sensor'],
+                                ['input_number.guest_bath_motion_detector', 'Guest Bath Motion Detector'],
+                                ['input_number.laundry_room_motion_detector', 'Laundry Room Motion Detector'],
+                                ['input_number.master_bath_motion_detector', 'Master Bath Motion Detector'],
+                                ['input_number.upstairs_br_vent_1', 'Upstairs BR Vent 1'],
+                                ['input_number.upstairs_br_vent_2', 'Upstairs BR Vent 2']
+                               ] %}
+                               
+          {# --Create an empty list to start-- #}
+          {% set unavail_device_list = namespace(list = []) %}
+          
+          {# --Walk through all devices-- #}
+          {% for device in device_list %}
+          
+            {# --Set variables-- #}
+            {% set timestamp_entity = device[0] %}
+            {% set device_name = device[1] %}
+          
+            {# --Add a device to the list if the device timestamp is not 0-- #}
+            {% if states(timestamp_entity) | int(0) > 0 %}
               {% set unavail_device_list.list = unavail_device_list.list + [device_name] %}
             {% endif %}
           {% endfor %}

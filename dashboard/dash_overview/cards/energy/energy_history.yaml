@@ -10,8 +10,9 @@ hours_to_show: 48
 hour24: false
 line_width: 2
 show:
-  extrema: true
+  extrema: false
 points_per_hour: 60
+group_by: interval
 
 entities:
   - entity: sensor.total_power

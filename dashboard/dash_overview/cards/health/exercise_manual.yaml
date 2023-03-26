@@ -8,5 +8,5 @@ cards:
   - type: entities
     show_header_toggle: false
     entities:
-      - entity: input_number.yard_work_time
-      - entity: input_number.weight_training_time
+      - entity: input_number.workout_daily_time
+      - entity: input_number.yard_work_daily_time

@@ -35,7 +35,7 @@ cards:
       - entity: input_datetime.reminder_cleaning_upstairs_bath
       - name: Bath
       - icon: bathtub
-      - interval: 4
+      - interval: 6
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       

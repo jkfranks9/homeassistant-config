@@ -18,10 +18,14 @@ entities:
     name: Garage South
     icon: mdi:calendar
   
+  - entity: sensor.washer_last_changed
+    name: Washer
+    icon: mdi:calendar
+  
   - entity: sensor.treadmill_last_changed
     name: Treadmill
     icon: mdi:calendar
   
-  - entity: sensor.washer_last_changed
-    name: Washer
+  - entity: sensor.workout_last_changed
+    name: Workout
     icon: mdi:calendar

@@ -415,12 +415,12 @@
     - platform: time
       at: '08:00:00'
   
-  # Continue if the treadmill or weight training were last used more than 3 days ago (72 hours).
+  # Continue if the treadmill or exercise were last used more than 3 days ago (72 hours).
   condition:
     - condition: template
       value_template: >
         {% set t_changed = states('sensor.treadmill_last_changed') %}
-        {% set w_changed = states('sensor.exercise_last_changed') %}
+        {% set w_changed = states('sensor.workout_last_changed') %}
         {% set t_delta = now() - strptime(t_changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
         {% set w_delta = now() - strptime(w_changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
         {% set t_hours = (((t_delta.days * 86400) + t_delta.seconds) / 3600) | round(0) %}
@@ -591,9 +591,10 @@
                       'input_datetime.reminder_misc_cleandishwasher',
                       'input_datetime.reminder_misc_cleanhvacregs',
                       'input_datetime.reminder_misc_rechargeclipper',
-                      'input_datetime.reminder_misc_lubegaragedoors'
+                      'input_datetime.reminder_misc_lubegaragedoors',
+                      'input_datetime.reminder_misc_britafilter'
                      ]
-      message_prefix: Miscellaneous maintenance due      
+      message_prefix: Misc maintenance due      
       tag_prefix: misc_maintenance_
 
 # Clear persistent notification.
@@ -612,7 +613,8 @@
                       'input_datetime.reminder_misc_cleandishwasher',
                       'input_datetime.reminder_misc_cleanhvacregs',
                       'input_datetime.reminder_misc_rechargeclipper',
-                      'input_datetime.reminder_misc_lubegaragedoors'
+                      'input_datetime.reminder_misc_lubegaragedoors',
+                      'input_datetime.reminder_misc_britafilter'
                      ]
       tag_prefix: misc_maintenance_
 
@@ -768,10 +770,12 @@
                 {% for opt in state_attr('input_select.weekly_cleaning_items', 'options') %}
                   {% set item_list.list = item_list.list + [opt] %}
                   {% if loop.last %}
+                    {% set item_date = states(repeat.item).split('-')[-2] ~ '/' ~ states(repeat.item).split('-')[-1] %}
+                    {% set item_text = (state_attr(repeat.item, 'friendly_name').split('Reminder Cleaning ')[-1]) ~ ' (' ~ item_date ~ ')' %}
                     {% if opt | length == 0 %}
-                      {% set item_list.list = [(state_attr(repeat.item, 'friendly_name').split('Reminder Cleaning ')[-1])] %}
+                      {% set item_list.list = [item_text] %}
                     {% else %}
-                      {% set item_list.list = item_list.list + [(state_attr(repeat.item, 'friendly_name').split('Reminder Cleaning ')[-1])] %}
+                      {% set item_list.list = item_list.list + [item_text] %}
                     {% endif %}
                   {% endif %}
                 {% endfor %}
@@ -1173,25 +1177,217 @@
 
 - alias: Notify Zigbee Device Unavailable
   id: 'notify_zigbee_device_unavailable'
+  mode: queued
   
+  trace:
+    stored_traces: 20
+  
+  # Trigger on any state change to the unavailable devices sensor.
+  # NOTE: I'm assuming that the device list can't change while the state stays the same. In other words a single device can't
+  # become available at the same time another device becomes unavailable.
   trigger:
-    - platform: numeric_state
-      entity_id: sensor.zigbee_device_unavailable
-      above: 0
+    - platform: state
+      entity_id: sensor.current_zigbee_unavailable_devices
+      from:
+  
+  variables:
+    curr_device_list: "{{ state_attr('sensor.current_zigbee_unavailable_devices', 'device_list') }}"
+    curr_unavail_devices: "{{ states('sensor.current_zigbee_unavailable_devices') | int(0) }}"
+    curr_devices_str: "Device{% if curr_unavail_devices > 1 %}s{% endif %}"
+    prev_device_list: "{{ state_attr('sensor.previous_zigbee_unavailable_devices', 'device_list') }}"
+    prev_unavail_devices: "{{ states('sensor.previous_zigbee_unavailable_devices') | int(0) }}"
+    prev_devices_str: "Device{% if prev_unavail_devices > 1 %}s{% endif %}"
+  
+  condition:
+    
+    # Ignore any change to or from unavailable state.
+    - condition: template
+      value_template: "{{ trigger.from_state.state != 'unavailable' and trigger.to_state.state != 'unavailable' }}"
+    
+    # Ensure the state matches the number of devices in the list. Just call me paranoid.
+    - condition: template
+      value_template: "{{ trigger.to_state.state | int(0) == curr_device_list | count }}"
+    
+    # Ignore spurious nonsense during HA startup.
+    - condition: state
+      entity_id: input_boolean.zigbee_catch_22
+      state: 'off'
   
   action:
-    - variables:
-        unavail_devices: "{{ trigger.to_state.state }}"
-        devices_str: "Device{% if unavail_devices > 1 %}s{% endif %}"
     
-    - service: script.send_notification
+    # DEBUG messages
+    - service: system_log.write
       data:
-        destination:
-          - persistent
-        title: |
-          Zigbee {{ devices_str }} Unavailable:
-        notification_id: 'zigbee_device_unavail'
-        message: |
-          {% for device in state_attr('sensor.zigbee_device_unavailable', 'device_list') %}
-            {{ device }}{% if not loop.last %},{% endif %}
-          {% endfor %}
+        message: "From state: {{ trigger.from_state }}"
+        level: info    
+    - service: system_log.write
+      data:
+        message: "To state: {{ trigger.to_state }}"
+        level: info
+    # DEBUG messages
+    
+    - choose:
+      
+      # Devices have become unavailable, and none were previously unavailable.
+      - conditions: "{{ trigger.from_state.state | int(0) == 0 }}"
+      
+        sequence:
+          
+          # Issue the unavailable devices notification.
+          - service: script.send_notification
+            data:
+              destination:
+                - persistent
+              title: |
+                Zigbee {{ curr_devices_str }} Unavailable:
+              notification_id: 'zigbee_device_unavail'
+              message: |
+                {% for device in curr_device_list %}
+                  {{ device }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+          
+          # Process all unavailable devices.
+          - repeat:
+              count: "{{ curr_unavail_devices }}"
+              sequence:
+          
+                - variables:
+                    device_name: "{{ curr_device_list[repeat.index - 1] }}"
+                    timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
+                
+                # Save the timestamp for the device. This causes the device to be added to the Previous Zigbee Unavailable Devices sensor.
+                - service: input_number.set_value
+                  target:
+                    entity_id: "{{ timestamp_entity }}"
+                  data:
+                    value: "{{ as_timestamp(now()) }}"
+        
+      # Devices have become available, and none are still unavailable.
+      - conditions: "{{ trigger.to_state.state | int(0) == 0 }}"
+      
+        sequence:
+          
+          # Remove the unavailable devices notification.
+          - service: persistent_notification.dismiss
+            data:
+              notification_id: 'zigbee_device_unavail'
+          
+          # Process all previously unavailable devices.
+          - repeat:
+              count: "{{ prev_unavail_devices }}"
+              sequence:
+                
+                - variables:
+                    device_name: "{{ prev_device_list[repeat.index - 1] }}"
+                    timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
+                    from_time: "{{ states(timestamp_entity) | int(0) | timestamp_custom('%b %d %X') }}"
+                    to_time: "{{ as_timestamp(now()) | timestamp_custom('%b %d %X') }}"
+              
+                # Issue the restored device notification.
+                - service: script.send_notification
+                  data:
+                    destination:
+                      - persistent
+                    title: 'Zigbee Device Restored:'
+                    notification_id: "{{ 'zigbee_device_restored_' ~ as_timestamp(now()) | int(0) }}"
+                    message: "{{ device_name ~ ' restored: (' ~ from_time ~ ' - ' ~ to_time ~ ')' }}"
+              
+                # Remove the timestamp for the device.
+                - service: input_number.set_value
+                  target:
+                    entity_id: "{{ timestamp_entity }}"
+                  data:
+                    value: 0
+        
+      # Devices have become unavailable, and some were previously unavailable.
+      - conditions: "{{ trigger.to_state.state | int(0) > trigger.from_state.state | int(0) }}"
+      
+        sequence:
+          
+          # Issue the unavailable devices notification.
+          - service: script.send_notification
+            data:
+              destination:
+                - persistent
+              title: |
+                Zigbee {{ curr_devices_str }} Unavailable:
+              notification_id: 'zigbee_device_unavail'
+              message: |
+                {% for device in curr_device_list %}
+                  {{ device }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+          
+          # Process all newly unavailable devices.
+          - repeat:
+              count: "{{ curr_unavail_devices }}"
+              sequence:
+                
+                - variables:
+                    device_name: "{{ curr_device_list[repeat.index - 1] }}"
+              
+                - if:
+                    - "{{ device_name not in prev_device_list }}"
+                  
+                  then:
+                
+                    - variables:
+                        timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
+          
+                    # Save the timestamp for the device. This causes the device to be added to the Previous Zigbee Unavailable Devices sensor.
+                    - service: input_number.set_value
+                      target:
+                        entity_id: "{{ timestamp_entity }}"
+                      data:
+                        value: "{{ as_timestamp(now()) }}"
+        
+      # Devices have become available, and some are still unavailable.
+      - conditions: "{{ trigger.to_state.state | int(0) < trigger.from_state.state | int(0) }}"
+      
+        sequence:
+          
+          # Issue the unavailable devices notification.
+          - service: script.send_notification
+            data:
+              destination:
+                - persistent
+              title: |
+                Zigbee {{ curr_devices_str }} Unavailable:
+              notification_id: 'zigbee_device_unavail'
+              message: |
+                {% for device in curr_device_list %}
+                  {{ device }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+          
+          # Process all newly available devices.
+          - repeat:
+              count: "{{ prev_unavail_devices }}"
+              sequence:
+                
+                - variables:
+                    device_name: "{{ prev_device_list[repeat.index - 1] }}"
+              
+                - if:
+                    - "{{ device_name not in curr_device_list }}"
+                  
+                  then:
+                
+                    - variables:
+                        timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
+                        from_time: "{{ states(timestamp_entity) | int(0) | timestamp_custom('%b %d %X') }}"
+                        to_time: "{{ as_timestamp(now()) | timestamp_custom('%b %d %X') }}"
+          
+                    # Issue the restored device notification.
+                    - service: script.send_notification
+                      data:
+                        destination:
+                          - persistent
+                        title: 'Zigbee Device Restored:'
+                        notification_id: "{{ 'zigbee_device_restored_' ~ as_timestamp(now()) | int(0) }}"
+                        message: "{{ device_name ~ ' restored: (' ~ from_time ~ ' - ' ~ to_time ~ ')' }}"
+          
+                    # Remove the timestamp for the device.
+                    - service: input_number.set_value
+                      target:
+                        entity_id: "{{ timestamp_entity }}"
+                      data:
+                        value: 0

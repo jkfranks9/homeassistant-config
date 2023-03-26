@@ -1,0 +1,20 @@
+#=============================#
+#     Misc Variables Card     #
+#=============================#
+
+type: custom:stack-in-card
+title: Misc Variables
+mode: horizontal
+
+cards:
+  - type: entity
+    entity: input_number.variables_cu_visa
+    name: CU Visa
+  
+  - type: entity
+    entity: input_number.variables_wells_fargo
+    name: Wells Fargo
+  
+  - type: entity
+    entity: input_number.variables_workout_time
+    name: Workout Time

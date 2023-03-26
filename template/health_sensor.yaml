@@ -11,23 +11,23 @@
     - name: 'Total Daily Calories'
       unique_id: total_daily_calories
       unit_of_measurement: 'Kcal'
-      state: "{{ (states('sensor.treadmill_daily_calories') | float(0) +
-                  states('sensor.yard_work_daily_calories') | float(0) +
-                  states('sensor.weight_training_daily_calories') | float(0)) | round(2) }}"
+      state: "{{ (states('input_number.treadmill_daily_calories') | float(0) +
+                  states('input_number.yard_work_daily_calories') | float(0) +
+                  states('input_number.workout_daily_calories') | float(0)) | round(2) }}"
     
     - name: 'Total Weekly Calories'
       unique_id: total_weekly_calories
       unit_of_measurement: 'Kcal'
-      state: "{{ (states('sensor.treadmill_weekly_calories') | float(0) +
-                  states('sensor.yard_work_weekly_calories') | float(0) +
-                  states('sensor.weight_training_weekly_calories') | float(0)) | round(2) }}"
+      state: "{{ (states('input_number.treadmill_weekly_calories') | float(0) +
+                  states('input_number.yard_work_weekly_calories') | float(0) +
+                  states('input_number.workout_weekly_calories') | float(0)) | round(2) }}"
     
     - name: 'Total Monthly Calories'
       unique_id: total_monthly_calories
       unit_of_measurement: 'Kcal'
-      state: "{{ (states('sensor.treadmill_monthly_calories') | float(0) +
-                  states('sensor.yard_work_monthly_calories') | float(0) +
-                  states('sensor.weight_training_monthly_calories') | float(0)) | round(2) }}"
+      state: "{{ (states('input_number.treadmill_monthly_calories') | float(0) +
+                  states('input_number.yard_work_monthly_calories') | float(0) +
+                  states('input_number.workout_monthly_calories') | float(0)) | round(2) }}"
 
     #-------------------------------#
     #   -- Total Exercise Time --   #
@@ -36,57 +36,23 @@
     - name: 'Total Daily Time'
       unique_id: total_daily_time
       unit_of_measurement: 'm'
-      state: "{{ (states('sensor.treadmill_daily_time') | float(0) +
-                  states('sensor.yard_work_daily_time') | float(0) +
-                  states('sensor.weight_training_daily_time') | float(0)) | round(2) }}"
+      state: "{{ (states('input_number.treadmill_daily_time') | float(0) +
+                  states('input_number.yard_work_daily_time') | float(0) +
+                  states('input_number.workout_daily_time') | float(0)) | round(2) }}"
     
     - name: 'Total Weekly Time'
       unique_id: total_weekly_time
       unit_of_measurement: 'm'
-      state: "{{ (states('sensor.treadmill_weekly_time') | float(0) +
-                  states('sensor.yard_work_weekly_time') | float(0) +
-                  states('sensor.weight_training_weekly_time') | float(0)) | round(2) }}"
+      state: "{{ (states('input_number.treadmill_weekly_time') | float(0) +
+                  states('input_number.yard_work_weekly_time') | float(0) +
+                  states('input_number.workout_weekly_time') | float(0)) | round(2) }}"
     
     - name: 'Total Monthly Time'
       unique_id: total_monthly_time
       unit_of_measurement: 'm'
-      state: "{{ (states('sensor.treadmill_monthly_time') | float(0) +
-                  states('sensor.yard_work_monthly_time') | float(0) +
-                  states('sensor.weight_training_monthly_time') | float(0)) | round(2) }}"
-
-    #-----------------------------------#
-    #   -- Rounded Exercise Values --   #
-    #-----------------------------------#
-    
-    - name: 'Yard Work Daily Calories Rounded'
-      unique_id: yard_work_daily_calories_rounded
-      unit_of_measurement: 'Kcal'
-      state: "{{ states('sensor.yard_work_daily_calories') | float(0) | round(2) }}"
-    
-    - name: 'Yard Work Weekly Calories Rounded'
-      unique_id: yard_work_weekly_calories_rounded
-      unit_of_measurement: 'Kcal'
-      state: "{{ states('sensor.yard_work_weekly_calories') | float(0) | round(2) }}"
-    
-    - name: 'Yard Work Monthly Calories Rounded'
-      unique_id: yard_work_monthly_calories_rounded
-      unit_of_measurement: 'Kcal'
-      state: "{{ states('sensor.yard_work_monthly_calories') | float(0) | round(2) }}"
-      
-    - name: 'Weight Training Daily Calories Rounded'
-      unique_id: weight_training_daily_calories_rounded
-      unit_of_measurement: 'Kcal'
-      state: "{{ states('sensor.weight_training_daily_calories') | float(0) | round(2) }}"
-    
-    - name: 'Weight Training Weekly Calories Rounded'
-      unique_id: weight_training_weekly_calories_rounded
-      unit_of_measurement: 'Kcal'
-      state: "{{ states('sensor.weight_training_weekly_calories') | float(0) | round(2) }}"
-    
-    - name: 'Weight Training Monthly Calories Rounded'
-      unique_id: weight_training_monthly_calories_rounded
-      unit_of_measurement: 'Kcal'
-      state: "{{ states('sensor.weight_training_monthly_calories') | float(0) | round(2) }}"
+      state: "{{ (states('input_number.treadmill_monthly_time') | float(0) +
+                  states('input_number.yard_work_monthly_time') | float(0) +
+                  states('input_number.workout_monthly_time') | float(0)) | round(2) }}"
 
     #----------------------------#
     #   -- Exercise History --   #

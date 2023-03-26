@@ -363,6 +363,22 @@ test_fan_control:
           temperature_entity_id: sensor.theater_temperature
           timeout: 0
 
+test_fan_zero:
+  alias: Test Fan Zero
+  
+  sequence:
+    - service: script.turn_on
+      entity_id: script.control_fan_for_temperature
+      data:
+        variables:
+          fan_entity_id: fan.family_room_fan
+          temperature_entity_id: sensor.main_floor_temperature
+          timeout: 0
+
+#==================#
+#     Exercise     #
+#==================#
+
 test_exercise_reset:
   alias: Test Exercise Reset
   
@@ -372,3 +388,72 @@ test_exercise_reset:
         entity_id:
           - input_boolean.treadmill_sun
           - input_boolean.workout_sun
+
+test_number_reset:
+  alias: Test Number Reset
+  
+  sequence:
+    - service: input_number.set_value
+      target:
+        entity_id:
+          - input_number.workout_daily_time
+          - input_number.yard_work_daily_time
+      data:
+        value: 0
+
+#=================#
+#     Laundry     #
+#=================#
+
+test_laundry_events:
+  alias: Test Laundry Events
+  
+  sequence:
+    - service: script.log_laundry_event
+      data:
+        event_type: basic
+        prefix: Washer
+        message: started
+    
+    - service: script.log_laundry_event
+      data:
+        event_type: metric
+        prefix: Dryer
+        message: temperature detected
+        entity_id_1: sensor.dryer_temperature 
+    
+    - service: script.log_laundry_event
+      data:
+        event_type: metric_plus_gradient
+        prefix: Dryer
+        message: temperature
+        entity_id_1: sensor.dryer_temperature
+        entity_id_2: binary_sensor.dryer_temperature_falling
+    
+    - service: script.log_laundry_event
+      data:
+        event_type: fill_plus_load
+        prefix: Washer
+        message: fill time, load size
+        entity_id_1: input_number.washer_fill_seconds
+        entity_id_2: input_select.washer_load_size
+    
+    - service: script.log_laundry_event
+      data:
+        event_type: timer
+        prefix: Washer
+        message: timer started
+        entity_id_1: timer.washer_wash_blackout
+
+#============#
+#     PC     #
+#============#
+
+test_pc_display_off:
+  alias: Test PC Display Off
+  
+  sequence:  
+  - service: mqtt.publish
+    data:
+      topic: "iotlink/workgroup/legion-t530/commands/displays/off"
+      payload: ""

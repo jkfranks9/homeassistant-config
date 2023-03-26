@@ -20,6 +20,7 @@
       value_template: >
         {% set skip_list = [
                             'backup_log_on_shutdown', 
+                            'control_family_room_fan', 
                             'delete_junk_log_files', 
                             'handle_shield_application_change', 
                             'initialize_turn_on_volume', 
@@ -81,6 +82,7 @@
                             'concat_auto_log_files', 
                             'concat_log_files', 
                             'concat_scripts_log_files', 
+                            'control_fan_for_temperature', 
                             'evaluate_weather_condition', 
                             'mobile_notification_worker',
                             'popup_light_group',
@@ -92,6 +94,7 @@
                             'set_datetime_offset_days', 
                             'set_datetime_offset_months', 
                             'set_datetime_offset_weeks', 
+                            'set_fan_to_speed', 
                             'set_theater_dark',
                             'set_theater_dark_delay',
                             'set_theater_dim',
@@ -144,23 +147,62 @@
 # Perform various daily chores.
 - alias: Perform Daily Chores
   id: 'perform_daily_chores'
+  
   trigger:
     - platform:  time
       at: '01:01:01'
+  
   action:
+    - variables:
+        day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
+        day_of_month: "{{ now().day }}"
     
-    # Reset manual exercise controls.
+    # Reset daily exercise values.
     - service: input_number.set_value
       target:
-        entity_id: input_number.yard_work_time
+        entity_id:
+          - input_number.treadmill_daily_time
+          - input_number.treadmill_daily_calories
+          - input_number.workout_daily_time
+          - input_number.workout_daily_calories
+          - input_number.yard_work_daily_time
+          - input_number.yard_work_daily_calories
       data:
         value: 0
     
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.weight_training_time
-      data:
-        value: 0
+    # If it's the start of a new week (Sunday), reset weekly exercise values.
+    - if:
+        - "{{ day_of_week == 'sun' }}"
+      
+      then:
+        - service: input_number.set_value
+          target:
+            entity_id:
+              - input_number.treadmill_weekly_time
+              - input_number.treadmill_weekly_calories
+              - input_number.workout_weekly_time
+              - input_number.workout_weekly_calories
+              - input_number.yard_work_weekly_time
+              - input_number.yard_work_weekly_calories
+          data:
+            value: 0
+    
+    # If it's the start of a new month, reset monthly exercise values.
+    - if:
+        - "{{ day_of_month == 1 }}"
+      
+      then:
+        - service: input_number.set_value
+          target:
+            entity_id:
+              - input_number.treadmill_monthly_time
+              - input_number.treadmill_monthly_calories
+              - input_number.workout_monthly_time
+              - input_number.workout_monthly_calories
+              - input_number.yard_work_monthly_time
+              - input_number.yard_work_monthly_calories
+          data:
+            value: 0
     
     # Turn off washer plug.
     - service: switch.turn_off
@@ -175,28 +217,42 @@
     - service: input_boolean.turn_off
       entity_id: input_boolean.dryer_running
     
-    # Backup the dryer trend sensors log file if indicated.
+    # Backup the laundry events log file if indicated.
     - if:
         - condition: state
-          entity_id: input_boolean.backup_dryer_trend_sensors_log
+          entity_id: input_boolean.backup_laundry_log
           state: 'on'
       
       then:
     
-        - service: shell_command.backup_dryer_trend_sensors_log
+        - service: shell_command.backup_laundry_log
         
         - service: input_boolean.turn_off
-          entity_id: input_boolean.backup_dryer_trend_sensors_log
+          entity_id: input_boolean.backup_laundry_log
     
-    # Reset the exercise flags for the current day, so we won't count this day if no exercise is done.
-    - variables:
-        day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
-    
+    # Reset the exercise flags for the current day, so we won't count this day if no exercise is done.    
     - service: input_boolean.turn_off
       target:
         entity_id: 
           - "{{ 'input_boolean.treadmill_' ~ day_of_week }}" 
           - "{{ 'input_boolean.workout_' ~ day_of_week }}"
+    
+    # Turn on all automations that may have been turned off. This is normally not needed, but some can be left off
+    # if certain automations or scripts do not finish normally.
+    - service: automation.turn_on
+      entity_id:
+        - automation.check_daytime_lights_sunset_maximum
+        - automation.check_daytime_lights_sunset_medium
+        - automation.check_daytime_lights_sunset_minimum
+        - automation.close_house
+        - automation.notify_zigbee_device_unavailable
+        - automation.open_house
+        - automation.run_guest_bath_motion_based_light
+        - automation.run_master_bath_motion_based_light
+        - automation.start_vacuum
+        - automation.turn_on_christmas_lights
+        - automation.turn_on_guest_lights_sunset
+        - automation.turn_on_office_light
 
 #===================================#
 #     Kodi Media Player Logging     #
@@ -379,7 +435,7 @@
       - "{{ 'garage_door_south_' ~ suffix }}"
       - "{{ 'treadmill_' ~ suffix }}"
       - "{{ 'washer_' ~ suffix }}"
-      - "{{ 'exercise_' ~ suffix }}"
+      - "{{ 'workout_' ~ suffix }}"
   
   action:
     - repeat:
@@ -432,9 +488,9 @@
       id: washer
     
     - platform: numeric_state
-      entity_id: input_number.weight_training_time
+      entity_id: input_number.workout_daily_time
       above: 0
-      id: exercise
+      id: workout
   
   variables:
     valid: >

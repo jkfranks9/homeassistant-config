@@ -1,3 +1,42 @@
+#===============================#
+#     Zigbee Initialization     #
+#===============================#
+
+# So this is cheating, and might not always work. I have a catch-22 during HA startup:
+#
+# 1) As zigbee devices are initialized by Zigbee2MQTT they change from 'unavailable' state
+# 2) In parallel, the Current Zigbee Unavailable Devices sensor gets initialized
+# 3) As a result, some zigbee devices might still be unavailable when the sensor is ready, resulting in a bogus numerical state for the sensor
+# 4) As the rest of the zigbee devices come up, the state of the above sensor continues to change toward 0
+# 5) About the same time, the Notify Zigbee Device Unavailable automation gets initialized and starts running, triggered by one of the above sensor changes
+# 
+# At this point, the automation will likely fail due to templates not resolving correctly, but even if there are no failures, the automation should not
+# be running at all at this point, since it's just churn during startup. OK, I guess it's possible that a zigbee device could choose to really go unavailable
+# at the same time, but oh well. I care less about that than seeing a bunch of errors in the log.
+#
+# So, the below automation runs at startup and sets a flag, which prevents Notify Zigbee Device Unavailable from running. It waits a bit, then resets the
+# flag, so the automation can run for real if a zigbee device becomes unavailable.
+#
+# So what was that about cheating? Automations are initialized in the order they are read from the files in the automations directory. This file is 'devices',
+# which is alphabetically before 'notification'. Which gives me a VERY short amount of time to get this flag set before the notification automation runs.
+# So yeah, super awesome stuff.
+- alias: Handle Zigbee Catch 22
+  id: handle_zigbee_catch_22
+  
+  trigger:
+    - platform: homeassistant
+      event: start
+  
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.zigbee_catch_22
+    
+    - delay: '00:01:00'
+    
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.zigbee_catch_22
+
+
 #=============#
 #     UPS     #
 #=============#
@@ -309,11 +348,10 @@
             
             # Turn off automations that could turn on various lights.
             - service: automation.turn_off
-              entity_id: automation.turn_on_christmas_lights
-            - service: automation.turn_off
-              entity_id: automation.turn_on_guest_lights_sunset
-            - service: automation.turn_off
-              entity_id: automation.turn_on_office_light
+              entity_id:
+                - automation.turn_on_christmas_lights
+                - automation.turn_on_guest_lights_sunset
+                - automation.turn_on_office_light
       
       # Must be sunset.
       else:
@@ -335,15 +373,21 @@
     # Anyone arrives.
     - platform: state
       entity_id: person.sarah
+      from: 'not_home'
       to: 'home'
+      id: adult1
 
     - platform: state
       entity_id: person.david
+      from: 'not_home'
       to: 'home'
+      id: adult2
 
     - platform: state
       entity_id: person.mike
+      from: 'not_home'
       to: 'home'
+      id: adult3
   
     - platform: state
       entity_id: input_boolean.children_home
@@ -352,11 +396,21 @@
   
   action:
     
+    # Turn on adults home if, uh, any adults arrive.
+    - if:
+        - "{{ 'adult' in trigger.id }}"
+      
+      then:    
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.adults_home
+    
     # Set the default occupied bedrooms.
     - choose:
       
-      # Sarah plus (David or Mike) = both.
-      - conditions: "{{ is_state('person.sarah', 'home') and (is_state('person.david', 'home') or is_state('person.mike', 'home')) }}"
+      # Sarah plus (David or Mike) OR children plus (David or Mike) OR (David and Mike) = both.
+      - conditions: "{{ (is_state('person.sarah', 'home') and (is_state('person.david', 'home') or is_state('person.mike', 'home'))) or
+                        (is_state('input_boolean.children_home', 'on') and (is_state('person.david', 'home') or is_state('person.mike', 'home'))) or
+                        (not is_state('person.sarah', 'home') and is_state('input_boolean.children_home', 'off') and is_state('person.david', 'home') and is_state('person.mike', 'home')) }}"
       
         sequence:
           - service: input_select.select_option
@@ -421,9 +475,22 @@
     
     # Anyone leaves.
     - platform: state
-      entity_id: input_boolean.adults_home
-      from: 'on'
-      to: 'off'
+      entity_id: person.sarah
+      from: 'home'
+      to: 'not_home'
+      id: adult1
+
+    - platform: state
+      entity_id: person.david
+      from: 'home'
+      to: 'not_home'
+      id: adult2
+
+    - platform: state
+      entity_id: person.mike
+      from: 'home'
+      to: 'not_home'
+      id: adult3
     
     - platform: state
       entity_id: input_boolean.children_home
@@ -433,13 +500,22 @@
   condition:
     
     # Everyone must be gone.
-    - condition: state
-      entity_id: input_boolean.adults_home
-      state: 'off'
+    not:      
+      - condition: state
+        entity_id: person.sarah
+        state: 'home'
+      
+      - condition: state
+        entity_id: person.david
+        state: 'home'
+      
+      - condition: state
+        entity_id: person.mike
+        state: 'home'
     
-    - condition: state
-      entity_id: input_boolean.children_home
-      state: 'off'
+      - condition: state
+        entity_id: input_boolean.children_home
+        state: 'on'
   
   action:
     
@@ -581,6 +657,78 @@
       state: 'off'
     - service: script.enable_family_room_av
 
+# Enable family room fan automation when the AV system turns on.
+- alias: Enable Family Room Fan Automation
+  id: 'enable_family_room_fan_automation'
+  
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.family_room_av
+      from: 'off'
+      to: 'on'
+  
+  action:
+    
+    # Turn on and trigger the fan automation.
+    - service: automation.turn_on
+      entity_id: automation.control_family_room_fan
+    
+    - service: automation.trigger
+      entity_id: automation.control_family_room_fan
+
+# Disable family room fan automation when the AV system turns off.
+- alias: Disable Family Room Fan Automation
+  id: 'disable_family_room_fan_automation'
+  
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.family_room_av
+      from: 'on'
+      to: 'off'
+  
+  action:
+    
+    # Turn off the fan automation.
+    - service: automation.turn_off
+      entity_id: automation.control_family_room_fan
+    
+    # If the fan was actually turned on, turn it off.
+    - if:
+        - condition: numeric_state
+          entity_id: input_number.family_room_fan_speed
+          above: 0
+      
+      then:
+        - service: script.turn_off_fan
+          data:
+            entity_id: fan.family_room_fan
+
+# Control the family room fan when the AV system is on.
+- alias: Control Family Room Fan
+  id: 'control_family_room_fan'
+  
+  # Trigger every 5 minutes.
+  trigger:
+    - platform: time_pattern
+      minutes: /5
+    
+  # Failsafe in case this automation is left enabled.
+  condition:
+    - condition: state
+      entity_id: binary_sensor.family_room_av
+      state: 'on'
+  
+  action:
+            
+    # Turn on the fan if the temperature demands it.
+    - service: script.turn_on
+      entity_id: script.control_fan_for_temperature
+      data:
+        variables:
+          fan_entity_id: fan.family_room_fan
+          temperature_entity_id: sensor.main_floor_temperature
+          timeout: 0
+
 #===================#
 #     Treadmill     #
 #===================#
@@ -603,19 +751,6 @@
       state: 'off'
   
   action:
-    
-    # We use the utility meter to create different period sensors for the time and calories. Utility meter needs the values to 
-    # change in order to set the sensors. So reset them to 0 before the workout in order to register value changes.
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.treadmill_time
-      data:
-        value: 0
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.treadmill_calories
-      data:
-        value: 0
     
     # Set the treadmill start time.
     - service: input_datetime.set_datetime
@@ -667,7 +802,7 @@
     # is accounted for in the next step.
     - service: input_number.set_value
       target:
-        entity_id: input_number.treadmill_time
+        entity_id: input_number.treadmill_daily_time
       data:
         value: >
           {% set start = as_timestamp(strptime(states('input_datetime.treadmill_start'), '%Y-%m-%d %H:%M:%S')) %}
@@ -688,13 +823,13 @@
     #   - My cooldown period is always 1 minute at 2.0 MPH (ctime and ckph variables).
     - service: input_number.set_value
       target:
-        entity_id: input_number.treadmill_calories
+        entity_id: input_number.treadmill_daily_calories
       data:
         value: >
           {% set weight  = states('input_number.user_weight') | int(0) %}
           {% set speed   = states('input_number.treadmill_speed') | float(0) %}
           {% set incline = states('input_number.treadmill_incline') | int(0) %}
-          {% set time    = states('input_number.treadmill_time')| int(0) / 60 %}
+          {% set time    = states('input_number.treadmill_daily_time')| int(0) / 60 %}
           {% set ctime   = 1/60 %}
           {% set kph     = speed * 1.609344 %}
           {% set ckph    = 2.0   * 1.609344 %}
@@ -718,6 +853,11 @@
             {% set cooldown = (((ckph**3 * 0.0221) - (ckph**2 * 0.1349) + (ckph * 0.8025) + 2.1000) * wkg * ctime) | int(0) %}
             {{ cooldown     + (( (kph**3 * 0.0221) -  (kph**2 * 0.1349) +  (kph * 0.8025) + 2.1000) * wkg *  time) | int(0) }}
           {% endif %}
+    
+    # Register weekly and monthly exercise metrics.
+    - service: script.register_exercise_metrics
+      data:
+        exercise_type: treadmill
 
 #====================#
 #     Appliances     #
@@ -834,6 +974,20 @@
         entity_id: input_datetime.washer_start
       data_template:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Indicate load size is sensing.
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.washer_load_size
+      data:
+        option: '*sensing*'
+    
+    # Log the start in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: basic
+        prefix: Washer
+        message: starting
 
 # Set the washer load size, based on the amount of time spent on the initial fill. This is triggered only
 # when the power state changes from fill to raise, and the washer state is Wash Fill.
@@ -855,7 +1009,7 @@
     - variables:
         washer_fill_seconds: >
           {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
-          {% set seconds = (now().timestamp() - start) %}
+          {% set seconds = (now().timestamp() - start) | round(0) %}
           {{ seconds }}
     
     # Set the washer load size. Default to medium if the calculation for seconds is unreasonably small.
@@ -880,6 +1034,15 @@
         entity_id: input_number.washer_fill_seconds
       data:
         value: "{{ washer_fill_seconds }}"
+    
+    # Log the event in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: fill_plus_load
+        prefix: Washer
+        message: fill time, load size
+        entity_id_1: input_number.washer_fill_seconds
+        entity_id_2: input_select.washer_load_size
 
 # Start the washer wash blackout timer. This is used to ignore a potential early drop,
 # which would shorten the wash cycle dramatically.
@@ -896,6 +1059,14 @@
       data:
         entity_id: timer.washer_wash_blackout
         duration: '00:01:00'
+    
+    # Log the event in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: timer
+        prefix: Washer
+        message: timer started
+        entity_id_1: timer.washer_wash_blackout
 
 # Start the washer rinse fill blackout timer. This is used to ignore the fabric softener injection
 # during the rinse fill, which otherwise wreaks havoc on the operation control algorithm.
@@ -955,6 +1126,14 @@
           data:
             entity_id: timer.washer_rinse_fill_blackout
             duration: '00:04:00'
+    
+    # Log the event in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: timer
+        prefix: Washer
+        message: timer started
+        entity_id_1: timer.washer_rinse_fill_blackout
 
 # Start the washer rinse blackout timer. This is used to ignore a potential early drop,
 # which would shorten the rinse cycle dramatically.
@@ -971,6 +1150,14 @@
       data:
         entity_id: timer.washer_rinse_blackout
         duration: '00:01:00'
+    
+    # Log the event in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: timer
+        prefix: Washer
+        message: timer started
+        entity_id_1: timer.washer_rinse_blackout
 
 # Washer operation control. This uses the washer power state sensor and other controls to step through the following washer states:
 #
@@ -996,13 +1183,15 @@
     # Delay one second so automations (above) that determine the load size have a chance to run before we do.
     - delay: '00:00:01'
     
+    - variables:
+        s: "{{ states('input_select.washer_state') }}"
+    
     # Determine the washer state.
     - service: input_select.select_option
       data:
         entity_id: input_select.washer_state
         option: >
           {# --Set variables-- #}
-          {% set s = states('input_select.washer_state') %}
           {% set fr = trigger.from_state.state %}
           {% set to = trigger.to_state.state %}
           {% set t1 = states('timer.washer_rinse_fill_blackout') %}
@@ -1023,11 +1212,23 @@
           {# --Some washer power state sensor changes just remain in the current state-- #}
           {% elif fr == 'drop'  and to in ['fill', 'raise'] %} {{ s }}
           {% elif fr == 'fill'  and to in ['drop', 'raise'] %} {{ s }}
-          {% elif fr == 'raise' and to in ['drop'] %}          {{ s }}
+          {% elif fr == 'raise' and to in ['fill', 'drop'] %}  {{ s }}
           
           {# --Catch-all, default to Stop-- #}
           {% else %} Stop
           {% endif %}
+    
+    # Log the state change in the laundry events log.
+    - if:
+        - "{{ s != states('input_select.washer_state') }}"
+      
+      then:
+    
+        - service: script.log_laundry_event
+          data:
+            event_type: basic
+            prefix: Washer
+            message: "state changed from {{ s }} to {{ states('input_select.washer_state') }}"
 
 #===============#
 #     Dryer     #
@@ -1035,67 +1236,120 @@
 
 - alias: Turn On Dryer Running
   id: turn_on_dryer_running
-  trigger:
-    - platform: template
-      value_template: >
-        {{ states('sensor.dryer_temperature') != 'unavailable' and states('sensor.office_temperature') != 'unavailable' and
-           states('sensor.dryer_temperature') | int(0) > (states('sensor.office_temperature') | int(0) + 20) }}
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.dryer_running
-
-- alias: Turn On Dryer Almost Done
-  id: turn_on_dryer_almost_done
   
   trigger:
-    - platform: state
-      entity_id: binary_sensor.dryer_humidity_falling
-      to: 'on'
+    
+    # Trigger when the dryer temperature rises 20 degrees above ambient.
+    - platform: template
+      value_template: >
+        {{ states('sensor.dryer_temperature') != 'unavailable' and states('sensor.main_floor_temperature') != 'unavailable' and
+           states('sensor.dryer_temperature') | int(0) > (states('sensor.main_floor_temperature') | int(0) + 20) }}
+  action:
+    
+    # Initialize the temperature & humidity counts. This has the side effect of turning off the Dryer Done binary sensor.
+    - service: counter.reset
+      entity_id:
+        - counter.dryer_temperature_count
+        - counter.dryer_humidity_count
+    
+    # Indicate the dryer is running.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.dryer_running
+    
+    # Set the dryer start time.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.dryer_start
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Log temperature detected in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: metric
+        prefix: Dryer
+        message: temperature detected
+        entity_id_1: sensor.dryer_temperature
+
+- alias: Register Dryer Event
+  id: register_dryer_event
+  
+  trigger:
+    
+    # Since our humidity trend sensor is looking for a drop of 40 points, only trigger if the current humidity is 60 or below.
+    # This should weed out inaccurate trend sensor readings.
+    # NOTE: The drop amount here must be kept in sync with the Dryer Humidity Falling trend sensor.
+    - platform: template
+      value_template: "{{ states('binary_sensor.dryer_humidity_falling') == 'on' and states('sensor.dryer_humidity') | int(0) <= 60 }}"
       id: humidity
     
+    # We don't bother doing the above for temperature. This would require saving the initial temperature when we detect the dryer is running, 
+    # and I don't want to.
     - platform: state
       entity_id: binary_sensor.dryer_temperature_falling
       to: 'on'
       id: temperature
   
   condition:
+    
+    # Make sure the dryer is running ... we could easily detect changes at any time, since the sensor lives in the dryer vent connected to the outdoors.
     - condition: state
       entity_id: input_boolean.dryer_running
       state: 'on'
   
-  action:
-    - delay: '00:00:01'
+  action: 
     
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.dryer_almost_done
+    # Bump the appropriate count. The dryer done binary sensor only turns on when both counts are above 0. We use counts in case we get 
+    # spurious triggers, for example back to back humidity falling.
+    - if:
+        - "{{ trigger.id == 'temperature' }}"
+      
+      then:
+        - service: counter.increment
+          entity_id: counter.dryer_temperature_count
     
-    - service: system_log.write
-      data:
-        message: "Dryer almost done: {{ trigger.id }}"
-        level: info
+        # Log the event in the laundry events log.
+        - service: script.log_laundry_event
+          data:
+            event_type: metric
+            prefix: Dryer
+            message: temperature falling
+            entity_id_1: sensor.dryer_temperature
+      
+      else:
+        - service: counter.increment
+          entity_id: counter.dryer_humidity_count
+    
+        # Log the event in the laundry events log.
+        - service: script.log_laundry_event
+          data:
+            event_type: metric
+            prefix: Dryer
+            message: humidity falling
+            entity_id_1: sensor.dryer_humidity
 
 - alias: Turn Off Dryer Running
   id: turn_off_dryer_running
   
   trigger:
+    
+    # Trigger when the dryer done binary sensor turns on, indicating that both temperature and humidity have fallen.
     - platform: state
-      entity_id: binary_sensor.dryer_humidity_falling
+      entity_id: binary_sensor.dryer_done
       to: 'on'
-    - platform: state
-      entity_id: binary_sensor.dryer_temperature_falling
-      to: 'on'
-  
-  condition:
-    - condition: state
-      entity_id: input_boolean.dryer_almost_done
-      state: 'on'
   
   action:
+    
+    # Turn off the dryer running flag.
     - service: input_boolean.turn_off
       entity_id: input_boolean.dryer_running
-    - delay: '00:00:02'
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.dryer_almost_done
+    
+    # Log the stop in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: basic
+        prefix: Dryer
+        message: stopped
 
 # Log the dryer trend sensors for debugging purposes. I anticipate needing a lot of dryer runs in different seasons
 # and conditions before settling on the final settings for the trend sensors that trigger the end of the cycle.
@@ -1122,7 +1376,7 @@
     
     # Remember to backup the log tomorrow morning.
     - service: input_boolean.turn_on
-      entity_id: input_boolean.backup_dryer_trend_sensors_log
+      entity_id: input_boolean.backup_laundry_log
     
     # Log either the humidity or the temperature, based on the trigger id.
     - if:
@@ -1130,18 +1384,22 @@
           id: humidity
       
       then:
-        - service: notify.dryer_trend_sensors
-          data_template:
-            message: >
-              {% set hum = states('sensor.dryer_humidity') %}
-              {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Humidity ({{ hum }}) {{ trigger.to_state.attributes.gradient }}
+        - service: script.log_laundry_event
+          data:
+            event_type: metric_plus_gradient
+            prefix: Dryer
+            message: humidity
+            entity_id_1: sensor.dryer_humidity
+            entity_id_2: binary_sensor.dryer_humidity_falling
       
       else:
-        - service: notify.dryer_trend_sensors
-          data_template:
-            message: >
-              {% set temp = states('sensor.dryer_temperature') %}
-              {{ as_timestamp(now()) | timestamp_custom('%b %d: %X') }}: Temperature ({{ temp }}) {{ trigger.to_state.attributes.gradient }}
+        - service: script.log_laundry_event
+          data:
+            event_type: metric_plus_gradient
+            prefix: Dryer
+            message: temperature
+            entity_id_1: sensor.dryer_temperature
+            entity_id_2: binary_sensor.dryer_temperature_falling
 
 #=======================#
 #     General Plugs     #
@@ -1204,42 +1462,15 @@
         variables:
           fan_entity_id: fan.office_fan
           temperature_entity_id: sensor.office_temperature
-          timeout: 120
+          timeout: 240
 
 #=================================#
 #     Device Tracker Presence     #
 #=================================#
 
 # Control adults home based on device tracker presence.
-- alias: Turn On Adults Home
-  id: 'turn_on_adults_home'
-  trigger:
-    - platform: state
-      entity_id: person.mike
-      from: 'not_home'
-      to: 'home'
-    - platform: state
-      entity_id: person.sarah
-      from: 'not_home'
-      to: 'home'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    or:
-      - condition: state
-        entity_id: person.mike
-        state: 'home'
-      - condition: state
-        entity_id: person.sarah
-        state: 'home'
-  
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.adults_home
-
+# NOTE: Adults home is turned on in Open House For Family, to avoid a timing problem: if we turned it on here, it would be delayed
+# because of the random delay and would thus not be on when Open House For Family ran.
 - alias: Turn Off Adults Home
   id: 'turn_off_adults_home'
   trigger:

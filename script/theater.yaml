@@ -89,8 +89,9 @@ close_cinema:
       entity_id: script.set_theater_idle
     
     # Turn off the fan.
-    - service: fan.turn_off
-      entity_id: fan.theater_fan
+    - service: script.turn_off_fan
+      data:
+        entity_id: fan.theater_fan
     
     # Turn off the Kodi media player (it might not be on but that's OK).
     - service: media_player.turn_off

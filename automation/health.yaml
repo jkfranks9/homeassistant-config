@@ -80,22 +80,20 @@
 #     Manual Exercise      #
 #==========================#
 
-# Yard work exercise.
-- alias: Process Workout For Yard Work
-  id: 'process_workout_for_yard_work'
+# Workout exercise.
+- alias: Process Workout Exercise
+  id: 'process_workout_exercise'
   use_blueprint:
-    path: health/process_workout.yaml
+    path: health/process_exercise.yaml
     input:
-      exercise_type: Yard
-      time_entity: input_number.yard_work_time
-      calories_entity: input_number.yard_work_calories
+      exercise_type: workout
+      time_entity: input_number.workout_daily_time
 
-# Weight training exercise.
-- alias: Process Workout For Weight Training
-  id: 'process_workout_for_weight_training'
+# Yard work exercise.
+- alias: Process Yard Work Exercise
+  id: 'process_yard_work_exercise'
   use_blueprint:
-    path: health/process_workout.yaml
+    path: health/process_exercise.yaml
     input:
-      exercise_type: Weight
-      time_entity: input_number.weight_training_time
-      calories_entity: input_number.weight_training_calories
+      exercise_type: yard_work
+      time_entity: input_number.yard_work_daily_time

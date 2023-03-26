@@ -39,7 +39,6 @@ reset_jon_away:
 lock_pc:
   alias: Lock PC
   sequence:
-  
   - service: mqtt.publish
     data:
       topic: "iotlink/workgroup/legion-t530/commands/lock"
@@ -272,9 +271,14 @@ set_fan_to_speed:
     
     speed:
       description: 'The desired fan speed (0 = off, 33 = low, 66 = medium, 99 = high).'
-      example: 66
+  
+  variables:
+    fan_speed_entity: "{{ 'input_number.' ~ (state_attr(entity_id, 'friendly_name') | replace(' ', '_') | lower) ~ '_speed' }}"
   
   sequence:
+    
+    # Don't do anything if the fan is already at the desired speed.
+    - condition: "{{ states(fan_speed_entity) != speed }}"      
     
     # Set the fan to the specified speed. 
     - service: fan.turn_on
@@ -285,44 +289,35 @@ set_fan_to_speed:
     
     # To calculate estimated power consumption, we need to keep track of the specified speed. We do this
     # using a unique input number for each fan. Lovely.
-    - choose:
-        
-      # Family room
-      - conditions: "{{ state_attr(entity_id, 'friendly_name') == 'Family Room Fan' }}"
-        
-        sequence:
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.family_room_fan_speed
-            data:
-              value: "{{ speed }}"
-        
-      # Office
-      - conditions: "{{ state_attr(entity_id, 'friendly_name') == 'Office Fan' }}"
-        
-        sequence:
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.office_fan_speed
-            data:
-              value: "{{ speed }}"
-        
-      # Theater
-      - conditions: "{{ state_attr(entity_id, 'friendly_name') == 'Theater Fan' }}"
-        
-        sequence:
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.theater_fan_speed
-            data:
-              value: "{{ speed }}"
-      
-      # Not a fan we know about, log it.
-      default:
-        - service: system_log.write
-          data:
-            message: "Invalid ceiling fan entity {{ state_attr(entity_id, 'friendly_name') }} specified"
-            level: error
+    - service: input_number.set_value
+      target:
+        entity_id: "{{ fan_speed_entity }}"
+      data:
+        value: "{{ speed }}"
+
+# Turn off a ceiling fan.
+turn_off_fan:
+  alias: Turn Off Fan
+  
+  fields:
+    entity_id:
+      description: 'The target ceiling fan.'
+  
+  variables:
+    fan_speed_entity: "{{ 'input_number.' ~ (state_attr(entity_id, 'friendly_name') | replace(' ', '_') | lower) ~ '_speed' }}"    
+    
+  sequence:
+    # Turn off the fan.
+    - service: fan.turn_off
+      target:
+        entity_id: "{{ entity_id }}"
+    
+    # Reset the fan speed input number.
+    - service: input_number.set_value
+      target:
+        entity_id: "{{ fan_speed_entity }}"
+      data:
+        value: 0
 
 # Control a fan based on temperature.
 control_fan_for_temperature:
@@ -363,6 +358,12 @@ control_fan_for_temperature:
             data:
               entity_id: "{{ fan_entity_id }}"
               speed: 33
+      
+      default:
+        - service: script.set_fan_to_speed
+          data:
+            entity_id: "{{ fan_entity_id }}"
+            speed: 0
     
     # Continue if a valid timeout is specified.
     - condition: "{{ timeout > 0 if is_number(timeout) }}"
@@ -371,8 +372,27 @@ control_fan_for_temperature:
     - delay: "{{ timeout }}" 
     
     # Then turn the fan off.
-    - service: fan.turn_off
-      target:
+    - service: script.turn_off_fan
+      data:
         entity_id: "{{ fan_entity_id }}"
-    
-    
+
+#=================#
+#     Laundry     #
+#=================#
+
+# Log the dryer start.
+log_dryer_start:
+  alias: Log Dryer Start
+  
+  sequence:
+    - service: script.log_laundry_event
+      data:
+        event_type: basic
+        prefix: Dryer
+        message: >
+          {% set intemp  = state_attr('climate.downstairs', 'current_temperature') %}
+          {% set inhum   = state_attr('climate.downstairs', 'current_humidity') %}
+          {% set outtemp = states('sensor.porch_temperature') %}
+          {% set outhum  = states('sensor.porch_humidity') %}
+          
+          starting: indoor temperature, humidity ({{ intemp }}, {{ inhum }}), outdoor temperature, humidity ({{ outtemp }}, {{ outhum }})

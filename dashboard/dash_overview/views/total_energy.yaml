@@ -1,0 +1,16 @@
+#==========================#
+#     Total Energy Tab     #
+#==========================#
+
+title: Total Energy
+icon: mdi:home-lightning-bolt
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/total_energy/total_energy_1.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/total_energy/total_energy_2.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/total_energy/total_energy_3.yaml
