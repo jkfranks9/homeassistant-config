@@ -20,7 +20,7 @@
       value_template: >
         {% set skip_list = [
                             'backup_log_on_shutdown', 
-                            'control_family_room_fan', 
+                            'close_upstairs_bedroom_vents',
                             'delete_junk_log_files', 
                             'handle_shield_application_change', 
                             'initialize_turn_on_volume', 
@@ -28,6 +28,9 @@
                             'log_dryer_trend_sensors', 
                             'log_notifications', 
                             'log_scripts',
+                            'open_upstairs_bedroom_vents',
+                            'operate_family_room_fan', 
+                            'operate_theater_fan', 
                             'perform_daily_chores',
                             'remove_saved_notifications_on_dismiss',
                             'restore_movie_list_on_start',
@@ -41,6 +44,7 @@
                             'set_minimum_garage_temperature', 
                             'set_minimum_outdoor_temperature',
                             'set_up_mqtt_automated_config',
+                            'set_washer_operation',
                             'update_openuv'
                            ] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
@@ -79,12 +83,15 @@
       value_template: >
         {% set skip_list = [
                             'change_downstairs_lighting',
+                            'close_upstairs_br_vents',
                             'concat_auto_log_files', 
                             'concat_log_files', 
                             'concat_scripts_log_files', 
                             'control_fan_for_temperature', 
                             'evaluate_weather_condition', 
+                            'log_laundry_event',
                             'mobile_notification_worker',
+                            'open_upstairs_br_vents',
                             'popup_light_group',
                             'reset_smart_bulbs', 
                             'restore_lighting_on_resume',
@@ -223,8 +230,7 @@
           entity_id: input_boolean.backup_laundry_log
           state: 'on'
       
-      then:
-    
+      then:    
         - service: shell_command.backup_laundry_log
         
         - service: input_boolean.turn_off
@@ -253,70 +259,27 @@
         - automation.turn_on_christmas_lights
         - automation.turn_on_guest_lights_sunset
         - automation.turn_on_office_light
-
-#===================================#
-#     Kodi Media Player Logging     #
-#===================================#
-     
-# The Kodi media player has a tendency to fill the log with useless error messages, because the player can't
-# be contacted on an async_update(), which happens every 10 seconds. Count these events so we can restart HA if 
-# the situation persists for ~5 minutes.
-- alias: Detect Kodi Error Loop
-  id: detect_kodi_error_loop
-  trigger:
-    - platform: event
-      event_type: system_log_event
-      event_data:
-        name: 'homeassistant.components.kodi.media_player'
-        level: 'ERROR'
-  #condition:
-  #  - condition: template
-  #    value_template: "{{ 'Error calling async_update on entity media_player.kodi: TransportError' in trigger.event.data.message }}"
-  action:
-    - service: counter.increment
-      data:
-        entity_id: counter.kodi_errors
-
-# Restart HA if the kodi error loop situation exists (see above).
-- alias: Handle Kodi Error Loop
-  id: handle_kodi_error_loop
-  
-  trigger:
-    - platform: state
-      entity_id: counter.kodi_errors
-  
-  condition: "{{ trigger.to_state.state | int(0) >= 30 }}"
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - persistent
-        title: 'Home Assistant Restarted'
-        notification_id: 'kodi_error_loop'
-        message: 'Home Assistant was restarted due to excessive Kodi media player errors.'
     
-    # - service: persistent_notification.create
-      # data:
-        # title: 'Home Assistant Restarted'
-        # notification_id: 'kodi_error_loop'
-        # message: 'Home Assistant was restarted due to excessive Kodi media player errors.'
+    # Update the hockey Rest sensors during hockey season. The sensors have a very long scan interval so
+    # they don't try to update when there's no hockey.
+    - if:
+        - condition: state
+          entity_id: input_boolean.hockey_season
+          state: 'on'
+      
+      then:    
+        - service: homeassistant.update_entity
+          target:
+            entity_id:
+              - sensor.next_canes_game
+              - sensor.next_flyers_game
     
-    - service: homeassistant.restart
-
-# Reset the counter after a few minutes since we're not interested in occasional sporadic errors.
-- alias: Reset Kodi Error Counter
-  id: reset_kodi_error_counter
-  
-  trigger:
-    - platform: time_pattern
-      minutes: '/7'
-  
-  condition: "{{ states('counter.kodi_errors')|int(0) > 0 }}"      
-  
-  action:
-    - service: counter.reset
-      entity_id: counter.kodi_errors
+    # Bump the F150 mileage. We use this to notify when the next service is due.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.f150_mileage
+      data:
+        value: "{{ states('input_number.f150_mileage') | int(0) + 32 }}"
 
 #==================================#
 #     Persistent Notifications     #
@@ -543,3 +506,33 @@
   action:
     - service: automation.turn_on
       entity_id: automation.notify_zigbee_device_unavailable
+
+#=======================#
+#     Hockey Season     #
+#=======================#
+
+- alias: Enable Hockey Hobby
+  id: enable_hockey_hobby
+  
+  trigger:
+    - platform: state
+      entity_id: input_boolean.hockey_season
+      from: 'off'
+      to: 'on'
+  
+  action:
+    - service: automation.turn_on
+      entity_id: automation.notify_next_canes_game
+
+- alias: Disable Hockey Hobby
+  id: disable_hockey_hobby
+  
+  trigger:
+    - platform: state
+      entity_id: input_boolean.hockey_season
+      from: 'on'
+      to: 'off'
+  
+  action:
+    - service: automation.turn_off
+      entity_id: automation.notify_next_canes_game

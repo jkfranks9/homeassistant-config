@@ -44,10 +44,8 @@ cards:
       - entity: sensor.sonoff_washer_rssi
         name: Washer
       
-      - entity: binary_sensor.espresense_garage
-        name: ESPresense Garage
-        attribute: rssi
+      - entity: sensor.ble_garage_wifi_signal
+        name: BLE Garage Sensor
       
-      - entity: binary_sensor.espresense_house
-        name: ESPresense House
-        attribute: rssi
+      - entity: sensor.ble_house_wifi_signal
+        name: BLE House Sensor

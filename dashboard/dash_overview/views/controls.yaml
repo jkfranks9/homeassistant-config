@@ -13,7 +13,6 @@ cards:
     cards:
       - !include /config/dashboard/dash_overview/cards/controls/treadmill.yaml
       - !include /config/dashboard/dash_overview/cards/controls/variables.yaml
-      - !include /config/dashboard/dash_overview/cards/controls/vents.yaml
       - !include /config/dashboard/dash_overview/cards/controls/other.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml

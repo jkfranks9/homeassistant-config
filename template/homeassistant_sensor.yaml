@@ -4,6 +4,18 @@
 
 - sensor:
 
+    #-----------------#
+    #   -- Dates --   #
+    #-----------------#
+    
+    - name: Credit Reports Due
+      unique_id: credit_reports_due
+      state: "{{ now().month == 1 and now().day == 15 }}"
+    
+    - name: First Of Month
+      unique_id: first_of_month
+      state: "{{ now().day == 1 }}"
+
     #--------------------------#
     #   -- Nighttime Mode --   #
     #--------------------------#
@@ -39,9 +51,9 @@
       unique_id: count_device_trackers
       state: "{{ states.device_tracker | count }}"
     
-    - name: 'Count Groups'
-      unique_id: count_groups
-      state: "{{ states.group| count }}"
+    - name: 'Count Media Players'
+      unique_id: count_media_players
+      state: "{{ states.media_player| count }}"
     
     - name: 'Count Input Booleans'
       unique_id: count_input_booleans
@@ -91,124 +103,44 @@
     - name: 'HA Uptime'
       unique_id: ha_uptime
       state: >
-        {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.uptime')) %}
-
-        {% set minutes = (up_time // 60) | int(0) %}
-        {% set hours = (minutes // 60) %}
-        {% set days = (hours // 24) %}
-        {% set weeks = (days // 7) %}
-
-        {% set minutes = (minutes % 60) %}
-        {% set hours =  (hours % 24) %}
-        {% set days = (days % 7) %}
-
-        {% macro phrase(value, name) %}
-                  {%- set value = value %}
-                  {%- set end = 's' if value > 1 else '' %}
-                  {{- '{} {}{}'.format(value, name, end) if value | int(0) > 0 else '' }}
-        {%- endmacro %}
-                    
-        {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
-        {% set last_comma = text.rfind(',') %}
-        {% if last_comma != -1 %}
-          {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
-        {% endif %}
-          
-        {{ text }}
+        {% from 'friendly_strings.jinja' import format_duration %}
+        {{ format_duration(as_timestamp(states('sensor.uptime'))) }}
 
     # Raspberry Pi last boot date and time       
     - name: 'Last Boot Date Time'
       unique_id: last_boot_date_time
       state: >
-        {% set date = as_timestamp(states('sensor.last_boot')) | timestamp_custom('%d') %}
-        {% set date = '{:01}'.format(date | int(0)) %}
-        {% if date in ('1', '21', '31') %}
-          {% set date = date ~ 'st' %}
-        {% elif date in ('2', '22') %}
-          {% set date = date ~ 'nd' %}
-        {% elif date in ('3', '23') %}
-          {% set date = date ~ 'rd' %}
+        {% if states('sensor.last_boot') not in ['unknown', 'unavailable'] %}
+          {% from 'friendly_strings.jinja' import format_time %}
+          {{ format_time('sensor.last_boot') }}
         {% else %}
-          {% set date = date ~ 'th' %}
+          {{ states('sensor.last_boot') }}
         {% endif %}
-
-        {{ as_timestamp(states('sensor.last_boot')) | timestamp_custom('%H:%M on %a') }} {{ date }} {{ as_timestamp(states('sensor.last_boot')) | timestamp_custom('%b %Y') }}
 
     # Raspberry Pi up time
     - name: 'RPi Uptime'
       unique_id: rpi_uptime
       state: >
-        {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) %}
-
-        {% set minutes = (up_time // 60) | int(0) %}
-        {% set hours = (minutes // 60) %}
-        {% set days = (hours // 24) %}
-        {% set weeks = (days // 7) %}
-
-        {% set minutes = (minutes % 60) %}
-        {% set hours =  (hours % 24) %}
-        {% set days = (days % 7) %}
-
-        {% macro phrase(value, name) %}
-                  {%- set value = value %}
-                  {%- set end = 's' if value > 1 else '' %}
-                  {{- '{} {}{}'.format(value, name, end) if value | int(0) > 0 else '' }}
-        {%- endmacro %}
-                    
-        {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
-        {% set last_comma = text.rfind(',') %}
-        {% if last_comma != -1 %}
-          {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
-        {% endif %}
-          
-        {{ text }}
+        {% from 'friendly_strings.jinja' import format_duration %}
+        {{ format_duration(as_timestamp(states('sensor.last_boot'))) }}
 
     # PC last boot date and time       
-    #- name: 'PC Boot Date Time'
-    #  unique_id: pc_boot_date_time
-    #  state: >
-    #    {% set date = as_timestamp(states('sensor.legion_t530_system_boot_time')) | timestamp_custom('%d') %}
-    #    {% set date = '{:01}'.format(date | int(0)) %}
-    #    {% if date in ('1', '21', '31') %}
-    #      {% set date = date ~ 'st' %}
-    #    {% elif date in ('2', '22') %}
-    #      {% set date = date ~ 'nd' %}
-    #    {% elif date in ('3', '23') %}
-    #      {% set date = date ~ 'rd' %}
-    #    {% else %}
-    #      {% set date = date ~ 'th' %}
-    #    {% endif %}
-
-    #    {{ as_timestamp(states('sensor.legion_t530_system_boot_time')) | timestamp_custom('%H:%M on %a') }} {{ date }} {{ as_timestamp(states('sensor.legion_t530_system_boot_time')) | timestamp_custom('%b %Y') }}
+    - name: 'PC Boot Date Time'
+      unique_id: pc_boot_date_time
+      state: >
+        {% if states('sensor.legion_t530_system_boot_time') not in ['unknown', 'unavailable'] %}
+          {% from 'friendly_strings.jinja' import format_time %}
+          {{ format_time('sensor.legion_t530_system_boot_time') }}
+        {% else %}
+          {{ states('sensor.legion_t530_system_boot_time') }}
+        {% endif %}
 
     # PC up time
-    #- name: 'PC Uptime'
-    #  unique_id: pc_uptime
-    #  state: >
-    #    {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.legion_t530_system_boot_time')) %}
-
-    #    {% set minutes = (up_time // 60) | int(0) %}
-    #    {% set hours = (minutes // 60) %}
-    #    {% set days = (hours // 24) %}
-    #    {% set weeks = (days // 7) %}
-
-    #    {% set minutes = (minutes % 60) %}
-    #    {% set hours =  (hours % 24) %}
-    #    {% set days = (days % 7) %}
-
-    #    {% macro phrase(value, name) %}
-    #              {%- set value = value %}
-    #              {%- set end = 's' if value > 1 else '' %}
-    #              {{- '{} {}{}'.format(value, name, end) if value | int(0) > 0 else '' }}
-    #    {%- endmacro %}
-                    
-    #    {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
-    #    {% set last_comma = text.rfind(',') %}
-    #    {% if last_comma != -1 %}
-    #      {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
-    #    {% endif %}
-          
-    #    {{ text }}
+    - name: 'PC Uptime'
+      unique_id: pc_uptime
+      state: >
+        {% from 'friendly_strings.jinja' import format_duration %}
+        {{ format_duration(as_timestamp(states('sensor.legion_t530_system_boot_time'), now())) }}
 
     #----------------#
     #   -- Misc --   #
@@ -228,7 +160,7 @@
     - name: 'Canes Game Status'
       unique_id: canes_game_status
       state: >
-        {% if states.sensor.next_canes_game is defined %}
+        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.teams is defined %}
           {{ iif(state_attr('sensor.next_canes_game', 'teams')['home']['team']['name'] == 'Carolina Hurricanes', 'Home', 'Away') }}
         {% else %}
           'Unknown'
@@ -237,30 +169,13 @@
     - name: 'Canes Opponent'
       unique_id: canes_opponent
       state: >
-        {% if states('sensor.canes_game_status') == 'Home' %}
-          {% set opp_team_list = (state_attr('sensor.next_canes_game', 'teams')['away']['team']['name']).split() %}
-        {% elif states('sensor.canes_game_status') == 'Away' %}
-          {% set opp_team_list = (state_attr('sensor.next_canes_game', 'teams')['home']['team']['name']).split() %}
-        {% else %}
-          {% set opp_team_list = ['Unknown'] %}
-        {% endif %}
-        
-        {% if opp_team_list | wordcount > 2 %}
-          {% if opp_team_list[-1] == 'Leafs' or opp_team_list[-1] == 'Wings' or opp_team_list[-1] == 'Jackets' or opp_team_list[-1] == 'Nights' %}
-            {% set opp_team = opp_team_list[-2] ~ ' ' ~ opp_team_list[-1] %}
-          {% else %}
-            {% set opp_team = opp_team_list[-1] %}
-          {% endif %}
-        {% else %}
-          {% set opp_team = opp_team_list[-1] %}
-        {% endif %}
-        
-        {{ opp_team }}
+        {% from 'friendly_strings.jinja' import format_hockey_opposition_team %}
+        {{ format_hockey_opposition_team('sensor.canes_game_status', 'sensor.next_canes_game') }}
 
     - name: 'Flyers Game Status'
       unique_id: flyers_game_status
       state: >
-        {% if states.sensor.next_flyers_game is defined %}
+        {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.teams is defined %}
           {{ iif(state_attr('sensor.next_flyers_game', 'teams')['home']['team']['name'] == 'Philadelphia Flyers', 'Home', 'Away') }}
         {% else %}
           'Unknown'
@@ -269,22 +184,5 @@
     - name: 'Flyers Opponent'
       unique_id: flyers_opponent
       state: >
-        {% if states('sensor.flyers_game_status') == 'Home' %}
-          {% set opp_team_list = (state_attr('sensor.next_flyers_game', 'teams')['away']['team']['name']).split() %}
-        {% elif states('sensor.flyers_game_status') == 'Away' %}
-          {% set opp_team_list = (state_attr('sensor.next_flyers_game', 'teams')['home']['team']['name']).split() %}
-        {% else %}
-          {% set opp_team_list = ['Unknown'] %}
-        {% endif %}
-        
-        {% if opp_team_list | wordcount > 2 %}
-          {% if opp_team_list[-1] == 'Leafs' or opp_team_list[-1] == 'Wings' or opp_team_list[-1] == 'Jackets' or opp_team_list[-1] == 'Nights' %}
-            {% set opp_team = opp_team_list[-2] ~ ' ' ~ opp_team_list[-1] %}
-          {% else %}
-            {% set opp_team = opp_team_list[-1] %}
-          {% endif %}
-        {% else %}
-          {% set opp_team = opp_team_list[-1] %}
-        {% endif %}
-        
-        {{ opp_team }}
+        {% from 'friendly_strings.jinja' import format_hockey_opposition_team %}
+        {{ format_hockey_opposition_team('sensor.flyers_game_status', 'sensor.next_flyers_game') }}

@@ -13,7 +13,7 @@ logs:
 
   # HA automations
   homeassistant.components.automation.backup_log_on_shutdown:                 warning
-  homeassistant.components.automation.control_family_room_fan:                warning
+  homeassistant.components.automation.close_upstairs_bedroom_vents:           warning
   homeassistant.components.automation.delete_junk_log_files:                  warning
   homeassistant.components.automation.disable_nighttime_sleeptime_modes:      warning
   homeassistant.components.automation.enable_nighttime_mode:                  warning
@@ -34,7 +34,11 @@ logs:
   homeassistant.components.automation.log_automations:                        warning
   homeassistant.components.automation.log_dryer_trend_sensors:                warning
   homeassistant.components.automation.log_scripts:                            warning
+  homeassistant.components.automation.open_upstairs_bedroom_vents:            warning
+  homeassistant.components.automation.operate_family_room_fan:                warning
+  homeassistant.components.automation.operate_theater_fan:                    warning
   homeassistant.components.automation.perform_daily_chores:                   warning
+  homeassistant.components.automation.process_kodi_video_results:             warning
   homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
   homeassistant.components.automation.restore_movie_list_on_start:            warning
   homeassistant.components.automation.resume_cinema:                          warning
@@ -48,6 +52,7 @@ logs:
   homeassistant.components.automation.set_minimum_garage_temperature:         warning
   homeassistant.components.automation.set_minimum_outdoor_temperature:        warning
   homeassistant.components.automation.set_up_mqtt_automated_config:           warning
+  homeassistant.components.automation.set_washer_operation:                   warning
   homeassistant.components.automation.toggle_adguard_for_paramount:           warning
   homeassistant.components.automation.update_openuv:                          warning
   homeassistant.components.automation.washer_operation:                       warning
@@ -57,6 +62,7 @@ logs:
   homeassistant.components.script.change_lighting_per_weather:        warning
   homeassistant.components.script.change_lighting_per_weather_simple: warning
   homeassistant.components.script.change_downstairs_lighting:         warning
+  homeassistant.components.script.close_upstairs_br_vents:            warning
   homeassistant.components.script.concat_auto_log_files:              warning
   homeassistant.components.script.concat_log_files:                   warning
   homeassistant.components.script.concat_scripts_log_files:           warning
@@ -64,6 +70,7 @@ logs:
   homeassistant.components.script.evaluate_weather_condition:         warning
   homeassistant.components.script.log_laundry_event:                  warning
   homeassistant.components.script.mobile_notification_worker:         warning
+  homeassistant.components.script.open_upstairs_br_vents:             warning
   homeassistant.components.script.popup_light_group:                  warning
   homeassistant.components.script.restore_lighting_on_resume:         warning
   homeassistant.components.script.resume_cinema:                      warning
@@ -100,7 +107,7 @@ logs:
   homeassistant.components.fan:                                 info
   homeassistant.components.history:                             info
   homeassistant.components.http.view:                           info
-  homeassistant.components.kodi.media_player:                   info
+  homeassistant.components.kodi.media_player:                   debug
   homeassistant.components.life360:                             info
   homeassistant.components.lutron_caseta:                       info
   homeassistant.components.media_player:                        info
@@ -114,13 +121,12 @@ logs:
   homeassistant.components.unifi:                               info
   homeassistant.components.webhook:                             info
   homeassistant.components.websocket_api:                       info
-  homeassistant.components.websocket_api.http.connection:       info
+  homeassistant.components.websocket_api.http.connection:       warning
 
   # Custom components
   custom_components.alexa_media:                       info
   custom_components.epson_projector:                   info
   custom_components.hacs:                              warning
-  custom_components.kodi.media_player:                 info
   custom_components.mail_and_packages:                 warning
   custom_components.pyscript.file.populate_all_movies: info
   custom_components.pyscript.file.restore_all_movies:  info
@@ -133,6 +139,7 @@ logs:
   androidtv.adb_manager.adb_manager_async: info
   frontend.js.latest:                      fatal
   googleapiclient.discovery:               info
+  httpx:                                   warning
   kasa:                                    info
   pygatt.backends.gatttool.gatttool:       warning
   pylutron_caseta:                         info
@@ -184,6 +191,13 @@ filters:
     - "Unexpected error fetching .* data: Server disconnected"
     - "Unexpected error fetching .* data: Cannot connect to host .* [Try again]"
   
+  custom_components.thermal_comfort.sensor:
+    - "Temperature has an invalid value:"
+    - "Relative humidity has an invalid value:"
+  
+  custom_components.unifics.sensor:
+    - "Unexpected error fetching sensor data: Expecting value:"
+  
   custom_components.watchman:
     - "Watchman sensors updated"
   
@@ -217,6 +231,9 @@ filters:
   homeassistant.components.input_select:
     - "Current option:.* no longer valid"
   
+  homeassistant.components.kodi.media_player:
+    - "Error calling async_update on entity media_player.kodi"
+  
   homeassistant.components.life360.device_tracker:
     - "get_circles: .* Max retries exceeded"
     - "Suppressing further errors until OK"
@@ -229,6 +246,9 @@ filters:
 
   homeassistant.components.openuv:
     - "Skipping update due to missing data: from_time"
+  
+  homeassistant.components.rest.sensor:
+    - "JSON result was not a dictionary or list with 0th element a dictionary"
   
   homeassistant.components.scene:
     - "Setup of scene platform .* is taking over 10 seconds"
@@ -275,6 +295,9 @@ filters:
   
   oauth2client.transport:
     - "Refreshing due to a 401"
+  
+  py.warnings:
+    - "InsecureRequestWarning"
   
   sleekxmppfs.basexmpp:
     - "fulljid property deprecated. Use boundjid.resource"

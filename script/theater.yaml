@@ -28,15 +28,6 @@ open_cinema:
         data:
           type: tts
     
-    # Turn on the fan if needed.
-    - service: script.turn_on
-      entity_id: script.control_fan_for_temperature
-      data:
-        variables:
-          fan_entity_id: fan.theater_fan
-          temperature_entity_id: sensor.theater_temperature
-          timeout: 0
-    
     # Set the upstairs Ecobee to home mode.
     - service: script.set_thermostat_preset
       data:
@@ -78,25 +69,9 @@ close_cinema:
     - service: input_boolean.turn_off
       entity_id: input_boolean.theater_open
     
-    # Turn on automations/lights that were possibly turned off by the open cinema script.
-    - service: script.change_downstairs_lighting
-      data:
-        turn_on: true
-        christmas: false
-    
-    # Turn on some lights. There's some overlap in entities with the above service, but that's OK.
+    # Turn on some lights. This also turns on automations/lights that were possibly turned off by the open cinema script.
     - service: script.turn_on
       entity_id: script.set_theater_idle
-    
-    # Turn off the fan.
-    - service: script.turn_off_fan
-      data:
-        entity_id: fan.theater_fan
-    
-    # Turn off the Kodi media player (it might not be on but that's OK).
-    - service: media_player.turn_off
-      data:
-        entity_id: media_player.kodi
     
     # Turn off all devices.
     - delay: '00:00:02'
@@ -326,13 +301,13 @@ watch_disney_plus:
         component: 'com.disney.disneyplus/com.bamtechmedia.dominguez.main.MainActivity'
         lighting: 'script.set_theater_dark_delay'
 
-# HBO Max
-watch_hbo_max:
-  alias: Watch HBO Max
+# Max
+watch_max:
+  alias: Watch Max
   sequence:
     - service: script.watch_app
       data:
-        component: 'com.hbo.hbonow/com.hbo.go.LaunchActivity'
+        component: 'com.wbd.stream/com.wbd.beam.BeamActivity'
         lighting: 'script.set_theater_dark_delay'
 
 # Hulu
@@ -341,7 +316,7 @@ watch_hulu:
   sequence:
     - service: script.watch_app
       data:
-        component: 'com.hulu.livingroomplus/.MainActivity'
+        component: 'com.hulu.livingroomplus/.WKFactivity'
         lighting: 'script.set_theater_dark_delay'
 
 # Kodi
@@ -368,7 +343,7 @@ watch_paramount_plus:
   sequence:
     - service: script.watch_app
       data:
-        component: 'com.cbs.ott/com.cbs.app.tv.ui.activity.SplashActivity'
+        component: 'com.cbs.ott/com.paramount.android.pplus.splash.tv.ui.activity.SplashActivity'
         lighting: 'script.set_theater_dark_delay'
 
 # Peacock
@@ -537,55 +512,130 @@ restore_lighting_on_resume:
         turn_on: false
         christmas: false
 
-#============================#
-#     Kodi Movie Control     #
-#============================#
+#===========================#
+#     Kodi Misc Control     #
+#===========================#
 
-# Get the list of all movies known by Kodi.
-# This script is only needed when the Kodi movie library is updated, and the Shield TV is off (we don't want
-# to randomly switch apps if the media player is in use).
-get_all_kodi_movies:
-  alias: Get All Kodi Movies
+# Activate the cinema if needed. This is necessary if Play Feature Movie or Play Random Kodi Videos is started when the
+# cinema is off.
+activate_cinema:
+  alias: Activate Cinema
+  
   sequence:
-    - condition: state
-      entity_id: media_player.shield_tv
-      state: 'off'
+  
+    #
+    - if:
+        - "{{ states('binary_sensor.theater_av_system') == 'off' }}"
+    
+      then:
+    
+        # Turn on some lights.
+        - service: script.set_theater_idle
+  
+        # Start the 'enable streaming' Harmony activity, which ensures the correct devices are on and the screen is dark.
+        - service: switch.turn_on
+          entity_id: switch.harmony_hub_enable_streaming
+      
+        # Delay for a bit to let the projector warm up.
+        - delay: '00:40:00'
+
+# Activate Kodi on the Shield TV. We make no assumptions here about the rest of the theater; for example we don't
+# require the projector to be on. All we need is the Shield TV on and the Kodi application running on it.
+activate_kodi:
+  alias: Activate Kodi
+  
+  sequence:
   
     # Turn on the Shield TV so we can host the Kodi application.
     - service: media_player.turn_on
       data:
         entity_id: media_player.shield_tv
-    - delay: '00:00:03'
+    - delay: '00:00:02'
   
     # Start Kodi on the Shield TV.
     - service: androidtv.adb_command
       data:
         entity_id: media_player.shield_tv
         command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n 'org.xbmc.kodi/.Splash'"
-    - delay: '00:00:02'
+    - delay: '00:00:01'
+
+#============================#
+#     Kodi Movie Results     #
+#============================#
+
+# When we send commands to Kodi, for example to get movies or music videos, it seems we can't wait for the result in a script
+# using wait_for_trigger, because the result event is fired before such trigger is initialized (at least from what I've seen).
+# So we use automations instead to react to the result event, and process those results here, for movies. 
+#
+# Results for a set of music videos is handled directly by the Process Kodi Video Result automation.
+handle_kodi_movies_result:
+  alias: Handle Kodi Movies Result
   
-    # Send the 'get movies' command to Kodi.
+  fields:
+    result:
+      description: The result from the GetMovies Kodi call.
+  
+  sequence:
+    
+    # We expect either one movie to be returned, or all of them. Pass the result on to the appropriate script to continue.
+    - choose:
+      - conditions: "{{ result.limits.total == 1 }}"
+        
+        sequence:
+          - service: script.process_single_kodi_movie_result
+            data:
+              result: "{{ result }}"
+      
+      - conditions: "{{ result.limits.total > 1 }}"
+        
+        sequence:
+          - service: script.process_all_kodi_movies_result
+            data:
+              result: "{{ result }}"
+      
+      # Nothing was returned. This is unexpected.
+      default:
+        - service: system_log.write
+          data:
+            message: "Kodi GetMovies command did not return any movies."
+            level: warning
+
+#========================#
+#     Kodi All Movies    #
+#========================#
+
+# Get the list of all movies known by Kodi.
+# This script is only needed when the Kodi movie library is updated.
+get_all_kodi_movies:
+  alias: Get All Kodi Movies
+  
+  sequence:
+    
+    # Activate Kodi on the Shield TV.
+    - service: script.activate_kodi
+  
+    # Send the GetMovies command to Kodi. The Handle Kodi Movies Result script calls Process All Kodi Movies Result
+    # below with the command result.
     - service: kodi.call_method
       data:
         entity_id: media_player.kodi
         method: VideoLibrary.GetMovies
-    
-    # Wait a bit for a good 'get movies' result, but quit if it times out.
-    - wait_for_trigger:
-        - platform: event
-          event_type: kodi_call_method_result
-          event_data:
-            result_ok: 'True'
-            input:
-              method: VideoLibrary.GetMovies
-      timeout: 10
-      continue_on_timeout: false
+
+# Process the list of movies returned by Kodi.
+process_all_kodi_movies_result:
+  alias: Process All Kodi Movies Result
+  
+  fields:
+    result:
+      description: The result from the GetMovies Kodi call.
+  
+  sequence:
     
     # Call the python script to populate the input select.
     - service: pyscript.populate_all_movies
       data:
         entity: input_select.kodi_movies
-        result: "{{ trigger.event.data.result }}"
+        result: "{{ result }}"
   
     # Exit the Kodi application.
     - service: remote.send_command
@@ -593,12 +643,7 @@ get_all_kodi_movies:
       data:
         command: 'Home'
         device: NVIDIA Shield TV
-    - delay: '00:00:02'
-    
-    # Turn off the Kodi media player.
-    - service: media_player.turn_off
-      data:
-        entity_id: media_player.kodi
+    - delay: '00:00:01'
   
     # Turn the Shield TV off again.
     - service: media_player.turn_off
@@ -612,24 +657,17 @@ get_all_kodi_movies:
 # Play feature movie! 
 play_feature_movie:
   alias: Play Feature Movie
+  
   sequence:
     
-    # Turn on some lights.
-    - service: script.set_theater_idle
+    # Prepare the cinema if needed.
+    - service: script.activate_cinema
+    
+    # Activate Kodi on the Shield TV.
+    - service: script.activate_kodi
   
-    # Start the 'enable streaming' Harmony activity, which ensures the correct devices are on and the screen is dark.
-    - service: switch.turn_on
-      entity_id: switch.harmony_hub_enable_streaming
-    - delay: '00:00:03'
-  
-    # Start Kodi on the Shield TV.
-    - service: androidtv.adb_command
-      data:
-        entity_id: media_player.shield_tv
-        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n 'org.xbmc.kodi/.Splash'"
-    - delay: '00:00:02'
-  
-    # Send the 'get movies' command to Kodi, with the target movie name.
+    # Send the GetMovies command to Kodi, with the target movie name. The Handle Kodi Movies Result script calls 
+    # Process Single Kodi Movie Result below with the command result.
     - service: kodi.call_method
       data:
         entity_id: media_player.kodi
@@ -641,21 +679,33 @@ play_feature_movie:
         limits:
           end: 1
           start: 0
-    
-    # Wait a bit for a good 'get movies' result, but quit if it times out.
-    - wait_for_trigger:
-        - platform: event
-          event_type: kodi_call_method_result
-          event_data:
-            result_ok: 'True'
-            input:
-              method: VideoLibrary.GetMovies
-      timeout: 10
-      continue_on_timeout: false
+
+# Process the single movie returned by Kodi.
+process_single_kodi_movie_result:
+  alias: Process Single Kodi Movie Result
+  
+  fields:
+    result:
+      description: The result from the GetMovies Kodi call.
+  
+  sequence:
     
     # Pick up the movie ID.
     - variables:
-        movieid: "{{ trigger.event.data.result.movies.0.movieid }}"
+        movieid: "{{ result.movies.0.movieid }}"
+    
+    # Build a set of random music videos as a preamble to the movie. These are added to a playlist.
+    - service: script.get_all_kodi_videos
+          
+    # Add the movie to the playlist.
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Playlist.Add
+        playlistid: 1
+        item:
+          movieid: "{{ movieid }}"
   
     # Now switch the receiver to the proper input so Kodi can be viewed on screen.
     - service: remote.send_command
@@ -664,14 +714,107 @@ play_feature_movie:
         command: 'InputCbl/Sat'
         device: Marantz Receiver
   
-    # Tell Kodi to play the feature.
-    - service: kodi.call_method
-      data_template:
-        entity_id: media_player.kodi
-        method: Player.Open
-        item:
-          movieid: "{{ movieid }}"
+    # Play the playlist.
+    - service: script.play_kodi_playlist
   
     # Darken the theater.
     - service: script.turn_on
       entity_id: script.set_theater_dark_delay
+
+#=================================#
+#     Kodi Play Random Videos     #
+#=================================#
+
+# Play random videos using Kodi. This is intended to be run standalone. Playing videos as a preamble to a movie
+# uses some of the same technology, but is part of the Play Feature Movie script.
+play_random_kodi_videos:
+  alias: Play Random Kodi Videos
+  
+  sequence:
+    
+    # Prepare the cinema if needed.
+    - service: script.activate_cinema
+    
+    # Activate Kodi on the Shield TV.
+    - service: script.activate_kodi
+
+    # Build a set of random music videos. These are added to a playlist.
+    - service: script.get_all_kodi_videos
+  
+    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'InputCbl/Sat'
+        device: Marantz Receiver
+        
+    # Play the playlist.
+    - service: script.play_kodi_playlist
+  
+    # Darken the theater.
+    - service: script.turn_on
+      entity_id: script.set_theater_dark_delay
+
+#=====================================#
+#     Kodi Video Playlist Control     #
+#=====================================#
+
+# Get all music videos using Kodi.
+get_all_kodi_videos:
+  alias: Get All Kodi Videos
+  
+  sequence:
+    
+    # Send the command to Kodi to get all available videos.
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: VideoLibrary.GetMusicVideos
+        properties:
+          - artist
+          - streamdetails
+
+# Build a playlist of selected music videos.
+build_kodi_video_playlist:
+  alias: Build Kodi Video Playlist
+  
+  sequence:
+  
+    # Ensure the playlist is clear.
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Playlist.Clear
+        playlistid: 1
+    
+    - repeat:
+        
+        # Repeat for each selected video ID.
+        for_each: "{{ states('input_text.music_video_ids').split(',') }}"
+        
+        sequence:
+          
+          # Add the video to the playlist.
+          - service: kodi.call_method
+            target:
+              entity_id: media_player.kodi
+            data:
+              method: Playlist.Add
+              playlistid: 1
+              item:
+                musicvideoid: "{{ repeat.item | int(0) }}"
+
+# Play a Kodi playlist. This consists of either a set of music videos, or such a set along with a feature movie.
+play_kodi_playlist:
+  alias: Play Kodi Playlist
+  
+  sequence:
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Player.Open
+        item:
+          playlistid: 1

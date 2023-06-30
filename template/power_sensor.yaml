@@ -682,3 +682,18 @@
                   states('sensor.second_floor_measured_monthly_energy') | float(0)
                  ) | round(2)
               }}"
+
+    #--------------------------------------------#
+    #   -- Jittered Riemann Sum Integration --   #
+    #--------------------------------------------#
+    
+    # These sensors add a small amount (between 0.0 and 0.1) to a power sensor. This jittered amount
+    # should, in theory, prevent the Riemann Sum integration from becoming unavailable.
+    # This sensor must replace the source power sensor in the Riemann Sum sensor.
+    
+    - name: "Jittered Master Bedroom Lamp Power"
+      unique_id: jittered_master_bedroom_lamp_power
+      state: >-
+        {% set JIT = states('sensor.random_sensor') | float / 100 %}
+        {{ float(states('sensor.master_bedroom_lamp_current_consumption'),0) + JIT }}
+      unit_of_measurement: "w"

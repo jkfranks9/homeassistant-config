@@ -47,20 +47,26 @@
       unique_id: epson_lamp_hours
       state: "{{ state_attr('media_player.epson_projector', 'lamp_hours') }}"
 
-    #------------------------------#
-    #   -- MQTT Room Presence --   #
-    #------------------------------#
+    #---------------------------#
+    #   -- Beacon Presence --   #
+    #---------------------------#
     
-    # This sensor uses the appropriate battery level sensor, based on the state of the beacon.
-    - name: 'Blue Charm Battery Level'
-      unique_id: blue_charm_battery_level
+    # Blue charm beacon presence, based on scanner lowest distance.
+    - name: 'Blue Charm Presence'
+      unique_id: blue_charm_presence
       state: >
-        {% if states('sensor.blue_charm_beacon') == 'garage' %}
-          {{ states('sensor.blue_charm_battery_level_garage') }}
-        {% elif states('sensor.blue_charm_beacon') == 'house' %}
-          {{ states('sensor.blue_charm_battery_level_house') }}
+        {% set garage_dist = states('sensor.ble_garage_blue_charm_distance') %}
+        {% set house_dist = states('sensor.ble_house_blue_charm_distance') %}
+        {% set bad = ['unknown', 'unavailable'] %}
+        
+        {% if garage_dist not in bad and house_dist not in bad %}
+          {{ iif(house_dist <= garage_dist, 'House', 'Garage') }}
+        {% elif garage_dist in bad and house_dist not in bad %}
+          House
+        {% elif garage_dist not in bad and house_dist in bad %}
+          Garage
         {% else %}
-          {{ 'unknown' }}
+          Away
         {% endif %}
 
     #------------------------------#

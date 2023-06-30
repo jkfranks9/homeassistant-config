@@ -34,7 +34,7 @@ blueprint:
     
     persistent:
       name: Indicates if the notification should persist.
-      description: If true, the notification can only be removed using a future automation or script.
+      description: If true, the notification can only be removed using a future automation, script or device state change.
       selector:
         boolean:
     
@@ -72,7 +72,7 @@ action:
       # Handle a persistent notification.
       - "{{ input_persistent }}"
       
-    then:  
+    then:
       - service: script.send_notification
         data:
           destination:
@@ -86,7 +86,7 @@ action:
           timeout: 0
     
     # Handle a non-persistent notification.
-    else: 
+    else:
       - service: script.send_notification
         data:
           destination:

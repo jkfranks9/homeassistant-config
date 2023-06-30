@@ -14,4 +14,6 @@ cards:
       - !include /config/dashboard/dash_reminders/cards/maintenance/cpap.yaml
       - !include /config/dashboard/dash_reminders/cards/maintenance/filters.yaml
       - type: custom:layout-break
+      - !include /config/dashboard/dash_reminders/cards/maintenance/devices.yaml
+      - type: custom:layout-break
       - !include /config/dashboard/dash_reminders/cards/maintenance/misc.yaml

@@ -62,15 +62,12 @@ include:
   entities:
     
     - binary_sensor.cinema_projector
-    - binary_sensor.espresense_garage
-    - binary_sensor.espresense_house
     - binary_sensor.family_room_av
     - input_number.washer_fill_seconds
     - input_select.washer_load_size
     - input_select.washer_state
     - person.jon
     - sensor.attic_temperature
-    - sensor.blue_charm_beacon
     - sensor.cpap_ahi_events_per_hour
     - sensor.cpap_usage_hours
     - sensor.cpap_usage_minutes
@@ -80,7 +77,6 @@ include:
     - sensor.garage_temperature
     - sensor.main_floor_temperature
     - sensor.nighttime
-    - sensor.nut_mini
     - sensor.office_ambient_light
     - sensor.porch_battery_level
     - sensor.porch_battery_voltage

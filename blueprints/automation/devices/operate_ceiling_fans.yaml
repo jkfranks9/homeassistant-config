@@ -1,0 +1,61 @@
+# Operate a ceiling fan, loosely based on presence. A sensor entity is used to enable or disable the automations that
+# use this blueprint, for example an AV system in use. While enabled, we check a temperature sensor periodically to determine
+# the appropriate fan speed based on a set of threshold values.
+
+blueprint:
+  name: Operate Ceiling Fan
+  description: Operate a ceiling fan, periodically checking temperature to regulate the fan speed.
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Fan Entity
+      description: Sensor entity on which to trigger.
+      selector:
+        entity:
+          domain: binary_sensor
+    
+    temperature_entity:
+      name: Fan Entity
+      description: Sensor entity for the current temperature.
+      selector:
+        entity:
+          domain: sensor
+    
+    fan_entity:
+      name: Fan Entity
+      description: Fan entity to be operated.
+      selector:
+        entity:
+          domain: fan
+    
+    thresholds:
+      name: Threshold List
+      description: List of thresholds for high, medium and low fan speeds.
+      selector:
+        number:
+          min: 0
+          max: 100
+
+# Trigger every 5 minutes.
+trigger:
+  - platform: time_pattern
+    minutes: /5
+    
+  # Failsafe in case this automation is left enabled.
+condition:
+  - condition: state
+    entity_id: !input sensor_entity
+    state: 'on'
+
+action:
+            
+  # Turn on the fan if the temperature demands it.
+  - service: script.turn_on
+    entity_id: script.control_fan_for_temperature
+    data:
+      variables:
+        fan_entity_id: !input fan_entity
+        temperature_entity_id: !input temperature_entity
+        thresholds: !input thresholds
+        timeout: 0

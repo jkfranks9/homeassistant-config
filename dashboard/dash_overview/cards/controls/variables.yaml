@@ -13,8 +13,12 @@ cards:
   
   - type: entity
     entity: input_number.variables_wells_fargo
-    name: Wells Fargo
+    name: WF
+  
+  - type: entity
+    entity: input_number.variables_john_deere
+    name: Deere
   
   - type: entity
     entity: input_number.variables_workout_time
-    name: Workout Time
+    name: Ex Time

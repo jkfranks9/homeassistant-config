@@ -80,6 +80,19 @@
              (is_state('switch.harmony_hub_stream_player', 'on') and
               is_state('media_player.shield_tv', 'playing'))) }}
 
+    #------------------------------#
+    #   -- Device Power Flags --   #
+    #------------------------------#
+    
+    # These indicate if a device or device group (such as an AV system) are drawing power.
+    - name: Family Room AV System
+      unique_id: family_room_av_system
+      state: "{{ states('sensor.sonoff_family_room_av_power') | float(0) > 10 }}"
+      
+    - name: Theater AV System
+      unique_id: theater_av_system
+      state: "{{ states('sensor.projector_power') | float(0) > 0 }}"
+
     #-------------------------#
     #   -- Dryer Control --   #
     #-------------------------#

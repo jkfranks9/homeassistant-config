@@ -1,0 +1,12 @@
+# GPIO binary sensor, used as a button.
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D5
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: ${friendly_name} Start Button
+    filters:
+      - delayed_on: 10ms

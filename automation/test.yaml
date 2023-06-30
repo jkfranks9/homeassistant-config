@@ -30,7 +30,47 @@
   action:
   - delay:
       milliseconds: 500
-  - event: test_kodi_result
-    event_data:
-      source: "{{ trigger.event.data.entity_id }}"
-      result: "{{ trigger.event.data.result }}"
+          
+  - variables:
+      
+      # Random index into the list of videos.
+      number_of_videos: "{{ trigger.event.data.result.limits.total }}"
+      index: "{{ range(0, number_of_videos - 1) | random }}"
+  - service: system_log.write
+    data:
+      message: "JKF: total {{number_of_videos}}, index {{index}}"
+      level: info
+          
+  - variables:
+      
+      # Data from the randomly selected video.
+      artist: >
+        {% set artist_str = 'trigger.event.data.result.musicvideos.' ~ index ~ '.artist.0' %}
+        {{ artist_str }}
+      videoid: "{{ trigger.event.data.result.musicvideos.10.musicvideoid }}"
+      runtime: "{{ trigger.event.data.result.musicvideos.10.streamdetails.video.0.duration }}"
+  - service: system_log.write
+    data:
+      message: "JKF: artist {{artist}}, ID {{videoid}}, runtime {{runtime}}"
+      level: info
+
+#==============#
+#     Kodi     #
+#==============#
+  
+- alias: Test Kodi Result Event
+  id: test_kodi_result_event
+  
+  trigger:
+    - platform: event
+      event_type: kodi_call_method_result
+      event_data:
+        result_ok: true
+        input:
+          method: VideoLibrary.GetMovies
+        
+  action:
+    - service: system_log.write
+      data:
+        message: "JKF: {{ trigger.event.data }}"
+        level: warning

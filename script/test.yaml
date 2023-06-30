@@ -22,46 +22,6 @@ test_washer_cycle:
 #     Kodi     #
 #==============#
 
-test_kodi_start:
-  alias: Test Kodi Start
-  
-  sequence:
-    
-    # Turn on the Shield TV so we can host the Kodi application.
-    - service: media_player.turn_on
-      data:
-        entity_id: media_player.shield_tv
-    - delay: '00:00:03'
-  
-    # Start Kodi on the Shield TV.
-    - service: androidtv.adb_command
-      data:
-        entity_id: media_player.shield_tv
-        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n 'org.xbmc.kodi/.Splash'"
-
-test_kodi_stop:
-  alias: Test Kodi Stop
-  
-  sequence:
-  
-    # Exit the Kodi application.
-    - service: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'Home'
-        device: NVIDIA Shield TV
-    - delay: '00:00:02'
-    
-    # Turn off the Kodi media player.
-    - service: media_player.turn_off
-      data:
-        entity_id: media_player.kodi
-  
-    # Turn the Shield TV off again.
-    - service: media_player.turn_off
-      data:
-        entity_id: media_player.shield_tv
-
 test_kodi:
   alias: Test Kodi
   
@@ -87,6 +47,80 @@ test_kodi:
       data:
         message: "{{ wait.trigger.event.data.result }}"
         level: warning
+
+test_kodi_video_playlist:
+  alias: Test Kodi Video Playlist
+  
+  sequence:
+  
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Playlist.Clear
+        playlistid: 1
+    
+    - wait_for_trigger:
+        - platform: event
+          event_type: kodi_call_method_result
+          event_data:
+            result_ok: true
+            input:
+              method: Playlist.Clear
+      timeout: 3
+  
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Playlist.Add
+        playlistid: 1
+        item:
+          musicvideoid: 55
+    
+    - wait_for_trigger:
+        - platform: event
+          event_type: kodi_call_method_result
+          event_data:
+            result_ok: true
+            input:
+              method: Playlist.Add
+      timeout: 3
+  
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Playlist.Add
+        playlistid: 1
+        item:
+          musicvideoid: 66
+    
+    - wait_for_trigger:
+        - platform: event
+          event_type: kodi_call_method_result
+          event_data:
+            result_ok: true
+            input:
+              method: Playlist.Add
+      timeout: 3
+  
+    # - service: kodi.call_method
+      # target:
+        # entity_id: media_player.kodi
+      # data:
+        # method: Player.Open
+        # item:
+          # playlistid: 1
+    
+    # - wait_for_trigger:
+        # - platform: event
+          # event_type: kodi_call_method_result
+          # event_data:
+            # result_ok: true
+            # input:
+              # method: Player.Open
+      # timeout: 3
 
 #====================#
 #     Thermostat     #
@@ -351,29 +385,18 @@ test_notify_all:
 #     Fans     #
 #==============#
 
-test_fan_control:
-  alias: Test Fan Control
+test_fan_temperature:
+  alias: Test Fan Temperature
   
   sequence:
     - service: script.turn_on
       entity_id: script.control_fan_for_temperature
       data:
         variables:
-          fan_entity_id: fan.theater_fan
-          temperature_entity_id: sensor.theater_temperature
-          timeout: 0
-
-test_fan_zero:
-  alias: Test Fan Zero
-  
-  sequence:
-    - service: script.turn_on
-      entity_id: script.control_fan_for_temperature
-      data:
-        variables:
-          fan_entity_id: fan.family_room_fan
-          temperature_entity_id: sensor.main_floor_temperature
-          timeout: 0
+          fan_entity_id: fan.office_fan
+          temperature_entity_id: sensor.office_temperature
+          thresholds: [78, 72, 68]
+          timeout: 30
 
 #==================#
 #     Exercise     #
@@ -457,3 +480,68 @@ test_pc_display_off:
     data:
       topic: "iotlink/workgroup/legion-t530/commands/displays/off"
       payload: ""
+
+#==========================#
+#     Friendly Strings     #
+#==========================#
+
+test_friendly_time:
+  alias: Test Friendly Time
+  
+  sequence:
+    - service: script.send_notification
+      data:
+        destination:
+          - persistent
+        title: 'Test:'
+        notification_id: 'test_friendly'
+        message: >
+          {% from 'friendly_strings.jinja' import format_duration %}
+          {{ format_duration(state_attr('input_datetime.reminder_cleaning_guest_bath', 'timestamp')) }}
+
+#================#
+#     Lights     #
+#================#
+
+# Sometimes the stairway light doesn't turn on. Trying to figure out why.
+test_close_cinema_lights:
+  alias: Test Close Cinema Lights
+  
+  sequence:
+        
+    - repeat:
+        count: 10
+        sequence:
+          
+          # Turn on automations that might have been turned off.
+          - service: automation.turn_on
+            entity_id:
+              - automation.check_daytime_lights_sunset_minimum
+              - automation.check_daytime_lights_sunset_medium
+              - automation.check_daytime_lights_sunset_maximum
+          
+          # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
+          - condition: numeric_state
+            entity_id: sun.sun
+            attribute: elevation
+            above: 4.0
+    
+          - service: light.turn_on
+            data_template:
+              entity_id: >
+                {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
+                  {{ 'light.daytime_lights' }}
+                {% else %}
+                  {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
+                {% endif %}
+    
+          - service: light.turn_on
+            entity_id:
+              - light.stairway_light
+              - light.island_light
+          
+          - delay: 3
+    
+          - scene: scene.lights_out
+          
+          - delay: 3

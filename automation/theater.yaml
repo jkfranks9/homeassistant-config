@@ -208,21 +208,23 @@
       device_name: LD Player
       volume: 0.63
  
-#============================#
-#     Kodi Movie Control     #
-#============================#
+#=================================#
+#     Kodi Feature Movie List     #
+#=================================#
  
 # We have an input select that represents the list of Kodi movies. This is dynamically set using the 
-# get_all_kodi_movies script. However, when HA restarts, the input select gets restored to the yaml value
+# Process All Kodi Movies Result script. However, when HA restarts, the input select gets restored to the yaml value
 # instead of the dynamically set value. So this automation restores the dynamic list on HA start.
 #
-# The actual list should exist in a file that was saved at get_all_kodi_movies time, and the feature
+# The actual list should exist in a file that was saved at Process All Kodi Movies Result time, and the feature
 # movie name (input select state value) exists in input_text.current_feature.
 - alias: Restore Movie List On Start
   id: restore_movie_list_on_start
+  
   trigger:
     - platform: homeassistant
       event: start
+  
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
@@ -281,6 +283,286 @@
         entity_id: input_text.current_feature
         value: "{{ ( trigger.to_state.state ) }}"
 
+#==============================#
+#     Kodi Process Results     #
+#==============================#
+
+# Process a bad result from any Kodi call.
+- alias: Process Kodi Bad Result
+  id: process_kodi_bad_result
+  
+  # Trigger on an unsuccessful command result.
+  trigger:
+    - platform: event
+      event_type: kodi_call_method_result
+      event_data:
+        result_ok: false
+  
+  action:
+    - service: system_log.write
+      data:
+        message: "Kodi {{ trigger.event.data.input.method }} call failed."
+        level: warning
+
+# Process the results from a GetMovies Kodi call.
+- alias: Process Kodi Movies Result
+  id: process_kodi_movies_result
+  
+  # Trigger on a successful GetMovies command result.
+  trigger:
+    - platform: event
+      event_type: kodi_call_method_result
+      event_data:
+        result_ok: true
+        input:
+          method: VideoLibrary.GetMovies
+  
+  action:
+    - service: script.handle_kodi_movies_result
+      data:
+        result: "{{ trigger.event.data.result }}"
+
+# Process the results from a GetMusicVideos Kodi call.
+- alias: Process Kodi Video Result
+  id: process_kodi_video_result
+  
+  # Trigger on a successful GetMusicVideos command result.
+  trigger:
+    - platform: event
+      event_type: kodi_call_method_result
+      event_data:
+        result_ok: true
+        input:
+          method: VideoLibrary.GetMusicVideos
+  
+  variables:
+    
+    # Limits are imposed on the number of videos played, as well as the total time allotted.
+    max_videos: 3
+    max_time: "{{ (12 * 60) | int }}"
+    
+    # Collect the relevant pieces of the results into separate lists.
+    artists:  "{{ trigger.event.data.result['musicvideos'] | map(attribute='artist.0') | list }}"
+    ids:      "{{ trigger.event.data.result['musicvideos'] | map(attribute='musicvideoid') | list }}"
+    runtimes: "{{ trigger.event.data.result['musicvideos'] | map(attribute='streamdetails.video.0.duration') | list }}"
+    
+    # Then refactor those lists into a list of [artist, ID, runtime] for each video, weeding out long videos.
+    results: >
+      {% set result = namespace(list = []) %}
+      {% for artist in artists %}
+        {% if runtimes[loop.index0] < max_time %}
+          {% set result.list = result.list + [[artists[loop.index0], ids[loop.index0], runtimes[loop.index0]]] %}
+        {% endif %}
+      {% endfor %}
+      
+      {{ result.list }}
+    
+    # Number of videos available.
+    number_of_videos: "{{ results | length() }}"
+    
+    # Minimum runtime ... we use this to determine if no possible video can fit into the remaining total time, meaning we're done.
+    minimum_runtime: >
+      {% set min = namespace(time = max_time) %}
+      {% for rt in runtimes %}
+        {% if rt < min.time %}
+          {% set min.time = rt %}
+        {% endif %}
+      {% endfor %}
+      
+      {{ min.time }}
+  
+  action:
+    
+    # Initialize variables...
+    
+    # These ensure that no duplicate artists are selected, and collect the IDs and run times of the videos we select.
+    - service: input_text.set_value
+      target:
+        entity_id:
+          - input_text.music_video_artists
+          - input_text.music_video_ids
+          - input_text.music_video_runtimes
+      data:
+        value: ''
+    
+    # This ensures we end the loop if we've checked all videos without satisfying the limits.
+    - service: input_select.set_options
+      target:
+        entity_id: input_select.music_videos_checked
+      data:
+        options: placeholder
+    
+    # These accumulate the total run time, and count the number of videos.
+    - service: input_number.set_value
+      target:
+        entity_id:
+          - input_number.music_videos_total_time
+          - input_number.music_videos_selected
+      data:
+        value: 0
+    
+    # This is a flag to know when we're done.
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.music_video_selection_done
+          
+    # Debug logging.
+    - service: system_log.write
+      data:
+        message: "Videos: {{ number_of_videos }}:, min runtime {{ minimum_runtime }}, {{ results }}"
+        level: info
+    
+    # Loop through the result to randomly select videos.
+    - repeat:
+        
+        # We're done if any of the limits are reached or we've checked all videos.
+        until:
+          - condition: state
+            entity_id: input_boolean.music_video_selection_done
+            state: 'on'          
+        
+        sequence:
+          
+          - variables:
+              
+              # Random index into the list of videos.
+              index: "{{ range(number_of_videos) | random }}"
+              
+              # Data from the randomly selected video.
+              artist:  "{{ results[index][0] }}"
+              videoid: "{{ results[index][1] }}"
+              runtime: "{{ results[index][2] }}"
+              
+          # Debug logging.
+          - service: system_log.write
+            data:
+              message: "Checking video ({{ repeat.index }}): '{{ artist }}', {{ videoid }}, {{ runtime }}"
+              level: info
+          - service: system_log.write
+            data:
+              message: "Total runtime {{ states('input_number.music_videos_total_time') }}, artists {{ states('input_text.music_video_artists') }}"
+              level: info
+          
+          # Skip if this artist has already been chosen, or the runtime is too long.
+          - if:
+              - "{{ artist not in states('input_text.music_video_artists') and
+                    runtime + states('input_number.music_videos_total_time') | int(0) <= max_time }}"
+            
+            then:
+          
+              # Only do something if the limits haven't been reached.
+              #
+              # Note the following:
+              #
+              # 1) We check if the total accumulated time is less than the maximum time minus the minimum runtime.
+              #    If this is false no possible video can be found to fill out the time to the maximum.
+              # 2) We also only iterate to twice the number of videos found (an arbitrary value), so we don't
+              #    spend too much time trying to fill up the total time.
+              - if:
+                  - "{{ states('input_number.music_videos_total_time') | int(0) < max_time - minimum_runtime and 
+                        states('input_number.music_videos_selected') | int(0) < max_videos and
+                        repeat.index <= number_of_videos * 2}}"
+                
+                then:
+                  
+                  # Update the list of chosen artists.
+                  - service: input_text.set_value
+                    target:
+                      entity_id: input_text.music_video_artists
+                    data:
+                      value: >
+                        {% from 'friendly_strings.jinja' import build_list %}
+                        {{ build_list('input_text.music_video_artists', artist) }}
+                  
+                  # Update the list of chosen video IDs.
+                  - service: input_text.set_value
+                    target:
+                      entity_id: input_text.music_video_ids
+                    data:
+                      value: >
+                        {% from 'friendly_strings.jinja' import build_list %}
+                        {{ build_list('input_text.music_video_ids', videoid) }}
+                  
+                  # Update the list of chosen video run times.
+                  - service: input_text.set_value
+                    target:
+                      entity_id: input_text.music_video_runtimes
+                    data:
+                      value: >
+                        {% from 'friendly_strings.jinja' import build_list %}
+                        {{ build_list('input_text.music_video_runtimes', runtime) }}
+                  
+                  # Accumulate the total run time.
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.music_videos_total_time
+                    data:
+                      value: "{{ states('input_number.music_videos_total_time') | int(0) + runtime | int(0) }}"
+                  
+                  # Bump the number of selected videos.
+                  - service: input_number.increment
+                    target:
+                      entity_id: input_number.music_videos_selected
+                
+                # Limits have been reached, we're done.
+                else:
+                  - service: input_boolean.turn_on
+                    data:
+                      entity_id: input_boolean.music_video_selection_done
+          
+          # Add this video to the checked list if we haven't checked it yet.
+          - service: system_log.write
+            data:
+              message: "Checked {{ state_attr('input_select.music_videos_checked', 'options') }}"
+              level: info
+          - service: input_select.set_options
+            target:
+              entity_id: input_select.music_videos_checked
+            data:
+              options: >
+                {% set id = videoid | string %}
+                {% set current = state_attr('input_select.music_videos_checked', 'options') %}
+                  {% if id not in current %}
+                    {% if 'placeholder' not in current %}
+                      {% set current = current + [id] %}
+                    {% else %}
+                      {% set current = videoid %}
+                    {% endif %}
+                  {% endif %}
+                
+                {{ current }}
+          
+          # We're done if we've checked all available videos.
+          - if:
+              - "{{ state_attr('input_select.music_videos_checked', 'options') | length() >= number_of_videos or
+                    max_time - states('input_number.music_videos_total_time') | int(0) < minimum_runtime }}"
+            
+            then:
+              - service: input_boolean.turn_on
+                data:
+                  entity_id: input_boolean.music_video_selection_done
+    
+    # Debug logging.
+    - service: system_log.write
+      data:
+        message: "Found artists: {{ states('input_text.music_video_artists') }}"
+        level: debug
+    - service: system_log.write
+      data:
+        message: "Found video IDs: {{ states('input_text.music_video_ids') }}"
+        level: debug
+    - service: system_log.write
+      data:
+        message: "Found run times: {{ states('input_text.music_video_runtimes') }}"
+        level: debug
+    - service: system_log.write
+      data:
+        message: "Total time: {{ states('input_number.music_videos_total_time') | int(0) }} minutes"
+        level: debug
+    
+    # Go build the video playlist.
+    - service: script.build_kodi_video_playlist
+
 #===================================#
 #     Shield Application Change     #
 #===================================#
@@ -309,15 +591,4 @@
       # Turn on Adguard for all other applications. Note that it's also turned on when the cinema
       # is closed, in case Paramount was the last application used.
       else:
-        - service: script.turn_on_adguard  
-    
-    # The Kodi media player needs to be turned off if we're changing from Kodi to something else.
-    - if:
-      
-        # Kill the Kodi app if needed, else do nothing.
-        - "{{ trigger.from_state and trigger.from_state.attributes.app_name == 'Kodi' }}"
-        
-      then:
-        - service: media_player.turn_off
-          data:
-            entity_id: media_player.kodi
+        - service: script.turn_on_adguard 

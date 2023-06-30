@@ -9,14 +9,7 @@
 
 #======================#
 #     Raspberry Pi     #
-#======================#
-
-# CPU temperature
-- platform: command_line
-  name: CPU Temp
-  unit_of_measurement: '°'
-  command: 'cat /sys/class/thermal/thermal_zone0/temp'
-  value_template: "{{ (value | multiply(0.001) | float(0)) | round(2) }}"
+#======================#.
 
 # Last boot time, disk, memory & CPU usage
 - platform: systemmonitor
@@ -34,13 +27,14 @@
 # Next Canes Game
 - platform: rest
   name: Next Canes Game
+  scan_interval: 31536000
   json_attributes_path: "$.teams[0].nextGameSchedule.dates[0].games[0]"
   json_attributes:
     - gameDate
     - teams
   resource: https://statsapi.web.nhl.com/api/v1/teams/12?expand=team.schedule.next
   value_template: >
-    {% if value_json is defined and value_json | length %}
+    {% if value_json is defined and value_json | length and value_json.teams[0].nextGameSchedule is defined %}
       {{ as_timestamp(value_json.teams[0].nextGameSchedule.dates[0].games[0].gameDate) | timestamp_custom('%b %d %I:%M%p') }}
     {% else %}
       {{ as_timestamp(now().today() + timedelta(days = 5)) | timestamp_custom('%b %d %I:%M%p') }}
@@ -49,15 +43,38 @@
 # Next Flyers Game
 - platform: rest
   name: Next Flyers Game
+  scan_interval: 31536000
   json_attributes_path: "$.teams[0].nextGameSchedule.dates[0].games[0]"
   json_attributes:
     - gameDate
     - teams
   resource: https://statsapi.web.nhl.com/api/v1/teams/4?expand=team.schedule.next
   value_template: >    
-    {% if value_json is defined and value_json | length %}
+    {% if value_json is defined and value_json | length and value_json.teams[0].nextGameSchedule is defined %}
       {{ as_timestamp(value_json.teams[0].nextGameSchedule.dates[0].games[0].gameDate) | timestamp_custom('%b %d %I:%M%p') }}
     {% else %}
       {{ as_timestamp(now().today() + timedelta(days = 5)) | timestamp_custom('%b %d %I:%M%p') }}
     {% endif %}
-    
+
+#=======================#
+#     Unifi Counter     #
+#=======================#
+
+- platform: unifics
+  name: Unifi Counter
+  host: !secret unifi_host
+  username: !secret unifi_username
+  password: !secret unifi_password
+  udm: True
+
+#================#
+#     Random     #
+#================#
+
+# This is used to provide a jittered power amount to Riemann integrations to help prevent them from becoming unavailable.
+# See the Jittered Riemann Sum Integration section of the power template sensors.
+- platform: random
+  name: 'Random Sensor'
+  minimum: 0
+  maximum: 10
+  unit_of_measurement: "w"

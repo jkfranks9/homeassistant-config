@@ -1,0 +1,77 @@
+# Enable or disable ceiling fan automations based on a conditional sensor. The reason for this blueprint is that The
+# fan automations to be controlled trigger every few minutes to dynamically adjust the fan based on current temperature.
+# We don't need or want those automations to keep triggering all day, but only when needed.
+
+blueprint:
+  name: Control Ceiling Fan Automations
+  description: Enable or disable ceiling fan automations based on a conditional sensor. For example, control a room fan only if the AV system in that room is in use.
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Sensor Entity
+      description: Sensor entity on which to trigger.
+      selector:
+        entity:
+          domain: binary_sensor
+    
+    automation_entity:
+      name: Automation Entity
+      description: Automation entity to be enabled or disabled.
+      selector:
+        entity:
+          domain: automation
+    
+    speed_entity:
+      name: Speed Entity
+      description: Numeric entity indicating the current fan speed. If this is above zero when the automation is disabled, also turn off the fan.
+      selector:
+        entity:
+          domain: input_number
+    
+    fan_entity:
+      name: Fan Entity
+      description: Fan entity to be turned off if needed when the automation is disabled.
+      selector:
+        entity:
+          domain: fan
+
+# Trigger on any change to the sensor entity.
+trigger:
+  - platform: state
+    entity_id: !input sensor_entity
+    to:
+
+action:
+    
+  - choose:
+      
+    # Sensor turned on.
+    - conditions: "{{ trigger.from_state.state == 'off' and trigger.to_state.state == 'on' }}"
+      
+      sequence:
+    
+        # Turn on the fan automation.
+        - service: automation.turn_on
+          entity_id: !input automation_entity
+      
+    # Sensor turned off.
+    - conditions: "{{ trigger.from_state.state == 'on' and trigger.to_state.state == 'off' }}"
+        
+      sequence:
+    
+        # Turn off the fan automation.
+        - service: automation.turn_off
+          entity_id: !input automation_entity
+    
+        # If the fan was running, turn it off.
+        - if:
+            - condition: numeric_state
+              entity_id: !input speed_entity
+              above: 0
+              
+          then:
+            - service: script.set_fan_to_speed
+              data:
+                entity_id: !input fan_entity
+                speed: 0

@@ -21,9 +21,10 @@ substitutions:
 
 # Pull in common configuration
 packages:
-  nodemcu_base: !include common/nodemcu_base.yaml
-  wifi:         !include common/wifi.yaml
-  dht_sensor:   !include common/dht_sensor.yaml
+  nodemcu_base:       !include common/nodemcu_base.yaml
+  wifi:               !include common/wifi.yaml
+  dht_sensor:         !include common/dht_sensor.yaml
+  gpio_binary_sensor: !include common/gpio_binary_sensor.yaml
 
 # Enable Home Assistant API
 api:

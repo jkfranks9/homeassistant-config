@@ -6,32 +6,16 @@ type: custom:stack-in-card
 title: CPAP Data
 cards:
 
-  - type: 'custom:mini-graph-card'
-    name: AHI
-    icon: mdi:timelapse
-    hours_to_show: 168
-    aggregate_func: max
-    group_by: date
-    group: true
-    height: 100
-    show:
-      graph: bar
-      average: true
-      
-    entities:
+  - type: 'custom:decluttering-card'
+    template: cpap_data
+    variables:
       - entity: sensor.cpap_ahi_events_per_hour
+      - name: AHI
+      - icon: timelapse
 
-  - type: 'custom:mini-graph-card'
-    name: Usage
-    icon: mdi:bed-clock
-    hours_to_show: 168
-    aggregate_func: max
-    group_by: date
-    group: true
-    height: 100
-    show:
-      graph: bar
-      average: true
-      
-    entities:
+  - type: 'custom:decluttering-card'
+    template: cpap_data
+    variables:
       - entity: sensor.cpap_usage_hours
+      - name: Usage
+      - icon: bed-clock

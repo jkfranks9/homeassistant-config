@@ -1,9 +1,9 @@
-#================================#
-#     Doors and Windows Card     #
-#================================#
+#=====================#
+#     Covers Card     #
+#=====================#
 
 type: custom:stack-in-card
-title: Doors & Windows
+title: Covers
 mode: horizontal
 cards:
   
@@ -45,3 +45,17 @@ cards:
               variables:
                 var_name: Guest BR
                 var_icon_prefix: mdi:window
+  
+            - type: custom:button-card
+              template: hvac_vent_button
+              entity: cover.upstairs_br_vent_1
+              name: Upstairs BR 1
+              variables:
+                var_entity: cover.upstairs_br_vent_1
+              
+            - type: custom:button-card
+              template: hvac_vent_button
+              entity: cover.upstairs_br_vent_2
+              name: Upstairs BR 2
+              variables:
+                var_entity: cover.upstairs_br_vent_2

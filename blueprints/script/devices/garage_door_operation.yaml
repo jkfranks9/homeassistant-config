@@ -60,7 +60,7 @@ sequence:
           data:
             destination:
               - mobile
-            title: 'Information:'
+            title: 'Attention:'
             message: '{{ msg_operation }} garage door {{ input_name }}.'
             channel: standard
             throttled: false

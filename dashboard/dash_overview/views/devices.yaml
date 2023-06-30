@@ -11,10 +11,8 @@ cards:
   - type: custom:layout-card
     layout_type: custom:vertical-layout
     cards:
-      - !include /config/dashboard/dash_overview/cards/devices/presence.yaml
       - !include /config/dashboard/dash_overview/cards/devices/pc_info.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/printer.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/devices/pc_resources.yaml
       - !include /config/dashboard/dash_overview/cards/devices/storage.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/devices/printer.yaml

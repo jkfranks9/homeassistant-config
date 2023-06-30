@@ -29,30 +29,34 @@ cards:
               name: Upstairs
           
             - type: 'custom:button-card'
-              template: info_button
+              template: presence_button
               entity: input_boolean.adults_home
               name: Adults
               icon: mdi:human-male-female
-              show_state: false
           
             - type: 'custom:button-card'
-              template: info_button
+              template: presence_button
               entity: input_boolean.children_home
               name: Children
               icon: mdi:human-child
-              show_state: false
           
             - type: 'custom:button-card'
-              template: info_button
+              template: person_button
               entity: person.jon
               icon: mdi:human-male
           
             - type: 'custom:button-card'
-              template: info_button
+              template: person_button
               entity: person.mike
               icon: mdi:human-male
           
             - type: 'custom:button-card'
-              template: info_button
+              template: person_button
               entity: person.sarah
               icon: mdi:human-female
+          
+            - type: 'custom:button-card'
+              template: beacon_button
+              entity: sensor.blue_charm_presence
+              name: Blue Charm
+              icon: mdi:home-map-marker

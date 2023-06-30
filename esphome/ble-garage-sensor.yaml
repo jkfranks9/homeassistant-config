@@ -1,0 +1,24 @@
+# Device specific information
+substitutions:
+  
+  # Used by boards
+  device_name:      ble-garage-sensor
+  loglevel:         DEBUG
+  
+  # Used by WiFi and sensors
+  friendly_name:    BLE Garage
+  update_interval:  600s
+  
+  # Used by BLE sensor
+  sensor_id_prefix: ble_garage
+  scan_interval:    60s
+  sensor_interval:  30s
+
+# Pull in common configuration
+packages:
+  esp32_base: !include common/esp32_base.yaml
+  wifi:       !include common/wifi.yaml
+  ble:        !include common/ble.yaml
+
+# Enable Home Assistant API
+api:

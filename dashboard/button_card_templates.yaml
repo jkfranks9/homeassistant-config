@@ -23,24 +23,25 @@ container:
 #=========================#
 
 delivery_button:
-  show_icon: true
-  show_name: true
+  template: very_basic_button
+  
   show_label: true
   show_state: false
   layout: icon_name_state2nd
-  size: 30%
   
   tap_action:
     action: none
+  
+  styles:
+    label:
+      - font-size: 70%
 
 #=======================#
 #     Toggle Button     #
 #=======================#
 
 toggle_button:
-  show_icon: true
-  show_name: true
-  show_state: true
+  template: very_basic_button
   
   tap_action:
     action: toggle
@@ -50,28 +51,24 @@ toggle_button:
 #=======================#
 
 sensor_button:
-  show_icon: true
-  show_name: true
-  show_state: true
+  template: very_basic_button
   
   tap_action:
     action: none
 
-#=====================#
-#     Info Button     #
-#=====================#
+#=======================#
+#     Person Button     #
+#=======================#
 
-info_button:
-  show_icon: true
-  show_name: true
-  show_state: true
+person_button:
+  template: very_basic_button
   
   state_display: |
     [[[
-      if (entity.state == 'on')
-        return 'Home';
-      else if (entity.state == 'off')
+      if (entity.state == 'not_home')
         return 'Away';
+      else if (entity.state == 'home')
+        return 'Home';
     ]]]
   
   tap_action:
@@ -81,29 +78,53 @@ info_button:
     - value: 'not_home'
       color: var(--paper-item-icon-color)
     
-    - value: 'off'
-      color: var(--paper-item-icon-color)
-    
     - value: 'home'
-      color: var(--paper-item-icon-active-color)
-    
-    - value: 'on'
       color: var(--paper-item-icon-active-color)
     
     - operator: default
       color: var(--accent-color)
+
+#=======================#
+#     Beacon Button     #
+#=======================#
+
+beacon_button:
+  template: very_basic_button
+  
+  tap_action:
+    action: more-info
+  
+  state:
+    - value: 'Away'
+      color: var(--paper-item-icon-color)
+    
+    - operator: default
+      color: var(--paper-item-icon-active-color)
+
+#=========================#
+#     Presence Button     #
+#=========================#
+
+presence_button:
+  template: very_basic_button
+  
+  show_state: false
+  
+  tap_action:
+    action: toggle
 
 #============================#
 #     Garage Door Button     #
 #============================#
 
 garage_door_button:
+  template: very_basic_button
+  
   variables:
     var_entity: ''
     var_name: ''
   
-  show_icon: true
-  show_name: true
+  show_state: false
   icon: 'hass:garage'
   size: 40%
   
@@ -128,12 +149,13 @@ garage_door_button:
 #==============================#
 
 door_window_button:
+  template: very_basic_button
+  
   variables:
     var_name: ''
     var_icon_prefix: ''
   
-  show_icon: true
-  show_name: true
+  show_state: false
   size: 40%
   
   tap_action:
@@ -155,12 +177,13 @@ door_window_button:
 #============================#
 
 light_group_button:
+  template: very_basic_button
+  
   variables:
     entities_title: ''
     entities_group: ''
   
-  show_icon: true
-  show_name: true
+  show_state: false
   
   tap_action:
     action: fire-dom-event
@@ -183,8 +206,9 @@ light_group_button:
 #=======================#
 
 motion_button:
-  show_icon: true
-  show_name: true
+  template: very_basic_button
+  
+  show_state: false
   
   tap_action:
     action: 'none'
@@ -361,6 +385,9 @@ temperature_button:
 
 hvac_vent_button:
   template: operational_button
+  
+  variables:
+    var_entity: ''
       
   # Bogus state display, needed to display the icon. It's hidden by stying.
   state_display: |-
@@ -369,13 +396,22 @@ hvac_vent_button:
     ]]]
     
   state:
-    - value: 'open'
+    - operator: template
+      value: >
+        [[[
+          return states[variables.var_entity].attributes.current_position == 100
+        ]]]
       icon: mdi:hvac
       styles:
         icon:
           - color: var(--paper-item-icon-active-color)
     
-    - value: 'closed'
+    
+    - operator: template
+      value: >
+        [[[
+          return states[variables.var_entity].attributes.current_position == 0
+        ]]]
       icon: mdi:hvac-off
       styles:
         icon:
@@ -393,7 +429,7 @@ hvac_vent_button:
   custom_fields:
     pos: |
       [[[
-        if (entity.state == 'closed')
+        if (entity.attributes.current_position == 0)
           return `<div style="line-height:1">Closed</div>`;
         else if (entity.attributes.current_position == 100)
           return `<div style="line-height:1">Open</div>`;
@@ -620,15 +656,23 @@ satellite_compass:
 #========================= Internal Templates =========================
 #
 
+#===========================#
+#     Very Basic Button     #
+#===========================#
+
+very_basic_button:
+  show_icon: true
+  show_name: true
+  show_state: true
+  size: 30%
+
 #=====================#
 #     Base Button     #
 #=====================#
 
 # This contains common configuration for the other internal templates below.
 base_button:
-  show_icon: true
-  show_state: true
-  show_name: true
+  template: very_basic_button
     
   styles:
     card:
@@ -650,7 +694,7 @@ base_button:
       - position: absolute
       - top: 0
       - left: 2
-      - z-index: 10
+      - z-index: 2
 
 #============================#
 #     Environment Button     #
@@ -744,7 +788,7 @@ operational_button:
       - width: 60%
       - bottom: 1px
       - display: block
-      - z-index: 10
+      - z-index: 2
     
     state:
       - font-size: 350%

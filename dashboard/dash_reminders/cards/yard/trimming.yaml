@@ -28,23 +28,45 @@ cards:
       - period: 'months'
       - service: script.set_datetime_offset_months
       
+  # Sidewalk
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_trimming_sidewalk
+      - name: Sidewalk
+      - icon: sickle
+      - interval: 4
+      - period: 'months'
+      - service: script.set_datetime_offset_months
+      
+  # Front
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_trimming_front
+      - name: Front
+      - icon: sickle
+      - interval: 4
+      - period: 'months'
+      - service: script.set_datetime_offset_months
+      
+  # Side
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_trimming_side
+      - name: Side
+      - icon: sickle
+      - interval: 4
+      - period: 'months'
+      - service: script.set_datetime_offset_months
+      
   # Back
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
       - entity: input_datetime.reminder_trimming_back
       - name: Back
-      - icon: sickle
-      - interval: 4
-      - period: 'months'
-      - service: script.set_datetime_offset_months
-      
-  # Courtyard
-  - type: 'custom:decluttering-card'
-    template: next_event
-    variables:
-      - entity: input_datetime.reminder_trimming_courtyard
-      - name: Courtyard
       - icon: sickle
       - interval: 4
       - period: 'months'
@@ -61,12 +83,12 @@ cards:
       - period: 'months'
       - service: script.set_datetime_offset_months
       
-  # Front / Sidewalk
+  # Courtyard
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_trimming_front_sidewalk
-      - name: Front / Sidewalk
+      - entity: input_datetime.reminder_trimming_courtyard
+      - name: Courtyard
       - icon: sickle
       - interval: 4
       - period: 'months'
@@ -89,17 +111,6 @@ cards:
     variables:
       - entity: input_datetime.reminder_trimming_pool
       - name: Pool
-      - icon: sickle
-      - interval: 4
-      - period: 'months'
-      - service: script.set_datetime_offset_months
-      
-  # Side
-  - type: 'custom:decluttering-card'
-    template: next_event
-    variables:
-      - entity: input_datetime.reminder_trimming_side
-      - name: Side
       - icon: sickle
       - interval: 4
       - period: 'months'

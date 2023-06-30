@@ -207,27 +207,37 @@ close_garage_door_south:
 # Suspend deep sleep on ESPHome devices so we can update the firmware using OTA
 suspend_deep_sleep:
   alias: Suspend Deep Sleep
+  
+  fields:
+    topic:
+      description: 'The battery sensor MQTT topic.'
+  
   sequence:
   
   - service: mqtt.publish
     data:
-      topic:   porch-sensor/ota_mode
+      topic:   "{{ topic }}"
       payload: 'ON'
       retain: true
 
 # Resume deep sleep on ESPHome devices
 resume_deep_sleep:
   alias: Resume Deep Sleep
+  
+  fields:
+    topic:
+      description: 'The battery sensor MQTT topic.'
+  
   sequence:
   
   - service: mqtt.publish
     data:
-      topic:   porch-sensor/ota_mode
+      topic:   "{{ topic }}"
       payload: 'OFF'
   
   - service: mqtt.publish
     data:
-      topic:   porch-sensor/ota_mode
+      topic:   "{{ topic }}"
       payload: ''
       retain: true
 
@@ -277,15 +287,17 @@ set_fan_to_speed:
   
   sequence:
     
-    # Don't do anything if the fan is already at the desired speed.
-    - condition: "{{ states(fan_speed_entity) != speed }}"      
-    
-    # Set the fan to the specified speed. 
-    - service: fan.turn_on
-      target:
-        entity_id: "{{ entity_id }}"
-      data:
-        percentage: "{{ speed }}"
+    # Don't set the speed if the fan is already at the desired speed.
+    - if:
+        - "{{ states(fan_speed_entity) != speed }}"
+      
+      then:    
+        # Set the fan to the specified speed. 
+        - service: fan.turn_on
+          target:
+            entity_id: "{{ entity_id }}"
+          data:
+            percentage: "{{ speed }}"
     
     # To calculate estimated power consumption, we need to keep track of the specified speed. We do this
     # using a unique input number for each fan. Lovely.
@@ -294,30 +306,6 @@ set_fan_to_speed:
         entity_id: "{{ fan_speed_entity }}"
       data:
         value: "{{ speed }}"
-
-# Turn off a ceiling fan.
-turn_off_fan:
-  alias: Turn Off Fan
-  
-  fields:
-    entity_id:
-      description: 'The target ceiling fan.'
-  
-  variables:
-    fan_speed_entity: "{{ 'input_number.' ~ (state_attr(entity_id, 'friendly_name') | replace(' ', '_') | lower) ~ '_speed' }}"    
-    
-  sequence:
-    # Turn off the fan.
-    - service: fan.turn_off
-      target:
-        entity_id: "{{ entity_id }}"
-    
-    # Reset the fan speed input number.
-    - service: input_number.set_value
-      target:
-        entity_id: "{{ fan_speed_entity }}"
-      data:
-        value: 0
 
 # Control a fan based on temperature.
 control_fan_for_temperature:
@@ -336,14 +324,34 @@ control_fan_for_temperature:
         entity:
           domain: sensor
     
+    thresholds:
+      name: Threshold List
+      description: List of thresholds for high, medium and low fan speeds.
+      selector:
+        number:
+          min: 0
+          max: 100
+    
     timeout:
       description: 'Time to leave the fan on, in seconds. Zero means no timeout.'
   
   sequence:
+    - variables:
+        high_threshold: "{{ thresholds[0] }}"
+        med_threshold:  "{{ thresholds[1] }}"
+        low_threshold:  "{{ thresholds[2] }}"
     
     # Set the fan to a speed based on the temperature.
     - choose:
-      - conditions: "{{ states(temperature_entity_id) | float(0) > 75.0 }}"
+      - conditions: "{{ states(temperature_entity_id) | float(0) >= high_threshold }}"
+      
+        sequence:
+          - service: script.set_fan_to_speed
+            data:
+              entity_id: "{{ fan_entity_id }}"
+              speed: 99
+      
+      - conditions: "{{ states(temperature_entity_id) | float(0) >= med_threshold }}"
       
         sequence:
           - service: script.set_fan_to_speed
@@ -351,7 +359,7 @@ control_fan_for_temperature:
               entity_id: "{{ fan_entity_id }}"
               speed: 66
       
-      - conditions: "{{ states(temperature_entity_id) | float(0) > 70.0 }}"
+      - conditions: "{{ states(temperature_entity_id) | float(0) >= low_threshold }}"
       
         sequence:
           - service: script.set_fan_to_speed
@@ -372,27 +380,7 @@ control_fan_for_temperature:
     - delay: "{{ timeout }}" 
     
     # Then turn the fan off.
-    - service: script.turn_off_fan
+    - service: script.set_fan_to_speed
       data:
         entity_id: "{{ fan_entity_id }}"
-
-#=================#
-#     Laundry     #
-#=================#
-
-# Log the dryer start.
-log_dryer_start:
-  alias: Log Dryer Start
-  
-  sequence:
-    - service: script.log_laundry_event
-      data:
-        event_type: basic
-        prefix: Dryer
-        message: >
-          {% set intemp  = state_attr('climate.downstairs', 'current_temperature') %}
-          {% set inhum   = state_attr('climate.downstairs', 'current_humidity') %}
-          {% set outtemp = states('sensor.porch_temperature') %}
-          {% set outhum  = states('sensor.porch_humidity') %}
-          
-          starting: indoor temperature, humidity ({{ intemp }}, {{ inhum }}), outdoor temperature, humidity ({{ outtemp }}, {{ outhum }})
+        speed: 0

@@ -11,14 +11,14 @@ entities:
   - entity: script.watch_disney_plus
     name: Disney Plus
     action_name: Watch
-  - entity: script.watch_hbo_max
-    name: HBO Max
-    action_name: Watch
   - entity: script.watch_hulu
     name: Hulu
     action_name: Watch
   - entity: script.watch_kodi
     name: Kodi
+    action_name: Watch
+  - entity: script.watch_max
+    name: Max
     action_name: Watch
   - entity: script.watch_netflix
     name: Netflix

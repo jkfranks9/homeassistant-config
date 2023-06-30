@@ -120,30 +120,6 @@ mqtt:
   
   sensor:
     
-    # Room presence ... Unfortunately, the MQTT topic for beacon devices includes the name of the scanner closest to the beacon,
-    # so we have to have a sensor for each scanner state topic ...
-
-    # ... garage scanner.
-    - name: 'Blue Charm Battery Level Garage'
-      state_topic: 'espresense/devices/iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949/garage'
-      unit_of_measurement: '%'
-      value_template: >
-        {% set pct = ((value_json.mV / 1000) / 3.00 * 100) | float(0) | round(0) %}
-        {% if pct > 100 %}
-          {% set pct = 100 %}
-        {% endif %}    
-        {{ pct }}
-  
-    - name: 'Blue Charm Battery Level House'
-      state_topic: 'espresense/devices/iBeacon:426c7565-4368-6172-6d42-6561636f6e73-3838-4949/house'
-      unit_of_measurement: '%'
-      value_template: >
-        {% set pct = ((value_json.mV / 1000) / 3.00 * 100) | float(0) | round(0) %}
-        {% if pct > 100 %}
-          {% set pct = 100 %}
-        {% endif %}    
-        {{ pct }}
-    
     # InfluxDB database size for the front end.
     - name: InfluxDB DB Size
       unit_of_measurement: 'MB'
@@ -201,7 +177,7 @@ ecovacs:
 #     Miscellaneous     #
 #=======================#
 
-#HTTP, needed for NGINX
+#HTTP, needed for NGINX (check NGINX add-on log for current values)
 http:
   use_x_forwarded_for: true
   trusted_proxies: 
@@ -211,12 +187,6 @@ http:
 # System log error detection
 system_log:
   fire_event: true
-
-counter:
-  kodi_errors:
-    name: Kodi Errors
-    initial: 0
-    restore: false
 
 # Notify service
 notify:
@@ -244,6 +214,14 @@ notify:
     recipient:
       - !secret gmail_email_address
     sender_name: Jon Franks
+
+# Command line
+command_line:
+  - sensor:
+      name: CPU Temp
+      unit_of_measurement: '°'
+      command: 'cat /sys/class/thermal/thermal_zone0/temp'
+      value_template: "{{ (value | multiply(0.001) | float(0)) | round(2) }}"
 
 # Shell commands
 shell_command:

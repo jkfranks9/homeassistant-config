@@ -178,6 +178,8 @@ set_up_mqtt_automated_config:
 log_laundry_event:
   alias: Log Laundry Event
   
+  mode: queued
+  
   fields:
     event_type:
       description: The type of event to be logged.
@@ -216,6 +218,15 @@ log_laundry_event:
           - service: notify.laundry_events
             data_template:
               message: "{{ timestamp }} {{ prefix }} {{ message }}"
+          
+          # Write a separator in the log for stopped messages.
+          - if:
+              - "{{ message == 'stopped' }}"
+            
+            then:
+              - service: notify.laundry_events
+                data:
+                  message: '--------------------'
     
       # A metric message adds a single metric, such as a temperature or humidity.
       - conditions: "{{ event_type == 'metric' }}"

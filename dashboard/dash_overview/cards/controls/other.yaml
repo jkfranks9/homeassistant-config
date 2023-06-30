@@ -12,5 +12,8 @@ cards:
       - entity: input_boolean.christmas_mode
         icon: mdi:pine-tree
       
+      - entity: input_boolean.hockey_season
+        icon: mdi:hockey-sticks
+      
       - entity: input_select.occupied_bedrooms
         name: Beds

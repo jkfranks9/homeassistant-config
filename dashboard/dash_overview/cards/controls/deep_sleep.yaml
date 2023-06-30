@@ -3,7 +3,44 @@
 #=========================#
 
 type: entities
-title: Sensor Battery Deep Sleep Control
+title: Battery Deep Sleep Control
 entities:
-  - entity: script.suspend_deep_sleep
-  - entity: script.resume_deep_sleep
+  - type: custom:multiple-entity-row
+    entity: script.suspend_deep_sleep
+    name: Porch Sensor
+    show_state: false
+    entities:
+      - icon: mdi:gesture-tap-button
+        name: Suspend
+        tap_action:
+          action: call-service
+          service: script.suspend_deep_sleep
+          service_data:
+            topic: 'porch-sensor/ota_mode'
+      - icon: mdi:gesture-tap-button
+        name: Resume
+        tap_action:
+          action: call-service
+          service: script.resume_deep_sleep
+          service_data:
+            topic: 'porch-sensor/ota_mode'
+  
+  - type: custom:multiple-entity-row
+    entity: script.suspend_deep_sleep
+    name: Downstairs Sensor
+    show_state: false
+    entities:
+      - icon: mdi:gesture-tap-button
+        name: Suspend
+        tap_action:
+          action: call-service
+          service: script.suspend_deep_sleep
+          service_data:
+            topic: 'downstairs-sensor/ota_mode'
+      - icon: mdi:gesture-tap-button
+        name: Resume
+        tap_action:
+          action: call-service
+          service: script.resume_deep_sleep
+          service_data:
+            topic: 'downstairs-sensor/ota_mode'

@@ -43,9 +43,9 @@ cards:
     show_header_toggle: false
     entities:
       
-      - entity: sensor.count_groups
-        name: Groups
-        icon: mdi:account-group
+      - entity: sensor.count_media_players
+        name: Media Players
+        icon: mdi:play-circle-outline
       
       - entity: sensor.count_scenes
         name: Scenes

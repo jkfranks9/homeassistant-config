@@ -1,0 +1,242 @@
+#=====================#
+#     Status Card     #
+#=====================#
+
+type: entities
+title: Status
+show_header_toggle: false
+entities:
+  
+  # Washer and dryer both off.
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'off'
+    row:
+      type: custom:multiple-entity-row
+      entity: input_boolean.dryer_running
+      name: Washer/Dryer
+      icon: mdi:washing-machine
+      state_header: Dryer
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+  
+  # Only washer on.
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'off'
+    row:
+      type: custom:multiple-entity-row
+      entity: input_boolean.dryer_running
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Dryer
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+  
+  # NOTE: We have multiple conditionals for the dryer (either on by itself or with the washer also on).
+  # This is so we can color the temperature or humidity red once the associated "falling" sensor has tripped at least once.
+  # We don't need a conditional for both of those sensors tripped, because the dryer is done at that point.
+  
+  # Only dryer on (temp/humidity haven't fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: sensor.dryer_temperature
+          name: Temp
+  
+  # Only dryer on (humidity has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state_not: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      styles:
+        color: red
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: sensor.dryer_temperature
+          name: Temp
+  
+  # Only dryer on (temperature has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state_not: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: sensor.dryer_temperature
+          name: Temp
+          styles:
+            color: red
+  
+  # Washer and dryer both on (temp/humidity haven't fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+        - entity: sensor.dryer_temperature
+          name: Temp
+  
+  # Washer and dryer both on (humidity has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state_not: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      styles:
+        color: red
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+        - entity: sensor.dryer_temperature
+          name: Temp
+  
+  # Washer and dryer both on (temperature has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state_not: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+        - entity: sensor.dryer_temperature
+          name: Temp
+          styles:
+            color: red
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.cyber1_load
+    name: Cyber Power
+    state_header: Load
+    entities:
+      - entity: sensor.cyber1_battery_charge
+        name: Battery
+      - entity: sensor.cp_ups_runtime_minutes
+        name: Runtime
+      - entity: sensor.cyber1_output_voltage
+        name: Output
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.unifi_counter
+    name: Unifi Networks
+    state_header: Total
+    unit: false
+    entities:
+      - entity: sensor.unifi_counter
+        attribute: wired
+        name: Wired
+      - entity: sensor.unifi_counter
+        attribute: white-rabbit-theater
+        name: WiFi
+      - entity: sensor.unifi_counter
+        attribute: Guest
+        name: Guest
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.unifi_counter
+    attribute: 'AP U6-Lite'
+    name: Unifi APs
+    state_header: U6
+    entities:
+      - entity: sensor.unifi_counter
+        attribute: 'AP White Rabbit Gardens'
+        name: UDM

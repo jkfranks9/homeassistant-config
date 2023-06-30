@@ -18,8 +18,8 @@ cards:
         moon_phase: sensor.moon
         current_conditions: sensor.openweathermap_weather
         temperature: sensor.openweathermap_temperature
+        feels_like: sensor.openweathermap_feels_like_temperature
         humidity: sensor.openweathermap_humidity
-        pressure: sensor.porch_pressure
         precipitation: sensor.openweathermap_precipitation_kind
         forecast: false
     
@@ -30,41 +30,3 @@ cards:
       uv_index: sensor.current_uv_index
       uv_level: sensor.current_uv_level
       max_uv_index: sensor.max_uv_index
-  
-  # Thermal comfort values
-  - type: entities
-    entities:
-      - type: custom:multiple-entity-row
-        name: Thermal Comfort
-        unit: false
-        entity: sensor.thermal_comfort_frost_point
-        state_header: Frost
-        format: precision1
-        entities:
-          - entity: sensor.thermal_comfort_heat_index
-            name: Heat
-            unit: false
-            format: precision1
-          - entity: sensor.thermal_comfort_humidex
-            name: Humid
-            unit: false
-            format: precision1
-          - entity: sensor.thermal_comfort_summer_simmer_index
-            name: Simmer
-            unit: false
-            format: precision1
-          - entity: sensor.thermal_comfort_dew_point
-            name: Dew
-            unit: false
-            format: precision1
-  
-  # Thermal comfort perception
-  - type: entities
-    entities:
-      - type: custom:multiple-entity-row
-        name: Perception
-        entity: sensor.thermal_comfort_summer_simmer_perception
-        state_header: Simmer
-        entities:
-          - entity: sensor.thermal_comfort_humidex_perception
-            name: Humid

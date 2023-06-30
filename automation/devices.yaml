@@ -69,7 +69,7 @@
       data:
         destination:
           - mobile
-        title: 'Action required:'
+        title: 'Warning:'
         message: 'Power is out, shutting down PC.'
         channel: critical
         throttled: false
@@ -114,7 +114,7 @@
       data:
         destination:
           - mobile
-        title: 'Action required:'
+        title: 'Warning:'
         message: 'UPS battery is critical, shutting down RPi.'
         channel: critical
         throttled: false
@@ -150,7 +150,7 @@
       data:
         destination:
           - mobile
-        title: 'Action required:'
+        title: 'Attention:'
         message: 'Power is restored, turning on the PC.'
         channel: critical
         throttled: false
@@ -657,77 +657,53 @@
       state: 'off'
     - service: script.enable_family_room_av
 
-# Enable family room fan automation when the AV system turns on.
-- alias: Enable Family Room Fan Automation
-  id: 'enable_family_room_fan_automation'
-  
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.family_room_av
-      from: 'off'
-      to: 'on'
-  
-  action:
-    
-    # Turn on and trigger the fan automation.
-    - service: automation.turn_on
-      entity_id: automation.control_family_room_fan
-    
-    - service: automation.trigger
-      entity_id: automation.control_family_room_fan
+#======================#
+#     Ceiling Fans     #
+#======================#
 
-# Disable family room fan automation when the AV system turns off.
-- alias: Disable Family Room Fan Automation
-  id: 'disable_family_room_fan_automation'
-  
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.family_room_av
-      from: 'on'
-      to: 'off'
-  
-  action:
-    
-    # Turn off the fan automation.
-    - service: automation.turn_off
-      entity_id: automation.control_family_room_fan
-    
-    # If the fan was actually turned on, turn it off.
-    - if:
-        - condition: numeric_state
-          entity_id: input_number.family_room_fan_speed
-          above: 0
-      
-      then:
-        - service: script.turn_off_fan
-          data:
-            entity_id: fan.family_room_fan
+# Control family room fan automation based on the AV system in use or not.
+- alias: Control Family Room Fan Automation
+  id: 'control_family_room_fan_automation'
+  use_blueprint:
+    path: devices/control_ceiling_fan_automations.yaml
+    input:
+      sensor_entity: binary_sensor.family_room_av_system
+      automation_entity: automation.operate_family_room_fan
+      speed_entity: input_number.family_room_fan_speed
+      fan_entity: fan.family_room_fan
 
-# Control the family room fan when the AV system is on.
-- alias: Control Family Room Fan
-  id: 'control_family_room_fan'
-  
-  # Trigger every 5 minutes.
-  trigger:
-    - platform: time_pattern
-      minutes: /5
-    
-  # Failsafe in case this automation is left enabled.
-  condition:
-    - condition: state
-      entity_id: binary_sensor.family_room_av
-      state: 'on'
-  
-  action:
-            
-    # Turn on the fan if the temperature demands it.
-    - service: script.turn_on
-      entity_id: script.control_fan_for_temperature
-      data:
-        variables:
-          fan_entity_id: fan.family_room_fan
-          temperature_entity_id: sensor.main_floor_temperature
-          timeout: 0
+# Control theater fan automation based on the AV system in use or not.
+- alias: Control Theater Fan Automation
+  id: 'control_theater_fan_automation'
+  use_blueprint:
+    path: devices/control_ceiling_fan_automations.yaml
+    input:
+      sensor_entity: binary_sensor.theater_av_system
+      automation_entity: automation.operate_theater_fan
+      speed_entity: input_number.theater_fan_speed
+      fan_entity: fan.theater_fan
+
+# Operate the family room fan when the AV system is on.
+- alias: Operate Family Room Fan
+  id: 'operate_family_room_fan'
+  use_blueprint:
+    path: devices/operate_ceiling_fans.yaml
+    input:
+      sensor_entity: binary_sensor.family_room_av_system
+      temperature_entity: sensor.main_floor_temperature
+      fan_entity: fan.family_room_fan
+      thresholds: [80, 76, 73]
+
+# Operate the theater fan when the AV system is on.
+- alias: Operate Theater Fan
+  id: 'operate_theater_fan'
+  use_blueprint:
+    path: devices/operate_ceiling_fans.yaml
+    input:
+      sensor_entity: binary_sensor.theater_av_system
+      temperature_entity: sensor.theater_temperature
+      fan_entity: fan.theater_fan
+      thresholds: [79, 74, 72]
 
 #===================#
 #     Treadmill     #
@@ -780,7 +756,7 @@
       entity_id: input_boolean.treadmill_triggered
       state: 'on'
   
-  action:    
+  action:
     
     # Reset the triggered flag.
     - service: input_boolean.turn_off
@@ -829,7 +805,7 @@
           {% set weight  = states('input_number.user_weight') | int(0) %}
           {% set speed   = states('input_number.treadmill_speed') | float(0) %}
           {% set incline = states('input_number.treadmill_incline') | int(0) %}
-          {% set time    = states('input_number.treadmill_daily_time')| int(0) / 60 %}
+          {% set time    = states('input_number.treadmill_daily_time') | int(0) / 60 %}
           {% set ctime   = 1/60 %}
           {% set kph     = speed * 1.609344 %}
           {% set ckph    = 2.0   * 1.609344 %}
@@ -858,6 +834,39 @@
     - service: script.register_exercise_metrics
       data:
         exercise_type: treadmill
+    
+    # Update the current treadmill used minutes. We keep minutes because the treadmill time is likely to not be an even hour.
+    # We convert the minutes to hours in order to determine if lubrication is needed.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.treadmill_usage_minutes
+      data:
+        value: "{{ states('input_number.treadmill_usage_minutes') | int(0) + states('input_number.treadmill_daily_time') | int(0) }}"
+
+# Treadmill lubrication needed.
+- alias: Set Treadmill Lube Date
+  id: 'set_treadmill_lube_date'
+  
+  # Trigger when the current treadmill minutes (converted to hours) is greater than the last lube hours + 180.
+  trigger:
+    - platform: template
+      value_template: "{{ states('input_number.treadmill_usage_minutes') | int(0) / 60 >= states('input_number.treadmill_last_lube_hours') | int(0) + 180 }}"
+  
+  action:
+    
+    # Set the due date to midnight (tomorrow at 00:00).
+    - service: input_datetime.set_datetime
+      data:
+        entity_id: input_datetime.reminder_misc_lubetreadmill
+        datetime: "{{ as_timestamp(now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days = 1)) }}"
+    
+    # Update the last lube hours. Of course it's possible I won't actually perform the lubrication immediately, but this is the
+    # only way I can figure to update the value automatically. As long as I don't wait too long, a few hours off the mark won't matter.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.treadmill_last_lube_hours
+      data:
+        value: "{{ states('input_number.treadmill_usage_minutes') | int(0) / 60 }}"
 
 #====================#
 #     Appliances     #
@@ -1078,6 +1087,11 @@
       from: 'Wash Drain'
       to: 'Rinse Fill'
   
+  condition:
+    - condition: state
+      entity_id: input_boolean.washer_fabric_softener
+      state: 'on'
+  
   action:
     
     # The timer amount is based on the washer load size.
@@ -1218,32 +1232,71 @@
           {% else %} Stop
           {% endif %}
     
-    # Log the state change in the laundry events log.
+    # Continue if the state changed.
     - if:
         - "{{ s != states('input_select.washer_state') }}"
       
       then:
-    
+        
+        # Log the state change in the laundry events log.
         - service: script.log_laundry_event
           data:
             event_type: basic
             prefix: Washer
             message: "state changed from {{ s }} to {{ states('input_select.washer_state') }}"
+        
+        # If the washer just stopped, log that as well.
+        - if:
+            - "{{ is_state('input_select.washer_state', 'Stop') }}"
+          
+          then:
+            - service: script.log_laundry_event
+              data:
+                event_type: basic
+                prefix: Washer
+                message: stopped
+          
 
 #===============#
 #     Dryer     #
 #===============#
+
+- alias: Start Dryer
+  id: start_dryer
+  
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.dryer_start_button
+      from: 'off'
+      to: 'on'
+  
+  action:
+    
+    # Log the start in the laundry events log.
+    - service: script.log_laundry_event
+      data:
+        event_type: basic
+        prefix: Dryer
+        message: >
+          {% set intemp  = state_attr('climate.downstairs', 'current_temperature') %}
+          {% set inhum   = state_attr('climate.downstairs', 'current_humidity') %}
+          {% set outtemp = states('sensor.porch_temperature') %}
+          {% set outhum  = states('sensor.porch_humidity') %}
+          {% set drytemp = states('sensor.dryer_temperature') %}
+          {% set dryhum  = states('sensor.dryer_humidity') %}
+          
+          starting: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%); dryer ({{ drytemp }}°, {{ dryhum }}%)
 
 - alias: Turn On Dryer Running
   id: turn_on_dryer_running
   
   trigger:
     
-    # Trigger when the dryer temperature rises 20 degrees above ambient.
+    # Trigger when the dryer temperature rises a bit above ambient.
     - platform: template
       value_template: >
-        {{ states('sensor.dryer_temperature') != 'unavailable' and states('sensor.main_floor_temperature') != 'unavailable' and
-           states('sensor.dryer_temperature') | int(0) > (states('sensor.main_floor_temperature') | int(0) + 20) }}
+        {{ states('sensor.dryer_temperature') not in ['unavailable', 'unknown'] and states('sensor.main_floor_temperature') not in ['unavailable', 'unknown'] and
+           states('sensor.dryer_temperature') | int(0) > (states('sensor.main_floor_temperature') | int(0) + 30) }}
   action:
     
     # Initialize the temperature & humidity counts. This has the side effect of turning off the Dryer Done binary sensor.
@@ -1255,13 +1308,6 @@
     # Indicate the dryer is running.
     - service: input_boolean.turn_on
       entity_id: input_boolean.dryer_running
-    
-    # Set the dryer start time.
-    - service: input_datetime.set_datetime
-      target:
-        entity_id: input_datetime.dryer_start
-      data_template:
-        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Log temperature detected in the laundry events log.
     - service: script.log_laundry_event
@@ -1276,11 +1322,11 @@
   
   trigger:
     
-    # Since our humidity trend sensor is looking for a drop of 40 points, only trigger if the current humidity is 60 or below.
+    # Since our humidity trend sensor is looking for a drop of 30 points, only trigger if the current humidity is 70 or below.
     # This should weed out inaccurate trend sensor readings.
     # NOTE: The drop amount here must be kept in sync with the Dryer Humidity Falling trend sensor.
     - platform: template
-      value_template: "{{ states('binary_sensor.dryer_humidity_falling') == 'on' and states('sensor.dryer_humidity') | int(0) <= 60 }}"
+      value_template: "{{ states('binary_sensor.dryer_humidity_falling') == 'on' and states('sensor.dryer_humidity') | int(0) <= 70 }}"
       id: humidity
     
     # We don't bother doing the above for temperature. This would require saving the initial temperature when we detect the dryer is running, 
@@ -1462,6 +1508,7 @@
         variables:
           fan_entity_id: fan.office_fan
           temperature_entity_id: sensor.office_temperature
+          thresholds: [76, 74, 72]
           timeout: 240
 
 #=================================#
@@ -1504,29 +1551,60 @@
 #     Tag/Beacon Presence     #
 #=============================#
 
-# Control children home based on Nut Mini presence.
+- alias: Log Blue Charm Presence
+  id: log_blue_charm_presence
+  mode: queued
+  
+  trigger:
+    - platform: state
+      entity_id: sensor.blue_charm_presence
+  
+  action:
+    - service: system_log.write
+      data:
+        message: "Blue Charm from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }}"
+        level: debug
+
+- alias: Log Garage Distance
+  id: log_garage_distance
+  mode: queued
+  
+  trigger:
+    - platform: state
+      entity_id: sensor.ble_garage_blue_charm_distance
+  
+  action:
+    - service: system_log.write
+      data:
+        message: "Garage distance from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }}"
+        level: debug
+
+- alias: Log House Distance
+  id: log_house_distance
+  mode: queued
+  
+  trigger:
+    - platform: state
+      entity_id: sensor.ble_house_blue_charm_distance
+  
+  action:
+    - service: system_log.write
+      data:
+        message: "House distance from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }}"
+        level: debug
+
+# Control children home based on beacon presence.
 - alias: Turn On Children Home
   id: 'turn_on_children_home'
   trigger:
     - platform: state
-      entity_id: sensor.nut_mini
-      from: 'not_home'
+      entity_id: sensor.blue_charm_presence
+      from: 'Away'
       to:
-        - 'garage'
-        - 'house'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - condition: state
-      entity_id: sensor.nut_mini
-      state:
-        - 'garage'
-        - 'house'
+        - 'Garage'
+        - 'House'
   
   action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_on
       entity_id: input_boolean.children_home
 
@@ -1534,22 +1612,13 @@
   id: 'turn_off_children_home'
   trigger:
     - platform: state
-      entity_id: sensor.nut_mini
+      entity_id: sensor.blue_charm_presence
       from:
-        - 'garage'
-        - 'house'
-      to: 'not_home'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - condition: state
-      entity_id: sensor.nut_mini
-      state: 'not_home'
+        - 'Garage'
+        - 'House'
+      to: 'Away'
   
   action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
     - service: input_boolean.turn_off
       entity_id: input_boolean.children_home
 
@@ -1584,3 +1653,51 @@
   action:
     - service: switch.turn_off
       entity_id: switch.master_bedroom_echo_do_not_disturb_switch
+
+#=====================#
+#     Smart Vents     #
+#=====================#
+
+# Control upstairs bedroom vents based on HVAC fan (only) running. The fan runs a short period every hour to circulate air a bit,
+# so I want the vents to be open when that happens, unless the bedroom is occupied.
+- alias: Open Upstairs Bedroom Vents
+  id: 'open_upstairs_bedroom_vents'
+  
+  trigger:
+    - platform: state
+      entity_id: climate.upstairs
+      attribute: fan
+      from: 'off'
+      to: 'on'
+  
+  condition:
+    
+    # Ensure ONLY the fan is running.
+    - condition: template
+      value_template: "{{ state_attr('climate.upstairs', 'equipment_running') == 'fan' }}"
+    
+    # Ensure the upstairs bedroom is not occupied.
+    - condition: template
+      value_template: "{{ states('input_select.occupied_bedrooms') not in ['Upstairs', 'Both'] }}"
+  
+  action:
+    - service: script.open_upstairs_br_vents
+
+- alias: Close Upstairs Bedroom Vents
+  id: 'close_upstairs_bedroom_vents'
+  
+  trigger:
+    - platform: state
+      entity_id: climate.upstairs
+      attribute: fan
+      from: 'on'
+      to: 'off'
+  
+  condition:
+    
+    # Ensure the upstairs bedroom is not occupied.
+    - condition: template
+      value_template: "{{ states('input_select.occupied_bedrooms') not in ['Upstairs', 'Both'] }}"
+  
+  action:
+    - service: script.close_upstairs_br_vents

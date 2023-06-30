@@ -12,6 +12,10 @@ cards:
       - !include /config/dashboard/dash_overview/cards/hobbies/satellite_map.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/hobbies/satellites.yaml
-      - !include /config/dashboard/dash_overview/cards/hobbies/starlink.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/monitoring/hockey.yaml
+      - !include /config/dashboard/dash_overview/cards/hobbies/starlink.yaml 
+      - type: conditional
+        conditions:
+          - entity: input_boolean.hockey_season
+            state: 'on'
+        card:
+          !include /config/dashboard/dash_overview/cards/hobbies/hockey.yaml

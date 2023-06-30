@@ -93,3 +93,25 @@ satellite_pass:
             - type: 'custom:button-card'
               template: satellite_compass
               entity: '[[entity]]'
+
+#===================#
+#     CPAP Card     #
+#===================#
+
+cpap_data:
+  card:
+    type: 'custom:mini-graph-card'
+    name: '[[name]]'
+    icon: 'mdi:[[icon]]'
+    hours_to_show: 168
+    aggregate_func: max
+    group_by: date
+    group: true
+    height: 100
+    show:
+      graph: bar
+      average: true
+      state: false
+      
+    entities:
+      - entity: '[[entity]]'

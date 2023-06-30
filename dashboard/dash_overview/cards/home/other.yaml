@@ -15,9 +15,14 @@ cards:
       buttons:
         card:
           type: grid
-          columns: 4
+          columns: 5
           square: false
           cards:
+  
+            - type: custom:button-card
+              template: toggle_button
+              entity: input_boolean.washer_fabric_softener
+              name: Softener
   
             - type: custom:button-card
               template: toggle_button

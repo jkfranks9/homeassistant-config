@@ -42,8 +42,8 @@ smart_home:
       - scene.lights_out
       - script.awake
       - script.bedtime
-      - script.log_dryer_start
       - script.play_feature_movie
+      - script.play_random_kodi_videos
       - script.set_theater_idle
       - script.set_workout_daily_time
       - script.sleeptime
@@ -56,9 +56,9 @@ smart_home:
       - script.wakeup
       - script.watch_amazon_prime
       - script.watch_disney_plus
-      - script.watch_hbo_max
       - script.watch_hulu
       - script.watch_kodi
+      - script.watch_max
       - script.watch_netflix
       - script.watch_paramount_plus
       - script.watch_peacock
