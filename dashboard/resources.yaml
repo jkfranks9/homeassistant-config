@@ -46,6 +46,10 @@
 - url: /local/community/lovelace-layout-card/layout-card.js
   type: module
 
+# Lovelace Multiline Text Input Card
+- url: /local/community/lovelace-multiline-text-input-card/lovelace-multiline-text-input-card.js
+  type: module
+
 # Lovelace Multiple Entity Row
 - url: /local/community/lovelace-multiple-entity-row/multiple-entity-row.js
   type: module

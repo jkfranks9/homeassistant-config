@@ -98,12 +98,31 @@ set_thermostat_preset:
       description: The thermostat preset mode.
     
   sequence:
+    - variables:
+        climate_name: "{{ thermostat_entity.replace('climate.', '') }}"
     
-    - service: climate.set_preset_mode
-      target:
-        entity_id: "{{ thermostat_entity }}"
-      data:
-        preset_mode: "{{ preset }}"
+    # Simulate the request if testing mode is on.
+    - if:
+        - "{{ is_state('input_boolean.testing_mode', 'off') }}"
+      
+      then:
+    
+        # Bypass setting the mode if the request is for the upstairs thermostat and the upstairs bedroom is occupied.
+        - if:
+            - "{{ climate_name != 'upstairs' or is_state('binary_sensor.upstairs_bedroom_occupied', 'off') }}"
+          
+          then:    
+            - service: climate.set_preset_mode
+              target:
+                entity_id: "{{ thermostat_entity }}"
+              data:
+                preset_mode: "{{ preset }}"
+      
+      else:
+        - service: script.log_testing_simulation
+          data:
+            category: climate
+            message: "{{ 'Climate name ' ~ climate_name ~ ' set to ' ~ preset ~ ' mode.' }}"
 
 #==========================#
 #     Temperature Hold     #
@@ -124,19 +143,33 @@ set_temporary_thermostat_hold:
       description: The desired cool temperature.
   
   sequence:
+    - variables:
+        climate_name: "{{ thermostat_entity.replace('climate.', '') }}"
     
-    # Create a vacation to simulate a hold, using today's date/time, plus 1 day for the end. 
-    # We should remove the vacation on the following morning.
-    - service: ecobee.create_vacation
-      data_template:
-        entity_id: "{{ thermostat_entity }}"
-        vacation_name: "Temporary"
-        start_date: "{{ states('sensor.date') }}"
-        start_time: "{{ now().strftime('%H:%M:%S') }}"
-        end_date: "{{ (as_timestamp(states('sensor.date')) + 86400) | timestamp_custom('%Y-%m-%d') }}"
-        end_time: "{{ now().strftime('%H:%M:%S') }}"
-        heat_temp: "{{ heat_temp }}"
-        cool_temp: "{{  cool_temp }}"
+    # Simulate the request if testing mode is on.
+    - if:
+        - "{{ is_state('input_boolean.testing_mode', 'off') }}"
+      
+      then:
+    
+        # Create a vacation to simulate a hold, using today's date/time, plus 1 day for the end. 
+        # We should remove the vacation on the following morning.
+        - service: ecobee.create_vacation
+          data_template:
+            entity_id: "{{ thermostat_entity }}"
+            vacation_name: "Temporary"
+            start_date: "{{ states('sensor.date') }}"
+            start_time: "{{ now().strftime('%H:%M:%S') }}"
+            end_date: "{{ (as_timestamp(states('sensor.date')) + 86400) | timestamp_custom('%Y-%m-%d') }}"
+            end_time: "{{ now().strftime('%H:%M:%S') }}"
+            heat_temp: "{{ heat_temp }}"
+            cool_temp: "{{ cool_temp }}"
+      
+      else:
+        - service: script.log_testing_simulation
+          data:
+            category: climate
+            message: "{{ 'Climate name ' ~ climate_name ~ ' vacation (temporary) set: ' ~ cool_temp ~ '°' ~ '-' ~ heat_temp ~ '°' }}"
 
 # Set extended thermostat hold.
 set_extended_thermostat_hold:
@@ -153,19 +186,34 @@ set_extended_thermostat_hold:
       description: The desired cool temperature.
   
   sequence:
-    
-    # Create a vacation to simulate a hold, using the extended away dates/times. 
-    # We should remove the vacation when the extended away ends.
-    - service: ecobee.create_vacation
-      data_template:
-        entity_id: "{{ thermostat_entity }}"
+    - variables:
+        climate_name: "{{ thermostat_entity.replace('climate.', '') }}"
         vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-        start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-        start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
-        end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
-        end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
-        heat_temp: "{{ heat_temp }}"
-        cool_temp: "{{  cool_temp }}"
+    
+    # Simulate the request if testing mode is on.
+    - if:
+        - "{{ is_state('input_boolean.testing_mode', 'off') }}"
+      
+      then:
+    
+        # Create a vacation to simulate a hold, using the extended away dates/times. 
+        # We should remove the vacation when the extended away ends.
+        - service: ecobee.create_vacation
+          data_template:
+            entity_id: "{{ thermostat_entity }}"
+            vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+            start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+            start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
+            end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
+            end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
+            heat_temp: "{{ heat_temp }}"
+            cool_temp: "{{ cool_temp }}"
+      
+      else:
+        - service: script.log_testing_simulation
+          data:
+            category: climate
+            message: "{{ 'Climate name ' ~ climate_name ~ ' vacation (' ~ vacation_name ~ ') set: ' ~ start_date ~ ' ' ~ start_time ~ ' to ' ~ end_date ~ ' ' ~ end_time ~ ', ' ~ cool_temp ~ '°' ~ '-' ~ heat_temp ~ '°' }}"
 
 # Remove a temperature hold for a given thermostat.
 remove_thermostat_hold:
@@ -181,25 +229,28 @@ remove_thermostat_hold:
   sequence:
     
     # Verify a vacation exists on the thermostat first.
-    - condition: "{{ state_attr(thermostat_entity, 'preset_mode') == 'vacation' }}"
+    - condition: "{{ state_attr(thermostat_entity, 'preset_mode') == 'temp' }}"
     
-    # Remove the vacation on the thermostat. Note that the name is limited to 12 characters.
+    - variables:
+        climate_name: "{{ thermostat_entity.replace('climate.', '') }}" 
         
-    # For an extended vacation, use the extended away start date as the name.
+        # For an extended vacation, use the extended away start date as the name. For a temporary vacation, use the hardcoded name.
+        vacation_name: "{{ iif (extended == true, states('input_datetime.extended_away_start').split(' ')[0], 'temporary') }}"
+    
+    # Simulate the request if testing mode is on.
     - if:
-        - "{{ extended == 'true' }}"
+        - "{{ is_state('input_boolean.testing_mode', 'off') }}"
       
       then:
-          
+    
+        # Remove the vacation on the thermostat.
         - service: ecobee.delete_vacation
           data_template:
             entity_id: "{{ thermostat_entity }}"
-            vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+            vacation_name: "{{ vacation_name }}"
       
-      # For a temporary vacation, use the hardcoded name.
       else:
-        
-        - service: ecobee.delete_vacation
-          data_template:
-            entity_id: "{{ thermostat_entity }}"
-            vacation_name: "Temporary"
+        - service: script.log_testing_simulation
+          data:
+            category: climate
+            message: "{{ 'Climate name ' ~ climate_name ~ ' vacation (' ~ vacation_name ~ ') removed' }}"

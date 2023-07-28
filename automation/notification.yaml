@@ -107,29 +107,61 @@
 - alias: Notify F150 Service Due
   id: 'notify_f150_service_due'
   
+  use_blueprint:
+    path: notification/maint_above_notify.yaml
+    input:
+      sensor_entity: input_number.f150_mileage
+      threshold: input_number.f150_service_due
+      timer_entity: timer.f150_service_notification
+      message: 'F150 service is due.'
+      persistent: true
+      tag: 'f150_service'
+
+# Clear persistent notification.
+- alias: Clear F150 Service Notification
+  id: 'clear_f150_service_notification'
+  
   trigger:
     - platform: numeric_state
-      entity_id: input_number.f150_mileage
-      above: input_number.f150_service_due
+      entity_id: input_number.f150_service_due
+      above: input_number.f150_mileage
   
-  action:    
-    - service: script.send_notification
+  action:
+    - service: notify.mobile_app_jon_galaxy
       data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'F150 service is due.'
-        channel: standard
-        throttled: false
-        tag: ''
-        timeout: 0
-    
-    # Bump the service due date by the service interval plus a small fudge factor (to account for driving to the station).
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.f150_service_due
+        message: 'clear_notification'
+        data:
+          tag: 'f150_service'
+
+# Treadmill lubrication is due.
+- alias: Notify Treadmill Lube Due
+  id: 'notify_treadmill_lube_due'
+  
+  use_blueprint:
+    path: notification/maint_above_notify.yaml
+    input:
+      sensor_entity: sensor.treadmill_current_hours
+      threshold: input_number.treadmill_lube_due
+      timer_entity: timer.treadmill_lube_notification
+      message: 'Treadmill lubrication is due.'
+      persistent: true
+      tag: 'treadmill_lube'
+
+# Clear persistent notification.
+- alias: Clear Treadmill Lube Notification
+  id: 'clear_treadmill_lube_notification'
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: input_number.treadmill_lube_due
+      above: sensor.treadmill_current_hours
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
       data:
-        value: "{{ states('input_number.f150_service_due') | int(0) + 5015 }}"
+        message: 'clear_notification'
+        data:
+          tag: 'treadmill_lube'
 
 #==========================================#
 #     Abnormal Condition Notifications     #
@@ -398,6 +430,19 @@
       message: 'Guest BR window sensor battery needs replacing.'
       persistent: false
 
+# Dryer vibration sensor battery is too low.
+- alias: Notify Dryer Vibration Sensor Battery Low
+  id: 'notify_dryer_vibration_sensor_battery_low'
+  
+  use_blueprint:
+    path: notification/maint_below_notify.yaml
+    input:
+      sensor_entity: sensor.dryer_vibration_sensor_battery
+      threshold: 15
+      timer_entity: timer.dryer_vibration_sensor_battery_notification
+      message: 'Dryer vibration sensor battery needs replacing.'
+      persistent: false
+
 # Porch battery powered sensor needs recharging.
 - alias: Notify Porch Sensor Battery Low
   id: 'notify_porch_sensor_battery_low'
@@ -457,63 +502,6 @@
 #===============================#
 #     Health Notifications      #
 #===============================#
-
-# Send a notification if the UV index or humidity index rise above an unhealthy threshold.
-- alias: Notify Outdoors Unhealthy
-  id: 'notify_outdoors_unhealthy'
-  
-  trigger:
-    
-    # UV index rises to unhealthy level
-    - platform: numeric_state
-      entity_id: sensor.current_uv_index
-      above: 7.9999
-    
-    # Humidity index rises to unhealthy level
-    - platform: numeric_state
-      entity_id: sensor.thermal_comfort_humidex
-      above: 70.0
-    
-    # Once in the morning in case the levels are already high
-    - platform: time
-      at: '07:15:00'
-      
-    # In case Home Assistant restarts after the morning check just as the level(s) rise above the threshold
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - and:
-      
-        # Only during daytime
-        - condition: state
-          entity_id: sun.sun
-          state: above_horizon
-      
-        # Only if the levels are high (for the Home Assistant start trigger)
-        - or:
-          - condition: numeric_state
-            entity_id: sensor.current_uv_index
-            above: 7.9999
-          - condition: numeric_state
-            entity_id: sensor.thermal_comfort_humidex
-            above: 70.0
-  
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Attention:'
-        message: 'Outdoor quality is unhealthy.'
-        channel: standard
-        throttled: true
-        timer_entity: timer.outdoors_unhealthy_notification
-        tag: ''
-        timeout: 0
 
 # Send a notification for overdue exercise.
 - alias: Notify Exercise Due
@@ -701,8 +689,7 @@
                       'input_datetime.reminder_misc_cleanhvacregs',
                       'input_datetime.reminder_misc_rechargeclipper',
                       'input_datetime.reminder_misc_lubegaragedoors',
-                      'input_datetime.reminder_misc_britafilter',
-                      'input_datetime.reminder_misc_lubetreadmill'
+                      'input_datetime.reminder_misc_britafilter'
                      ]
       message_prefix: Misc maintenance due      
       tag_prefix: misc_maintenance_
@@ -724,8 +711,7 @@
                       'input_datetime.reminder_misc_cleanhvacregs',
                       'input_datetime.reminder_misc_rechargeclipper',
                       'input_datetime.reminder_misc_lubegaragedoors',
-                      'input_datetime.reminder_misc_britafilter',
-                      'input_datetime.reminder_misc_lubetreadmill'
+                      'input_datetime.reminder_misc_britafilter'
                      ]
       tag_prefix: misc_maintenance_
 
@@ -744,6 +730,7 @@
       date_entities: [
                       'input_datetime.reminder_payment_amazon', 
                       'input_datetime.reminder_payment_creditunion', 
+                      'input_datetime.reminder_payment_johndeere',
                       'input_datetime.reminder_payment_mortgage', 
                       'input_datetime.reminder_payment_randolph', 
                       'input_datetime.reminder_payment_wellsfargo'
@@ -761,6 +748,7 @@
       date_entities: [
                       'input_datetime.reminder_payment_amazon', 
                       'input_datetime.reminder_payment_creditunion', 
+                      'input_datetime.reminder_payment_johndeere',
                       'input_datetime.reminder_payment_mortgage', 
                       'input_datetime.reminder_payment_randolph', 
                       'input_datetime.reminder_payment_wellsfargo'
@@ -1161,7 +1149,7 @@
           - mobile
           - echo
         title: 'Action required:'
-        message: 'Dryer has probably finished.'
+        message: 'Dryer has finished.'
         channel: standard
         throttled: false
         media_player_entity: media_player.everywhere

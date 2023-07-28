@@ -6,6 +6,7 @@
 !.gitignore
 !*.md
 !*.py
+!*.jinja
 
 !automation
 
@@ -19,7 +20,10 @@
 !blueprints/automation/theater
 !blueprints/script/
 !blueprints/script/devices
+!blueprints/script/lighting
 !blueprints/script/notification
+
+!custom_templates/
 
 !dashboard/
 !dashboard/dash_overview/
@@ -32,7 +36,9 @@
 !dashboard/dash_overview/cards/home
 !dashboard/dash_overview/cards/levels
 !dashboard/dash_overview/cards/monitoring
+!dashboard/dash_overview/cards/testing
 !dashboard/dash_overview/cards/theater
+!dashboard/dash_overview/cards/total_energy
 !dashboard/dash_overview/views
 !dashboard/dash_reminders/
 !dashboard/dash_reminders/cards/

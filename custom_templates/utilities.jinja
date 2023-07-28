@@ -1,0 +1,12 @@
+{# Add a new element to a comma-delimited list. #}
+
+{% macro build_list(list, element) %}
+
+	{% set current = states(list) %}
+	{% if current | length() > 0 %}
+	  {{ current ~ ', ' ~ element }}
+	{% else %}
+	  {{ element }}
+	{% endif %}
+
+{% endmacro %}

@@ -114,21 +114,69 @@ disable_family_room_av:
     - service: switch.turn_off
       entity_id: switch.sonoff_family_room_av
 
+#================#
+#     Vacuum     #
+#================#
+
+# Toggle the vacuum automation; sometimes we need it to be off, like when family are sleeping upstairs.
+toggle_vacuum_automation:
+  alias: Toggle Vacuum Automation
+  
+  fields:
+    vacuum_name:
+      description: Name of the vacuum.
+    
+    operation:
+      description: Whether to turn the automation on or off.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+  
+  sequence:
+    - variables:
+        automation_state: "{{ states('automation.start_vacuum') }}"
+    
+    # Don't do anything if the automation is already in the desired state.
+    - if:
+        - "{{ operation != automation_state }}"
+      
+      then:
+        
+        # Simulate the request if testing mode is on.
+        - if:
+            - "{{ is_state('input_boolean.testing_mode', 'off') }}"
+          
+          then:
+            - if:
+                - "{{ operation == 'on' }}"
+              
+              then:
+                - service: automation.turn_on
+                  entity_id: automation.start_vacuum
+              
+              else:
+                - service: automation.turn_off
+                  entity_id: automation.start_vacuum
+      
+          else:
+            - service: script.log_testing_simulation
+              data:
+                category: vacuum
+                message: "{{ 'Vacuum name ' ~ vacuum_name ~ ' automation turned ' ~ operation }}"
+
 #======================#
 #     Echo Devices     #
 #======================#
 
-# Mute bedroom echo devices until 9 AM the next morning.
-
+# Mute bedroom echo devices until 9 AM the next morning (unmuted in Unmute Guest Bedroom Echos automation).
 mute_guest_bedroom_echo:
   alias: Mute Guest Bedroom Echo
   use_blueprint:
     path: devices/echo_do_not_disturb.yaml
     input:
       switch_entity: switch.guest_bedroom_echo_do_not_disturb_switch
-      mute_duration: >
-        {% set next = now().today().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
-        {{ (next - now().today().replace(microsecond=0)).seconds }}
 
 mute_master_bedroom_echo:
   alias: Mute Master Bedroom Echo
@@ -136,9 +184,6 @@ mute_master_bedroom_echo:
     path: devices/echo_do_not_disturb.yaml
     input:
       switch_entity: switch.master_bedroom_echo_do_not_disturb_switch
-      mute_duration: >
-        {% set next = now().today().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
-        {{ (next - now().today().replace(microsecond=0)).seconds }}
 
 mute_upstairs_bedroom_echo:
   alias: Mute Upstairs Bedroom Echo
@@ -146,13 +191,10 @@ mute_upstairs_bedroom_echo:
     path: devices/echo_do_not_disturb.yaml
     input:
       switch_entity: switch.upstairs_bedroom_echo_do_not_disturb_switch
-      mute_duration: >
-        {% set next = now().today().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days = 1) %}
-        {{ (next - now().today().replace(microsecond=0)).seconds }}
 
-#----------------------#
+#======================#
 #     Garage Doors     #
-#----------------------#
+#======================#
 
 # Open garage door
 open_garage_door_north:
@@ -310,6 +352,7 @@ set_fan_to_speed:
 # Control a fan based on temperature.
 control_fan_for_temperature:
   alias: Control Fan For Temperature
+  mode: queued
   
   fields:
     fan_entity_id:
@@ -384,3 +427,27 @@ control_fan_for_temperature:
       data:
         entity_id: "{{ fan_entity_id }}"
         speed: 0
+
+#=================================#
+#     Ceiling Fan Convenience     #
+#=================================#
+
+# Used mostly via Alexa.
+
+change_fan_setting:
+  alias: Change Fan Setting
+  
+  sequence:
+    
+    # If I'm home alone, determine the room automatically then ask for the fan setting.
+    - if:
+        - condition: state
+          entity_id: binary_sensor.home_alone
+          state: 'on'
+      
+      then:
+        - service: script.ask_fan_setting_home_alone
+      
+      # Otherwise, first ask for the room then ask for the fan setting.
+      else:
+        - service: script.ask_fan_room

@@ -31,7 +31,6 @@ exclude:
     - light
     - media_player
     - number
-    - person
     - proximity
     - remote
     - scene
@@ -58,15 +57,19 @@ include:
     
     - climate
     - device_tracker
+    - person
 
   entities:
+    
+    # TEMPORARY
+    - light.upstairs_bedroom_outlet
     
     - binary_sensor.cinema_projector
     - binary_sensor.family_room_av
     - input_number.washer_fill_seconds
     - input_select.washer_load_size
     - input_select.washer_state
-    - person.jon
+    - sensor.ahi_average
     - sensor.attic_temperature
     - sensor.cpap_ahi_events_per_hour
     - sensor.cpap_usage_hours
@@ -89,7 +92,6 @@ include:
   
   entity_globs:
     
-    - binary_sensor.dryer_*_falling
     - binary_sensor.*_occupancy
     - input_number.*_calories
     - input_number.*_time

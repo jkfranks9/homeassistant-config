@@ -65,8 +65,8 @@
       unique_id: family_room_av
       state: >
         {{ states('sensor.sonoff_family_room_av_power') | float(0) > 10 and
-           (is_state('input_boolean.children_home', 'off') or
-             (is_state('input_boolean.children_home', 'on') and
+           (is_state('binary_sensor.children_home', 'off') or
+             (is_state('binary_sensor.children_home', 'on') and
               now().strftime('%H') >= '19')) }}
     
     # Cinema is true if the projector is drawing power, and the source device is not Shield TV
@@ -93,13 +93,34 @@
       unique_id: theater_av_system
       state: "{{ states('sensor.projector_power') | float(0) > 0 }}"
 
-    #-------------------------#
-    #   -- Dryer Control --   #
-    #-------------------------#
+    #------------------------------#
+    #   -- Presence Detection --   #
+    #------------------------------#
     
-    # This sensor controls when we turn off the dryer. There are trend sensors to detect temperature and humidity falling,
-    # but sometimes these can be spurious, for example getting 2 humidity falling events, then a temperature falling event.
-    # So we have a counter for each type of event, and only turn this sensor on when both counters are above zero.
-    - name: 'Dryer Done'
-      unique_id: dryer_done
-      state: "{{ states('counter.dryer_temperature_count') | int(0) > 0 and states('counter.dryer_humidity_count') | int(0) > 0 }}"
+    # This sensor indicates if any adult family members are home or not.
+    - name: Adults Home
+      unique_id: adults_home
+      state: "{{ states('person.david') == 'home' or states('person.maryam') == 'home' or states('person.mike') == 'home' or states('person.sarah') == 'home' }}"
+      device_class: presence
+    
+    # This sensor indicates if any child family members are home or not.
+    - name: Children Home
+      unique_id: children_home
+      state: "{{ states('person.skylar') == 'home' }}"
+      device_class: presence
+    
+    # Am I home alone?
+    - name: Home Alone
+      unique_id: home_alone
+      state: "{{ states('zone.home') | int(0) == 1 and state_attr('zone.home', 'persons') == ['person.jon'] }}"
+      device_class: presence
+
+    #-------------------------------------#
+    #   -- Upstairs Bedroom Occupied --   #
+    #-------------------------------------#
+    
+    # Note that the house is considered a device.
+    - name: Upstairs Bedroom Occupied
+      unique_id: upstairs_bedroom_occupied
+      state: >
+        {{ states('input_select.occupied_bedrooms') in ['AdultUp', 'ChildUp', 'ChildDownPlus', 'ChildUpPlus', 'Both'] }}

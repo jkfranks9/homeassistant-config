@@ -1,0 +1,19 @@
+{# Get a value for the effective sun sensor. #}
+{% macro get_testing_value(test_entity, null_value, attribute) %}
+        
+	{% set testing_mode = states('input_boolean.testing_mode') %}
+    {% set virtual_value = states(test_entity) %}
+	
+	{% if null_value is number %}
+	  {% set value_test = virtual_value | int(0) == null_value %}
+	{% else %}
+	  {% set value_test = virtual_value == null_value %}
+	{% endif %}
+	
+	{% if attribute == '' %}
+	  {{ iif (testing_mode == 'off' or value_test, states('sun.sun'), virtual_value) }}
+	{% else %}
+	  {{ iif (testing_mode == 'off' or value_test, state_attr('sun.sun', attribute), virtual_value) }}
+	{% endif %}
+
+{% endmacro %}

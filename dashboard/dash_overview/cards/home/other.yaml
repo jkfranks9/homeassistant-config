@@ -15,19 +15,9 @@ cards:
       buttons:
         card:
           type: grid
-          columns: 5
+          columns: 4
           square: false
           cards:
-  
-            - type: custom:button-card
-              template: toggle_button
-              entity: input_boolean.washer_fabric_softener
-              name: Softener
-  
-            - type: custom:button-card
-              template: toggle_button
-              entity: switch.adguard_protection
-              name: Adguard
           
             - type: custom:button-card
               template: sensor_button
@@ -37,9 +27,12 @@ cards:
             - type: custom:button-card
               template: sensor_button
               entity: sensor.weekly_workout_total
-              name: Workout
+              name: >
+                [[[
+                  return "Workout (G" + Math.round(states['input_number.workout_group'].state) + ")";
+                ]]]
           
             - type: custom:button-card
               template: sensor_button
-              entity: sensor.cpap_ahi_events_per_hour
-              name: AHI
+              entity: sensor.ahi_average
+              name: AHI Avg

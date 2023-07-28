@@ -22,9 +22,6 @@
   trigger:
     - platform: time
       at: '20:00:00'
-    
-    - platform: homeassistant
-      event: start
   
   condition:
     - "{{ states('sensor.projector_power') | float(0) == 0 }}"
@@ -32,19 +29,12 @@
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'off'
-    
-    - condition: time
-      after: '20:00:00'
   
   action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    
-    - service: climate.set_preset_mode
-      target:
-        entity_id: climate.upstairs
+    - service: script.set_thermostat_preset
       data:
-        preset_mode: 'Sleep'
+        thermostat_entity: climate.upstairs
+        preset: 'Sleep'
 
 #============================#
 #     Extended Away Mode     #
@@ -210,8 +200,12 @@
       entity_id: group.downstairs_doors_windows
       from: 'on'
       to: 'off'
-      for: '00:02:00'
 
+  condition:
+    - condition: state
+      entity_id: climate.downstairs
+      state: 'off'
+  
   action:
     - service: climate.turn_on
       target:

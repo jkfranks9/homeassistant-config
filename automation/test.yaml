@@ -74,3 +74,20 @@
       data:
         message: "JKF: {{ trigger.event.data }}"
         level: warning
+
+#=======================================#
+#     Alexa Actionable Notification     #
+#=======================================#
+
+- alias: Test Alexa Actionable Notification
+  id: test_alexa_actionable_notification
+  
+  trigger:
+    - platform: event
+      event_type: alexa_actionable_notification
+      event_data:
+        event_id: actionable_notification_flash_light
+        event_response_type: ResponseYes
+  
+  action:
+    - service: script.test_light_flash

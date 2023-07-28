@@ -18,10 +18,6 @@ bathroom:
 extended_away_mode:
   name: Extended Away Mode
 
-# This modifies some automations and scripts.
-christmas_mode:
-  name: Christmas Mode
-
 # This indicates the theater is open, used as a sanity check in the Close Cinema automation.
 theater_open:
   name: Theater Open
@@ -29,14 +25,6 @@ theater_open:
 #===================#
 #     Presence      #
 #===================#
-
-# Adult family members present.
-adults_home:
-  name: Adults Home
-
-# Child family members present.
-children_home:
-  name: Children Home
 
 # Jon away.
 jon_away:
@@ -79,11 +67,6 @@ treadmill_triggered:
 # This is set when the vacuum is started (once per week). It's used to detect if the vacuum did not run for some reason.
 vacuum_kicked_off:
   name: Vacuum Kicked Off
-
-# Dryer is running.
-dryer_running:
-  name: Dryer Running
-  icon: mdi:tumble-dryer
 
 # Sonoff plug not on, which could indicate a power glitch.
 possible_power_glitch:

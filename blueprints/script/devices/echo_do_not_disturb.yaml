@@ -12,17 +12,21 @@ blueprint:
       selector:
         entity:
           domain: switch
-    
-    mute_duration:
-      name: Do Not Disturb Duration
-      description: Entity that contains the do not disturb duration in seconds.
 
 sequence:
-  - service: switch.turn_on
-    entity_id: !input switch_entity
-  
-  - delay:
-      seconds: !input mute_duration
-  
-  - service: switch.turn_off
-    entity_id: !input switch_entity
+  - variables:
+      echo_name: "{{ state_attr(switch_entity, 'friendly_name') | replace(' do not disturb switch', '') }}"
+    
+  # Simulate the request if testing mode is on.
+  - if:
+      - "{{ is_state('input_boolean.testing_mode', 'off') }}"
+      
+    then:
+      - service: switch.turn_on
+        entity_id: !input switch_entity
+      
+    else:
+      - service: script.log_testing_simulation
+        data:
+          category: echo
+          message: "{{ 'Echo name ' ~ echo_name ~ ' muted.' }}"

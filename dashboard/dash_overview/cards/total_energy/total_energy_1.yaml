@@ -1,0 +1,76 @@
+#=============================#
+#     Total Energy 1 Card     #
+#=============================#
+
+type: custom:stack-in-card
+title: Total Energy
+
+cards:
+  
+  - type: entities
+    show_header_toggle: false
+    entities:
+  
+      - entity: sensor.attic_light_energy
+        name: Attic Light
+        icon: mdi:dome-light
+
+      - entity: sensor.back_floodlight_energy
+        name: Back Floodlight
+        icon: mdi:light-flood-down
+
+      - entity: sensor.back_yard_light_energy
+        name: Back Yard Light
+        icon: mdi:coach-lamp
+
+      - entity: sensor.dining_room_hutch_energy
+        name: Dining Room Hutch
+        icon: mdi:lightbulb-on-outline
+
+      - entity: sensor.dining_room_lamps_energy
+        name: Dining Room Lamps
+        icon: mdi:lamp
+
+      - entity: sensor.driveway_lights_energy
+        name: Driveway Lights
+        icon: mdi:coach-lamp
+
+      - entity: sensor.sonoff_family_room_av_energy
+        name: Family Room AV
+        icon: mdi:audio-video
+
+      - entity: sensor.family_room_fan_energy
+        name: Family Room Fan
+        icon: mdi:fan
+
+      - entity: sensor.family_room_lamp_energy
+        name: Family Room Lamp
+        icon: mdi:lamp
+
+      - entity: sensor.family_room_lamp_energy
+        name: Fire TV
+        icon: mdi:television-classic
+
+      - entity: sensor.floor_fan_energy
+        name: Floor Fan
+        icon: mdi:fan
+
+      - entity: sensor.foyer_hutch_energy
+        name: Foyer Hutch
+        icon: mdi:lightbulb-on-outline
+
+      - entity: sensor.front_floodlight_energy
+        name: Front Floodlight
+        icon: mdi:light-flood-down
+  
+      - entity: sensor.garage_lights_energy
+        name: Garage Lights
+        icon: mdi:dome-light
+
+      - entity: sensor.guest_bath_fan_energy
+        name: Guest Bath Fan
+        icon: mdi:fan
+
+      - entity: sensor.guest_bath_light_energy
+        name: Guest Bath Light
+        icon: mdi:dome-light

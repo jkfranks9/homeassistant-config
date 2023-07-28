@@ -1,0 +1,11 @@
+#=======================#
+#     Bedrooms Card     #
+#=======================#
+  
+type: entities
+title: Occupied Bedrooms
+show_header_toggle: false
+entities:
+      
+  - entity: input_select.occupied_bedrooms
+    name: Beds

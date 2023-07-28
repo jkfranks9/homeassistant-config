@@ -25,6 +25,25 @@
       unique_id: nighttime
       state: "{{ iif(is_state('input_boolean.nighttime', 'on'), 1, 0) }}"
 
+    #-------------------------#
+    #   -- Effective Sun --   #
+    #-------------------------#
+    
+    # This reflects either the real sun, or a virtual sun that can be used with the testing infrastructure.
+    # Note that it only contains the state and a subset of the real sun attributes (only those attributes needed for testing).
+    - name: Effective Sun
+      unique_id: effective_sun
+      state: >
+        {% from 'testing.jinja' import get_testing_value %}
+        {{ get_testing_value('input_select.virtual_sun_state', 'none', '') }}
+      attributes:
+        elevation: >
+          {% from 'testing.jinja' import get_testing_value %}
+          {{ get_testing_value('input_number.virtual_sun_elevation', 0, 'elevation') }}
+        rising: >
+          {% from 'testing.jinja' import get_testing_value %}
+          {{ get_testing_value('input_select.virtual_sun_rising', 'none', 'rising') }}
+
     #-------------------#
     #   -- Backups --   #
     #-------------------#
@@ -139,8 +158,12 @@
     - name: 'PC Uptime'
       unique_id: pc_uptime
       state: >
-        {% from 'friendly_strings.jinja' import format_duration %}
-        {{ format_duration(as_timestamp(states('sensor.legion_t530_system_boot_time'), now())) }}
+        {% if states('sensor.legion_t530_system_boot_time') not in ['unknown', 'unavailable'] %}
+          {% from 'friendly_strings.jinja' import format_duration %}
+          {{ format_duration(as_timestamp(states('sensor.legion_t530_system_boot_time'), now())) }}
+        {% else %}
+          {{ states('sensor.legion_t530_system_boot_time') }}
+        {% endif %}
 
     #----------------#
     #   -- Misc --   #

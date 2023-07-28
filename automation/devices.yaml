@@ -209,12 +209,14 @@
       from: 'not_home'
       to: 'home'
   
-  action:
+  condition:
     
     # Make sure the Jon Away flag is on. This turns on when I leave home, so should be on now.
     - condition: state
       entity_id: input_boolean.jon_away
       state: 'on'
+  
+  action:    
     
     # The Jon Away flag needs to get reset now that I'm home. Don't wait for the script, because it contains a several minute delay.
     - service: script.turn_on
@@ -252,19 +254,27 @@
     # Turn off extended away mode (this should have happened above based on proximity ... this is a failsafe).
     - service: script.turn_off_extended_away_mode
     
-    # Continue only if it's dark-ish.
-    - condition: numeric_state
-      entity_id: sun.sun
-      attribute: elevation
-      below: 6.0
+    # Disarm Alexa Guard mode if armed.
+    - if:
+        - condition: state
+          entity_id: alarm_control_panel.alexa_guard
+          state: armed_away
+      
+      then:
+        - service: alarm_control_panel.alarm_disarm
+          entity_id: alarm_control_panel.alexa_guard
     
-    # Turn on appropriate lights.        
-    - service: light.turn_on
-      entity_id: light.office_lamp
-    
-    - service: light.turn_on
-      data_template:
-        entity_id: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
+    # Turn on appropriate lights if it's dark-ish.
+    - if:
+        - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
+      
+      then:        
+        - service: light.turn_on
+          entity_id: light.office_lamp
+        
+        - service: light.turn_on
+          data_template:
+            entity_id: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 # Close up the house when needed.
 - alias: Close House
@@ -326,16 +336,16 @@
         - service: input_boolean.turn_on
           entity_id: input_boolean.jon_away
     
+        # Lock the PC.
+        - service: script.turn_on
+          entity_id: script.lock_pc
+    
         - if:
           
             # No one else is home.
-            - "{{ is_state('input_boolean.adults_home', 'off') }}"
+            - "{{ is_state('binary_sensor.adults_home', 'off') }}"
         
           then:
-    
-            # Lock the PC.
-            - service: script.turn_on
-              entity_id: script.lock_pc
         
             # Turn off all lights.
             - scene: scene.lights_out
@@ -352,6 +362,10 @@
                 - automation.turn_on_christmas_lights
                 - automation.turn_on_guest_lights_sunset
                 - automation.turn_on_office_light
+            
+            # Arm Alexa Guard mode.  
+            - service: alarm_control_panel.alarm_arm_away
+              entity_id: alarm_control_panel.alexa_guard
       
       # Must be sunset.
       else:
@@ -370,47 +384,36 @@
   
   trigger:
     
-    # Anyone arrives.
+    # Adults arrive.
     - platform: state
-      entity_id: person.sarah
+      entity_id:
+        - person.sarah
+        - person.david
+        - person.mike
+        - person.maryam
       from: 'not_home'
       to: 'home'
-      id: adult1
-
+      id: adults
+    
+    # Children arrive.
     - platform: state
-      entity_id: person.david
+      entity_id:
+        - person.skylar
       from: 'not_home'
       to: 'home'
-      id: adult2
-
-    - platform: state
-      entity_id: person.mike
-      from: 'not_home'
-      to: 'home'
-      id: adult3
-  
-    - platform: state
-      entity_id: input_boolean.children_home
-      from: 'off'
-      to: 'on'
+      id: children
   
   action:
     
-    # Turn on adults home if, uh, any adults arrive.
-    - if:
-        - "{{ 'adult' in trigger.id }}"
-      
-      then:    
-        - service: input_boolean.turn_on
-          entity_id: input_boolean.adults_home
+    - variables:
+        sarah_nor_skylar: "{{ not is_state('person.sarah', 'home') and not is_state('person.skylar', 'home') }}"
+        sarah_nor_david: "{{ not is_state('person.sarah', 'home') and not is_state('person.david', 'home') }}"
     
     # Set the default occupied bedrooms.
     - choose:
       
-      # Sarah plus (David or Mike) OR children plus (David or Mike) OR (David and Mike) = both.
-      - conditions: "{{ (is_state('person.sarah', 'home') and (is_state('person.david', 'home') or is_state('person.mike', 'home'))) or
-                        (is_state('input_boolean.children_home', 'on') and (is_state('person.david', 'home') or is_state('person.mike', 'home'))) or
-                        (not is_state('person.sarah', 'home') and is_state('input_boolean.children_home', 'off') and is_state('person.david', 'home') and is_state('person.mike', 'home')) }}"
+      # Sarah with David = both.
+      - conditions: "{{ (is_state('person.sarah', 'home') and is_state('person.david', 'home')) }}"
       
         sequence:
           - service: input_select.select_option
@@ -419,31 +422,66 @@
             data:
               option: 'Both'
       
-      # David or Mike without Sarah = up.
-      - conditions: "{{ not is_state('person.sarah', 'home') and (is_state('person.david', 'home') or is_state('person.mike', 'home')) }}"
+      # David without Sarah nor Skylar = adult up.
+      - conditions: "{{ sarah_nor_skylar and is_state('person.david', 'home') }}"
       
         sequence:
           - service: input_select.select_option
             target:
               entity_id: input_select.occupied_bedrooms
             data:
-              option: 'Upstairs'
+              option: 'AdultUp'
       
-      # Otherwise = down.
-      default:
-        - service: input_select.select_option
-          target:
-            entity_id: input_select.occupied_bedrooms
-          data:
-            option: 'Downstairs'
+      # Sarah without David = adult down (it's assumed Skylar will sleep with Sarah if she's here).
+      - conditions: "{{ is_state('person.sarah', 'home') and not is_state('person.david', 'home') }}"
+      
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.occupied_bedrooms
+            data:
+              option: 'AdultDown'
+      
+      # Skylar with David = child down plus (plus meaning adult up).
+      - conditions: "{{ is_state('person.skylar', 'home') and is_state('person.david', 'home') }}"
+      
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.occupied_bedrooms
+            data:
+              option: 'ChildDownPlus'
+      
+      # Skylar alone = child down.
+      - conditions: "{{ is_state('person.skylar', 'home') and sarah_nor_david }}"
+      
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: input_select.occupied_bedrooms
+            data:
+              option: 'ChildDown'
     
     # Perform tasks for adults.
     - if:
-        - condition: state
-          entity_id: input_boolean.adults_home
-          state: 'on'
+        - "{{ trigger.id == 'adults' }}"
       
       then:
+        
+        # If sunset has already occurred, Close House won't be triggered to close the garage.
+        # So start a timer to do that in a bit.
+        # Note that we're using the effective sun sensor, which allows us to do testing using the
+        # testing infrastructure. If we're not testing the sensor reflects the real sun.
+        - if:
+            - condition: state
+              entity_id: sensor.effective_sun
+              state: 'below_horizon'
+        
+          then:
+            - service: timer.start
+              data:
+                entity_id: timer.garage_north_close
+                duration: '00:30:00'
         
         # Open garage door.
         - service: input_boolean.turn_on
@@ -455,9 +493,7 @@
     
     # Perform tasks for children.
     - if:
-        - condition: state
-          entity_id: input_boolean.children_home
-          state: 'on'
+        - "{{ trigger.id == 'children' }}"
       
       then:
         
@@ -467,7 +503,25 @@
             light_entity: light.guest_bedroom_lamp_2
             turn_on: true
 
-# Close house when family members leave.
+# Close garage door north once a delay has occurred after family has arrived after sunset.
+- alias: Close Garage North
+  id: close_garage_north
+  
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.garage_north_close
+  
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.garage_door_info_message
+    
+    - service: script.turn_on
+      target:
+        entity_id: script.close_garage_door_north
+
+# Close house when all family members leave.
 - alias: Close House For Family
   id: 'close_house_for_family'
   
@@ -475,49 +529,33 @@
     
     # Anyone leaves.
     - platform: state
-      entity_id: person.sarah
-      from: 'home'
-      to: 'not_home'
-      id: adult1
-
+      entity_id: binary_sensor.adults_home
+      from: 'on'
+      to: 'off'
+  
     - platform: state
-      entity_id: person.david
-      from: 'home'
-      to: 'not_home'
-      id: adult2
-
-    - platform: state
-      entity_id: person.mike
-      from: 'home'
-      to: 'not_home'
-      id: adult3
-    
-    - platform: state
-      entity_id: input_boolean.children_home
+      entity_id: binary_sensor.children_home
       from: 'on'
       to: 'off'
   
   condition:
     
     # Everyone must be gone.
-    not:      
-      - condition: state
-        entity_id: person.sarah
-        state: 'home'
-      
-      - condition: state
-        entity_id: person.david
-        state: 'home'
-      
-      - condition: state
-        entity_id: person.mike
-        state: 'home'
+    - condition: state
+      entity_id: binary_sensor.adults_home
+      state: 'off'
     
-      - condition: state
-        entity_id: input_boolean.children_home
-        state: 'on'
+    - condition: state
+      entity_id: binary_sensor.children_home
+      state: 'off'
   
   action:
+    
+    # Remove upstairs thermostat hold.
+    - service: script.remove_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        extended: false
     
     # Close the upstairs guest bedroom vents.
     - service: script.close_upstairs_br_vents
@@ -537,6 +575,52 @@
         entity_id: input_select.occupied_bedrooms
       data:
         option: 'None'
+            
+    # Turn on the vacuum automation.
+    - service: script.toggle_vacuum_automation
+      data:
+        vacuum_name: "{{ state_attr('vacuum.ecovacs_deebot', 'friendly_name') }}"
+        operation: 'on'
+
+# Set the upstairs thermostat and bedroom vents appropriately when the occupied bedrooms change.
+# Normally this only happens when family members arrive, but it could also be done manually via the UI.
+- alias: Prepare Upstairs Bedroom For Family
+  id: 'prepare_upstairs_bedroom_for_family'
+  mode: queued
+  
+  # Trigger only on the state of occupied bedrooms.
+  trigger:
+    - platform: state
+      entity_id: input_select.occupied_bedrooms
+      not_from:
+        - 'AdultUp'
+        - 'ChildDownPlus'
+        - 'Both'
+      to:
+        - 'AdultUp'
+        - 'ChildDownPlus'
+        - 'Both'
+  
+  # We only care if the upstairs bedroom is occupied by an adult.
+  condition: "{{ states('input_select.occupied_bedrooms') in ['AdultUp', 'ChildDownPlus', 'Both'] }}"
+  
+  action:
+
+    # Set a temporary temperature hold upstairs.
+    - service: script.set_temporary_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        heat_temp: !secret constant_upstairs_home_heat_temp
+        cool_temp: !secret constant_upstairs_home_cool_temp
+            
+    # Open the upstairs guest bedroom vents.
+    - service: script.open_upstairs_br_vents
+            
+    # Turn off the vacuum automation.
+    - service: script.toggle_vacuum_automation
+      data:
+        vacuum_name: "{{ state_attr('vacuum.ecovacs_deebot', 'friendly_name') }}"
+        operation: 'off'
 
 # Turn off extended away mode when Jon is nearing home (proximity is somewhat unreliable, so if this doesn't trigger we have a failsafe 
 # below in Open House).
@@ -645,7 +729,7 @@
     - or:
       - and:
         - condition: state
-          entity_id: input_boolean.children_home
+          entity_id: binary_sensor.children_home
           state: 'on'
         - condition: trigger
           id: 'morning'
@@ -657,13 +741,64 @@
       state: 'off'
     - service: script.enable_family_room_av
 
+#================================#
+#     Human Presence Sensors     #
+#================================#
+
+# The office has a human presence sensor to detect presence. I want to use that to control the ceiling fan.
+# But what is needed is a delayed reaction after the human presence sensor turns off, so the fan doesn't go off until it's
+# clear that the office is unoccupied. So we use an input boolean here that turns on quickly but only turns off 
+# if the human presence sensor doesn't detect presence for a decent interval.
+- alias: Turn On Office occupied
+  id: turn_on_office_occupied
+  
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.office_human_sensor_presence
+      from: 'off'
+      to: 'on'
+      for: '00:02:00'
+  
+  action:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.office_occupied
+
+- alias: Turn Off Office occupied
+  id: turn_off_office_occupied
+  
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.office_human_sensor_presence
+      from: 'on'
+      to: 'off'
+      for: '00:30:00'
+  
+  action:
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.office_occupied
+
 #======================#
 #     Ceiling Fans     #
 #======================#
 
+# Control office fan automation based on the AV system in use or not.
+- alias: Control Office Fan Automation
+  id: 'control_office_fan_automation'
+  
+  use_blueprint:
+    path: devices/control_ceiling_fan_automations.yaml
+    input:
+      sensor_entity: input_boolean.office_occupied
+      automation_entity: automation.operate_office_fan
+      speed_entity: input_number.office_fan_speed
+      fan_entity: fan.office_fan
+
 # Control family room fan automation based on the AV system in use or not.
 - alias: Control Family Room Fan Automation
   id: 'control_family_room_fan_automation'
+  
   use_blueprint:
     path: devices/control_ceiling_fan_automations.yaml
     input:
@@ -675,6 +810,7 @@
 # Control theater fan automation based on the AV system in use or not.
 - alias: Control Theater Fan Automation
   id: 'control_theater_fan_automation'
+  
   use_blueprint:
     path: devices/control_ceiling_fan_automations.yaml
     input:
@@ -683,9 +819,22 @@
       speed_entity: input_number.theater_fan_speed
       fan_entity: fan.theater_fan
 
+# Operate the office fan when the AV system is on.
+- alias: Operate Office Fan
+  id: 'operate_office_fan'
+  
+  use_blueprint:
+    path: devices/operate_ceiling_fans.yaml
+    input:
+      sensor_entity: input_boolean.office_occupied
+      temperature_entity: sensor.office_temperature
+      fan_entity: fan.office_fan
+      thresholds: [79, 77, 75]
+
 # Operate the family room fan when the AV system is on.
 - alias: Operate Family Room Fan
   id: 'operate_family_room_fan'
+  
   use_blueprint:
     path: devices/operate_ceiling_fans.yaml
     input:
@@ -697,6 +846,7 @@
 # Operate the theater fan when the AV system is on.
 - alias: Operate Theater Fan
   id: 'operate_theater_fan'
+  
   use_blueprint:
     path: devices/operate_ceiling_fans.yaml
     input:
@@ -843,31 +993,6 @@
       data:
         value: "{{ states('input_number.treadmill_usage_minutes') | int(0) + states('input_number.treadmill_daily_time') | int(0) }}"
 
-# Treadmill lubrication needed.
-- alias: Set Treadmill Lube Date
-  id: 'set_treadmill_lube_date'
-  
-  # Trigger when the current treadmill minutes (converted to hours) is greater than the last lube hours + 180.
-  trigger:
-    - platform: template
-      value_template: "{{ states('input_number.treadmill_usage_minutes') | int(0) / 60 >= states('input_number.treadmill_last_lube_hours') | int(0) + 180 }}"
-  
-  action:
-    
-    # Set the due date to midnight (tomorrow at 00:00).
-    - service: input_datetime.set_datetime
-      data:
-        entity_id: input_datetime.reminder_misc_lubetreadmill
-        datetime: "{{ as_timestamp(now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days = 1)) }}"
-    
-    # Update the last lube hours. Of course it's possible I won't actually perform the lubrication immediately, but this is the
-    # only way I can figure to update the value automatically. As long as I don't wait too long, a few hours off the mark won't matter.
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.treadmill_last_lube_hours
-      data:
-        value: "{{ states('input_number.treadmill_usage_minutes') | int(0) / 60 }}"
-
 #====================#
 #     Appliances     #
 #====================#
@@ -990,6 +1115,10 @@
         entity_id: input_select.washer_load_size
       data:
         option: '*sensing*'
+    
+    # Remember to backup the log tomorrow morning.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.backup_laundry_log
     
     # Log the start in the laundry events log.
     - service: script.log_laundry_event
@@ -1255,7 +1384,6 @@
                 event_type: basic
                 prefix: Washer
                 message: stopped
-          
 
 #===============#
 #     Dryer     #
@@ -1271,6 +1399,10 @@
       to: 'on'
   
   action:
+    
+    # Remember to backup the log tomorrow morning.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.backup_laundry_log
     
     # Log the start in the laundry events log.
     - service: script.log_laundry_event
@@ -1292,18 +1424,14 @@
   
   trigger:
     
-    # Trigger when the dryer temperature rises a bit above ambient.
-    - platform: template
-      value_template: >
-        {{ states('sensor.dryer_temperature') not in ['unavailable', 'unknown'] and states('sensor.main_floor_temperature') not in ['unavailable', 'unknown'] and
-           states('sensor.dryer_temperature') | int(0) > (states('sensor.main_floor_temperature') | int(0) + 30) }}
+    # Trigger when the dryer vibration sensor activates.
+    - platform: state
+      entity_id: binary_sensor.dryer_vibration_sensor_vibration
+      from: 'off'
+      to: 'on'
+      for: 30
+      
   action:
-    
-    # Initialize the temperature & humidity counts. This has the side effect of turning off the Dryer Done binary sensor.
-    - service: counter.reset
-      entity_id:
-        - counter.dryer_temperature_count
-        - counter.dryer_humidity_count
     
     # Indicate the dryer is running.
     - service: input_boolean.turn_on
@@ -1312,77 +1440,21 @@
     # Log temperature detected in the laundry events log.
     - service: script.log_laundry_event
       data:
-        event_type: metric
+        event_type: basic
         prefix: Dryer
-        message: temperature detected
-        entity_id_1: sensor.dryer_temperature
-
-- alias: Register Dryer Event
-  id: register_dryer_event
-  
-  trigger:
-    
-    # Since our humidity trend sensor is looking for a drop of 30 points, only trigger if the current humidity is 70 or below.
-    # This should weed out inaccurate trend sensor readings.
-    # NOTE: The drop amount here must be kept in sync with the Dryer Humidity Falling trend sensor.
-    - platform: template
-      value_template: "{{ states('binary_sensor.dryer_humidity_falling') == 'on' and states('sensor.dryer_humidity') | int(0) <= 70 }}"
-      id: humidity
-    
-    # We don't bother doing the above for temperature. This would require saving the initial temperature when we detect the dryer is running, 
-    # and I don't want to.
-    - platform: state
-      entity_id: binary_sensor.dryer_temperature_falling
-      to: 'on'
-      id: temperature
-  
-  condition:
-    
-    # Make sure the dryer is running ... we could easily detect changes at any time, since the sensor lives in the dryer vent connected to the outdoors.
-    - condition: state
-      entity_id: input_boolean.dryer_running
-      state: 'on'
-  
-  action: 
-    
-    # Bump the appropriate count. The dryer done binary sensor only turns on when both counts are above 0. We use counts in case we get 
-    # spurious triggers, for example back to back humidity falling.
-    - if:
-        - "{{ trigger.id == 'temperature' }}"
-      
-      then:
-        - service: counter.increment
-          entity_id: counter.dryer_temperature_count
-    
-        # Log the event in the laundry events log.
-        - service: script.log_laundry_event
-          data:
-            event_type: metric
-            prefix: Dryer
-            message: temperature falling
-            entity_id_1: sensor.dryer_temperature
-      
-      else:
-        - service: counter.increment
-          entity_id: counter.dryer_humidity_count
-    
-        # Log the event in the laundry events log.
-        - service: script.log_laundry_event
-          data:
-            event_type: metric
-            prefix: Dryer
-            message: humidity falling
-            entity_id_1: sensor.dryer_humidity
+        message: running
 
 - alias: Turn Off Dryer Running
   id: turn_off_dryer_running
   
   trigger:
     
-    # Trigger when the dryer done binary sensor turns on, indicating that both temperature and humidity have fallen.
+    # Trigger when the dryer vibration sensor deactivates.
     - platform: state
-      entity_id: binary_sensor.dryer_done
-      to: 'on'
+      entity_id: binary_sensor.dryer_vibration_sensor_vibration
+      from: 'on'
+      to: 'off'
+      for: 30
   
   action:
     
@@ -1396,56 +1468,6 @@
         event_type: basic
         prefix: Dryer
         message: stopped
-
-# Log the dryer trend sensors for debugging purposes. I anticipate needing a lot of dryer runs in different seasons
-# and conditions before settling on the final settings for the trend sensors that trigger the end of the cycle.
-- alias: Log Dryer Trend Sensors
-  id: log_dryer_trend_sensors
-  mode: queued
-  
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.dryer_humidity_falling
-      attribute: gradient
-      id: humidity
-    - platform: state
-      entity_id: binary_sensor.dryer_temperature_falling
-      attribute: gradient
-      id: temperature
-  
-  condition:
-    - condition: state
-      entity_id: input_boolean.dryer_running
-      state: 'on'
-  
-  action:
-    
-    # Remember to backup the log tomorrow morning.
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.backup_laundry_log
-    
-    # Log either the humidity or the temperature, based on the trigger id.
-    - if:
-        - condition: trigger
-          id: humidity
-      
-      then:
-        - service: script.log_laundry_event
-          data:
-            event_type: metric_plus_gradient
-            prefix: Dryer
-            message: humidity
-            entity_id_1: sensor.dryer_humidity
-            entity_id_2: binary_sensor.dryer_humidity_falling
-      
-      else:
-        - service: script.log_laundry_event
-          data:
-            event_type: metric_plus_gradient
-            prefix: Dryer
-            message: temperature
-            entity_id_1: sensor.dryer_temperature
-            entity_id_2: binary_sensor.dryer_temperature_falling
 
 #=======================#
 #     General Plugs     #
@@ -1511,42 +1533,6 @@
           thresholds: [76, 74, 72]
           timeout: 240
 
-#=================================#
-#     Device Tracker Presence     #
-#=================================#
-
-# Control adults home based on device tracker presence.
-# NOTE: Adults home is turned on in Open House For Family, to avoid a timing problem: if we turned it on here, it would be delayed
-# because of the random delay and would thus not be on when Open House For Family ran.
-- alias: Turn Off Adults Home
-  id: 'turn_off_adults_home'
-  trigger:
-    - platform: state
-      entity_id: person.mike
-      from: 'home'
-      to: 'not_home'
-    - platform: state
-      entity_id: person.sarah
-      from: 'home'
-      to: 'not_home'
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    not:
-      - condition: state
-        entity_id: person.mike
-        state: 'home'
-      - condition: state
-        entity_id: person.sarah
-        state: 'home'
-  
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.adults_home
-
 #=============================#
 #     Tag/Beacon Presence     #
 #=============================#
@@ -1593,9 +1579,9 @@
         message: "House distance from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }}"
         level: debug
 
-# Control children home based on beacon presence.
-- alias: Turn On Children Home
-  id: 'turn_on_children_home'
+# Activate Blue Charm beacon device tracker.
+- alias: Activate Beacon Device Tracker
+  id: 'activate_beacon_device_tracker'
   trigger:
     - platform: state
       entity_id: sensor.blue_charm_presence
@@ -1605,11 +1591,14 @@
         - 'House'
   
   action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.children_home
+    - service: mqtt.publish
+      data:
+        topic: "homeassistant/device_tracker/bluecharm_beacon"
+        payload: "home"
 
-- alias: Turn Off Children Home
-  id: 'turn_off_children_home'
+# Deactivate Blue Charm beacon device tracker.
+- alias: Deactivate Beacon Device Tracker
+  id: 'deactivate_beacon_device_tracker'
   trigger:
     - platform: state
       entity_id: sensor.blue_charm_presence
@@ -1618,9 +1607,16 @@
         - 'House'
       to: 'Away'
   
+  # So we have a possible timing problem: during startup, the Blue Charm Presence sensor can change to Away if ESPHome has not had 
+  # time to initialize the BLE readers (garage and house). We don't want to turn off children home in this case.
+  # So we verify that the wifi sensors in both readers are in a good state before continuing. Yeah, I know.
+  condition: "{{ states('sensor.ble_garage_wifi_signal') not in ['unknown', 'unavailable'] and states('sensor.ble_house_wifi_signal') not in ['unknown', 'unavailable'] }}"
+  
   action:
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.children_home
+    - service: mqtt.publish
+      data:
+        topic: "homeassistant/device_tracker/bluecharm_beacon"
+        payload: "not_home"
 
 #======================#
 #     Echo Devices     #
@@ -1654,6 +1650,21 @@
     - service: switch.turn_off
       entity_id: switch.master_bedroom_echo_do_not_disturb_switch
 
+# Guest bedroom echo devices might be muted at night. Unmute them at 9 AM. Note that the master bedroom echo is unmuted
+# above at the end of nighttime.
+- alias: Unmute Guest Bedroom Echoes
+  id: 'unmute_guest_bedroom_echoes'
+  
+  trigger:
+    - platform: time
+      at: '09:00:00'
+  
+  action:
+    - service: switch.turn_off
+      entity_id:
+        - switch.guest_bedroom_echo_do_not_disturb_switch
+        - switch.upstairs_bedroom_echo_do_not_disturb_switch
+
 #=====================#
 #     Smart Vents     #
 #=====================#
@@ -1677,8 +1688,7 @@
       value_template: "{{ state_attr('climate.upstairs', 'equipment_running') == 'fan' }}"
     
     # Ensure the upstairs bedroom is not occupied.
-    - condition: template
-      value_template: "{{ states('input_select.occupied_bedrooms') not in ['Upstairs', 'Both'] }}"
+    -  "{{ is_state('binary_sensor.upstairs_bedroom_occupied', 'off') }}"
   
   action:
     - service: script.open_upstairs_br_vents
@@ -1696,8 +1706,7 @@
   condition:
     
     # Ensure the upstairs bedroom is not occupied.
-    - condition: template
-      value_template: "{{ states('input_select.occupied_bedrooms') not in ['Upstairs', 'Both'] }}"
+    -  "{{ is_state('binary_sensor.upstairs_bedroom_occupied', 'off') }}"
   
   action:
     - service: script.close_upstairs_br_vents

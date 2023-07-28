@@ -1,0 +1,79 @@
+#================================#
+#     Testing Infrastructure     #
+#================================#
+
+# See the automation of the same name for more information.
+
+#===========================#
+#     Virtual Variables     #
+#===========================#
+
+# Reset virtual variables.
+reset_virtual_variables:
+  alias: Reset Virtual Variables
+  
+  sequence:
+    - service: input_select.select_first
+      entity_id: input_select.virtual_sun_state
+    
+    - service: input_number.set_value
+      entity_id: input_number.virtual_sun_elevation
+      data:
+        value: 0
+    
+    - service: input_select.select_first
+      entity_id: input_select.virtual_sun_rising
+    
+    - service: input_boolean.turn_off
+      entity_id:
+        - input_boolean.virtual_david
+        - input_boolean.virtual_maryam
+        - input_boolean.virtual_mike
+        - input_boolean.virtual_sarah
+        - input_boolean.virtual_skylar
+
+#===========================#
+#     Test Mode Logging     #
+#===========================#
+
+# Log a testing simulation, meaning that a service has been bypassed so we just log what the service would have done.
+log_testing_simulation:
+  alias: Log Testing Simulation
+  
+  fields:
+    category:
+      name: Category
+      description: The testing category.
+      selector:
+        select:
+          options:
+            - start
+            - stop
+            - climate
+            - echo
+            - garage
+            - vacuum
+            - vent
+  
+    message:
+      name: Message
+      description: The message to be logged.
+      selector:
+        text:
+    
+  sequence:
+    - variables:
+        timestamp: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') }}:"
+    
+    - service: notify.testing_scenarios
+      data_template:
+        message: "{{ timestamp ~ 'TEST MODE... category ' ~ category | upper ~ ': ' ~ message }}"
+          
+    # Write a separator in the log for the stop category.
+    - if:
+        - "{{ category == 'stop' }}"
+        
+      then:
+        - service: notify.testing_scenarios
+          data:
+            message: '--------------------'

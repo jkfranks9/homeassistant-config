@@ -1,0 +1,47 @@
+#=======================#
+#     Controls Card     #
+#=======================#
+
+type: custom:stack-in-card
+title: Controls
+mode: vertical
+cards:
+  
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+            
+            - type: 'custom:button-card'
+              template: toggle_button
+              entity: input_boolean.testing_mode
+              name: Test Mode
+              icon: mdi:toggle-switch
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_select.virtual_sun_state
+              name: Sun State
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.virtual_sun_elevation
+              name: Sun Angle
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_select.virtual_sun_rising
+              name: Sun Rising
+            
+  - type: 'custom:lovelace-multiline-text-input-card'
+    entity: input_text.testing_mode_scenario
+    title: Scenario
+    autosave: true
+    show_success_messages: false
+    buttons: false

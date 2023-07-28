@@ -27,52 +27,109 @@ concat_scripts_log_files:
 # Set an input datetime entity with an offset in days.
 set_datetime_offset_days:
   alias: Set Datetime Offset Days
+  
+  fields:
+    entity:
+      description: The entity to be updated.
+      selector:
+        entity:
+          domain: input_datetime
+    
+    amount:
+      description: The amount by which to update the entity.
+      selector:
+        number:
+          min: 1
+          max: 100
+  
   sequence:
     - service: input_datetime.set_datetime
       data:
         entity_id: "{{ entity }}"
-        datetime: "{{ now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days = interval) }}"
+        datetime: "{{ now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days = amount) }}"
 
 # Set an input datetime entity with an offset in weeks.
 set_datetime_offset_weeks:
   alias: Set Datetime Offset Weeks
+  
+  fields:
+    entity:
+      description: The entity to be updated.
+      selector:
+        entity:
+          domain: input_datetime
+    
+    amount:
+      description: The amount by which to update the entity.
+      selector:
+        number:
+          min: 1
+          max: 52
+  
   sequence:
     - service: input_datetime.set_datetime
       data:
         entity_id: "{{ entity }}"
-        datetime: "{{ now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(weeks = interval) }}"
+        datetime: "{{ now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(weeks = amount) }}"
 
 # Set an input datetime entity with an offset in months.
 set_datetime_offset_months:
   alias: Set Datetime Offset Months
+  
+  fields:
+    entity:
+      description: The entity to be updated.
+      selector:
+        entity:
+          domain: input_datetime
+    
+    amount:
+      description: The amount by which to update the entity.
+      selector:
+        number:
+          min: 1
+          max: 24
+  
   sequence:
     - service: input_datetime.set_datetime
       data:
         entity_id: '{{ entity }}'
         datetime: >
           {%- set dtobj=now().fromtimestamp(as_timestamp(states(entity))) %}
-          {%- set sub_months=((dtobj.year) * 12 + (dtobj.month + interval - 1)) %}
+          {%- set sub_months=((dtobj.year) * 12 + (dtobj.month + amount - 1)) %}
           {%- set new_months=((sub_months) % 12) + 1 %}
           {%- set new_year=((sub_months - new_months + 1) / 12) | int(0) %}
           {{ dtobj.replace(month=new_months, year=new_year) }}
 
-#=================#
-#     Adguard     #
-#=================#
-
-# These are used for automatic control of Adguard for different Shield applications, and for voice
-# control via Alexa.
-turn_off_adguard:
-  alias: Turn Off Adguard
+# Set an input number entity with an offset value.
+set_number_offset:
+  alias: Set Number Offset
+  
+  fields:
+    entity:
+      description: The entity to be updated.
+      selector:
+        entity:
+          domain: input_number
+    
+    base_entity:
+      description: The base entity to which the amount should be added.
+      selector:
+        entity:
+          domain: input_number
+    
+    amount:
+      description: The amount by which to update the entity.
+      selector:
+        number:
+          min: 1
+          max: 6000
+  
   sequence:
-    - service: switch.turn_off
-      entity_id: switch.adguard_protection
-
-turn_on_adguard:
-  alias: Turn On Adguard
-  sequence:
-    - service: switch.turn_on
-      entity_id: switch.adguard_protection
+    - service: input_number.set_value
+      data:
+        entity_id: "{{ entity }}"
+        datetime: "{{ states(base_entity) + amount }}"
 
 #========================#
 #     MQTT Discovery     #
@@ -130,6 +187,11 @@ publish_mqtt_automated_states:
   sequence:
     - service: mqtt.publish
       data: "{{ service_data }}"
+  
+    - service: system_log.write
+      data:
+        message: "Publish MQTT state: {{ service_data }}"
+        level: info
 
 # Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
 set_up_mqtt_automated_config:
@@ -188,7 +250,6 @@ log_laundry_event:
           options:
             - basic
             - metric
-            - metric_plus_gradient
             - fill_plus_load
             - timer
     
@@ -235,14 +296,6 @@ log_laundry_event:
           - service: notify.laundry_events
             data_template:
               message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }})"
-    
-      # A metric plus gradient message includes both a single metric plus a trend sensor gradient. Obviously this only applies to the dryer.
-      - conditions: "{{ event_type == 'metric_plus_gradient' }}"
-        
-        sequence:
-          - service: notify.laundry_events
-            data_template:
-              message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }}) {{ state_attr(entity_id_2, 'gradient') | round(5) }}"
     
       # A fill plus load message includes both the washer fill seconds and calculated load size.
       - conditions: "{{ event_type == 'fill_plus_load' }}"

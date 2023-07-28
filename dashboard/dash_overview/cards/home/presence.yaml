@@ -14,9 +14,14 @@ cards:
       buttons:
         card:
           type: grid
-          columns: 4
+          columns: 5
           square: false
           cards:
+          
+            - type: 'custom:button-card'
+              template: person_button
+              entity: person.jon
+              icon: mdi:human-male
       
             - type: 'custom:button-card'
               template: motion_button
@@ -27,23 +32,17 @@ cards:
               template: motion_button
               entity: group.upstairs_motion
               name: Upstairs
+            
+            - type: 'custom:button-card'
+              template: sensor_button
+              entity: input_select.occupied_bedrooms
+              name: Occupied
           
             - type: 'custom:button-card'
-              template: presence_button
-              entity: input_boolean.adults_home
-              name: Adults
-              icon: mdi:human-male-female
-          
-            - type: 'custom:button-card'
-              template: presence_button
-              entity: input_boolean.children_home
-              name: Children
-              icon: mdi:human-child
-          
-            - type: 'custom:button-card'
-              template: person_button
-              entity: person.jon
-              icon: mdi:human-male
+              template: beacon_button
+              entity: sensor.blue_charm_presence
+              name: Blue Charm
+              icon: mdi:home-map-marker
           
             - type: 'custom:button-card'
               template: person_button
@@ -52,11 +51,20 @@ cards:
           
             - type: 'custom:button-card'
               template: person_button
+              entity: person.maryam
+              icon: mdi:human-female
+          
+            - type: 'custom:button-card'
+              template: person_button
               entity: person.sarah
               icon: mdi:human-female
           
             - type: 'custom:button-card'
-              template: beacon_button
-              entity: sensor.blue_charm_presence
-              name: Blue Charm
-              icon: mdi:home-map-marker
+              template: person_button
+              entity: person.david
+              icon: mdi:human-male
+          
+            - type: 'custom:button-card'
+              template: person_button
+              entity: person.skylar
+              icon: mdi:human-child

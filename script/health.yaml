@@ -1,16 +1,44 @@
-#============================#
-#     Workout Daily Time     #
-#============================#
+#==================#
+#     Workout      #
+#==================#
 
 set_workout_daily_time:
   alias: Set Workout Daily Time
   
   sequence:
+    
+    # Set the workout time based on the current constant value.
     - service: input_number.set_value
       target:
         entity_id: input_number.workout_daily_time
       data:
         value: "{{ states('input_number.variables_workout_time') }}"
+    
+    # Set the next workout group.
+    - service: script.set_workout_group
+
+set_workout_group:
+  alias: Set Workout Group
+  
+  sequence:
+    
+    # Bump the workout group or reset it to 1.
+    - if:
+        - condition: numeric_state
+          entity_id: input_number.workout_group
+          above: 3
+      
+      then:
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.workout_group
+          data:
+            value: 1
+      
+      else:
+        - service: input_number.increment
+          target:
+            entity_id: input_number.workout_group
 
 #==========================#
 #     Exercise Metrics     #

@@ -1,0 +1,56 @@
+# Turn a room light on or off, based on presence. This is intended to be used by a voice assistant.
+#
+# Note that this depends on the Alexa Media Player integration correctly identifying the last called echo device, which
+# in my experience isn't always correct. So this might not work as expected. Lovely.
+
+blueprint:
+  name: Light Operation
+  description: Turn a room light on or off.
+  domain: script
+  
+  input:
+    operation:
+      name: Operation
+      description: Whether to turn the light on or off.
+      selector:
+        boolean:
+
+variables:
+  
+  # The !input tag cannot be used in templates.
+  input_operation: !input operation
+        
+  # Extract the room name from the last Alexa sensor (leave any underscores intact).
+  room: "{{ states('sensor.last_alexa') | replace('media_player.', '') | replace('_echo', '') }}"
+  
+  # Determine the light entity from the room. For some rooms the lamp name matches the echo room name, 
+  # so we can construct the lamp entity dynamically. For others, use a hardcoded entity.
+  #
+  # NOTE: We do not expect this to resolve to an empty string, but we check for that below anyway.
+  light_entity: >
+    {% if room in ['family_room', 'guest_bedroom', 'master_bedroom', 'office'] %}
+      {{ 'light.' ~ room ~ '_lamp' }}
+    {% elif room == 'upstairs_bedroom' %}
+      light.upstairs_bedroom_light
+    {% elif room == 'theater' %}
+      light.theater_sconces
+    {% endif %}
+
+sequence:
+  
+  # Do nothing if for some reason the room could not be determined.
+  - condition: "{{ light_entity | length > 0 }}"
+  
+  # The light we use depends on the room.
+  - if:
+      - "{{ input_operation == true}}"
+    
+    then:    
+      - service: light.turn_on
+        data:
+          entity_id: "{{ light_entity }}"
+    
+    else:   
+      - service: light.turn_off
+        data:
+          entity_id: "{{ light_entity }}"

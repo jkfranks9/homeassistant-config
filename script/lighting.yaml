@@ -163,9 +163,11 @@ set_up_children_only_bedtime_environment:
   sequence:
   
     # Verify that only children are home. If we're here after a delay until 8PM, things could have changed.
-    - condition: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
+    - condition: "{{ is_state('binary_sensor.adults_home', 'off') and is_state('binary_sensor.children_home', 'on') }}"
     
     # Pre-bedtime stage: turn on the appropriate bedroom light.
+    # NOTE: We don't turn off the downstairs bedroom light if another bedroom is selected, because the downstairs
+    # bedroom is home base.
     - if:
         - "{{ stage == 'pre' }}"
     
@@ -177,7 +179,7 @@ set_up_children_only_bedtime_environment:
           - conditions:
             - condition: state
               entity_id: input_select.occupied_bedrooms
-              state: 'Downstairs'
+              state: 'ChildDown'
           
             sequence:
               - service: scene.apply
@@ -191,14 +193,13 @@ set_up_children_only_bedtime_environment:
           - conditions:
             - condition: state
               entity_id: input_select.occupied_bedrooms
-              state: 'Upstairs'
+              state: 'ChildUp'
           
             sequence:
               - service: scene.apply
                 data:
                   entities:
                     light.guest_bedroom_lamp:      'off'
-                    light.guest_bedroom_lamp_2:    'off'
                     light.upstairs_bedroom_outlet: 'on'
                     light.master_bedroom_lamp:     'off'
       
@@ -212,7 +213,6 @@ set_up_children_only_bedtime_environment:
                 data:
                   entities:
                     light.guest_bedroom_lamp:      'off'
-                    light.guest_bedroom_lamp_2:    'off'
                     light.upstairs_bedroom_outlet: 'off'
                     light.master_bedroom_lamp:     'on'
     
@@ -228,7 +228,7 @@ set_up_children_only_bedtime_environment:
           - conditions:
             - condition: state
               entity_id: input_select.occupied_bedrooms
-              state: 'Downstairs'
+              state: 'ChildDown'
           
             sequence:
               - service: light.turn_off
@@ -239,7 +239,7 @@ set_up_children_only_bedtime_environment:
           - conditions:
             - condition: state
               entity_id: input_select.occupied_bedrooms
-              state: 'Upstairs'
+              state: 'ChildUp'
           
             sequence:
               - service: light.turn_on
@@ -263,327 +263,303 @@ establish_bedtime_environment:
   alias: Establish Bedtime Environment
   
   sequence:
+          
+    # Just me home: turn off everything except the master bedroom lamp. There's no need to bother with any devices.
+    - if:
+        - condition: state
+          entity_id: input_select.occupied_bedrooms
+          state: 'None'
+      
+      then:
+        - scene: scene.non_master_lights_out
+      
+      # Family members are present.
+      else:
     
-    # Determine who is home.
+        # Turn off all but bedroom lights.
+        - scene: scene.non_bedroom_lights_out
+        
+        # Determine who is home and which bedrooms are occupied.
+        - choose:
+          
+          # Child only, downstairs.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'ChildDown'
+            
+            sequence:
+                    
+              # Turn off bedroom lights and turn on night lights.
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'on'
+                    light.hallway_lamp:                  'on'
+                    light.guest_bedroom_lamp:            'off'
+                    light.guest_bedroom_lamp_2:          'off'
+                    light.upstairs_guest_suite_lights:   'off'
+              
+              # Set up all the bedtime devices.
+              - service: script.set_up_bedroom_devices
+                data:
+                  bedrooms: 'downstairs'
+
+              # Enter sleep mode upstairs.
+              - service: script.set_thermostat_preset
+                data:
+                  thermostat_entity: climate.upstairs
+                  preset: 'Sleep'
+          
+          # Child only, upstairs.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'ChildUp'
+            
+            sequence:
+                    
+              # Turn off bedroom lights and turn on night lights.
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'off'
+                    light.downstairs_guest_suite_lights: 'off'
+                    light.upstairs_bath_vanity_light:    'on'
+                    light.upstairs_bedroom_light:        'off'
+                    light.upstairs_bedroom_outlet:       'off'
+              
+              # Set up all the bedtime devices.
+              - service: script.set_up_bedroom_devices
+                data:
+                  bedrooms: 'upstairs'
+          
+          # Child only, master.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'Master'
+            
+            sequence:
+                    
+              # Turn off bedroom lights and night lights (we turn on the master bath light later as a night light).
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'off'
+                    light.downstairs_guest_suite_lights: 'off'
+                    light.upstairs_guest_suite_lights:   'off'
+        
+              # Set a temporary temperature hold downstairs.
+              - service: script.set_temporary_thermostat_hold
+                data:
+                  thermostat_entity: climate.downstairs
+                  heat_temp: !secret constant_downstairs_home_heat_temp
+                  cool_temp: !secret constant_downstairs_home_cool_temp
+
+              # Enter sleep mode upstairs.
+              - service: script.set_thermostat_preset
+                data:
+                  thermostat_entity: climate.upstairs
+                  preset: 'Sleep'
+
+              # Mute master bedroom echo device.
+              - service: script.turn_on
+                entity_id: script.mute_master_bedroom_echo
+                
+              # Close the upstairs guest bedroom vents.
+              - service: script.close_upstairs_br_vents
+                
+              # Turn on the master bath light as a night light, after a delay.
+              - delay: '00:20:00'
+              - service: light.turn_on
+                entity_id: light.master_bath_light
+                  
+              # Disable the motion sensor automation, so the light remains on all night.
+              - service: automation.turn_off
+                entity_id: automation.run_master_bath_motion_based_light
+          
+          # Adults only, downstairs.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'AdultDown'
+            
+            sequence:
+                    
+              # Turn off upstairs bedroom lights and downstairs night lights (except the hallway light, which is part of the downstairs suite).
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'off'
+                    light.upstairs_guest_suite_lights:   'off'
+              
+              # Set up all the bedtime devices.
+              - service: script.set_up_bedroom_devices
+                data:
+                  bedrooms: 'downstairs'
+
+              # Enter sleep mode upstairs.
+              - service: script.set_thermostat_preset
+                data:
+                  thermostat_entity: climate.upstairs
+                  preset: 'Sleep'
+          
+          # Adults only, upstairs.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'AdultUp'
+            
+            sequence:
+                    
+              # Turn off downstairs bedroom lights and night lights.
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'off'
+                    light.downstairs_guest_suite_lights: 'off'
+              
+              # Set up all the bedtime devices.
+              - service: script.set_up_bedroom_devices
+                data:
+                  bedrooms: 'upstairs'
+          
+          # Adults only, both.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'Both'
+            
+            sequence:
+                    
+              # Turn off downstairs night lights (except the hallway light, which is part of the downstairs suite).
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'off'
+              
+              # Set up all the bedtime devices.
+              - service: script.set_up_bedroom_devices
+                data:
+                  bedrooms: 'both'
+          
+          # Child downstairs, adults upstairs.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'ChildDownPlus'
+            
+            sequence:
+                    
+              # Turn off downstairs bedroom lights and turn on night lights.
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'on'
+                    light.hallway_lamp:                  'on'
+                    light.guest_bedroom_lamp:            'off'
+                    light.guest_bedroom_lamp_2:          'off'
+              
+              # Set up all the bedtime devices.
+              - service: script.set_up_bedroom_devices
+                data:
+                  bedrooms: 'both'
+          
+          # Child upstairs, adults downstairs.
+          - conditions:
+            - condition: state
+              entity_id: input_select.occupied_bedrooms
+              state: 'ChildUpPlus'
+            
+            sequence:
+                    
+              # Turn off upstairs bedroom lights and turn on night lights.
+              - service: scene.apply
+                data:
+                  entities:
+                    light.family_room_lamp:              'off'
+                    light.upstairs_bath_vanity_light:    'on'
+                    light.upstairs_bedroom_light:        'off'
+                    light.upstairs_bedroom_outlet:       'off'
+              
+              # Set up all the bedtime devices.
+              - service: script.set_up_bedroom_devices
+                data:
+                  bedrooms: 'both'
+
+# Set up the various devices required for bedtime:
+#
+# - set thermostat settings for guest comfort
+# - mute appropriate echo devices
+# - open or close the upstairs bedroom vents
+# - turn off the vacuum automation if needed, so as to not frighten upstairs guests
+set_up_bedroom_devices:
+  alias: Set Up Bedroom Devices
+  
+  fields:
+    bedrooms:
+      description: 'Which bedroom(s) are occupied. We use a short form of the Occupied Bedrooms select for brevity.'
+      selector:
+        select:
+          options:
+            - 'downstairs'
+            - 'upstairs'
+            - 'both'
+  
+  sequence:
+  
     - choose:
       
-      # Adults home (with or without children).
-      - conditions:
-        - condition: state
-          entity_id: input_boolean.adults_home
-          state: 'on'
-        
-        sequence:
-          
-          # Turn off all but bedroom lights.
-          - scene: scene.adult_bedtime_lights_out
-          
-          # Determine which bedrooms are occupied.
-          - choose:
-            
-            # Downstairs only
-            - conditions:
-              - condition: state
-                entity_id: input_select.occupied_bedrooms
-                state: 'Downstairs'
-              
-              sequence:
-                
-                # Turn off upstairs bedroom lights.
-                - service: light.turn_off
-                  entity_id: light.upstairs_guest_suite_lights
-    
-                # Set a temporary temperature hold downstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.downstairs
-                    heat_temp: !secret constant_downstairs_home_heat_temp
-                    cool_temp: !secret constant_downstairs_home_cool_temp
-    
-                # Enter sleep mode upstairs.
-                - service: script.set_thermostat_preset
-                  data:
-                    thermostat_entity: climate.upstairs
-                    preset: 'Sleep'
-    
-                # Mute downstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_guest_bedroom_echo
-                
-                # Close the upstairs guest bedroom vents.
-                - service: script.close_upstairs_br_vents
-            
-            # Upstairs only
-            - conditions:
-              - condition: state
-                entity_id: input_select.occupied_bedrooms
-                state: 'Upstairs'
-              
-              sequence:
-                
-                # Turn off downstairs bedroom lights.
-                - service: light.turn_off
-                  entity_id: light.downstairs_guest_suite_lights
-    
-                # Enter sleep mode downstairs.
-                - service: script.set_thermostat_preset
-                  data:
-                    thermostat_entity: climate.downstairs
-                    preset: 'Sleep'
-    
-                # Set a temporary temperature hold upstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.upstairs
-                    heat_temp: "{{ state_attr('climate.upstairs', 'target_temp_low') }}"
-                    cool_temp: "{{ state_attr('climate.upstairs', 'target_temp_high') }}"
-    
-                # Mute upstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_upstairs_bedroom_echo
-                
-                # Open the upstairs guest bedroom vents.
-                - service: script.open_upstairs_br_vents
-                
-                # Turn off the vacuum automation.
-                - service: automation.turn_off
-                  entity_id: automation.start_vacuum
-            
-            # Both occupied
-            - conditions:
-              - condition: state
-                entity_id: input_select.occupied_bedrooms
-                state: 'Both'
-              
-              sequence:
-    
-                # Set a temporary temperature hold downstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.downstairs
-                    heat_temp: !secret constant_downstairs_home_heat_temp
-                    cool_temp: !secret constant_downstairs_home_cool_temp
-    
-                # Set a temporary temperature hold upstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.upstairs
-                    heat_temp: "{{ state_attr('climate.upstairs', 'target_temp_low') }}"
-                    cool_temp: "{{ state_attr('climate.upstairs', 'target_temp_high') }}"
-    
-                # Mute downstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_guest_bedroom_echo
-    
-                # Mute upstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_upstairs_bedroom_echo
-                
-                # Open the upstairs guest bedroom vents.
-                - service: script.open_upstairs_br_vents
-                
-                # Turn off the vacuum automation.
-                - service: automation.turn_off
-                  entity_id: automation.start_vacuum
-            
-            # Should not occur.
-            default:
-              
-              - service: system_log.write
-                data:
-                  message: "Occupied bedrooms invalid value ({{ states('input_select.occupied_bedrooms') }})"
-                  level: error
+      # Downstairs bedroom occupied.
+      - conditions: "{{ bedrooms == downstairs }}"
       
-      # Children home (without adults).
-      - conditions: "{{ is_state('input_boolean.adults_home', 'off') and is_state('input_boolean.children_home', 'on') }}"
-        
         sequence:
-          
-          # Turn off all but night lights.
-          - scene: scene.child_bedtime_lights_out
-          
-          # Determine which bedrooms are occupied.
-          - choose:
+    
+          # Set a temporary temperature hold downstairs.
+          - service: script.set_temporary_thermostat_hold
+            data:
+              thermostat_entity: climate.downstairs
+              heat_temp: !secret constant_downstairs_home_heat_temp
+              cool_temp: !secret constant_downstairs_home_cool_temp
+
+          # Mute downstairs guest bedroom echo device.
+          - service: script.turn_on
+            entity_id: script.mute_guest_bedroom_echo
             
-            # Master
-            - conditions:
-              - condition: state
-                entity_id: input_select.occupied_bedrooms
-                state: 'Master'
-              
-              sequence:
-                
-                # Turn off all normal night lights (we turn on the master bath light later as a night light).
-                - service: scene.apply
-                  data:
-                    entities:
-                      light.hallway_lamp:               'off'
-                      light.family_room_lamp:           'off'
-                      light.upstairs_bath_vanity_light: 'off'
-    
-                # Set a temporary temperature hold downstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.downstairs
-                    heat_temp: !secret constant_downstairs_home_heat_temp
-                    cool_temp: !secret constant_downstairs_home_cool_temp
-    
-                # Enter sleep mode upstairs.
-                - service: script.set_thermostat_preset
-                  data:
-                    thermostat_entity: climate.upstairs
-                    preset: 'Sleep'
-    
-                # Mute master bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_master_bedroom_echo
-                
-                # Close the upstairs guest bedroom vents.
-                - service: script.close_upstairs_br_vents
-                
-                # Turn on the master bath light as a night light, after a delay.
-                - delay: '00:20:00'
-                - service: light.turn_on
-                  entity_id: light.master_bath_light
-                  
-                # Disable the motion sensor automation, so the light remains on all night.
-                - service: automation.turn_off
-                  entity_id: automation.run_master_bath_motion_based_light
-                  
-            
-            # Downstairs only
-            - conditions:
-              - condition: state
-                entity_id: input_select.occupied_bedrooms
-                state: 'Downstairs'
-              
-              sequence:
-                
-                # Turn off upstairs night lights, and turn on downstairs night lights.
-                - service: scene.apply
-                  data:
-                    entities:
-                      light.hallway_lamp:               'on'
-                      light.family_room_lamp:           'on'
-                      light.upstairs_bath_vanity_light: 'off'
-    
-                # Set a temporary temperature hold downstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.downstairs
-                    heat_temp: !secret constant_downstairs_home_heat_temp
-                    cool_temp: !secret constant_downstairs_home_cool_temp
-    
-                # Enter sleep mode upstairs.
-                - service: script.set_thermostat_preset
-                  data:
-                    thermostat_entity: climate.upstairs
-                    preset: 'Sleep'
-    
-                # Mute downstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_guest_bedroom_echo
-                
-                # Close the upstairs guest bedroom vents.
-                - service: script.close_upstairs_br_vents
-            
-            # Upstairs only
-            - conditions:
-              - condition: state
-                entity_id: input_select.occupied_bedrooms
-                state: 'Upstairs'
-              
-              sequence:
-                
-                # Turn off downstairs night lights, and turn on upstairs night lights.
-                - service: scene.apply
-                  data:
-                    entities:
-                      light.hallway_lamp:               'off'
-                      light.family_room_lamp:           'off'
-                      light.upstairs_bath_vanity_light: 'on'
-    
-                # Enter sleep mode downstairs.
-                - service: script.set_thermostat_preset
-                  data:
-                    thermostat_entity: climate.downstairs
-                    preset: 'Sleep'
-    
-                # Set a temporary temperature hold upstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.upstairs
-                    heat_temp: !secret constant_upstairs_home_heat_temp
-                    cool_temp: !secret constant_upstairs_home_cool_temp
-    
-                # Mute upstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_upstairs_bedroom_echo
-                
-                # Open the upstairs guest bedroom vents.
-                - service: script.open_upstairs_br_vents
-                
-                # Turn off the vacuum automation.
-                - service: automation.turn_off
-                  entity_id: automation.start_vacuum
-            
-            # Both occupied
-            - conditions:
-              - condition: state
-                entity_id: input_select.occupied_bedrooms
-                state: 'Both'
-              
-              sequence:
-                
-                # Turn on all night lights.
-                - service: scene.apply
-                  data:
-                    entities:
-                      light.hallway_lamp:               'on'
-                      light.family_room_lamp:           'on'
-                      light.upstairs_bath_vanity_light: 'on'
-    
-                # Set a temporary temperature hold downstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.downstairs
-                    heat_temp: !secret constant_downstairs_home_heat_temp
-                    cool_temp: !secret constant_downstairs_home_cool_temp
-    
-                # Set a temporary temperature hold upstairs.
-                - service: script.set_temporary_thermostat_hold
-                  data:
-                    thermostat_entity: climate.upstairs
-                    heat_temp: !secret constant_upstairs_home_heat_temp
-                    cool_temp: !secret constant_upstairs_home_cool_temp
-    
-                # Mute downstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_guest_bedroom_echo
-    
-                # Mute upstairs guest bedroom echo device.
-                - service: script.turn_on
-                  entity_id: script.mute_upstairs_bedroom_echo
-                
-                # Open the upstairs guest bedroom vents.
-                - service: script.open_upstairs_br_vents
-                
-                # Turn off the vacuum automation.
-                - service: automation.turn_off
-                  entity_id: automation.start_vacuum
-            
-            # Should not occur.
-            default:
-              
-              - service: system_log.write
-                data:
-                  message: "Occupied bedrooms invalid value ({{ states('input_select.occupied_bedrooms') }})"
-                  level: error
+          # Close the upstairs guest bedroom vents.
+          - service: script.close_upstairs_br_vents
       
-      # Just me home: turn off everything except the master bedroom lamp.
-      default:
+      # Upstairs bedroom occupied. We don't change the upstairs thermostat, vents or vacuum here. 
+      # That's done once when family members arrive.
+      - conditions: "{{ bedrooms == upstairs }}"
+      
+        sequence:
+
+          # Mute upstairs guest bedroom echo device.
+          - service: script.turn_on
+            entity_id: script.mute_upstairs_bedroom_echo
         
-        - scene: scene.non_master_lights_out
+      # Both bedrooms occupied. We don't change the upstairs thermostat, vents or vacuum here. 
+      # That's done once when family members arrive.
+      - conditions: "{{ bedrooms == both }}"
+      
+        sequence:
+    
+          # Set a temporary temperature hold downstairs.
+          - service: script.set_temporary_thermostat_hold
+            data:
+              thermostat_entity: climate.downstairs
+              heat_temp: !secret constant_downstairs_home_heat_temp
+              cool_temp: !secret constant_downstairs_home_cool_temp
+
+          # Mute downstairs guest bedroom echo device.
+          - service: script.turn_on
+            entity_id: script.mute_guest_bedroom_echo
+
+          # Mute upstairs guest bedroom echo device.
+          - service: script.turn_on
+            entity_id: script.mute_upstairs_bedroom_echo
 
 # Reset the bedtime environment in the morning. This is called by an automation that triggers on the nighttime flag turning off.
 reset_bedtime_environment:
@@ -593,35 +569,28 @@ reset_bedtime_environment:
     
     # Note that the bedroom echo devices automatically unmute at 9 AM.
     
-    # Turn off the upstairs night light if it's light enough. The downstairs night lights (aka daytime lights) are turned off by an automation.
+    # Turn off the upstairs night light if we turned it on at bedtime, and it's light enough.
+    # The downstairs night lights (aka daytime lights) are turned off by an automation.
     # Note that if it's still dark, we don't check this light again anywhere. Oh well.
-    - service: script.change_lighting_per_weather_simple
-      data:
-        light_entity: light.upstairs_bath_vanity_light
-        turn_on: false  
+    - if:
+        - "{{ states('input_select.occupied_bedrooms') in ['ChildUp', 'ChildUpPlus'] }}"
+      
+      then:    
+        - service: script.change_lighting_per_weather_simple
+          data:
+            light_entity: light.upstairs_bath_vanity_light
+            turn_on: false  
   
     # Turn on all automations that were turned off.
     - service: automation.turn_on
-      entity_id: 
-        - automation.start_vacuum
+      entity_id:
         - automation.run_master_bath_motion_based_light
     
-    # Remove thermostat holds.
+    # Remove downstairs thermostat hold.
     - service: script.remove_thermostat_hold
       data:
         thermostat_entity: climate.downstairs
         extended: false
-    
-    - service: script.remove_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        extended: false
-    
-    # Close the upstairs guest bedroom vents if the room is unoccupied. If it is occupied the vents will be closed by an automation
-    # when family members leave.
-    - condition: "{{ not is_state('input_select.occupied_bedrooms', 'Upstairs') and not is_state('input_select.occupied_bedrooms', 'Both') }}"
-    
-    - service: script.close_upstairs_br_vents
 
 #================================================#
 #     Modify Lighting Per Weather Conditions     #
@@ -742,7 +711,10 @@ change_lighting_per_weather_simple:
     - service: script.evaluate_weather_condition  
         
     - variables:
-        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
+        
+        # Note that we're using the effective sun sensor, which allows us to do testing using the
+        # testing infrastructure. If we're not testing the sensor reflects the real sun.
+        sun_elevation: "{{ state_attr('sensor.effective_sun', 'elevation') }}"
         min_elevation: "{{ states('input_number.min_elevation') }}"
         med_elevation: "{{ states('input_number.min_elevation') }}"
         max_elevation: "{{ states('input_number.max_elevation') }}"
@@ -1025,3 +997,25 @@ start_bath_time:
       data:
         entity_id: timer.bath_time
         duration: '00:45:00'
+
+#==============================#
+#     Lighting Convenience     #
+#==============================#
+
+# Used mostly via Alexa.
+
+turn_on_light:
+  alias: Turn On Light
+  
+  use_blueprint:
+    path: lighting/light_operation.yaml
+    input:
+      operation: true
+
+turn_off_light:
+  alias: Turn Off Light
+  
+  use_blueprint:
+    path: lighting/light_operation.yaml
+    input:
+      operation: false

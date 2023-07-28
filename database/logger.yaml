@@ -18,7 +18,6 @@ logs:
   homeassistant.components.automation.disable_nighttime_sleeptime_modes:      warning
   homeassistant.components.automation.enable_nighttime_mode:                  warning
   homeassistant.components.automation.enable_sleeptime_mode:                  warning
-  homeassistant.components.automation.handle_shield_application_change:       warning
   homeassistant.components.automation.initialize_amazon_prime_volume:         warning
   homeassistant.components.automation.initialize_bluray_volume:               warning
   homeassistant.components.automation.initialize_disney_plus_volume:          warning
@@ -32,19 +31,27 @@ logs:
   homeassistant.components.automation.initialize_turn_on_volume:              warning
   homeassistant.components.automation.initialize_youtube_tv_volume:           warning
   homeassistant.components.automation.log_automations:                        warning
-  homeassistant.components.automation.log_dryer_trend_sensors:                warning
+  homeassistant.components.automation.log_blue_charm_presence:                warning
+  homeassistant.components.automation.log_garage_distance:                    warning
+  homeassistant.components.automation.log_house_distance:                     warning
   homeassistant.components.automation.log_scripts:                            warning
+  homeassistant.components.automation.notify_weekly_cleaning:                 warning
+  homeassistant.components.automation.notify_zigbee_device_unavailable:       warning
   homeassistant.components.automation.open_upstairs_bedroom_vents:            warning
   homeassistant.components.automation.operate_family_room_fan:                warning
+  homeassistant.components.automation.operate_office_fan:                     warning
   homeassistant.components.automation.operate_theater_fan:                    warning
   homeassistant.components.automation.perform_daily_chores:                   warning
   homeassistant.components.automation.process_kodi_video_results:             warning
+  homeassistant.components.automation.publish_mqtt_automated_states:          warning
   homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
+  homeassistant.components.automation.reset_virtual_variables:                warning
   homeassistant.components.automation.restore_movie_list_on_start:            warning
   homeassistant.components.automation.resume_cinema:                          warning
   homeassistant.components.automation.run_guest_bath_motion_based_light:      warning
   homeassistant.components.automation.run_laundry_room_motion_based_light:    warning
   homeassistant.components.automation.run_master_bath_motion_based_light:     warning
+  homeassistant.components.automation.save_notifications_on_create:           warning
   homeassistant.components.automation.set_maximum_attic_temperature:          warning
   homeassistant.components.automation.set_maximum_garage_temperature:         warning
   homeassistant.components.automation.set_maximum_outdoor_temperature:        warning
@@ -53,7 +60,9 @@ logs:
   homeassistant.components.automation.set_minimum_outdoor_temperature:        warning
   homeassistant.components.automation.set_up_mqtt_automated_config:           warning
   homeassistant.components.automation.set_washer_operation:                   warning
-  homeassistant.components.automation.toggle_adguard_for_paramount:           warning
+  homeassistant.components.automation.toggle_testing_mode:                    warning
+  homeassistant.components.automation.toggle_virtual_device_tracker:          warning
+  homeassistant.components.automation.turn_on_office_occupied:                warning
   homeassistant.components.automation.update_openuv:                          warning
   homeassistant.components.automation.washer_operation:                       warning
 
@@ -69,9 +78,12 @@ logs:
   homeassistant.components.script.control_fan_for_temperature:        warning
   homeassistant.components.script.evaluate_weather_condition:         warning
   homeassistant.components.script.log_laundry_event:                  warning
+  homeassistant.components.script.log_testing_simulation:             warning
   homeassistant.components.script.mobile_notification_worker:         warning
   homeassistant.components.script.open_upstairs_br_vents:             warning
   homeassistant.components.script.popup_light_group:                  warning
+  homeassistant.components.script.publish_mqtt_automated_states:      warning
+  homeassistant.components.script.reset_virtual_variables:            warning
   homeassistant.components.script.restore_lighting_on_resume:         warning
   homeassistant.components.script.resume_cinema:                      warning
   homeassistant.components.script.resume_worker:                      warning
@@ -88,9 +100,9 @@ logs:
   homeassistant.components.script.sleeptime:                          warning
   homeassistant.components.script.start_activity:                     warning
   homeassistant.components.script.start_rainbow:                      warning
-  homeassistant.components.script.turn_off_adguard:                   warning
-  homeassistant.components.script.turn_on_adguard:                    warning
+  homeassistant.components.script.turn_off_light:                     warning
   homeassistant.components.script.turn_on_bathroom_light:             warning
+  homeassistant.components.script.turn_on_light:                      warning
   homeassistant.components.script.watch_app:                          warning
 
   # HA misc components

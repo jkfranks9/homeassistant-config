@@ -1,0 +1,34 @@
+#=============================#
+#     Presence State Card     #
+#=============================#
+
+type: custom:stack-in-card
+title: Presence State
+mode: vertical
+cards:
+  
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+            
+            - type: 'custom:button-card'
+              template: sensor_button
+              entity: input_select.occupied_bedrooms
+              name: Occupied
+            
+            - type: 'custom:button-card'
+              template: sensor_button
+              entity: binary_sensor.adults_home
+              name: Adults
+            
+            - type: 'custom:button-card'
+              template: sensor_button
+              entity: binary_sensor.children_home
+              name: Children

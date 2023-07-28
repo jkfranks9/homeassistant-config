@@ -1,0 +1,151 @@
+#=======================================#
+#     Alexa Actionable Notification     #
+#=======================================#
+
+# This integrates with the Alexa custom skill AlexaActionableNotification. This skill allows us to have Alexa ask questions
+# and then process the response. There are 3 parts to this process:
+#
+# 1) An automation or script is used to call this script with the message to be announced and the echo device to use.
+#    More importantly, the event ID is provided, which is used in step 3.
+# 2) This script invokes the skill with the event ID. Alexa then asks a question and waits for a response. The skill then
+#    fires the alexa_actionable_notification event with the supplied event ID.
+# 3) An automation listens for the event and event ID and takes whatever action is desired.
+
+activate_alexa_actionable_notification:
+  alias: Activate Alexa Actionable Notification
+  
+  fields:
+    message:
+      name: Message
+      description: The content of the message that you want to be announced.
+      selector:
+        text:
+          type: text
+          multiline: false
+    
+    event_id:
+      name: Event ID
+      description: Correlation ID for event responses.
+      selector:
+        text:
+          type: text
+          multiline: false
+    
+    alexa_device:
+      name: Alexa Device
+      description: Alexa device you want to trigger.
+      selector:
+        entity:
+          filter:
+            - integration: alexa_media
+              domain: media_player
+    
+    suppress_confirmation:
+      name: Suppress Confirmation
+      description: Set true if you want to suppress 'okay' confirmation.
+      selector:
+        boolean:
+  
+  sequence:
+    
+    # The Alexa skill depends on the parameters being save in this input text.
+    - service: input_text.set_value
+      data_template:
+        entity_id: input_text.alexa_actionable_notification
+        value: '{"text": "{{ message }}", "event": "{{ event_id }}", "suppress_confirmation": "{{ suppress_confirmation }}"}'
+    
+    # Fire off the Alexa skill. Once the user has responded the skill will fire the appropriate event.
+    - service: media_player.play_media
+      data_template:
+        entity_id: "{{ alexa_device }}"
+        media_content_type: skill
+        media_content_id: amzn1.ask.skill.7d2664dc-8458-4ad9-ad3f-93c95c8dae57
+
+#======================#
+#     Ceiling Fans     #
+#======================#
+
+# When family members are here, I can't automatically determine who kicked off a request or what room they are in.
+# So we have a 2 step ask & response. 
+#
+# The first script asks for the room, and suppresses the "OK" response from Alexa, since we're not done. 
+#
+# The second script (called from the Handle Fan Room Response automation) then asks for the fan setting, 
+# using the room from the first script as input.
+ask_fan_room:
+  alias: Ask Fan Room
+  
+  sequence:
+    - service: script.activate_alexa_actionable_notification
+      data:
+        message: "Which room are you in? Family room, office or theater?"
+        event_id: actionable_notification_fan_room_choice
+        alexa_device: "{{ ['media_player.family_room_echo', 'media_player.office_echo', 'media_player.theater_echo'] }}"
+        suppress_confirmation: true
+
+ask_fan_setting_family:
+  alias: Ask Fan Setting Family
+  
+  fields:
+    room:
+      description: The room in which the fan lives.
+  
+  sequence:
+    - service: script.activate_alexa_actionable_notification
+      data:
+        message: "What setting should I use for the {{ room }} fan"
+        event_id: actionable_notification_fan_setting_choice
+        alexa_device: "{{ 'media_player.' ~ room ~ '_echo' }}"
+        suppress_confirmation: false
+
+# When I'm home alone I determine the room automatically:
+#
+# - for the office I use the human presence detector
+# - for the theater I use the theater AV system in use (I'm not going to be in that room otherwise)
+# - for the family room, I assume it's the default if neither of the above, since I won't kick off the process
+#   from a room without a fan
+ask_fan_setting_home_alone:
+  alias: Ask Fan Setting Home Alone
+  
+  sequence:
+    - variables:
+        rooms_with_fans: ['family room', 'office', 'theater']
+        
+        rooms_string: >
+          {% set result = namespace(string = '') %}
+          {% for room in rooms_with_fans %}
+            {% if loop.first %}
+              {% set result.string = result.string ~ room %}
+            {% elif loop.last %}
+              {% set result.string = result.string ~ ' or ' ~ room %}
+            {% else %}
+              {% set result.string = result.string ~ ', ' ~ room %}
+            {% endif %}
+          {% endfor %}
+          {{ result.string }}
+        
+        room: >
+          {% if is_state('binary_sensor.office_human_sensor_presence', 'on') %}
+            {{ rooms_with_fans[1] }}
+          {% elif is_state('binary_sensor.theater_av_system', 'on') %}
+            {{ rooms_with_fans[2] }}
+          {% else %}
+            {{ rooms_with_fans[0] }}
+          {% endif %}
+        
+        room_underscore: "{{ room | replace(' ', '_') }}"
+    
+    # Save the room so we can target the right echo device when we get the fan setting response.
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.alexa_fan_room
+      data:
+        value: "{{ room_underscore }}"
+    
+    # Ask for the fan setting.
+    - service: script.activate_alexa_actionable_notification
+      data:
+        message: "What setting should I use for the {{ room }} fan?"
+        event_id: actionable_notification_fan_setting_choice
+        alexa_device: "{{ 'media_player.' ~ room_underscore ~ '_echo' }}"
+        suppress_confirmation: false

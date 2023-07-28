@@ -58,7 +58,7 @@ condition:
 action:
   - service: system_log.write
     data:
-      message: "{{ input_person_name }} will be arriving soon"
+      message: "{{ input_person_name }} will be arriving soon (from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }})"
       level: info
     
   - service: script.send_notification

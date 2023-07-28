@@ -1,0 +1,119 @@
+#=======================================#
+#     Alexa Actionable Notification     #
+#=======================================#
+
+# This integrates with the Alexa custom skill AlexaActionableNotification. This skill allows us to have Alexa ask questions
+# and then process the response. There are 3 parts to this process:
+#
+# 1) An automation or script is used to call the Activate Alexa Actionable Notification script with the message to be announced 
+#    and the echo device to use. More importantly, the event ID is provided, which is used in step 3.
+# 2) The Activate Alexa Actionable Notification script invokes the skill with the event ID. Alexa then asks a question and waits for a response. 
+#    The skill then fires the alexa_actionable_notification event with the supplied event ID.
+# 3) Automations in this file listen for the event and event ID and take whatever action is desired.
+
+#======================#
+#     Ceiling Fans     #
+#======================#
+
+- alias: Handle Fan Room Response
+  id: handle_fan_room_response
+  
+  trigger:
+    - platform: event
+      event_type: alexa_actionable_notification
+      event_data:
+        event_id: actionable_notification_fan_room_choice
+        event_response_type: ResponseString
+  
+  action:
+    - variables:
+        rooms_with_fans: ['family room', 'office', 'theater']
+        response_room: "{{ trigger.event.data.event_response }}"
+        response_room_underscore: "{{ trigger.event.data.event_response | replace(' ', '_') }}"
+    
+    # Check for a valid response.
+    - if:
+        - "{{ response_room in rooms_with_fans }}"
+      
+      then:
+        
+        # Save the room so we can target the right echo device when we get the fan setting response.
+        - service: input_text.set_value
+          target:
+            entity_id: input_text.alexa_fan_room
+          data:
+            value: "{{ response_room_underscore }}"
+        
+        # Ask for the fan setting.
+        - service: script.ask_fan_setting_family
+          data:
+            room: "{{ response_room_underscore }}"
+      
+      # Issue instructions to the clueless user.
+      else:
+        - service: script.send_notification
+          data:
+            destination:
+              - echo
+            message: "{{ response_room }} is not valid. You must pick one of {{ (rooms_with_fans) | join(', ') }}"
+            media_player_entity: "{{ ['media_player.family_room_echo', 'media_player.office_echo', 'media_player.theater_echo'] }}"
+
+- alias: Handle Fan Setting Response
+  id: handle_fan_setting_response
+  
+  trigger:
+    - platform: event
+      event_type: alexa_actionable_notification
+      event_data:
+        event_id: actionable_notification_fan_setting_choice
+        event_response_type: ResponseString
+  
+  action:
+    - variables:
+        
+        # We use several sets of possible settings. Turns out 'off' can't be used (tells Alexa to quit),
+        # nor can 'low' (adjusts echo volume). Also, numbers ('one', 'two') do nothing. Sigh.
+        # So here are some options. I divided them into sets so I can have a single array of speeds.
+        fan_settings_1: ['none', 'gentle', 'moderate', 'severe']
+        fan_settings_2: ['still', 'breezy', 'windy', 'stormy']
+        fan_settings_3: ['0', '1', '2', '3']
+        fan_settings: "{{ fan_settings_1 + fan_settings_2 + fan_settings_3 }}"
+        
+        fan_speeds: ['0', '33', '66', '99']
+        response_setting: "{{ trigger.event.data.event_response }}"
+        room: "{{ states('input_text.alexa_fan_room') }}"
+    
+    # Check for a valid response.
+    - if:
+        - "{{ response_setting in fan_settings }}"
+      
+      # All is well, set the fan!
+      then:
+      
+        # Turn off the Operate <name> Fan automation to stop the automatic speed control.
+        - service: automation.turn_off
+          data:
+            entity_id: "{{ 'automation.operate_' ~ room ~ '_fan' }}"
+        
+        - service: script.set_fan_to_speed
+          data:
+            entity_id: "{{ 'fan.' ~ states('input_text.alexa_fan_room') ~ '_fan' }}"
+            speed: >
+              {% if response_setting in fan_settings_1 %}
+                {% set index = fan_settings_1.index(response_setting) %}
+              {% elif response_setting in fan_settings_2 %}
+                {% set index = fan_settings_2.index(response_setting) %}
+              {% elif response_setting in fan_settings_3 %}
+                {% set index = fan_settings_3.index(response_setting) %}
+              {% endif %}
+              
+              {{ fan_speeds[index] }}
+      
+      # Issue instructions to the clueless user.
+      else:
+        - service: script.send_notification
+          data:
+            destination:
+              - echo
+            message: "{{ response_setting }} is not valid. You must pick one of {{ (fan_settings) | join(', ') }}"
+            media_player_entity: "{{ 'media_player.' ~ states('input_text.alexa_fan_room') ~ '_echo' }}"

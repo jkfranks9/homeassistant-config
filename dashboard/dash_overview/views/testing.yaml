@@ -1,0 +1,19 @@
+#=====================#
+#     Testing Tab     #
+#=====================#
+
+title: Testing
+icon: mdi:clipboard-text
+panel: true
+visible:
+  - user: f02fbce66df546fa90f8f3d03283b55e
+
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/testing/controls.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/testing/presence.yaml
+      - !include /config/dashboard/dash_overview/cards/testing/presence_state.yaml
+      - !include /config/dashboard/dash_overview/cards/testing/lighting_state.yaml

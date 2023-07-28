@@ -20,18 +20,42 @@ next_event:
           service: '[[service]]'
           service_data:
             entity: '[[entity]]'
-            interval: '[[interval]]'
+            base_entity: '[[base_entity]]'
+            amount: '[[interval]]'
     
     style: |
-      {% if states.input_datetime | count > 0 %}
-        {%- set ts_event = as_timestamp(states.[[entity]].state, default=0) %}
-        {%- set ts_now = as_timestamp(now())|round(0) %}
-        {%- set ts_delta = (ts_now - ts_event) %}
-      {% else %}
-        {% set ts_delta = (-86400) %}
-      {% endif %}
+      {%- set ts_event = as_timestamp(states.[[entity]].state, default=0) %}
+      {%- set ts_now = as_timestamp(now()) | round(0) %}
+      {%- set ts_delta = (ts_now - ts_event) %}
       ha-card {
         color: {% if (ts_delta >= 0) %}red {% elif ts_delta > (-86400) %}yellow {% else %}var(--primary-text-color) {% endif %};
+      }
+
+next_event_numeric:
+  default:
+    - amount: ''
+    - base_entity: ''
+  card:
+    type: entities
+    entities:
+      - type: 'custom:multiple-entity-row'
+        entity: '[[entity]]'
+        format: precision0
+        icon: 'mdi:[[icon]]'
+        name: '[[name]]'
+        secondary_info: '[[interval]] [[period]] [[amount]]'
+        hold_action:
+          action: call-service
+          service: '[[service]]'
+          service_data:
+            entity: '[[entity]]'
+            base_entity: '[[base_entity]]'
+            amount: '[[interval]]'
+    
+    style: |
+      {%- set ts_delta = (states.[[entity]].state | int - states.[[base_entity]].state | int) %}
+      ha-card {
+        color: {% if (ts_delta <= 0) %}red {% elif ts_delta < ([[interval]] * 7.5/100) %}yellow {% else %}var(--primary-text-color) {% endif %};
       }
 
 #==================#

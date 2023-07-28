@@ -4,16 +4,32 @@
 
 type: custom:stack-in-card
 title: Other
+mode: vertical
 
 cards:
-  - type: entities
-    show_header_toggle: false
-    entities:
-      - entity: input_boolean.christmas_mode
-        icon: mdi:pine-tree
-      
-      - entity: input_boolean.hockey_season
-        icon: mdi:hockey-sticks
-      
-      - entity: input_select.occupied_bedrooms
-        name: Beds
+
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+
+            - type: custom:button-card
+              template: toggle_button
+              entity: input_boolean.washer_fabric_softener
+              name: Softener
+
+            - type: custom:button-card
+              template: toggle_button
+              entity: input_boolean.christmas_mode
+              name: Christmas
+
+            - type: custom:button-card
+              template: toggle_button
+              entity: input_boolean.hockey_season
+              name: Hockey

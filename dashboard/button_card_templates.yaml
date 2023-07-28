@@ -18,6 +18,21 @@ container:
         - margin: 0
         - padding: 0.15em
 
+#===========================#
+#     Blank Button Card     #
+#===========================#
+
+blank_button:
+  show_icon: false
+  show_name: false
+  show_state: false
+  tap_action:
+    action: 'none'
+  
+  styles:
+    card:
+      - border-width: 0px
+
 #=========================#
 #     Delivery Button     #
 #=========================#
@@ -46,6 +61,26 @@ toggle_button:
   tap_action:
     action: toggle
 
+#======================#
+#     Input Button     #
+#======================#
+
+input_button:
+  template: very_basic_button
+  
+  tap_action:
+    action: more-info
+  
+  state:
+    - value: 0
+      color: var(--paper-item-icon-color)
+    
+    - value: 'none'
+      color: var(--paper-item-icon-color)
+    
+    - operator: default
+      color: var(--paper-item-icon-active-color)
+
 #=======================#
 #     Sensor Button     #
 #=======================#
@@ -55,6 +90,19 @@ sensor_button:
   
   tap_action:
     action: none
+  
+  state:
+    - value: 'None'
+      color: var(--paper-item-icon-color)
+    
+    - value: 'off'
+      color: var(--paper-item-icon-color)
+    
+    - value: 0
+      color: var(--paper-item-icon-color)
+    
+    - operator: default
+      color: var(--paper-item-icon-active-color)
 
 #=======================#
 #     Person Button     #
@@ -83,6 +131,31 @@ person_button:
     
     - operator: default
       color: var(--accent-color)
+
+#===============================#
+#     Virtual Person Button     #
+#===============================#
+
+virtual_person_button:
+  template: very_basic_button
+  
+  state_display: |
+    [[[
+      if (entity.state == 'on')
+        return 'Home';
+      else
+        return 'Away';
+    ]]]
+  
+  tap_action:
+    action: more-info
+  
+  state:
+    - value: 'not_home'
+      color: var(--paper-item-icon-color)
+    
+    - value: 'home'
+      color: var(--paper-item-icon-active-color)
 
 #=======================#
 #     Beacon Button     #
@@ -191,7 +264,6 @@ light_group_button:
       service: script.popup_light_group
       data:
         browser_id: THIS
-        title: '[[[ return variables.entities_title ]]]'
         light_group: '[[[ return variables.entities_group ]]]'
   
   state:
@@ -208,7 +280,13 @@ light_group_button:
 motion_button:
   template: very_basic_button
   
-  show_state: false
+  state_display: |
+    [[[
+      if (entity.state == 'on')
+        return 'On';
+      else if (entity.state == 'off')
+        return 'Off';
+    ]]]
   
   tap_action:
     action: 'none'

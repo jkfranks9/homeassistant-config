@@ -31,6 +31,8 @@ cards:
   
   - type: conditional
     conditions:
+      - entity: media_player.shield_tv
+        state_not: 'off'
       - entity: media_player.kodi
         state_not: 'off'
     card:  

@@ -17,7 +17,6 @@ frontend:
 
 alexa:          !include database/alexa.yaml
 automation:     !include_dir_merge_list automation
-binary_sensor:  !include binary_sensor.yaml
 cover:          !include covers.yaml
 group:          !include_dir_merge_named group
 influxdb:       !include database/influxdb.yaml
@@ -126,6 +125,40 @@ mqtt:
       icon: hass:chart-line
       state_topic: "homeassistant/sensor/dbsize"
       value_template: "{{ (value.split('\t')[0]|int(0)/1000)|round(3) }}"
+  
+  device_tracker:
+    
+    # Manual device tracker for the Blue Charm beacon.
+    - name: Blue Charm Beacon
+      state_topic: "homeassistant/device_tracker/bluecharm_beacon"
+      payload_home: "home"
+      payload_not_home: "not_home"
+    
+    # Test device trackers, so I can simulate various family members arriving and leaving.
+    - name: Virtual David
+      state_topic: "homeassistant/device_tracker/virtual_david"
+      payload_home: "home"
+      payload_not_home: "not_home"
+
+    - name: Virtual Maryam
+      state_topic: "homeassistant/device_tracker/virtual_maryam"
+      payload_home: "home"
+      payload_not_home: "not_home"
+
+    - name: Virtual Mike
+      state_topic: "homeassistant/device_tracker/virtual_mike"
+      payload_home: "home"
+      payload_not_home: "not_home"
+
+    - name: Virtual Sarah
+      state_topic: "homeassistant/device_tracker/virtual_sarah"
+      payload_home: "home"
+      payload_not_home: "not_home"
+
+    - name: Virtual Skylar
+      state_topic: "homeassistant/device_tracker/virtual_skylar"
+      payload_home: "home"
+      payload_not_home: "not_home"
 
 #==========================#
 #     Computer Control     #
@@ -201,6 +234,10 @@ notify:
   - name: laundry_events
     platform: file
     filename: debug_logs/laundry_events.log
+  
+  - name: testing_scenarios
+    platform: file
+    filename: debug_logs/testing_scenarios.log
 
   - name: gmail
     platform: smtp
@@ -229,6 +266,7 @@ shell_command:
   backup_auto_log:                'python /config/python/backup_logs.py /config/debug_logs/triggered_automations.log'
   backup_laundry_log:             'python /config/python/backup_logs.py /config/debug_logs/laundry_events.log'
   backup_scripts_log:             'python /config/python/backup_logs.py /config/debug_logs/triggered_scripts.log'
+  backup_testing_log:             'python /config/python/backup_logs.py /config/debug_logs/testing_scenarios.log'
   concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
   concat_auto_log_files:          'python /config/python/concat_logs.py /config/debug_logs/triggered_automations'
   concat_scripts_log_files:       'python /config/python/concat_logs.py /config/debug_logs/triggered_scripts'

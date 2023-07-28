@@ -1,6 +1,5 @@
 # Initialize the receiver volume based on the Harmony device in use.
-# The device name and normal volume are inputs. If a grandchild is home, the 
-# volume level is reduced by a small amount.
+# The device name and volume are inputs.
 
 blueprint:
   name: Harmony Device Volume Initializer
@@ -39,10 +38,4 @@ action:
   - service: media_player.volume_set
     data:
       entity_id: media_player.marantz_sr7012
-      volume_level: >
-        {% set soft_volume = (input_volume | float(0) - 0.05) | round(2) %}
-        {% if is_state('input_boolean.children_home', 'on') %}
-          {{ soft_volume | float(0) }}
-        {% else %}
-          {{ input_volume | float(0) }}
-        {% endif %}
+      volume_level: "{{ input_volume | float(0) }}"

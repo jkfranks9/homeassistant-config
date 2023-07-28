@@ -47,6 +47,26 @@
       unique_id: epson_lamp_hours
       state: "{{ state_attr('media_player.epson_projector', 'lamp_hours') }}"
 
+    #----------------------#
+    #   -- Last Alexa --   #
+    #----------------------#
+    
+    # The state of this sensor is the most recent Alexa device spoken to. Useful for room-awareness.
+    - name: Last Alexa
+      unique_id: last_alexa
+      state: >
+        {{ expand(integration_entities('alexa_media') | select('search', 'media_player'))
+         | selectattr('attributes.last_called', 'eq', True) | map(attribute = 'entity_id') | first }}
+
+    #-----------------------------#
+    #   -- Treadmill Service --   #
+    #-----------------------------#
+    
+    # Treadmill current hours ... we maintain the usage in minutes, but need hours for the reminder UI.
+    - name: Treadmill Current Hours
+      unique_id: treadmill_current_hours
+      state: "{{ (states('input_number.treadmill_usage_minutes') | int(0) / 60) | round }}"
+
     #---------------------------#
     #   -- Beacon Presence --   #
     #---------------------------#
@@ -119,6 +139,7 @@
           {% set device_list = [
                                 ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen', 'Back Door Sensor'],
                                 ['binary_sensor.guest_br_window_sensor_contact', 'sensor.guest_br_window_sensor_last_seen', 'Guest BR Window Sensor'],
+                                ['binary_sensor.dryer_vibration_sensor_vibration', 'sensor.dryer_vibration_sensor_last_seen', 'Dryer Vibration Sensor'],
                                 ['binary_sensor.guest_bath_motion_detector_occupancy', 'sensor.guest_bath_motion_detector_last_seen', 'Guest Bath Motion Detector'],
                                 ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen', 'Laundry Room Motion Detector'],
                                 ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen', 'Master Bath Motion Detector'],
@@ -159,6 +180,7 @@
           {% set device_list = [
                                 ['input_number.back_door_sensor', 'Back Door Sensor'],
                                 ['input_number.guest_br_window_sensor', 'Guest BR Window Sensor'],
+                                ['input_number.dryer_vibration_sensor', 'Dryer Vibration Sensor'],
                                 ['input_number.guest_bath_motion_detector', 'Guest Bath Motion Detector'],
                                 ['input_number.laundry_room_motion_detector', 'Laundry Room Motion Detector'],
                                 ['input_number.master_bath_motion_detector', 'Master Bath Motion Detector'],

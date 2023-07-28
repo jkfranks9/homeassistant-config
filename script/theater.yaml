@@ -7,6 +7,68 @@ open_cinema:
   alias: Open Cinema
   sequence:
     
+    # Ensure the cinema is not already open.
+    - if:
+        - "{{ states('input_boolean.theater_open') == 'on' }}"
+      
+      then:
+        - service: notify.alexa_media
+          data:
+            message: "Cinema is already open!!"
+            target: "{{ states('sensor.last_alexa') }}"
+            data:
+              type: tts
+        
+        - stop: "Cinema is already open."
+    
+    # Ensure the cinema has not been closed recently. I don't want to jerk the projector around.
+    - variables:
+        delta_time: >
+          {% set start = as_timestamp(strptime(states('input_datetime.cinema_usage_control'), '%Y-%m-%d %H:%M:%S')) %}
+          {% set seconds = (now().timestamp() - start) %}
+          {{ seconds }}
+    
+    - if:
+        - "{{ delta_time | float(0) < 600 }}"
+      
+      then:
+        - variables:
+            delay: "{{ (600 - delta_time) | round }}"
+        
+        # Bypass the message and timer start if the timer is already running. Someone is being a jerk.
+        - if:
+            - "{{ is_state('timer.cinema_usage_delay', 'idle') }}"
+          
+          then:
+        
+            - service: notify.alexa_media
+              data:
+                message: >
+                  {% set delay_minutes = (delay / 60) | round %}
+                  {% set delay_display =iif(delay_minutes >= 1, delay_minutes, 1) %}
+                  Cinema has been closed recently. Delaying cinema open for {{ delay_display }} {{ iif(delay_display == 1, 'minute', 'minutes') }}
+                target: "{{ states('sensor.last_alexa') }}"
+                data:
+                  type: tts
+        
+            - service: timer.start
+              data:
+                entity_id: timer.cinema_usage_delay
+                duration: "{{ delay }}"
+        
+        - stop: "Cinema has been closed recently."
+    
+    # Indicate the theater is open.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.theater_open
+    
+    # Set the usage control timestamp.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.cinema_usage_control
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
     # Turn on the necessary devices.
     - service: switch.turn_on
       entity_id: switch.harmony_hub_open_cinema
@@ -34,10 +96,6 @@ open_cinema:
         thermostat_entity: climate.upstairs
         preset: 'Home'
     
-    # Indicate the theater is open.
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.theater_open
-    
     # If no family are home, delay, then turn off some downstairs lights.
     - delay: '00:05:00'
     - service: script.change_downstairs_lighting
@@ -49,8 +107,8 @@ open_cinema:
     - condition:
         - condition: state
           entity_id: 
-            - input_boolean.adults_home
-            - input_boolean.children_home
+            - binary_sensor.adults_home
+            - binary_sensor.children_home
           state: 'off'
         - condition: time
           after:  '18:00:00'
@@ -65,9 +123,67 @@ close_cinema:
   alias: Close Cinema
   sequence:
     
+    # Ensure the cinema is not already closed.
+    - if:
+        - "{{ states('input_boolean.theater_open') == 'off' }}"
+      
+      then:
+        - service: notify.alexa_media
+          data:
+            message: "Cinema is already closed!!"
+            target: "{{ states('sensor.last_alexa') }}"
+            data:
+              type: tts
+        
+        - stop: "Cinema is already closed."
+    
+    # Ensure the cinema has not been opened recently. I don't want to jerk the projector around.
+    - variables:
+        delta_time: >
+          {% set start = as_timestamp(strptime(states('input_datetime.cinema_usage_control'), '%Y-%m-%d %H:%M:%S')) %}
+          {% set seconds = (now().timestamp() - start) %}
+          {{ seconds }}
+    
+    - if:
+        - "{{ delta_time | float(0) < 600 }}"
+      
+      then:
+        - variables:
+            delay: "{{ (600 - delta_time) | round }}"
+        
+        # Bypass the message and timer start if the timer is already running. Someone is being a jerk.
+        - if:
+            - "{{ is_state('timer.cinema_usage_delay', 'idle') }}"
+          
+          then:
+        
+            - service: notify.alexa_media
+              data:
+                message: >
+                  {% set delay_minutes = (delay / 60) | round %}
+                  {% set delay_display =iif(delay_minutes >= 1, delay_minutes, 1) %}
+                  Cinema has been opened recently. Delaying cinema close for {{ delay_display }} {{ iif(delay_display == 1, 'minute', 'minutes') }}
+                target: "{{ states('sensor.last_alexa') }}"
+                data:
+                  type: tts
+        
+            - service: timer.start
+              data:
+                entity_id: timer.cinema_usage_delay
+                duration: "{{ delay }}"
+        
+        - stop: "Cinema has been opened recently."
+    
     # Indicate the theater is closed.
     - service: input_boolean.turn_off
       entity_id: input_boolean.theater_open
+    
+    # Set the usage control timestamp.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.cinema_usage_control
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Turn on some lights. This also turns on automations/lights that were possibly turned off by the open cinema script.
     - service: script.turn_on
@@ -97,9 +213,6 @@ close_cinema:
           data:
             thermostat_entity: climate.upstairs
             preset: 'Away'
-    
-    # Turn Adguard protection on in case it was turned off (for example for Paramount Plus).
-    - service: script.turn_on_adguard
     
     # Turn off all lights.
     - delay: '00:05:00'
@@ -190,29 +303,28 @@ change_downstairs_lighting:
             - automation.check_daytime_lights_sunset_maximum
           
         # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
-        - condition: numeric_state
-          entity_id: sun.sun
-          attribute: elevation
-          below: 4.0
-    
-        - service: light.turn_on
-          data_template:
-            entity_id: >
-              {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
-                {{ 'light.daytime_lights' }}
-              {% else %}
-                {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
-              {% endif %}
-        
-        - service: light.turn_on
-          entity_id:
-            - light.stairway_light
-            - light.island_light
+        - if:
+            - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
+          
+          then:    
+            - service: light.turn_on
+              data_template:
+                entity_id: >
+                  {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
+                    {{ 'light.daytime_lights' }}
+                  {% else %}
+                    {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
+                  {% endif %}
+            
+            - service: light.turn_on
+              entity_id:
+                - light.stairway_light
+                - light.island_light
         
       # Turn off lights, but only if no family members present.
       else:
         - condition: state
-          entity_id: input_boolean.adults_home
+          entity_id: binary_sensor.adults_home
           state: 'off'
         
         # First, turn off automations that might turn on some of these lights.
@@ -537,7 +649,7 @@ activate_cinema:
           entity_id: switch.harmony_hub_enable_streaming
       
         # Delay for a bit to let the projector warm up.
-        - delay: '00:40:00'
+        - delay: '00:04:00'
 
 # Activate Kodi on the Shield TV. We make no assumptions here about the rest of the theater; for example we don't
 # require the projector to be on. All we need is the Shield TV on and the Kodi application running on it.

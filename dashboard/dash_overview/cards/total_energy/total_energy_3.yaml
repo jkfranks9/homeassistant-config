@@ -1,0 +1,76 @@
+#=============================#
+#     Total Energy 3 Card     #
+#=============================#
+
+type: custom:stack-in-card
+title: ...
+
+cards:
+  
+  - type: entities
+    show_header_toggle: false
+    entities:
+
+      - entity: sensor.sonoff_refrigerator_energy
+        name: Refrigerator
+        icon: mdi:fridge
+
+      - entity: sensor.sink_light_energy
+        name: Sink Light
+        icon: mdi:light-recessed
+
+      - entity: sensor.snack_light_energy
+        name: Snack Light
+        icon: mdi:ceiling-light
+
+      - entity: sensor.stairway_light_energy
+        name: Stairway Light
+        icon: mdi:dome-light
+
+      - entity: sensor.theater_av_energy
+        name: Theater AV
+        icon: mdi:audio-video
+
+      - entity: sensor.theater_ceiling_energy
+        name: Theater Ceiling
+        icon: mdi:light-recessed
+
+      - entity: sensor.theater_fan_energy
+        name: Theater Fan
+        icon: mdi:fan
+
+      - entity: sensor.theater_sconces_energy
+        name: Theater Sconces
+        icon: mdi:wall-sconce-round-variant
+
+      - entity: sensor.sonoff_treadmill_energy
+        name: Treadmill
+        icon: mdi:walk
+
+      - entity: sensor.upstairs_bath_fan_energy
+        name: Upstairs Bath Fan
+        icon: mdi:fan
+
+      - entity: sensor.upstairs_bath_tub_light_energy
+        name: Upstairs Bath Tub Light
+        icon: mdi:dome-light
+
+      - entity: sensor.upstairs_bath_vanity_light_energy
+        name: Upstairs Bath Vanity Light
+        icon: mdi:vanity-light
+
+      - entity: sensor.upstairs_bedroom_light_energy
+        name: Upstairs Bedroom Light
+        icon: mdi:dome-light
+
+      - entity: sensor.upstairs_bedroom_outlet_energy
+        name: Upstairs Bedroom Outlet
+        icon: mdi:lamp
+
+      - entity: sensor.utility_light_energy
+        name: Utility Light
+        icon: mdi:dome-light
+
+      - entity: sensor.sonoff_washer_energy
+        name: Washer
+        icon: mdi:washing-machine

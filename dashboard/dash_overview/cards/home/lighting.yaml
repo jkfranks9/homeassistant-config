@@ -29,7 +29,6 @@ cards:
                 name: Family
                 entity: light.family_room_lights
                 variables:
-                  entities_title: Family Room Lights
                   entities_group: light.family_room_lights
       
             - type: conditional
@@ -44,7 +43,6 @@ cards:
                 name: Family
                 entity: light.dashboard_family_room_christmas_lights_1
                 variables:
-                  entities_title: Family Room Lights
                   entities_group: light.dashboard_family_room_christmas_lights_1
       
             - type: conditional
@@ -59,7 +57,6 @@ cards:
                 name: Family
                 entity: light.dashboard_family_room_christmas_lights_2
                 variables:
-                  entities_title: Family Room Lights
                   entities_group: light.dashboard_family_room_christmas_lights_2
       
             # Display kitchen lights according to Christmas mode.
@@ -73,7 +70,6 @@ cards:
                 name: Kitchen
                 entity: light.kitchen_lights
                 variables:
-                  entities_title: Kitchen Lights
                   entities_group: light.kitchen_lights
       
             - type: conditional
@@ -86,7 +82,6 @@ cards:
                 name: Kitchen
                 entity: light.dashboard_kitchen_christmas_lights
                 variables:
-                  entities_title: Kitchen Lights
                   entities_group: light.dashboard_kitchen_christmas_lights
                 
             # Office lights.
@@ -95,7 +90,6 @@ cards:
               name: Office
               entity: light.office_lights
               variables:
-                entities_title: Office Lights
                 entities_group: light.office_lights
           
             # Master suite lights.
@@ -104,7 +98,6 @@ cards:
               name: Master
               entity: light.master_suite_lights
               variables:
-                entities_title: Master Suite Lights
                 entities_group: light.master_suite_lights
                     
             # Downstairs guest suite lights.
@@ -113,7 +106,6 @@ cards:
               name: Guest 1st
               entity: light.downstairs_guest_suite_lights
               variables:
-                entities_title: Downstairs Guest Suite Lights
                 entities_group: light.downstairs_guest_suite_lights
       
             # Display downstairs common lights according to Christmas mode.
@@ -127,7 +119,6 @@ cards:
                 name: Common 1st
                 entity: light.downstairs_common_lights
                 variables:
-                  entities_title: Downstairs Common Lights
                   entities_group: light.downstairs_common_lights
       
             - type: conditional
@@ -142,7 +133,6 @@ cards:
                 name: Common 1st
                 entity: light.downstairs_common_lights
                 variables:
-                  entities_title: Downstairs Common Lights
                   entities_group: light.downstairs_common_lights
       
             - type: conditional
@@ -157,7 +147,6 @@ cards:
                 name: Common 1st
                 entity: light.dashboard_downstairs_common_christmas_lights
                 variables:
-                  entities_title: Downstairs Common Lights
                   entities_group: light.dashboard_downstairs_common_christmas_lights
                 
             # Laundry room lights.
@@ -166,7 +155,6 @@ cards:
               name: Laundry
               entity: light.laundry_room_lights
               variables:
-                entities_title: Laundry Room Lights
                 entities_group: light.laundry_room_lights
       
             # Display outdoor lights according to Christmas mode.
@@ -180,7 +168,6 @@ cards:
                 name: Outdoor
                 entity: light.outdoor_lights
                 variables:
-                  entities_title: Outdoor Lights
                   entities_group: light.outdoor_lights
       
             - type: conditional
@@ -193,7 +180,6 @@ cards:
                 name: Outdoor
                 entity: light.dashboard_outdoor_christmas_lights
                 variables:
-                  entities_title: Outdoor Lights
                   entities_group: light.dashboard_outdoor_christmas_lights
                     
             # Upstairs guest suite lights.
@@ -202,7 +188,6 @@ cards:
               name: Guest 2nd
               entity: light.upstairs_guest_suite_lights
               variables:
-                entities_title: Upstairs Guest Suite Lights
                 entities_group: light.upstairs_guest_suite_lights
                 
             # Upstairs common lights.
@@ -211,7 +196,6 @@ cards:
               name: Common 2nd
               entity: light.upstairs_common_lights
               variables:
-                entities_title: Upstairs Common Lights
                 entities_group: light.upstairs_common_lights
                 
             # Theater lights.
@@ -220,7 +204,6 @@ cards:
               name: Theater
               entity: light.theater_lights
               variables:
-                entities_title: Theater Lights
                 entities_group: light.theater_lights
                     
             # Storage lights.
@@ -229,5 +212,4 @@ cards:
               name: Storage
               entity: light.storage_lights
               variables:
-                entities_title: Storage Lights
                 entities_group: light.storage_lights

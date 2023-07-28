@@ -45,7 +45,33 @@
       state: 'on'
   
   action:
-    - service: script.close_cinema 
+    - service: script.close_cinema
+
+#===================================#
+#     Cinema Open/Close Control     #
+#===================================#
+
+# To prevent the projector and other components from frequent on/off cycles, the cinema can only be opened or closed
+# about 10 minutes after being closed or opened. This is largely controlled by the Open Cinema and Close Cinema scripts,
+# but they use a timer to delay the actual open or close. We handle the timer expiration here.
+- alias: Handle Cinema Usage Delay
+  id: handle_cinema_usage_delay
+  
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.cinema_usage_delay
+  
+  action:
+    - if:
+        - "{{ states('input_boolean.theater_open') == 'off' }}"
+      
+      then:
+        - service: script.open_cinema
+      
+      else:
+        - service: script.close_cinema
 
 #==================================#
 #     Automatic Volume Control     #
@@ -105,7 +131,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Amazon Prime
-      volume: 0.58
+      volume: 0.60
 
 # Disney Plus
 - alias: Initialize Disney Plus Volume
@@ -141,7 +167,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Hulu
-      volume: 0.62
+      volume: 0.58
 
 # Kodi
 - alias: Initialize Kodi Volume
@@ -168,7 +194,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Paramount+
-      volume: 0.61
+      volume: 0.62
 
 # Peacock
 - alias: Initialize Peacock Volume
@@ -471,7 +497,7 @@
                       entity_id: input_text.music_video_artists
                     data:
                       value: >
-                        {% from 'friendly_strings.jinja' import build_list %}
+                        {% from 'utilities.jinja' import build_list %}
                         {{ build_list('input_text.music_video_artists', artist) }}
                   
                   # Update the list of chosen video IDs.
@@ -480,7 +506,7 @@
                       entity_id: input_text.music_video_ids
                     data:
                       value: >
-                        {% from 'friendly_strings.jinja' import build_list %}
+                        {% from 'utilities.jinja' import build_list %}
                         {{ build_list('input_text.music_video_ids', videoid) }}
                   
                   # Update the list of chosen video run times.
@@ -489,7 +515,7 @@
                       entity_id: input_text.music_video_runtimes
                     data:
                       value: >
-                        {% from 'friendly_strings.jinja' import build_list %}
+                        {% from 'utilities.jinja' import build_list %}
                         {{ build_list('input_text.music_video_runtimes', runtime) }}
                   
                   # Accumulate the total run time.
@@ -562,33 +588,3 @@
     
     # Go build the video playlist.
     - service: script.build_kodi_video_playlist
-
-#===================================#
-#     Shield Application Change     #
-#===================================#
-
-# Handle various things that are required when the Shield application changes.
-- alias: Handle Shield Application Change
-  id: handle_shield_application_change
-  
-  # Trigger on the Shield application name changing.
-  trigger:
-    - platform: state
-      entity_id: media_player.shield_tv
-      attribute: app_name
-  
-  action:
-    
-    # Paramount Plus cannot function if Adguard protection is turned on.
-    - if:
-      
-        # Turn off Adguard if the application is Paramount.
-        - "{{ is_state_attr('media_player.shield_tv', 'app_name', 'Paramount+') }}"
-      
-      then:
-        - service: script.turn_off_adguard
-      
-      # Turn on Adguard for all other applications. Note that it's also turned on when the cinema
-      # is closed, in case Paramount was the last application used.
-      else:
-        - service: script.turn_on_adguard 
