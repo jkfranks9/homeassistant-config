@@ -5,20 +5,35 @@
 type: custom:stack-in-card
 title: Misc Variables
 mode: horizontal
-
 cards:
-  - type: entity
-    entity: input_number.variables_cu_visa
-    name: CU Visa
   
-  - type: entity
-    entity: input_number.variables_wells_fargo
-    name: WF
-  
-  - type: entity
-    entity: input_number.variables_john_deere
-    name: Deere
-  
-  - type: entity
-    entity: input_number.variables_workout_time
-    name: Ex Time
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.variables_cu_visa
+              name: CU Visa
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.variables_wells_fargo
+              name: WF
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.variables_john_deere
+              name: Deere
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.variables_workout_time
+              name: Ex Time

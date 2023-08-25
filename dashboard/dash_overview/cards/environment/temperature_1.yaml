@@ -1,0 +1,31 @@
+#============================#
+#     Temperature 1 Card     #
+#============================#
+
+type: grid
+columns: 2
+cards:
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: climate.downstairs
+      - attribute: current_temperature
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: climate.upstairs
+      - attribute: current_temperature
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.attic_temperature
+      - name: Attic
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.garage_temperature
+      - name: Garage

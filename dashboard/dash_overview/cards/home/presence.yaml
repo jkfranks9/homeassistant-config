@@ -14,29 +14,47 @@ cards:
       buttons:
         card:
           type: grid
-          columns: 5
+          columns: 4
           square: false
           cards:
-          
-            - type: 'custom:button-card'
-              template: person_button
-              entity: person.jon
-              icon: mdi:human-male
       
             - type: 'custom:button-card'
               template: motion_button
-              entity: group.downstairs_motion
+              entity: binary_sensor.downstairs_motion
               name: Downstairs
             
             - type: 'custom:button-card'
               template: motion_button
-              entity: group.upstairs_motion
+              entity: binary_sensor.upstairs_motion
               name: Upstairs
             
             - type: 'custom:button-card'
               template: sensor_button
               entity: input_select.occupied_bedrooms
               name: Occupied
+  
+              state_display: |
+                [[[
+                  if (states['input_select.occupied_bedrooms'].state == 'ChildDown')
+                    return 'CDown';
+                  else if (states['input_select.occupied_bedrooms'].state == 'AdultDown')
+                    return 'ADown';
+                  else if (states['input_select.occupied_bedrooms'].state == 'ChildUp')
+                    return 'CUp';
+                  else if (states['input_select.occupied_bedrooms'].state == 'AdultUp')
+                    return 'Aup';
+                  else if (states['input_select.occupied_bedrooms'].state == 'ChildDownPlus')
+                    return 'CDown+';
+                  else if (states['input_select.occupied_bedrooms'].state == 'ChildUpPlus')
+                    return 'CUp+';
+                ]]]
+  
+              state:
+                - value: 'Empty'
+                  color: var(--paper-item-icon-color)
+                
+                - operator: default
+                  color: var(--state-active-color)
           
             - type: 'custom:button-card'
               template: beacon_button
@@ -66,5 +84,13 @@ cards:
           
             - type: 'custom:button-card'
               template: person_button
+              entity: person.jon
+              icon: mdi:human-male
+          
+            - type: 'custom:button-card'
+              template: person_button
               entity: person.skylar
               icon: mdi:human-child
+            
+            - type: button
+              entity: input_boolean.child_alone

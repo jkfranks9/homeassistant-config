@@ -1,21 +1,6 @@
-#======================#
-#     Generic Test     #
-#======================#
-
-- alias: Test Automation
-  trigger:
-    - platform: time
-      at: '10:37:00'
-  condition:
-    - condition: time
-      after: '10:37:00'
-  action:
-    - service: light.turn_on
-      entity_id: light.office_lamp
-
-#=========================#
-#     Temporary Tests     #
-#=========================#
+#==============#
+#     Kodi     #
+#==============#
 
 # Wait for result from Test Kodi script
 - alias: Test Kodi Result
@@ -53,10 +38,6 @@
     data:
       message: "JKF: artist {{artist}}, ID {{videoid}}, runtime {{runtime}}"
       level: info
-
-#==============#
-#     Kodi     #
-#==============#
   
 - alias: Test Kodi Result Event
   id: test_kodi_result_event

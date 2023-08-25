@@ -40,6 +40,7 @@ smart_home:
 
     include_entities:
       - scene.lights_out
+      - script.ask_light_room
       - script.awake
       - script.bedtime
       - script.change_fan_setting
@@ -53,9 +54,7 @@ smart_home:
       - script.start_rainbow
       - script.start_streaming
       - script.start_turntable
-      - script.turn_off_light
       - script.turn_on_bathroom_light
-      - script.turn_on_light
       - script.wakeup
       - script.watch_amazon_prime
       - script.watch_disney_plus

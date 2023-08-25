@@ -1,3 +1,14 @@
+#======================#
+#     Common Stuff     #
+#======================#
+
+# This applies to almost all buttons.
+common:
+  show_icon: true
+  show_name: true
+  show_state: true
+  size: 30%
+
 #===================#
 #     Container     #
 #===================#
@@ -18,10 +29,11 @@ container:
         - margin: 0
         - padding: 0.15em
 
-#===========================#
-#     Blank Button Card     #
-#===========================#
+#======================#
+#     Blank Button     #
+#======================#
 
+# Generally used as a spacer within a container.
 blank_button:
   show_icon: false
   show_name: false
@@ -33,12 +45,22 @@ blank_button:
     card:
       - border-width: 0px
 
+#=======================#
+#     Toggle Button     #
+#=======================#
+
+toggle_button:
+  template: common
+  
+  tap_action:
+    action: toggle
+
 #=========================#
 #     Delivery Button     #
 #=========================#
 
 delivery_button:
-  template: very_basic_button
+  template: common
   
   show_label: true
   show_state: false
@@ -51,22 +73,13 @@ delivery_button:
     label:
       - font-size: 70%
 
-#=======================#
-#     Toggle Button     #
-#=======================#
-
-toggle_button:
-  template: very_basic_button
-  
-  tap_action:
-    action: toggle
-
 #======================#
 #     Input Button     #
 #======================#
 
+# Used for buttons that provide input information.
 input_button:
-  template: very_basic_button
+  template: common
   
   tap_action:
     action: more-info
@@ -86,7 +99,7 @@ input_button:
 #=======================#
 
 sensor_button:
-  template: very_basic_button
+  template: common
   
   tap_action:
     action: none
@@ -109,7 +122,7 @@ sensor_button:
 #=======================#
 
 person_button:
-  template: very_basic_button
+  template: common
   
   state_display: |
     [[[
@@ -127,17 +140,18 @@ person_button:
       color: var(--paper-item-icon-color)
     
     - value: 'home'
-      color: var(--paper-item-icon-active-color)
+      color: var(--state-active-color)
     
     - operator: default
-      color: var(--accent-color)
+      color: var(--paper-item-icon-active-color)
 
 #===============================#
 #     Virtual Person Button     #
 #===============================#
 
+# For testing purposes.
 virtual_person_button:
-  template: very_basic_button
+  template: common
   
   state_display: |
     [[[
@@ -162,7 +176,7 @@ virtual_person_button:
 #=======================#
 
 beacon_button:
-  template: very_basic_button
+  template: common
   
   tap_action:
     action: more-info
@@ -174,24 +188,12 @@ beacon_button:
     - operator: default
       color: var(--paper-item-icon-active-color)
 
-#=========================#
-#     Presence Button     #
-#=========================#
-
-presence_button:
-  template: very_basic_button
-  
-  show_state: false
-  
-  tap_action:
-    action: toggle
-
 #============================#
 #     Garage Door Button     #
 #============================#
 
 garage_door_button:
-  template: very_basic_button
+  template: common
   
   variables:
     var_entity: ''
@@ -222,7 +224,7 @@ garage_door_button:
 #==============================#
 
 door_window_button:
-  template: very_basic_button
+  template: common
   
   variables:
     var_name: ''
@@ -250,7 +252,7 @@ door_window_button:
 #============================#
 
 light_group_button:
-  template: very_basic_button
+  template: common
   
   variables:
     entities_title: ''
@@ -278,7 +280,7 @@ light_group_button:
 #=======================#
 
 motion_button:
-  template: very_basic_button
+  template: common
   
   state_display: |
     [[[
@@ -297,6 +299,258 @@ motion_button:
     
     - value: 'off'
       icon: mdi:motion-sensor-off
+
+#===========================#
+#     Satellite Buttons     #
+#===========================#
+
+satellite_pass:
+  show_label: false
+  styles:
+    card:
+      - width: 250px
+      - height: 100%
+    grid:
+      - grid-template-areas: '"n date" "i time" "i duration"'
+      - grid-template-columns: 1fr 1fr
+      - grid-template-rows: min-content min-content min-content
+    name:
+      - align-self: start
+      - justify-self: center
+      - font-weight: bold
+    icon:
+      - width: 40px
+    custom_fields:
+      date:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      time:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      duration:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      startdir:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+      enddir:
+        - align-self: start
+        - justify-self: start
+        - font-size: 14px
+  custom_fields:
+    date: |
+      [[[
+        var passdate = new Date(entity.attributes.pass_start_unix * 1000);
+        var options = { year: 'numeric', month: 'short', day: 'numeric' };
+        return new Intl.DateTimeFormat('en-US', options).format(passdate);
+      ]]]
+    time: |
+      [[[
+        var passdate = new Date(entity.attributes.pass_start_unix * 1000);
+        var options = { hour: '2-digit', minute: '2-digit' };
+        return new Intl.DateTimeFormat('en-US', options).format(passdate);
+      ]]]
+    duration: |
+      [[[
+        return entity.state + " seconds"
+      ]]]
+
+satellite_compass:
+  show_icon: false
+  show_name: false
+  styles:
+    grid:
+      - grid-template-areas: '"path"'
+      - grid-template-columns: 1fr
+      - grid-template-rows: min-content
+    custom_fields:
+      path:
+        - align-self: start
+        - font-size: 14px
+  custom_fields:
+    path: |
+      [[[
+        return entity.attributes.start_compass + " > " + entity.attributes.end_compass
+      ]]]
+
+#=====================#
+#     Base Button     #
+#=====================#
+
+# This contains common configuration for the other templates below.
+base_button:
+  template: common
+    
+  styles:
+    card:
+      - background-color: var(--card-background-color)
+      - padding: 18px 2px 5px 2px
+      - display: flex
+      #- border: 1px solid gray
+      - margin-right: 1px
+    
+    grid:
+      - display: contents
+    
+    img_cell:
+      - display: contents
+    
+    name:
+      - color: var(--primary-text-color)
+      - font-size: 0.75em
+      - position: absolute
+      - top: 0
+      - left: 2
+      - z-index: 2
+
+#============================#
+#     Environment Button     #
+#============================#
+
+# This is a base template for use by other templates that deal with environmental controls/sensors.
+environment_button:
+  template: base_button
+  
+  variables:
+    humidity_entity: ''  
+    
+  state:
+    - id: value_any
+      operator: '!='
+      value: all
+      spin: true
+  
+  styles:    
+    icon:
+      - width: 90%
+      - height: 70%
+      - position: absolute
+      - color: var(--state-active-color)
+    
+    state:
+      - font-size: 280%
+      - margin-top: '-10px'
+      - margin-bottom: '4px'
+      - color: var(--primary-text-color)
+      - z-index: 1
+    
+    custom_fields:        
+      humidity:
+        - position: absolute
+        - bottom: 0
+        - left: 0
+        - display: flex
+        - z-index: 2
+      
+      low:
+        - position: absolute
+        - bottom: 0
+        - right: 5
+        - z-index: 1
+        
+      high:
+        - position: absolute
+        - bottom: 0
+        - right: 0
+        - z-index: 1
+  
+  custom_fields:
+    humidity:
+      card:
+        type: 'custom:button-card'
+        show_icon: true
+        icon: 'mdi:water-percent'
+        show_name: false
+        show_state: true
+        
+        state_display: |
+          [[[
+            return Math.round(states[variables.humidity_entity].state).toString();
+          ]]]
+        
+        styles:
+          grid:
+            - grid-template-areas: '"s i"'
+          
+          img_cell:
+            - display: contents
+          
+          state:
+            - color: 'var(--text-primary-color)'
+            - font-size: 70%
+            - align-self: flex-end
+          
+          card:
+            - padding: 0
+            - padding-left: 2px
+            - background-color: 'var(--dark-primary-color)'
+          
+          icon:
+            - color: 'var(--text-primary-color)'
+            - width: 18px
+            - height: 15px
+            - margin: -4px -3px 0 -4px
+    low:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: false
+        show_state: true
+        
+        styles:
+          state:
+            - font-size: 70%
+            - color: var(--text-primary-color)
+          
+          card:
+            - padding: 0 2px
+            - background-color: var(--dark-primary-color)
+    
+    high:
+      card:
+        type: 'custom:button-card'
+        show_icon: false
+        show_name: false
+        show_state: true
+        
+        styles:
+          state:
+            - font-size: 70%
+            - color: var(--text-primary-color)
+          
+          card:
+            - padding: 0 2px
+            - background-color: var(--dark-primary-color)
+
+#============================#
+#     Operational Button     #
+#============================#
+
+# This is a base template for use by other templates that operate various devices.
+operational_button:
+  template: base_button
+    
+  styles:
+    card:
+      - width: fit-content
+    
+    icon:
+      - position: absolute
+      - color: silver
+      - width: 60%
+      - bottom: 1px
+      - display: block
+      - z-index: 2
+    
+    state:
+      - font-size: 350%
+      - margin-top: '-10px'
+      - color: var(--card-background-color)
+      - z-index: 0
 
 #===========================#
 #     Thermostat Button     #
@@ -318,27 +572,11 @@ thermostat_button:
       - display: >-
           [[[ return entity.attributes.fan &&
           entity.attributes.fan === 'on' ? "block" : "none" ]]]
-      
-    custom_fields:
-      low:
-        - position: absolute
-        - bottom: 0
-        - right: 5
-        - z-index: 1
-        
-      high:
-        - position: absolute
-        - bottom: 0
-        - right: 0
-        - z-index: 1
     
   custom_fields:
     low:
       card:
         type: 'custom:button-card'
-        show_icon: false
-        show_name: false
-        show_state: true
         
         state_display: |
           [[[
@@ -346,22 +584,10 @@ thermostat_button:
                 ? entity.attributes.target_temp_low + "°" 
                 : ''
           ]]]
-        
-        styles:
-          state:
-            - font-size: 70%
-            - color: var(--text-primary-color)
-          
-          card:
-            - padding: 0 2px
-            - background-color: var(--dark-primary-color)
     
     high:
       card:
         type: 'custom:button-card'
-        show_icon: false
-        show_name: false
-        show_state: true
         
         state_display: |
           [[[
@@ -369,15 +595,6 @@ thermostat_button:
                 ? entity.attributes.target_temp_high + "°" 
                 : ''
           ]]]
-        
-        styles:
-          state:
-            - font-size: 70%
-            - color: var(--text-primary-color)
-          
-          card:
-            - padding: 0 2px
-            - background-color: var(--dark-primary-color)
 
 #============================#
 #     Temperature Button     #
@@ -400,62 +617,24 @@ temperature_button:
         return Math.round(entity.state).toString()
     ]]]
     
-  styles:      
-    custom_fields:
-      min:
-        - position: absolute
-        - bottom: 0
-        - right: 5
-        - z-index: 1
-        
-      max:
-        - position: absolute
-        - bottom: 0
-        - right: 0
-        - z-index: 1
-    
   custom_fields:
-    min:
+    low:
       card:
         type: 'custom:button-card'
-        show_icon: false
-        show_name: false
-        show_state: true
         
         state_display: |
           [[[ 
             return Math.round(states[variables.min_entity].state).toString() + "°";
           ]]]
-        
-        styles:
-          state:
-            - font-size: 70%
-            - color: var(--text-primary-color)
-          
-          card:
-            - padding: 0 2px
-            - background-color: var(--dark-primary-color)
       
-    max:
+    high:
       card:
         type: 'custom:button-card'
-        show_icon: false
-        show_name: false
-        show_state: true
         
         state_display: |
           [[[ 
             return Math.round(states[variables.max_entity].state).toString() + "°";
           ]]]
-        
-        styles:
-          state:
-            - font-size: 70%
-            - color: var(--text-primary-color)
-          
-          card:
-            - padding: 0 2px
-            - background-color: var(--dark-primary-color)
 
 #==========================#
 #     HVAC Vent Button     #
@@ -463,9 +642,6 @@ temperature_button:
 
 hvac_vent_button:
   template: operational_button
-  
-  variables:
-    var_entity: ''
       
   # Bogus state display, needed to display the icon. It's hidden by stying.
   state_display: |-
@@ -477,7 +653,7 @@ hvac_vent_button:
     - operator: template
       value: >
         [[[
-          return states[variables.var_entity].attributes.current_position == 100
+          return entity.attributes.current_position == 100
         ]]]
       icon: mdi:hvac
       styles:
@@ -488,7 +664,7 @@ hvac_vent_button:
     - operator: template
       value: >
         [[[
-          return states[variables.var_entity].attributes.current_position == 0
+          return entity.attributes.current_position == 0
         ]]]
       icon: mdi:hvac-off
       styles:
@@ -552,7 +728,7 @@ ceiling_fan_button:
       spin: true
       styles:
         icon:
-          - color: var(--paper-item-icon-active-color)
+          - color: var(--state-active-color)
     
     - value: 'off'
       icon: mdi:fan-off
@@ -645,231 +821,10 @@ bath_fan_button:
       spin: true
       styles:
         icon:
-          - color: var(--paper-item-icon-active-color)
+          - color: var(--state-active-color)
     
     - value: 'off'
       icon: mdi:fan-off
       styles:
         icon:
           - color: var(--paper-item-icon-color)
-
-#===========================#
-#     Satellite Buttons     #
-#===========================#
-
-satellite_pass:
-  show_label: false
-  styles:
-    card:
-      - width: 250px
-      - height: 100%
-    grid:
-      - grid-template-areas: '"n date" "i time" "i duration"'
-      - grid-template-columns: 1fr 1fr
-      - grid-template-rows: min-content min-content min-content
-    name:
-      - align-self: start
-      - justify-self: center
-      - font-weight: bold
-    icon:
-      - width: 40px
-    custom_fields:
-      date:
-        - align-self: start
-        - justify-self: start
-        - font-size: 14px
-      time:
-        - align-self: start
-        - justify-self: start
-        - font-size: 14px
-      duration:
-        - align-self: start
-        - justify-self: start
-        - font-size: 14px
-      startdir:
-        - align-self: start
-        - justify-self: start
-        - font-size: 14px
-      enddir:
-        - align-self: start
-        - justify-self: start
-        - font-size: 14px
-  custom_fields:
-    date: |
-      [[[
-        var passdate = new Date(entity.attributes.pass_start_unix * 1000);
-        var options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return new Intl.DateTimeFormat('en-US', options).format(passdate);
-      ]]]
-    time: |
-      [[[
-        var passdate = new Date(entity.attributes.pass_start_unix * 1000);
-        var options = { hour: '2-digit', minute: '2-digit' };
-        return new Intl.DateTimeFormat('en-US', options).format(passdate);
-      ]]]
-    duration: |
-      [[[
-        return entity.state + " seconds"
-      ]]]
-
-satellite_compass:
-  show_icon: false
-  show_name: false
-  styles:
-    grid:
-      - grid-template-areas: '"path"'
-      - grid-template-columns: 1fr
-      - grid-template-rows: min-content
-    custom_fields:
-      path:
-        - align-self: start
-        - font-size: 14px
-  custom_fields:
-    path: |
-      [[[
-        return entity.attributes.start_compass + " > " + entity.attributes.end_compass
-      ]]]
-
-#
-#========================= Internal Templates =========================
-#
-
-#===========================#
-#     Very Basic Button     #
-#===========================#
-
-very_basic_button:
-  show_icon: true
-  show_name: true
-  show_state: true
-  size: 30%
-
-#=====================#
-#     Base Button     #
-#=====================#
-
-# This contains common configuration for the other internal templates below.
-base_button:
-  template: very_basic_button
-    
-  styles:
-    card:
-      - background-color: var(--card-background-color)
-      - padding: 18px 2px 5px 2px
-      - display: flex
-      - border: 1px solid gray
-      - margin-right: 1px
-    
-    grid:
-      - display: contents
-    
-    img_cell:
-      - display: contents
-    
-    name:
-      - color: var(--primary-text-color)
-      - font-size: 0.75em
-      - position: absolute
-      - top: 0
-      - left: 2
-      - z-index: 2
-
-#============================#
-#     Environment Button     #
-#============================#
-
-# This is a base template for use by other templates that deal with environmental controls/sensors.
-environment_button:
-  template: base_button
-  
-  variables:
-    humidity_entity: ''  
-    
-  state:
-    - id: value_any
-      operator: '!='
-      value: all
-      spin: true
-  
-  styles:    
-    icon:
-      - width: 70%
-      - position: absolute
-      - color: silver
-    
-    state:
-      - font-size: 290%
-      - margin-top: '-10px'
-      - color: var(--primary-text-color)
-      - z-index: 1
-    
-    custom_fields:        
-      humidity:
-        - z-index: 2
-        - position: absolute
-        - bottom: 0
-        - left: 0
-        - display: flex
-  
-  custom_fields:
-    humidity:
-      card:
-        type: 'custom:button-card'
-        show_icon: true
-        icon: 'mdi:water-percent'
-        show_name: false
-        show_state: true
-        
-        state_display: |
-          [[[
-            return Math.round(states[variables.humidity_entity].state).toString();
-          ]]]
-        
-        styles:
-          grid:
-            - grid-template-areas: '"s i"'
-          
-          img_cell:
-            - display: contents
-          
-          state:
-            - color: 'var(--text-primary-color)'
-            - font-size: 70%
-            - align-self: flex-end
-          
-          card:
-            - padding: 0
-            - padding-left: 2px
-            - background-color: 'var(--dark-primary-color)'
-          
-          icon:
-            - color: 'var(--text-primary-color)'
-            - width: 18px
-            - height: 15px
-            - margin: -4px -3px 0 -4px
-
-#============================#
-#     Operational Button     #
-#============================#
-
-# This is a base template for use by other templates that operate various devices.
-operational_button:
-  template: base_button
-    
-  styles:
-    card:
-      - width: fit-content
-    
-    icon:
-      - position: absolute
-      - color: silver
-      - width: 60%
-      - bottom: 1px
-      - display: block
-      - z-index: 2
-    
-    state:
-      - font-size: 350%
-      - margin-top: '-10px'
-      - color: var(--card-background-color)
-      - z-index: 0

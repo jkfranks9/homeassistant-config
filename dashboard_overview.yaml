@@ -14,6 +14,7 @@ title: Overview
 views:
   - !include /config/dashboard/dash_overview/views/home.yaml
   - !include /config/dashboard/dash_overview/views/controls.yaml
+  - !include /config/dashboard/dash_overview/views/environment.yaml
   - !include /config/dashboard/dash_overview/views/energy.yaml
   - !include /config/dashboard/dash_overview/views/total_energy.yaml
   - !include /config/dashboard/dash_overview/views/health.yaml

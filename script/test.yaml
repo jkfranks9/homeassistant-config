@@ -1,3 +1,16 @@
+
+remove_global_variables:
+  alias: Remove Global Variables
+  
+  sequence:
+    
+    - event: remove_variable
+      event_data:
+        key: rooms_with_lights
+    - event: remove_variable
+      event_data:
+        key: rooms_with_lights_entities
+
 #==============#
 #     Kodi     #
 #==============#
@@ -84,27 +97,20 @@ test_kodi_video_playlist:
             input:
               method: Playlist.Add
       timeout: 3
-  
-    # - service: kodi.call_method
-      # target:
-        # entity_id: media_player.kodi
-      # data:
-        # method: Player.Open
-        # item:
-          # playlistid: 1
-    
-    # - wait_for_trigger:
-        # - platform: event
-          # event_type: kodi_call_method_result
-          # event_data:
-            # result_ok: true
-            # input:
-              # method: Player.Open
-      # timeout: 3
 
 #====================#
 #     Thermostat     #
 #====================#
+
+test_temp_thermostat_hold:
+  alias: Test Temp Thermostat Hold
+  
+  sequence:
+    - service: script.set_temporary_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
+        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
 
 test_thermostat_hold:
   alias: Test Thermostat Hold
@@ -118,8 +124,8 @@ test_thermostat_hold:
         start_time: "{{ now().strftime('%H:%M:%S') }}"
         end_date: "{{ (as_timestamp(states('sensor.date')) + 86400) | timestamp_custom('%Y-%m-%d') }}"
         end_time: "{{ now().strftime('%H:%M:%S') }}"
-        heat_temp: !secret constant_upstairs_home_heat_temp
-        cool_temp: !secret constant_upstairs_home_cool_temp
+        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
+        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
 
 test_remove_thermostat_hold:
   alias: Test Remove Thermostat Hold
@@ -131,132 +137,6 @@ test_remove_thermostat_hold:
       data_template:
         entity_id: climate.upstairs
         vacation_name: "Temporary"
-
-#=================#
-#     Bedtime     #
-#=================#
-
-test_bedtime_adults_down:
-  alias: Test Bedtime Adults Down
-  
-  sequence:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.adults_home
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.children_home
-    - service: input_select.select_option
-      entity_id: input_select.occupied_bedrooms
-      data:
-        option: 'AdultDown'
-    - service: script.establish_bedtime_environment
-
-test_bedtime_adults_up:
-  alias: Test Bedtime Adults Up
-  
-  sequence:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.adults_home
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.children_home
-    - service: input_select.select_option
-      entity_id: input_select.occupied_bedrooms
-      data:
-        option: 'AdultUp'
-    - service: script.establish_bedtime_environment
-
-test_bedtime_adults_both:
-  alias: Test Bedtime Adults Both
-  
-  sequence:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.adults_home
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.children_home
-    - service: input_select.select_option
-      entity_id: input_select.occupied_bedrooms
-      data:
-        option: 'Both'
-    - service: script.establish_bedtime_environment
-
-test_bedtime_children_down:
-  alias: Test Bedtime Children Down
-  
-  sequence:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.adults_home
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.children_home
-    - service: input_select.select_option
-      entity_id: input_select.occupied_bedrooms
-      data:
-        option: 'ChildDown'
-    - service: script.establish_bedtime_environment
-
-test_bedtime_children_up:
-  alias: Test Bedtime Children Up
-  
-  sequence:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.adults_home
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.children_home
-    - service: input_select.select_option
-      entity_id: input_select.occupied_bedrooms
-      data:
-        option: 'ChildUp'
-    - service: script.establish_bedtime_environment
-
-test_bedtime_children_down_plus:
-  alias: Test Bedtime Children Down Plus
-  
-  sequence:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.adults_home
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.children_home
-    - service: input_select.select_option
-      entity_id: input_select.occupied_bedrooms
-      data:
-        option: 'ChildDownPlus'
-    - service: script.establish_bedtime_environment
-
-test_bedtime_children_up_plus:
-  alias: Test Bedtime Children Up Plus
-  
-  sequence:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.adults_home
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.children_home
-    - service: input_select.select_option
-      entity_id: input_select.occupied_bedrooms
-      data:
-        option: 'ChildUpPlus'
-    - service: script.establish_bedtime_environment
-
-#================#
-#     Backup     #
-#================#
-
-test_backup_logs:
-  alias: Test Backup Logs
-  
-  sequence:
-    - service: shell_command.backup_auto_log
 
 #================#
 #     Shield     #
@@ -337,7 +217,7 @@ test_notify_mobile:
     
     - delay: '00:00:15'
     
-    - service: notify.mobile_app_jon_galaxy
+    - service: notify.mobile_app_jon_companion
       data:
         message: 'clear_notification'
         data:
@@ -371,93 +251,6 @@ test_notify_all:
         throttled: false
         media_player_entity: media_player.everywhere
         notification_id: 'testing123'
-
-#==============#
-#     Fans     #
-#==============#
-
-test_fan_temperature:
-  alias: Test Fan Temperature
-  
-  sequence:
-    - service: script.turn_on
-      entity_id: script.control_fan_for_temperature
-      data:
-        variables:
-          fan_entity_id: fan.office_fan
-          temperature_entity_id: sensor.office_temperature
-          thresholds: [78, 72, 68]
-          timeout: 30
-
-#==================#
-#     Exercise     #
-#==================#
-
-test_exercise_reset:
-  alias: Test Exercise Reset
-  
-  sequence:
-    - service: input_boolean.turn_off
-      target:
-        entity_id:
-          - input_boolean.treadmill_sun
-          - input_boolean.workout_sun
-
-test_number_reset:
-  alias: Test Number Reset
-  
-  sequence:
-    - service: input_number.set_value
-      target:
-        entity_id:
-          - input_number.workout_daily_time
-          - input_number.yard_work_daily_time
-      data:
-        value: 0
-
-#=================#
-#     Laundry     #
-#=================#
-
-test_laundry_events:
-  alias: Test Laundry Events
-  
-  sequence:
-    - service: script.log_laundry_event
-      data:
-        event_type: basic
-        prefix: Washer
-        message: started
-    
-    - service: script.log_laundry_event
-      data:
-        event_type: metric
-        prefix: Dryer
-        message: temperature detected
-        entity_id_1: sensor.dryer_temperature 
-    
-    - service: script.log_laundry_event
-      data:
-        event_type: metric_plus_gradient
-        prefix: Dryer
-        message: temperature
-        entity_id_1: sensor.dryer_temperature
-        entity_id_2: binary_sensor.dryer_temperature_falling
-    
-    - service: script.log_laundry_event
-      data:
-        event_type: fill_plus_load
-        prefix: Washer
-        message: fill time, load size
-        entity_id_1: input_number.washer_fill_seconds
-        entity_id_2: input_select.washer_load_size
-    
-    - service: script.log_laundry_event
-      data:
-        event_type: timer
-        prefix: Washer
-        message: timer started
-        entity_id_1: timer.washer_wash_blackout
 
 #==========================#
 #     Friendly Strings     #

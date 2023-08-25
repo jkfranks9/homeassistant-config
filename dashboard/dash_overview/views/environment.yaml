@@ -1,0 +1,16 @@
+#=========================#
+#     Environment Tab     #
+#=========================#
+
+title: Environment
+icon: mdi:home-thermometer
+panel: true
+cards:
+  - type: custom:layout-card
+    layout_type: custom:vertical-layout
+    cards:
+      - !include /config/dashboard/dash_overview/cards/environment/temperature_1.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/environment/temperature_2.yaml
+      - type: custom:layout-break
+      - !include /config/dashboard/dash_overview/cards/environment/temperature_3.yaml

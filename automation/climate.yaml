@@ -24,7 +24,9 @@
       at: '20:00:00'
   
   condition:
-    - "{{ states('sensor.projector_power') | float(0) == 0 }}"
+    - condition: state
+      entity_id: binary_sensor.theater_av_system
+      state: 'off'
     
     - condition: state
       entity_id: input_boolean.extended_away_mode
@@ -35,6 +37,40 @@
       data:
         thermostat_entity: climate.upstairs
         preset: 'Sleep'
+
+# Catch an unexpected transition away from vacation mode. If the upstairs bedroom is occupied, this should not happen.
+# So put the vacation hold back on, and log it.
+- alias: Catch Vacation Drop
+  id: catch_vacation_drop
+  
+  trigger:
+    - platform: state
+      entity_id: climate.upstairs
+      attribute: preset_mode
+      from:
+        - 'temp'
+        - 'vacation'
+      not_to:
+        - 'temp'
+        - 'vacation'
+  
+  condition:
+    - condition: state
+      entity_id: binary_sensor.upstairs_bedroom_occupied
+      state: 'on'
+  
+  action:
+    - service: script.set_temporary_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
+        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
+        days: 7
+    
+    - service: system_log.write
+      data:
+        message: "Upstairs thermostat unexpectedly transitioned from {{ trigger.from_state.attributes.preset_mode }} to {{ trigger.to_state.attributes.preset_mode }}; resetting back to vacation mode."
+        level: error
 
 #============================#
 #     Extended Away Mode     #
@@ -58,14 +94,14 @@
     - service: script.set_extended_thermostat_hold
       data:
         thermostat_entity: climate.downstairs
-        heat_temp: !secret constant_extended_hold_heat_temp
-        cool_temp: !secret constant_extended_hold_cool_temp
+        heat_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_heat_temp }}"
+        cool_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_cool_temp }}"
     
     - service: script.set_extended_thermostat_hold
       data:
         thermostat_entity: climate.upstairs
-        heat_temp: !secret constant_extended_hold_heat_temp
-        cool_temp: !secret constant_extended_hold_cool_temp
+        heat_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_heat_temp }}"
+        cool_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_cool_temp }}"
 
 # Triggered on the end of an extended away period.
 - alias: Disable Extended Away Mode
@@ -181,7 +217,7 @@
   
   trigger:
     - platform: state
-      entity_id: group.downstairs_doors_windows
+      entity_id: binary_sensor.downstairs_doors_windows
       from: 'off'
       to: 'on'
       for: '00:02:00'
@@ -197,7 +233,7 @@
   
   trigger:
     - platform: state
-      entity_id: group.downstairs_doors_windows
+      entity_id: binary_sensor.downstairs_doors_windows
       from: 'on'
       to: 'off'
 

@@ -61,7 +61,7 @@
     - name: 'Floor Fan Power'
       unique_id: floor_fan_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('switch.general_plug_1', 'on'), 120, 0) }}"
+      state: "{{ iif(is_state('switch.treadmill_fan', 'on'), 120, 0) }}"
 
     - name: 'Foyer Hutch Power'
       unique_id: foyer_hutch_power

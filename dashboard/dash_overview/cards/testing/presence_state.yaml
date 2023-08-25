@@ -22,6 +22,22 @@ cards:
               template: sensor_button
               entity: input_select.occupied_bedrooms
               name: Occupied
+  
+              state_display: |
+                [[[
+                  if (states['input_select.occupied_bedrooms'].state == 'ChildDown')
+                    return 'CDown';
+                  else if (states['input_select.occupied_bedrooms'].state == 'AdultDown')
+                    return 'ADown';
+                  else if (states['input_select.occupied_bedrooms'].state == 'ChildUp')
+                    return 'CUp';
+                  else if (states['input_select.occupied_bedrooms'].state == 'AdultUp')
+                    return 'Aup';
+                  else if (states['input_select.occupied_bedrooms'].state == 'ChildDownPlus')
+                    return 'CDown+';
+                  else if (states['input_select.occupied_bedrooms'].state == 'ChildUpPlus')
+                    return 'CUp+';
+                ]]]
             
             - type: 'custom:button-card'
               template: sensor_button

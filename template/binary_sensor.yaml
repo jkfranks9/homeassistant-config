@@ -58,24 +58,24 @@
     
     # These sensors are used to support history stats.
     
-    # Family Room AV is true if the associated device is drawing power, and a grandchild
+    # Family Room AV is true if the AV system is drawing power, and a grandchild
     # is not home or a grandchild is home and it's in the evening (I don't count a grandchild
     # watching YouTube or cartoon shows all day).
-    - name: 'Family Room AV'
-      unique_id: family_room_av
+    - name: 'Family Room AV Usage'
+      unique_id: family_room_av_usage
       state: >
-        {{ states('sensor.sonoff_family_room_av_power') | float(0) > 10 and
+        {{ is_state('binary_sensor.family_room_av_system', 'on') and
            (is_state('binary_sensor.children_home', 'off') or
              (is_state('binary_sensor.children_home', 'on') and
               now().strftime('%H') >= '19')) }}
     
-    # Cinema is true if the projector is drawing power, and the source device is not Shield TV
+    # Theater AV is true if the AV system is drawing power, and the source device is not Shield TV
     # (we can't know if such devices are playing or not) or the source is Shield TV and it's in
     # playing state.
-    - name: 'Cinema Projector'
-      unique_id: cinema_projector
+    - name: 'Theater AV Usage'
+      unique_id: theater_av_usage
       state: >
-        {{ states('sensor.projector_power') | float(0) > 0  and
+        {{ is_state('binary_sensor.theater_av_system', 'on')  and
            (is_state('switch.harmony_hub_stream_player', 'off') or
              (is_state('switch.harmony_hub_stream_player', 'on') and
               is_state('media_player.shield_tv', 'playing'))) }}
@@ -91,7 +91,7 @@
       
     - name: Theater AV System
       unique_id: theater_av_system
-      state: "{{ states('sensor.projector_power') | float(0) > 0 }}"
+      state: "{{ states('sensor.projector_power') | float(0) > 0 and states('sensor.theater_av_current_consumption') | float(0) > 50 }}"
 
     #------------------------------#
     #   -- Presence Detection --   #

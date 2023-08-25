@@ -31,6 +31,25 @@ reset_jon_away:
     - service: input_boolean.turn_off
       entity_id: input_boolean.jon_away
 
+# Restore the upstairs bedroom to normal. This can happen when all family members leave, or when just parents
+# leave, but a child remains.
+restore_normal_upstairs_bedroom:
+  alias: Restore Normal Upstairs Bedroom
+  
+  sequence:
+    
+    # Remove upstairs thermostat hold.
+    - service: script.remove_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        extended: false
+            
+    # Turn on the vacuum automation.
+    - service: script.toggle_vacuum_automation
+      data:
+        vacuum_name: "{{ state_attr('vacuum.ecovacs_deebot', 'friendly_name') }}"
+        operation: 'on'
+
 #==========================#
 #     Computer Control     #
 #==========================#
@@ -287,26 +306,26 @@ resume_deep_sleep:
 #     HVAC Vents     #
 #====================#
 
-open_upstairs_br_vents:
-  alias: Open Upstairs BR Vents
+open_hvac_vents:
+  alias: Open HVAC Vents
   
   use_blueprint:
     path: devices/hvac_vent_operation.yaml
     input:
       vent_entity:
-        - cover.upstairs_br_vent_1
-        - cover.upstairs_br_vent_2
+        - cover.master_br_vent_1
+        - cover.master_br_vent_2
       position: 100
 
-close_upstairs_br_vents:
-  alias: Close Upstairs BR Vents
+close_hvac_vents:
+  alias: Close HVAC Vents
   
   use_blueprint:
     path: devices/hvac_vent_operation.yaml
     input:
       vent_entity:
-        - cover.upstairs_br_vent_1
-        - cover.upstairs_br_vent_2
+        - cover.master_br_vent_1
+        - cover.master_br_vent_2
       position: 0
 
 #======================#
@@ -433,7 +452,6 @@ control_fan_for_temperature:
 #=================================#
 
 # Used mostly via Alexa.
-
 change_fan_setting:
   alias: Change Fan Setting
   

@@ -1,8 +1,0 @@
-#=========================#
-#     Doors / Windows     #
-#=========================#
-
-Downstairs Doors / Windows:
-  entities:
-    - binary_sensor.back_door_sensor_contact
-    - binary_sensor.guest_br_window_sensor_contact

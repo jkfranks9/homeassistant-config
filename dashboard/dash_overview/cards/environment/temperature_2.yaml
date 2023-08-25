@@ -1,0 +1,31 @@
+#============================#
+#     Temperature 2 Card     #
+#============================#
+
+type: grid
+columns: 2
+cards:
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.main_floor_temperature
+      - name: Main Floor
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.office_temperature
+      - name: Office
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.porch_temperature
+      - name: Porch
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.dryer_temperature
+      - name: Dryer

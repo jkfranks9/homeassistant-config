@@ -186,13 +186,3 @@ config:
         action: call-service
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
-    
-    # HVAC vents
-    - entities:
-        - cover.upstairs_br_vent_1
-        - cover.upstairs_br_vent_2
-      #tap_action: more-info
-      state_action:
-        action: call-service
-        service: floorplan.class_set
-        service_data: "${(entity.state === 'open') ? 'element-on' : 'element-off' }"

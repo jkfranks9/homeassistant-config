@@ -24,7 +24,6 @@ exclude:
     - calendar
     - camera
     - counter
-    - cover
     - fan
     - group
     - input_boolean
@@ -60,35 +59,27 @@ include:
   domains:
     
     - climate
+    - cover
     - device_tracker
     - person
 
   entities:
     
-    # TEMPORARY
-    - light.upstairs_bedroom_outlet
-    
-    - binary_sensor.cinema_projector
-    - binary_sensor.family_room_av
+    - binary_sensor.dryer_vibration_sensor_vibration
+    - binary_sensor.office_human_sensor_presence
+    - input_boolean.office_occupied
     - input_number.washer_fill_seconds
     - input_select.washer_load_size
     - input_select.washer_state
     - sensor.ahi_average
-    - sensor.attic_temperature
     - sensor.cpap_ahi_events_per_hour
+    - sensor.cpap_average
     - sensor.cpap_usage_hours
     - sensor.cpap_usage_minutes
     - sensor.downstairs_humidity
     - sensor.dryer_humidity
-    - sensor.dryer_temperature
-    - sensor.garage_temperature
-    - sensor.main_floor_temperature
     - sensor.nighttime
-    - sensor.office_ambient_light
-    - sensor.porch_battery_level
-    - sensor.porch_battery_voltage
     - sensor.porch_humidity
-    - sensor.porch_temperature
     - sensor.sonoff_washer_power
     - sensor.total_daily_energy
     - sensor.total_power
@@ -97,7 +88,11 @@ include:
   entity_globs:
     
     - binary_sensor.*_occupancy
+    - binary_sensor.family_room_av_*
+    - binary_sensor.theater_av_*
     - input_number.*_calories
     - input_number.*_time
+    - sensor.*_ambient_light
+    - sensor.*_temperature
     - sensor.total_*_calories
     - sensor.total_*_time

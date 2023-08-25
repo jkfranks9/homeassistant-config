@@ -17,8 +17,8 @@ blueprint:
       description: The sun elevation angle on which to trigger.
       selector:
         number:
-          min: 3.0
-          max: 9.01
+          min: 3
+          max: 9
           mode: slider
     
     light_entity:
@@ -74,9 +74,9 @@ action:
         
       - variables:
           sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-          min_elevation: "{{ states('input_number.min_elevation') }}"
-          med_elevation: "{{ states('input_number.min_elevation') }}"
-          max_elevation: "{{ states('input_number.max_elevation') }}"
+          min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
+          med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
+          max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
       
       # Pick one invocation on which to take action. Each stanza below corresponds to one of the
       # possible input elevations. The second condition in each stanza (or only one for the default)

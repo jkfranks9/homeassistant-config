@@ -115,3 +115,12 @@
         {% endif %}
         
         {{ count }}
+
+    #--------------------------#
+    #   -- Workout Header --   #
+    #--------------------------#
+    
+    # This supplies a state header for the UI exercise status. 
+    - name: Workout State Header
+      unique_id: workout_state_header
+      state: "{{ 'G' ~ states('input_number.workout_group') | int(0) }}"

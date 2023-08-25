@@ -141,6 +141,9 @@ set_temporary_thermostat_hold:
     
     cool_temp:
       description: The desired cool temperature.
+    
+    days:
+      description: The number of days for the temporary hold.
   
   sequence:
     - variables:
@@ -152,15 +155,14 @@ set_temporary_thermostat_hold:
       
       then:
     
-        # Create a vacation to simulate a hold, using today's date/time, plus 1 day for the end. 
-        # We should remove the vacation on the following morning.
+        # Create a vacation to simulate a hold, using today's date/time, plus the input days for the end. 
         - service: ecobee.create_vacation
           data_template:
             entity_id: "{{ thermostat_entity }}"
             vacation_name: "Temporary"
             start_date: "{{ states('sensor.date') }}"
             start_time: "{{ now().strftime('%H:%M:%S') }}"
-            end_date: "{{ (as_timestamp(states('sensor.date')) + 86400) | timestamp_custom('%Y-%m-%d') }}"
+            end_date: "{{ (as_timestamp(states('sensor.date')) + (86400 * days | int(0))) | timestamp_custom('%Y-%m-%d') }}"
             end_time: "{{ now().strftime('%H:%M:%S') }}"
             heat_temp: "{{ heat_temp }}"
             cool_temp: "{{ cool_temp }}"
@@ -229,7 +231,7 @@ remove_thermostat_hold:
   sequence:
     
     # Verify a vacation exists on the thermostat first.
-    - condition: "{{ state_attr(thermostat_entity, 'preset_mode') == 'temp' }}"
+    - condition: "{{ state_attr(thermostat_entity, 'preset_mode') in ['vacation', 'temp'] }}"
     
     - variables:
         climate_name: "{{ thermostat_entity.replace('climate.', '') }}" 

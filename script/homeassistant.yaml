@@ -1,3 +1,82 @@
+#==========================#
+#     Global Variables     #
+#==========================#
+
+# We keep a set of global variables in the trigger-based template sensor 'Variables'. Most/all of these are actually
+# constants. They exist as entries in a dictionary under the 'variables' attribute, so are retrieved as follows:
+#
+# state_attr('sensor.variables', 'variables').<var name>
+
+# Trigger-based template sensors are restored on HA start, so we only need to initialize the variables once, which 
+# is the purpose of this script. As such, it never needs to be called normally.
+initialize_global_variables:
+  alias: Initialize Global Variables
+  
+  sequence:
+    
+    # Sun elevation angles used for lighting blueprints, automations and scripts.
+    - event: set_variable
+      event_data:
+        key: min_elevation
+        value: 3
+    - event: set_variable
+      event_data:
+        key: med_elevation
+        value: 6
+    - event: set_variable
+      event_data:
+        key: max_elevation
+        value: 9
+    
+    # Thermostat temperatures.
+    - event: set_variable
+      event_data:
+        key: downstairs_home_heat_temp
+        value: 68
+    - event: set_variable
+      event_data:
+        key: downstairs_home_cool_temp
+        value: 77
+    - event: set_variable
+      event_data:
+        key: upstairs_home_heat_temp
+        value: 67
+    - event: set_variable
+      event_data:
+        key: upstairs_home_cool_temp
+        value: 76
+    - event: set_variable
+      event_data:
+        key: extended_hold_heat_temp
+        value: 59
+    - event: set_variable
+      event_data:
+        key: extended_hold_cool_temp
+        value: 83
+    
+    # Rooms with lights are for voice control of lights in certain rooms.
+    # NOTE: The next 2 variables are related and must be kept in sync.
+    - event: set_variable
+      event_data:
+        key: light_rooms
+        value: ['family', 'guest', 'master', 'theater', 'upstairs']    
+    - event: set_variable
+      event_data:
+        key: light_rooms_lights
+        value: ['light.family_room_lamp', 'light.guest_bedroom_lamp_1', 'light.master_bedroom_lamp', 'light.theater_ceiling', 'light.upstairs_bedroom_light']
+    
+    # Rooms with fans are for voice control of ceiling fans in certain rooms.
+    # NOTE: The next 2 variables are related and must be kept in sync. Also, there is no sensor for the family room; it's the default, 
+    # and must be last in the list.
+    - event: set_variable
+      event_data:
+        key: fan_rooms
+        value: ['office', 'theater', 'family']    
+    - event: set_variable
+      event_data:
+        key: fan_rooms_sensors
+        value: ['binary_sensor.office_human_sensor_presence', 'binary_sensor.theater_av_system', '']
+
 #===================#
 #     Utilities     #
 #===================#
@@ -8,17 +87,11 @@ concat_log_files:
   sequence:
     - service: shell_command.concat_log_files
 
-# Concatenate a set of automation log files into one file for easier examination.
-concat_auto_log_files:
-  alias: Concat Auto Log Files
+# Concatenate a set of automation/script log files into one file for easier examination.
+concat_auto_scripts_log_files:
+  alias: Concat Auto Scripts Log Files
   sequence:
-    - service: shell_command.concat_auto_log_files
-
-# Concatenate a set of scripts log files into one file for easier examination.
-concat_scripts_log_files:
-  alias: Concat Scripts Log Files
-  sequence:
-    - service: shell_command.concat_scripts_log_files
+    - service: shell_command.concat_auto_scripts_log_files
 
 #===================#
 #     Reminders     #
@@ -129,7 +202,7 @@ set_number_offset:
     - service: input_number.set_value
       data:
         entity_id: "{{ entity }}"
-        datetime: "{{ states(base_entity) + amount }}"
+        value: "{{ states(base_entity) | int(0) + amount }}"
 
 #========================#
 #     MQTT Discovery     #

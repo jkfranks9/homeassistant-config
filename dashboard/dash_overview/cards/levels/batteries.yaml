@@ -40,8 +40,8 @@ cards:
       - entity: sensor.dryer_vibration_sensor_battery
         name: Dryer Vibration Sensor
       
-      - entity: sensor.upstairs_br_vent_1_battery
-        name: Upstairs BR Vent 1
+      - entity: sensor.master_br_vent_1_battery
+        name: Master BR Vent 1
      
-      - entity: sensor.upstairs_br_vent_2_battery
-        name: Upstairs BR Vent 2
+      - entity: sensor.master_br_vent_2_battery
+        name: Master BR Vent 2

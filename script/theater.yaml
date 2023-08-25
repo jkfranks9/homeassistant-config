@@ -5,6 +5,7 @@
 # Open the cinema to turn on some lights and warm up the projector and receiver.
 open_cinema:
   alias: Open Cinema
+  
   sequence:
     
     # Ensure the cinema is not already open.
@@ -15,7 +16,9 @@ open_cinema:
         - service: notify.alexa_media
           data:
             message: "Cinema is already open!!"
-            target: "{{ states('sensor.last_alexa') }}"
+            target:
+              - media_player.family_room_echo
+              - media_player.theater_echo
             data:
               type: tts
         
@@ -39,15 +42,16 @@ open_cinema:
         - if:
             - "{{ is_state('timer.cinema_usage_delay', 'idle') }}"
           
-          then:
-        
+          then:        
             - service: notify.alexa_media
               data:
                 message: >
                   {% set delay_minutes = (delay / 60) | round %}
                   {% set delay_display =iif(delay_minutes >= 1, delay_minutes, 1) %}
                   Cinema has been closed recently. Delaying cinema open for {{ delay_display }} {{ iif(delay_display == 1, 'minute', 'minutes') }}
-                target: "{{ states('sensor.last_alexa') }}"
+                target:
+                  - media_player.family_room_echo
+                  - media_player.theater_echo
                 data:
                   type: tts
         
@@ -98,6 +102,7 @@ open_cinema:
     
     # If no family are home, delay, then turn off some downstairs lights.
     - delay: '00:05:00'
+    
     - service: script.change_downstairs_lighting
       data:
         turn_on: false
@@ -110,9 +115,11 @@ open_cinema:
             - binary_sensor.adults_home
             - binary_sensor.children_home
           state: 'off'
+        
         - condition: time
           after:  '18:00:00'
           before: '23:30:00'
+    
     - service: script.disable_family_room_av
 
 # Close the cinema by turning off the current harmony activity, and relevant lights after a delay.
@@ -121,6 +128,7 @@ open_cinema:
 #       in that context, such as turning the remote off, but should do no harm.
 close_cinema:
   alias: Close Cinema
+  
   sequence:
     
     # Ensure the cinema is not already closed.
@@ -131,7 +139,9 @@ close_cinema:
         - service: notify.alexa_media
           data:
             message: "Cinema is already closed!!"
-            target: "{{ states('sensor.last_alexa') }}"
+            target:
+              - media_player.family_room_echo
+              - media_player.theater_echo
             data:
               type: tts
         
@@ -155,15 +165,16 @@ close_cinema:
         - if:
             - "{{ is_state('timer.cinema_usage_delay', 'idle') }}"
           
-          then:
-        
+          then:        
             - service: notify.alexa_media
               data:
                 message: >
                   {% set delay_minutes = (delay / 60) | round %}
                   {% set delay_display =iif(delay_minutes >= 1, delay_minutes, 1) %}
                   Cinema has been opened recently. Delaying cinema close for {{ delay_display }} {{ iif(delay_display == 1, 'minute', 'minutes') }}
-                target: "{{ states('sensor.last_alexa') }}"
+                target:
+                  - media_player.family_room_echo
+                  - media_player.theater_echo
                 data:
                   type: tts
         
@@ -191,6 +202,7 @@ close_cinema:
     
     # Turn off all devices.
     - delay: '00:00:02'
+    
     - service: remote.turn_off
       entity_id: remote.harmony_hub
     
@@ -216,6 +228,7 @@ close_cinema:
     
     # Turn off all lights.
     - delay: '00:05:00'
+    
     - service: script.turn_on
       entity_id: script.set_theater_dark
 
@@ -304,7 +317,7 @@ change_downstairs_lighting:
           
         # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
         - if:
-            - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
+            - "{{ state_attr('sun.sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
           
           then:    
             - service: light.turn_on

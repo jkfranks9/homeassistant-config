@@ -143,8 +143,8 @@
                                 ['binary_sensor.guest_bath_motion_detector_occupancy', 'sensor.guest_bath_motion_detector_last_seen', 'Guest Bath Motion Detector'],
                                 ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen', 'Laundry Room Motion Detector'],
                                 ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen', 'Master Bath Motion Detector'],
-                                ['cover.upstairs_br_vent_1', 'sensor.upstairs_br_vent_1_last_seen', 'Upstairs BR Vent 1'],
-                                ['cover.upstairs_br_vent_2', 'sensor.upstairs_br_vent_2_last_seen', 'Upstairs BR Vent 2']
+                                ['cover.master_br_vent_1', 'sensor.master_br_vent_1_last_seen', 'Master BR Vent 1'],
+                                ['cover.master_br_vent_2', 'sensor.master_br_vent_2_last_seen', 'Master BR Vent 2']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -184,8 +184,8 @@
                                 ['input_number.guest_bath_motion_detector', 'Guest Bath Motion Detector'],
                                 ['input_number.laundry_room_motion_detector', 'Laundry Room Motion Detector'],
                                 ['input_number.master_bath_motion_detector', 'Master Bath Motion Detector'],
-                                ['input_number.upstairs_br_vent_1', 'Upstairs BR Vent 1'],
-                                ['input_number.upstairs_br_vent_2', 'Upstairs BR Vent 2']
+                                ['input_number.master_br_vent_1', 'Master BR Vent 1'],
+                                ['input_number.master_br_vent_2', 'Master BR Vent 2']
                                ] %}
                                
           {# --Create an empty list to start-- #}

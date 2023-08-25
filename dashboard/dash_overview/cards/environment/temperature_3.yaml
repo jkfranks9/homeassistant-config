@@ -1,0 +1,31 @@
+#============================#
+#     Temperature 2 Card     #
+#============================#
+
+type: grid
+columns: 2
+cards:
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.master_br_vents_temperature
+      - name: Master Vents
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.theater_temperature
+      - name: Theater
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.back_door_sensor_device_temperature
+      - name: Back Door
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.guest_br_window_sensor_device_temperature
+      - name: Guest Window

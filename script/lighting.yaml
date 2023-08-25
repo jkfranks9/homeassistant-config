@@ -268,7 +268,7 @@ establish_bedtime_environment:
     - if:
         - condition: state
           entity_id: input_select.occupied_bedrooms
-          state: 'None'
+          state: 'Empty'
       
       then:
         - scene: scene.non_master_lights_out
@@ -276,8 +276,21 @@ establish_bedtime_environment:
       # Family members are present.
       else:
     
-        # Turn off all but bedroom lights.
+        # Turn off all but bedroom lights. Note that some upstairs lights are also left alone (as part of the scene)
+        # if the upstairs bedroom is occupied.
         - scene: scene.non_bedroom_lights_out
+        
+        - if:
+            - condition: state
+              entity_id: binary_sensor.upstairs_bedroom_occupied
+              state: 'off'
+          
+          then:
+            - service: scene.apply
+              data:
+                entities:
+                  light.theater_lights:         'off'
+                  light.upstairs_common_lights: 'off'
         
         # Determine who is home and which bedrooms are occupied.
         - choose:
@@ -354,8 +367,9 @@ establish_bedtime_environment:
               - service: script.set_temporary_thermostat_hold
                 data:
                   thermostat_entity: climate.downstairs
-                  heat_temp: !secret constant_downstairs_home_heat_temp
-                  cool_temp: !secret constant_downstairs_home_cool_temp
+                  heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
+                  cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
+                  days: 1
 
               # Enter sleep mode upstairs.
               - service: script.set_thermostat_preset
@@ -366,9 +380,6 @@ establish_bedtime_environment:
               # Mute master bedroom echo device.
               - service: script.turn_on
                 entity_id: script.mute_master_bedroom_echo
-                
-              # Close the upstairs guest bedroom vents.
-              - service: script.close_upstairs_br_vents
                 
               # Turn on the master bath light as a night light, after a delay.
               - delay: '00:20:00'
@@ -512,7 +523,7 @@ set_up_bedroom_devices:
     - choose:
       
       # Downstairs bedroom occupied.
-      - conditions: "{{ bedrooms == downstairs }}"
+      - conditions: "{{ bedrooms == 'downstairs' }}"
       
         sequence:
     
@@ -520,19 +531,17 @@ set_up_bedroom_devices:
           - service: script.set_temporary_thermostat_hold
             data:
               thermostat_entity: climate.downstairs
-              heat_temp: !secret constant_downstairs_home_heat_temp
-              cool_temp: !secret constant_downstairs_home_cool_temp
+              heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
+              cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
+              days: 1
 
           # Mute downstairs guest bedroom echo device.
           - service: script.turn_on
             entity_id: script.mute_guest_bedroom_echo
-            
-          # Close the upstairs guest bedroom vents.
-          - service: script.close_upstairs_br_vents
       
       # Upstairs bedroom occupied. We don't change the upstairs thermostat, vents or vacuum here. 
       # That's done once when family members arrive.
-      - conditions: "{{ bedrooms == upstairs }}"
+      - conditions: "{{ bedrooms == 'upstairs' }}"
       
         sequence:
 
@@ -542,7 +551,7 @@ set_up_bedroom_devices:
         
       # Both bedrooms occupied. We don't change the upstairs thermostat, vents or vacuum here. 
       # That's done once when family members arrive.
-      - conditions: "{{ bedrooms == both }}"
+      - conditions: "{{ bedrooms == 'both' }}"
       
         sequence:
     
@@ -550,8 +559,9 @@ set_up_bedroom_devices:
           - service: script.set_temporary_thermostat_hold
             data:
               thermostat_entity: climate.downstairs
-              heat_temp: !secret constant_downstairs_home_heat_temp
-              cool_temp: !secret constant_downstairs_home_cool_temp
+              heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
+              cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
+              days: 1
 
           # Mute downstairs guest bedroom echo device.
           - service: script.turn_on
@@ -625,9 +635,9 @@ change_lighting_per_weather:
         
     - variables:
         sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-        min_elevation: "{{ states('input_number.min_elevation') }}"
-        med_elevation: "{{ states('input_number.min_elevation') }}"
-        max_elevation: "{{ states('input_number.max_elevation') }}"
+        min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
+        med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
+        max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
     
     # Perform the appropriate actions based on the caller, sun rising state and weather.
     - if:
@@ -715,9 +725,9 @@ change_lighting_per_weather_simple:
         # Note that we're using the effective sun sensor, which allows us to do testing using the
         # testing infrastructure. If we're not testing the sensor reflects the real sun.
         sun_elevation: "{{ state_attr('sensor.effective_sun', 'elevation') }}"
-        min_elevation: "{{ states('input_number.min_elevation') }}"
-        med_elevation: "{{ states('input_number.min_elevation') }}"
-        max_elevation: "{{ states('input_number.max_elevation') }}"
+        min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
+        med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
+        max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
     
     # Perform the appropriate action based on turning on or off, sun rising state and weather.
     - if:
@@ -793,9 +803,9 @@ reset_smart_bulb_sky_conditions:
         
     - variables:
         sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-        min_elevation: "{{ states('input_number.min_elevation') }}"
-        med_elevation: "{{ states('input_number.min_elevation') }}"
-        max_elevation: "{{ states('input_number.max_elevation') }}"
+        min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
+        med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
+        max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
     
     # Use the evaluated weather conditions and sun elevation.
     - condition: template
@@ -940,7 +950,7 @@ turn_on_christmas_lights:
       state: 'on'
     
     - if:
-      - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
+      - "{{ state_attr('sun.sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
     
       then:    
         - service: light.turn_on
@@ -997,25 +1007,3 @@ start_bath_time:
       data:
         entity_id: timer.bath_time
         duration: '00:45:00'
-
-#==============================#
-#     Lighting Convenience     #
-#==============================#
-
-# Used mostly via Alexa.
-
-turn_on_light:
-  alias: Turn On Light
-  
-  use_blueprint:
-    path: lighting/light_operation.yaml
-    input:
-      operation: true
-
-turn_off_light:
-  alias: Turn Off Light
-  
-  use_blueprint:
-    path: lighting/light_operation.yaml
-    input:
-      operation: false

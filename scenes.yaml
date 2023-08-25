@@ -5,10 +5,11 @@
 - id: 'lights_out'
   name: Lights Out
   entities:
-    light.downstairs_lights: 'off'
-    light.upstairs_lights:   'off'
-    light.storage_lights:    'off'
-    light.outdoor_lights:    'off'
+    light.downstairs_lights:              'off'
+    light.upstairs_lights:                'off'
+    light.storage_lights:                 'off'
+    light.outdoor_lights:                 'off'
+    input_boolean.ceiling_fan_lights_off: 'on'
 
 #===============================#
 #     Non Master Lights Out     #
@@ -18,39 +19,42 @@
 - id: 'non_master_lights_out'
   name: Non Master Lights Out
   entities:
-    light.master_bath_light:             'off'
-    light.downstairs_common_lights:      'off'
-    light.downstairs_guest_suite_lights: 'off'
-    light.family_room_lights:            'off'
-    light.kitchen_lights:                'off'
-    light.office_lights:                 'off'
-    light.laundry_room_lights:           'off'
-    light.all_christmas_lights:          'off'
-    light.upstairs_lights:               'off'
-    light.storage_lights:                'off'
-    light.outdoor_lights:                'off'
+    light.master_bath_light:              'off'
+    light.downstairs_common_lights:       'off'
+    light.downstairs_guest_suite_lights:  'off'
+    light.family_room_lights:             'off'
+    light.kitchen_lights:                 'off'
+    light.office_lights:                  'off'
+    light.laundry_room_lights:            'off'
+    light.all_christmas_lights:           'off'
+    light.upstairs_lights:                'off'
+    light.storage_lights:                 'off'
+    light.outdoor_lights:                 'off'
+    input_boolean.ceiling_fan_lights_off: 'on'
 
 #================================#
 #     Non Bedroom Lights Out     #
 #================================#
 
 # Turn off all lights except bedrooms and related night lights.
+# Note that the theater and upstairs common lights are not included here, in case the upstairs
+# bedroom is occupied. In that case, such lights might be still in use at my bedtime. The 
+# Establish Bedtime Environment script takes care of that.
 - id: 'non_bedroom_lights_out'
   name: Non Bedroom Lights Out
   entities:
-    light.master_bath_light:          'off'
-    light.guest_bath_light:           'off'
-    light.stairway_light:             'off'
-    light.upstairs_bath_tub_light:    'off'
-    light.downstairs_common_lights:   'off'
-    light.kitchen_lights:             'off'
-    light.office_lights:              'off'
-    light.laundry_room_lights:        'off'
-    light.all_christmas_lights:       'off'
-    light.theater_lights:             'off'
-    light.upstairs_common_lights:     'off'
-    light.storage_lights:             'off'
-    light.outdoor_lights:             'off'
+    light.master_bath_light:              'off'
+    light.guest_bath_light:               'off'
+    light.stairway_light:                 'off'
+    light.upstairs_bath_tub_light:        'off'
+    light.downstairs_common_lights:       'off'
+    light.kitchen_lights:                 'off'
+    light.office_lights:                  'off'
+    light.laundry_room_lights:            'off'
+    light.all_christmas_lights:           'off'
+    light.storage_lights:                 'off'
+    light.outdoor_lights:                 'off'
+    input_boolean.ceiling_fan_lights_off: 'on'
 
 #==================================#
 #     Theater Auxiliary Lights     #

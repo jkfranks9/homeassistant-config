@@ -27,13 +27,13 @@
   
   action:
     - variables:
-        rooms_with_fans: ['family room', 'office', 'theater']
-        response_room: "{{ trigger.event.data.event_response }}"
-        response_room_underscore: "{{ trigger.event.data.event_response | replace(' ', '_') }}"
+        fan_rooms: "{{ state_attr('sensor.variables', 'variables').fan_rooms }}"
+        response_room: "{{ trigger.event.data.event_response.split(' ')[0] }}"
+        room: "{{ iif(response_room == 'family', 'family_room' , response_room) }}"
     
     # Check for a valid response.
     - if:
-        - "{{ response_room in rooms_with_fans }}"
+        - "{{ response_room in fan_rooms }}"
       
       then:
         
@@ -42,12 +42,12 @@
           target:
             entity_id: input_text.alexa_fan_room
           data:
-            value: "{{ response_room_underscore }}"
+            value: "{{ room }}"
         
         # Ask for the fan setting.
         - service: script.ask_fan_setting_family
           data:
-            room: "{{ response_room_underscore }}"
+            room: "{{ room }}"
       
       # Issue instructions to the clueless user.
       else:
@@ -55,8 +55,8 @@
           data:
             destination:
               - echo
-            message: "{{ response_room }} is not valid. You must pick one of {{ (rooms_with_fans) | join(', ') }}"
-            media_player_entity: "{{ ['media_player.family_room_echo', 'media_player.office_echo', 'media_player.theater_echo'] }}"
+            message: "{{ response_room }} is not valid. You must pick one of {{ (fan_rooms) | join(', ') }}"
+            media_player_entity: "{{ state_attr('media_player.room_echoes_with_fan', 'entity_id') }}"
 
 - alias: Handle Fan Setting Response
   id: handle_fan_setting_response
@@ -71,13 +71,10 @@
   action:
     - variables:
         
-        # We use several sets of possible settings. Turns out 'off' can't be used (tells Alexa to quit),
+        # This is the set of possible settings. Turns out 'off' can't be used (tells Alexa to quit),
         # nor can 'low' (adjusts echo volume). Also, numbers ('one', 'two') do nothing. Sigh.
-        # So here are some options. I divided them into sets so I can have a single array of speeds.
-        fan_settings_1: ['none', 'gentle', 'moderate', 'severe']
-        fan_settings_2: ['still', 'breezy', 'windy', 'stormy']
-        fan_settings_3: ['0', '1', '2', '3']
-        fan_settings: "{{ fan_settings_1 + fan_settings_2 + fan_settings_3 }}"
+        # So this is what I came up with.
+        fan_settings: ['fan off', 'fan low', 'fan medium', 'fan high']
         
         fan_speeds: ['0', '33', '66', '99']
         response_setting: "{{ trigger.event.data.event_response }}"
@@ -97,17 +94,8 @@
         
         - service: script.set_fan_to_speed
           data:
-            entity_id: "{{ 'fan.' ~ states('input_text.alexa_fan_room') ~ '_fan' }}"
-            speed: >
-              {% if response_setting in fan_settings_1 %}
-                {% set index = fan_settings_1.index(response_setting) %}
-              {% elif response_setting in fan_settings_2 %}
-                {% set index = fan_settings_2.index(response_setting) %}
-              {% elif response_setting in fan_settings_3 %}
-                {% set index = fan_settings_3.index(response_setting) %}
-              {% endif %}
-              
-              {{ fan_speeds[index] }}
+            entity_id: "{{ 'fan.' ~ room ~ '_fan' }}"
+            speed:  "{{ fan_speeds[fan_settings.index(response_setting)] }}"
       
       # Issue instructions to the clueless user.
       else:
@@ -116,4 +104,44 @@
             destination:
               - echo
             message: "{{ response_setting }} is not valid. You must pick one of {{ (fan_settings) | join(', ') }}"
-            media_player_entity: "{{ 'media_player.' ~ states('input_text.alexa_fan_room') ~ '_echo' }}"
+            media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
+
+#=====================#
+#     Room Lights     #
+#=====================#
+
+- alias: Handle Light Room Response
+  id: handle_light_room_response
+  
+  trigger:
+    - platform: event
+      event_type: alexa_actionable_notification
+      event_data:
+        event_id: actionable_notification_light_room_choice
+        event_response_type: ResponseString
+  
+  action:
+    - variables:
+        light_rooms: "{{ state_attr('sensor.variables', 'variables').light_rooms }}"
+        light_rooms_lights: "{{ state_attr('sensor.variables', 'variables').light_rooms_lights }}"
+        response_room: "{{ (trigger.event.data.event_response).split(' ')[0] }}"
+    
+    # Check for a valid response.
+    - if:
+        - "{{ response_room in light_rooms }}"
+      
+      then:
+        
+        # Toggle the light.
+        - service: light.toggle
+          target:
+            entity_id: "{{ light_rooms_lights[light_rooms.index(response_room)] }}"
+      
+      # Issue instructions to the clueless user.
+      else:
+        - service: script.send_notification
+          data:
+            destination:
+              - echo
+            message: "{{ response_room }} is not valid. You must pick one of {{ (light_rooms) | join(', ') }}"
+            media_player_entity: "{{ state_attr('media_player.room_echoes_with_light', 'entity_id') }}"

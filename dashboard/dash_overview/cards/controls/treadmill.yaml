@@ -6,11 +6,28 @@ type: custom:stack-in-card
 title: Treadmill Variables
 mode: horizontal
 cards:
-  - type: entity
-    entity: input_number.treadmill_speed
-    name: Speed
-  - type: entity
-    entity: input_number.treadmill_incline
-    name: Incline
-  - type: entity
-    entity: input_number.user_weight
+  
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 4
+          square: false
+          cards:
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.treadmill_speed
+              name: Speed
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.treadmill_incline
+              name: Incline
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.user_weight

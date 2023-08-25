@@ -33,8 +33,8 @@ cards:
       - entity: sensor.office_human_sensor_linkquality
         name: Office Human Presence Sensor
       
-      - entity: sensor.upstairs_br_vent_1_linkquality
-        name: Upstairs BR Vent 1
+      - entity: sensor.master_br_vent_1_linkquality
+        name: Master BR Vent 1
       
-      - entity: sensor.upstairs_br_vent_2_linkquality
-        name: Upstairs BR Vent 2
+      - entity: sensor.master_br_vent_2_linkquality
+        name: Master BR Vent 2

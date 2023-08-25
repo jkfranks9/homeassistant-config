@@ -48,14 +48,10 @@ cards:
   
             - type: custom:button-card
               template: hvac_vent_button
-              entity: cover.upstairs_br_vent_1
-              name: Upstairs BR 1
-              variables:
-                var_entity: cover.upstairs_br_vent_1
+              entity: cover.master_br_vent_1
+              name: Master BR 1
               
             - type: custom:button-card
               template: hvac_vent_button
-              entity: cover.upstairs_br_vent_2
-              name: Upstairs BR 2
-              variables:
-                var_entity: cover.upstairs_br_vent_2
+              entity: cover.master_br_vent_2
+              name: Master BR 2

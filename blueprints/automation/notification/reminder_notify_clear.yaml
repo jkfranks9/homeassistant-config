@@ -32,7 +32,7 @@ variables:
   input_tag_prefix: !input tag_prefix
 
 action:
-  - service: notify.mobile_app_jon_galaxy
+  - service: notify.mobile_app_jon_companion
     data:
       message: 'clear_notification'
       data:

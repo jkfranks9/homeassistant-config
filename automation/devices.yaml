@@ -82,12 +82,15 @@
     # Shut down the PC.
     - service: script.turn_off_pc
     
-    # The vacuum bizarrely starts running if the power goes out, so stop it (unless it's already running).   
-    - condition: state
-      entity_id: timer.vacuum
-      state: 'idle'
-    - service: vacuum.stop
-      entity_id: vacuum.ecovacs_deebot 
+    # The vacuum bizarrely starts running if the power goes out, so stop it (unless it's already running).
+    - if:  
+        - condition: state
+          entity_id: timer.vacuum
+          state: 'idle'
+      
+      then:        
+        - service: vacuum.return_to_base
+          entity_id: vacuum.ecovacs_deebot 
 
 # Shut down the host if UPS runtime reaches critical level.
 - alias: Handle UPS Critical
@@ -193,9 +196,9 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: shell_command.reboot_nut_service
 
-#===============#
-#     House     #
-#===============#
+#====================#
+#     House: Jon     #
+#====================#
 
 # Open up the house when needed.
 - alias: Open House
@@ -224,12 +227,12 @@
         entity_id: script.reset_jon_away
     
     # Open garage door.
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.garage_door_info_message
-    
     - service: script.turn_on
       target:
         entity_id: script.open_garage_door_north
+      data:
+        variables:
+          use_info_message: false
     
     # Turn on automations that were possibly turned off by Leave Home, and trigger them.
     - service: automation.turn_on
@@ -266,7 +269,7 @@
     
     # Turn on appropriate lights if it's dark-ish.
     - if:
-        - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
+        - "{{ state_attr('sun.sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
       
       then:        
         - service: light.turn_on
@@ -314,16 +317,19 @@
         seconds: "{{ range(2, 15) | random }}"
     
     # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.garage_door_info_message
-    
     - service: script.turn_on
       target:
         entity_id: script.close_garage_door_north
+      data:
+        variables:
+          use_info_message: true
     
     - service:  script.turn_on
       target:
         entity_id: script.close_garage_door_south
+      data:
+        variables:
+          use_info_message: true
     
     - if:
       
@@ -352,9 +358,6 @@
         
             # Turn off all fans.
             - scene: scene.fans_off
-        
-            # Close the upstairs guest bedroom vents.
-            - service: script.close_upstairs_br_vents
             
             # Turn off automations that could turn on various lights.
             - service: automation.turn_off
@@ -376,6 +379,10 @@
             entities:
               light.storage_lights: 'off'
               light.outdoor_lights: 'off'
+
+#=======================#
+#     House: Family     #
+#=======================#
 
 # Open the house for family.
 - alias: Open House For Family
@@ -484,12 +491,12 @@
                 duration: '00:30:00'
         
         # Open garage door.
-        - service: input_boolean.turn_on
-          entity_id: input_boolean.garage_door_info_message
-        
         - service: script.turn_on
           target:
             entity_id: script.open_garage_door_north
+          data:
+            variables:
+              use_info_message: true
     
     # Perform tasks for children.
     - if:
@@ -502,24 +509,6 @@
           data:
             light_entity: light.guest_bedroom_lamp_2
             turn_on: true
-
-# Close garage door north once a delay has occurred after family has arrived after sunset.
-- alias: Close Garage North
-  id: close_garage_north
-  
-  trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.garage_north_close
-  
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.garage_door_info_message
-    
-    - service: script.turn_on
-      target:
-        entity_id: script.close_garage_door_north
 
 # Close house when all family members leave.
 - alias: Close House For Family
@@ -551,36 +540,42 @@
   
   action:
     
-    # Remove upstairs thermostat hold.
-    - service: script.remove_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        extended: false
+    # Restore the upstairs bedroom to normal.
+    - if:
+        - condition: state
+          entity_id: binary_sensor.upstairs_bedroom_occupied
+          state: 'on'
+      
+      then:
+        - service: script.restore_normal_upstairs_bedroom
     
-    # Close the upstairs guest bedroom vents.
-    - service: script.close_upstairs_br_vents
-    
-    # Turn off guest suite lights.
-    - service: scene.apply
-      data:
-        entities:
-          light.guest_bedroom_lamp:      'off'
-          light.guest_bedroom_lamp_2:    'off'
-          light.upstairs_bedroom_light:  'off'
-          light.upstairs_bedroom_outlet: 'off'
-    
-    # Reset occupied bedrooms to none.
+    # Reset occupied bedrooms.
     - service: input_select.select_option
       target:
         entity_id: input_select.occupied_bedrooms
       data:
-        option: 'None'
-            
-    # Turn on the vacuum automation.
-    - service: script.toggle_vacuum_automation
+        option: Empty
+    
+    # Turn off appropriate guest suite lights and fans.
+    - service: scene.apply
       data:
-        vacuum_name: "{{ state_attr('vacuum.ecovacs_deebot', 'friendly_name') }}"
-        operation: 'on'
+        entities:
+          light.guest_bedroom_lamp:          'off'
+          light.guest_bedroom_lamp_2:        'off'
+          light.upstairs_guest_suite_lights: 'off'
+          light.upstairs_common_lights:      'off'
+          light.theater_lights:              'off'
+          switch.upstairs_bath_fan:          'off'
+          fan.theater_fan:                   'off'
+    
+    # Reset Child Alone.
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.child_alone
+
+#============================#
+#     Upstairs Occupancy     #
+#============================#
 
 # Set the upstairs thermostat and bedroom vents appropriately when the occupied bedrooms change.
 # Normally this only happens when family members arrive, but it could also be done manually via the UI.
@@ -588,7 +583,7 @@
   id: 'prepare_upstairs_bedroom_for_family'
   mode: queued
   
-  # Trigger only on the state of occupied bedrooms.
+  # Trigger when the upstairs bedroom is occupied by an adult.
   trigger:
     - platform: state
       entity_id: input_select.occupied_bedrooms
@@ -601,20 +596,15 @@
         - 'ChildDownPlus'
         - 'Both'
   
-  # We only care if the upstairs bedroom is occupied by an adult.
-  condition: "{{ states('input_select.occupied_bedrooms') in ['AdultUp', 'ChildDownPlus', 'Both'] }}"
-  
   action:
 
-    # Set a temporary temperature hold upstairs.
+    # Set a temporary temperature hold upstairs. Assume 7 days total.
     - service: script.set_temporary_thermostat_hold
       data:
         thermostat_entity: climate.upstairs
-        heat_temp: !secret constant_upstairs_home_heat_temp
-        cool_temp: !secret constant_upstairs_home_cool_temp
-            
-    # Open the upstairs guest bedroom vents.
-    - service: script.open_upstairs_br_vents
+        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
+        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
+        days: 7
             
     # Turn off the vacuum automation.
     - service: script.toggle_vacuum_automation
@@ -622,19 +612,43 @@
         vacuum_name: "{{ state_attr('vacuum.ecovacs_deebot', 'friendly_name') }}"
         operation: 'off'
 
-# Turn off extended away mode when Jon is nearing home (proximity is somewhat unreliable, so if this doesn't trigger we have a failsafe 
-# below in Open House).
-- alias: Turn Off Extended Away Mode
-  id: 'turn_off_extended_away_mode'
+# If a child is home with parents, we don't have a way to determine if the parents leave (not a temporary leave),
+# but the child stays home longer. So we use the Child Alone button triggered via the UI to indicate this.
+- alias: Restore Normal Upstairs Bedroom
+  id: 'restore_normal_upstairs_bedroom'
   
+  # Trigger when the Child Alone button is pressed on the UI.
   trigger:
-    - platform: template
-      value_template: "{{ is_state('proximity.jon_home') < 13000 if is_number('proximity.jon_home') }}"
-      
-  condition: "{{ is_state_attr('proximity.jon_home', 'dir_of_travel', 'towards') }}"
+    - platform: state
+      entity_id: input_boolean.child_alone
+      to: 'on'
   
   action:
-    - service: script.turn_off_extended_away_mode
+    
+    # Restore the upstairs bedroom to normal.
+    - service: script.restore_normal_upstairs_bedroom
+    
+    # Reset occupied bedrooms. For now this is ChildDown, until I figure out a more complete solution.
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.occupied_bedrooms
+      data:
+        option: ChildDown
+    
+    # Turn off upstairs guest suite lights and fans.
+    - service: scene.apply
+      data:
+        entities:
+          light.upstairs_guest_suite_lights: 'off'
+          light.upstairs_common_lights:      'off'
+          light.theater_lights:              'off'
+          switch.upstairs_bath_fan:          'off'
+          fan.theater_fan:                   'off'
+    
+    # Reset Child Alone.
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.child_alone
 
 #=================================#
 #     House Open/Close Timing     #
@@ -711,6 +725,28 @@
     - service: automation.turn_on
       entity_id: automation.open_house
 
+#================#
+#     Garage     #
+#================#
+
+# Close garage door north once a delay has occurred after family has arrived after sunset.
+- alias: Close Garage North
+  id: close_garage_north
+  
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.garage_north_close
+  
+  action:
+    - service: script.turn_on
+      target:
+        entity_id: script.close_garage_door_north
+      data:
+        variables:
+          use_info_message: true
+
 #========================#
 #     Family Room AV     #
 #========================#
@@ -772,7 +808,7 @@
       entity_id: binary_sensor.office_human_sensor_presence
       from: 'on'
       to: 'off'
-      for: '00:30:00'
+      for: '00:20:00'
   
   action:
     - service: input_boolean.turn_off
@@ -783,43 +819,7 @@
 #     Ceiling Fans     #
 #======================#
 
-# Control office fan automation based on the AV system in use or not.
-- alias: Control Office Fan Automation
-  id: 'control_office_fan_automation'
-  
-  use_blueprint:
-    path: devices/control_ceiling_fan_automations.yaml
-    input:
-      sensor_entity: input_boolean.office_occupied
-      automation_entity: automation.operate_office_fan
-      speed_entity: input_number.office_fan_speed
-      fan_entity: fan.office_fan
-
-# Control family room fan automation based on the AV system in use or not.
-- alias: Control Family Room Fan Automation
-  id: 'control_family_room_fan_automation'
-  
-  use_blueprint:
-    path: devices/control_ceiling_fan_automations.yaml
-    input:
-      sensor_entity: binary_sensor.family_room_av_system
-      automation_entity: automation.operate_family_room_fan
-      speed_entity: input_number.family_room_fan_speed
-      fan_entity: fan.family_room_fan
-
-# Control theater fan automation based on the AV system in use or not.
-- alias: Control Theater Fan Automation
-  id: 'control_theater_fan_automation'
-  
-  use_blueprint:
-    path: devices/control_ceiling_fan_automations.yaml
-    input:
-      sensor_entity: binary_sensor.theater_av_system
-      automation_entity: automation.operate_theater_fan
-      speed_entity: input_number.theater_fan_speed
-      fan_entity: fan.theater_fan
-
-# Operate the office fan when the AV system is on.
+# Operate the office fan when the office is occupied.
 - alias: Operate Office Fan
   id: 'operate_office_fan'
   
@@ -841,7 +841,7 @@
       sensor_entity: binary_sensor.family_room_av_system
       temperature_entity: sensor.main_floor_temperature
       fan_entity: fan.family_room_fan
-      thresholds: [80, 76, 73]
+      thresholds: [79, 76, 74]
 
 # Operate the theater fan when the AV system is on.
 - alias: Operate Theater Fan
@@ -1042,7 +1042,7 @@
     - service: input_boolean.turn_off
       entity_id: input_boolean.vacuum_kicked_off
     
-    - service: vacuum.turn_on
+    - service: vacuum.start
       entity_id: vacuum.ecovacs_deebot
     
     - service: timer.start
@@ -1066,7 +1066,7 @@
       weekday:
         - mon
   action:
-    - service: vacuum.turn_off
+    - service: vacuum.return_to_base
       entity_id: vacuum.ecovacs_deebot
 
 # Detect the vacuum running - we use the battery dropping below a threshold as the trigger.
@@ -1429,7 +1429,7 @@
       entity_id: binary_sensor.dryer_vibration_sensor_vibration
       from: 'off'
       to: 'on'
-      for: 30
+      for: 90
       
   action:
     
@@ -1470,7 +1470,7 @@
         message: stopped
 
 #=======================#
-#     General Plugs     #
+#     Treadmill Fan     #
 #=======================#
 
 # Control the treadmill fan based on temperature.
@@ -1490,7 +1490,7 @@
         sequence:
           - delay: '00:10:00'
           - service: switch.turn_on
-            entity_id: switch.general_plug_1
+            entity_id: switch.treadmill_fan
       
       - conditions:
         - condition: numeric_state
@@ -1500,11 +1500,11 @@
         sequence:
           - delay: '00:05:00'
           - service: switch.turn_on
-            entity_id: switch.general_plug_1
+            entity_id: switch.treadmill_fan
       
       default:
         - service: switch.turn_on
-          entity_id: switch.general_plug_1
+          entity_id: switch.treadmill_fan
 
 - alias: Turn Off Treadmill Fan
   id: 'turn_off_treadmill_fan'
@@ -1521,7 +1521,7 @@
     
     # Turn off the treadmill fan.
     - service: switch.turn_off
-      entity_id: switch.general_plug_1
+      entity_id: switch.treadmill_fan
     
     # Now turn on the office fan so I can continue cooling down.
     - service: script.turn_on
@@ -1537,55 +1537,37 @@
 #     Tag/Beacon Presence     #
 #=============================#
 
-- alias: Log Blue Charm Presence
-  id: log_blue_charm_presence
+- alias: Log Blue Charm Debug
+  id: log_blue_charm_debug
   mode: queued
   
   trigger:
     - platform: state
       entity_id: sensor.blue_charm_presence
-  
-  action:
-    - service: system_log.write
-      data:
-        message: "Blue Charm from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }}"
-        level: debug
-
-- alias: Log Garage Distance
-  id: log_garage_distance
-  mode: queued
-  
-  trigger:
+      id: Blue Charm
+    
     - platform: state
       entity_id: sensor.ble_garage_blue_charm_distance
-  
-  action:
-    - service: system_log.write
-      data:
-        message: "Garage distance from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }}"
-        level: debug
-
-- alias: Log House Distance
-  id: log_house_distance
-  mode: queued
-  
-  trigger:
+      id: Garage distance
+    
     - platform: state
       entity_id: sensor.ble_house_blue_charm_distance
+      id: House distance
   
   action:
     - service: system_log.write
       data:
-        message: "House distance from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }}"
+        message: "{{ trigger.id ~ ' from: ' ~ trigger.from_state.state ~ ', to: ' ~ trigger.to_state.state }}"
         level: debug
 
 # Activate Blue Charm beacon device tracker.
 - alias: Activate Beacon Device Tracker
   id: 'activate_beacon_device_tracker'
+  
   trigger:
     - platform: state
       entity_id: sensor.blue_charm_presence
-      from: 'Away'
+      #from: 'Away'
       to:
         - 'Garage'
         - 'House'
@@ -1599,6 +1581,7 @@
 # Deactivate Blue Charm beacon device tracker.
 - alias: Deactivate Beacon Device Tracker
   id: 'deactivate_beacon_device_tracker'
+  
   trigger:
     - platform: state
       entity_id: sensor.blue_charm_presence
@@ -1610,7 +1593,11 @@
   # So we have a possible timing problem: during startup, the Blue Charm Presence sensor can change to Away if ESPHome has not had 
   # time to initialize the BLE readers (garage and house). We don't want to turn off children home in this case.
   # So we verify that the wifi sensors in both readers are in a good state before continuing. Yeah, I know.
-  condition: "{{ states('sensor.ble_garage_wifi_signal') not in ['unknown', 'unavailable'] and states('sensor.ble_house_wifi_signal') not in ['unknown', 'unavailable'] }}"
+  variables:
+    garage_wifi: "{{ states('sensor.ble_garage_wifi_signal') }}"
+    house_wifi: "{{ states('sensor.ble_house_wifi_signal') }}"
+  
+  condition: "{{ garage_wifi not in ['unknown', 'unavailable'] and house_wifi not in ['unknown', 'unavailable'] }}"
   
   action:
     - service: mqtt.publish
@@ -1665,48 +1652,30 @@
         - switch.guest_bedroom_echo_do_not_disturb_switch
         - switch.upstairs_bedroom_echo_do_not_disturb_switch
 
-#=====================#
-#     Smart Vents     #
-#=====================#
+#====================#
+#     HVAC Vents     #
+#====================#
 
-# Control upstairs bedroom vents based on HVAC fan (only) running. The fan runs a short period every hour to circulate air a bit,
-# so I want the vents to be open when that happens, unless the bedroom is occupied.
-- alias: Open Upstairs Bedroom Vents
-  id: 'open_upstairs_bedroom_vents'
+# Open the HVAC vents near bedtime.
+- alias: Open HVAC Vents
+  id: open_hvac_vents
   
   trigger:
-    - platform: state
-      entity_id: climate.upstairs
-      attribute: fan
-      from: 'off'
-      to: 'on'
-  
-  condition:
-    
-    # Ensure ONLY the fan is running.
-    - condition: template
-      value_template: "{{ state_attr('climate.upstairs', 'equipment_running') == 'fan' }}"
-    
-    # Ensure the upstairs bedroom is not occupied.
-    -  "{{ is_state('binary_sensor.upstairs_bedroom_occupied', 'off') }}"
+    - platform: time
+      at: '21:30:00'
   
   action:
-    - service: script.open_upstairs_br_vents
+    - service: script.open_hvac_vents
 
-- alias: Close Upstairs Bedroom Vents
-  id: 'close_upstairs_bedroom_vents'
+# Close the HVAC vents at wakeup.
+- alias: Close HVAC Vents
+  id: close_hvac_vents
   
   trigger:
     - platform: state
-      entity_id: climate.upstairs
-      attribute: fan
+      entity_id: input_boolean.nighttime
       from: 'on'
       to: 'off'
   
-  condition:
-    
-    # Ensure the upstairs bedroom is not occupied.
-    -  "{{ is_state('binary_sensor.upstairs_bedroom_occupied', 'off') }}"
-  
   action:
-    - service: script.close_upstairs_br_vents
+    - service: script.close_hvac_vents

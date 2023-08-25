@@ -18,11 +18,7 @@ frontend:
 alexa:          !include database/alexa.yaml
 automation:     !include_dir_merge_list automation
 cover:          !include covers.yaml
-group:          !include_dir_merge_named group
 influxdb:       !include database/influxdb.yaml
-input_boolean:  !include input_boolean.yaml
-input_number:   !include input_number.yaml
-input_select:   !include input_select.yaml
 logger:         !include database/logger.yaml
 media_player:   !include media_player.yaml
 panel_custom:   !include panel_custom.yaml
@@ -223,13 +219,9 @@ system_log:
 
 # Notify service
 notify:
-  - name: triggered_automations
+  - name: automations_scripts
     platform: file
-    filename: debug_logs/triggered_automations.log
-  
-  - name: triggered_scripts
-    platform: file
-    filename: debug_logs/triggered_scripts.log
+    filename: debug_logs/automations_scripts.log
   
   - name: laundry_events
     platform: file
@@ -263,12 +255,10 @@ command_line:
 # Shell commands
 shell_command:
   backup_log:                     'python /config/python/backup_logs.py /config/home-assistant.log'
-  backup_auto_log:                'python /config/python/backup_logs.py /config/debug_logs/triggered_automations.log'
+  backup_auto_scripts_log:        'python /config/python/backup_logs.py /config/debug_logs/automations_scripts.log'
   backup_laundry_log:             'python /config/python/backup_logs.py /config/debug_logs/laundry_events.log'
-  backup_scripts_log:             'python /config/python/backup_logs.py /config/debug_logs/triggered_scripts.log'
   backup_testing_log:             'python /config/python/backup_logs.py /config/debug_logs/testing_scenarios.log'
   concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
-  concat_auto_log_files:          'python /config/python/concat_logs.py /config/debug_logs/triggered_automations'
-  concat_scripts_log_files:       'python /config/python/concat_logs.py /config/debug_logs/triggered_scripts'
+  concat_auto_scripts_log_files:  'python /config/python/concat_logs.py /config/debug_logs/automations_scripts'
   delete_junk_log_files:          'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
   reboot_nut_service:             bash /config/reboot_nut_server.sh

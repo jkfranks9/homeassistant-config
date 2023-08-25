@@ -1,10 +1,9 @@
-# Operate a ceiling fan, loosely based on presence. A sensor entity is used to enable or disable the automations that
-# use this blueprint, for example an AV system in use. While enabled, we check a temperature sensor periodically to determine
-# the appropriate fan speed based on a set of threshold values.
+# Operate a ceiling fan, loosely based on presence. A sensor entity is used to control the fan, for example 
+# an AV system in use.
 
 blueprint:
   name: Operate Ceiling Fan
-  description: Operate a ceiling fan, periodically checking temperature to regulate the fan speed.
+  description: Operate a ceiling fan, based on an input sensor and temperature value.
   domain: automation
   
   input:
@@ -16,7 +15,7 @@ blueprint:
           domain: binary_sensor
     
     temperature_entity:
-      name: Fan Entity
+      name: Temperature Entity
       description: Sensor entity for the current temperature.
       selector:
         entity:
@@ -37,25 +36,37 @@ blueprint:
           min: 0
           max: 100
 
-# Trigger every 5 minutes.
+# Trigger on any change to the sensor entity.
 trigger:
-  - platform: time_pattern
-    minutes: /5
-    
-  # Failsafe in case this automation is left enabled.
-condition:
-  - condition: state
+  - platform: state
     entity_id: !input sensor_entity
-    state: 'on'
+    to:
 
 action:
+    
+  - choose:
+      
+    # Sensor turned on.
+    - conditions: "{{ trigger.from_state.state == 'off' and trigger.to_state.state == 'on' }}"
+      
+      sequence:
             
-  # Turn on the fan if the temperature demands it.
-  - service: script.turn_on
-    entity_id: script.control_fan_for_temperature
-    data:
-      variables:
-        fan_entity_id: !input fan_entity
-        temperature_entity_id: !input temperature_entity
-        thresholds: !input thresholds
-        timeout: 0
+        # Turn on the fan if the temperature demands it.
+        - service: script.turn_on
+          entity_id: script.control_fan_for_temperature
+          data:
+            variables:
+              fan_entity_id: !input fan_entity
+              temperature_entity_id: !input temperature_entity
+              thresholds: !input thresholds
+              timeout: 0
+      
+    # Sensor turned off.
+    - conditions: "{{ trigger.from_state.state == 'on' and trigger.to_state.state == 'off' }}"
+        
+      # Turn off the fan.
+      sequence:
+        - service: script.set_fan_to_speed
+          data:
+            entity_id: !input fan_entity
+            speed: 0

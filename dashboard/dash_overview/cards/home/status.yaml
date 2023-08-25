@@ -102,6 +102,7 @@ entities:
   - type: custom:multiple-entity-row
     entity: sensor.unifi_counter
     name: Unifi Networks
+    icon: mdi:router-network
     state_header: Total
     unit: false
     entities:
@@ -119,8 +120,55 @@ entities:
     entity: sensor.unifi_counter
     attribute: 'AP U6-Lite'
     name: Unifi APs
+    icon: mdi:access-point
     state_header: U6
     entities:
       - entity: sensor.unifi_counter
         attribute: 'AP White Rabbit Gardens'
         name: UDM
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.workout_state_header
+    name: Exercise
+    icon: mdi:weight-lifter
+    state_header: Group
+    entities:
+      - entity: sensor.weekly_treadmill_total
+        name: Treadmill
+      - entity: sensor.weekly_workout_total
+        name: Workout
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.cpap_mask_on_off
+    name: CPAP
+    icon: mdi:sleep
+    state_header: On/Off
+    entities:
+      - entity: sensor.ahi_average
+        name: AHI Avg
+      - entity: sensor.cpap_average
+        name: Usage Avg
+      - entity: sensor.cpap_total_myair_score
+        name: Score
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: input_number.treadmill_lube_due
+    format: precision0
+    name: Service
+    icon: mdi:tools
+    state_header: Sole Due
+    entities:
+      - entity: input_number.f150_mileage
+        name: F150 Mileage
+        format: precision0
+      - entity: input_number.f150_service_due
+        name: F150 Due
+        format: precision0
+      - entity: sensor.treadmill_current_hours
+        name: Sole Hours

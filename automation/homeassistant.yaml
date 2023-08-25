@@ -1,150 +1,88 @@
-#=========================#
-#     Automations Log     #
-#=========================#
+#========================#
+#     Startup Chores     #
+#========================#
 
-# Record fired automations in a log file.
-- alias: Log Automations
-  id: log_automations
-  mode: queued
-  max: 200
+- alias: Perform Startup Chores
+  id: perform_startup_chores
   
-  # We trigger on all state changes, then weed out unnecessary events in the condition.
-  trigger:
-    - platform: event
-      event_type: state_changed
-  
-  # Weed out non-automations and some we want to skip (including this one!). Also, verify we have a 
-  # valid old and new state to work with, and that the last triggered time has changed.
-  condition:
-    - condition: template
-      value_template: >
-        {% set skip_list = [
-                            'backup_log_on_shutdown', 
-                            'close_upstairs_bedroom_vents',
-                            'delete_junk_log_files', 
-                            'initialize_turn_on_volume', 
-                            'log_automations',  
-                            'log_notifications', 
-                            'log_scripts',
-                            'open_upstairs_bedroom_vents',
-                            'operate_family_room_fan', 
-                            'operate_office_fan', 
-                            'operate_theater_fan', 
-                            'perform_daily_chores',
-                            'publish_mqtt_automated_states',
-                            'remove_saved_notifications_on_dismiss',
-                            'restore_movie_list_on_start',
-                            'restore_notifications',
-                            'resume_cinema', 
-                            'save_notifications_on_create', 
-                            'set_maximum_attic_temperature', 
-                            'set_maximum_garage_temperature', 
-                            'set_maximum_outdoor_temperature',
-                            'set_minimum_attic_temperature', 
-                            'set_minimum_garage_temperature', 
-                            'set_minimum_outdoor_temperature',
-                            'set_up_mqtt_automated_config',
-                            'set_washer_operation',
-                            'update_openuv'
-                           ] %}
-        {{ trigger.event.data.entity_id.startswith('automation.') and
-           trigger.event.data.entity_id.split('.')[1] not in skip_list and
-           trigger.event.data.old_state is not none and
-           trigger.event.data.new_state is not none and
-           'last_triggered' in trigger.event.data.old_state.attributes and 'last_triggered' in trigger.event.data.new_state.attributes and
-           trigger.event.data.old_state.attributes.last_triggered != trigger.event.data.new_state.attributes.last_triggered }}
-  
-  action:
-    
-    # Log it.
-    - service: notify.triggered_automations
-      data_template:
-        message: >
-         {{ as_timestamp(trigger.event.data.new_state.last_updated) | timestamp_custom('%b %d: %X') }}: {{ trigger.event.data.new_state.name }}
-
-#=====================#
-#     Scripts Log     #
-#=====================#
-
-# Record fired scripts in a log file.
-- alias: Log Scripts
-  id: log_scripts
-  mode: queued
-  max: 200
-  
-  # We trigger on all started scripts.
-  trigger:
-    - platform: event
-      event_type: script_started
-  
-  # Weed out non-scripts and some we want to skip.
-  condition:
-    - condition: template
-      value_template: >
-        {% set skip_list = [
-                            'change_downstairs_lighting',
-                            'close_upstairs_br_vents',
-                            'concat_auto_log_files', 
-                            'concat_log_files', 
-                            'concat_scripts_log_files', 
-                            'control_fan_for_temperature', 
-                            'evaluate_weather_condition', 
-                            'log_laundry_event',
-                            'mobile_notification_worker',
-                            'open_upstairs_br_vents',
-                            'popup_light_group',
-                            'publish_mqtt_automated_states',
-                            'reset_smart_bulbs', 
-                            'restore_lighting_on_resume',
-                            'resume_cinema',
-                            'resume_worker', 
-                            'send_notification',
-                            'set_datetime_offset_days', 
-                            'set_datetime_offset_months', 
-                            'set_datetime_offset_weeks', 
-                            'set_fan_to_speed', 
-                            'set_theater_dark',
-                            'set_theater_dark_delay',
-                            'set_theater_dim',
-                            'set_theater_idle',
-                            'set_up_mqtt_automated_config',
-                            'start_activity', 
-                            'watch_app'
-                           ] %}
-        {{ trigger.event.data.entity_id.startswith('script.') and
-           trigger.event.data.entity_id.split('.')[1] not in skip_list }}
-  
-  action:
-    
-    # Log it.
-    - service: notify.triggered_scripts
-      data_template:
-        message: >
-         {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: {{ trigger.event.data.name }}
-
-#===================#
-#     Log Files     #
-#===================#
-
-# Backup the current HA log file on shutdown, so we don't lose possible debugging information.
-- alias: Backup Log On Shutdown
-  id: backup_log_on_shutdown
-  trigger:
-    - platform: homeassistant
-      event: shutdown
-  action:
-    - service: shell_command.backup_log
-
-# Delete junk log files left over from the above automation.
-- alias: Delete Junk Log Files
-  id: delete_junk_log_files
   trigger:
     - platform: homeassistant
       event: start
+  
   action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: shell_command.delete_junk_log_files
+    
+    # Delete junk log files left over from backing up the logs on shutdown.
+    - service: shell_command.delete_junk_log_files  
+    
+    # Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
+    - variables:
+        suffix: 'last_changed'    
+        items:
+          - "{{ 'ups_' ~ suffix }}"
+          - "{{ 'garage_door_north_' ~ suffix }}"
+          - "{{ 'garage_door_south_' ~ suffix }}"
+          - "{{ 'treadmill_' ~ suffix }}"
+          - "{{ 'washer_' ~ suffix }}"
+          - "{{ 'workout_' ~ suffix }}"
+    
+    - repeat:
+        count: "{{ items | length }}"
+        
+        sequence:
+          - service: script.set_up_mqtt_automated_config
+            data:
+              domain: sensor
+              unique_id: "{{ items[repeat.index - 1] }}"
+              device_class: timestamp
+    
+    # We have an input select that represents the list of Kodi movies. This is dynamically set using the 
+    # Process All Kodi Movies Result script. However, when HA restarts, the input select gets restored to the yaml value
+    # instead of the dynamically set value. So we restore the dynamic list on HA start.
+    #
+    # The actual list should exist in a file that was saved at Process All Kodi Movies Result time, and the feature
+    # movie name (input select state value) exists in input_text.current_feature.
+    
+    # Turn on a flag to prevent any other automations or scripts mucking with the feature movie name until
+    # restoration is complete.
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.kodi_movie_list_restoration
+    
+    # Call a pyscript module to restore the movie list.
+    - service: pyscript.restore_all_movies
+      data:
+        entity: input_select.kodi_movies
+    
+    # Wait until the list is restored (state not equal to the static yaml value).
+    - wait_template: "{{ not is_state('input_select.kodi_movies', 'Select') }}"
+      timeout: '00:00:10'
+    
+    # Set the current feature movie as the selected option in the list.
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.kodi_movies
+        option: "{{ states('input_text.current_feature') }}"
+    
+    # Turn off the restoration flag.
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.kodi_movie_list_restoration
+
+#=========================#
+#     Shutdown Chores     #
+#=========================#
+
+- alias: Perform Shutdown Chores
+  id: perform_shutdown_chores
+  
+  trigger:
+    - platform: homeassistant
+      event: shutdown
+  
+  action:
+    
+    # Backup the current HA log file on shutdown, so we don't lose possible debugging information.
+    - service: shell_command.backup_log
 
 #======================#
 #     Daily Chores     #
@@ -215,9 +153,7 @@
       entity_id: switch.sonoff_washer
     
     # Backup automations and scripts log files.
-    - service: shell_command.backup_auto_log
-    
-    - service: shell_command.backup_scripts_log
+    - service: shell_command.backup_auto_scripts_log
     
     # Backup the laundry events log file if indicated.
     - if:
@@ -288,6 +224,118 @@
         entity_id: input_number.f150_mileage
       data:
         value: "{{ states('input_number.f150_mileage') | int(0) + 32 }}"
+
+#=========================#
+#     Automations Log     #
+#=========================#
+
+# Record fired automations in a log file.
+- alias: Log Automations
+  id: log_automations
+  mode: queued
+  max: 200
+  
+  # We trigger on all state changes, then weed out unnecessary events in the condition.
+  trigger:
+    - platform: event
+      event_type: state_changed
+  
+  # Weed out non-automations and some we want to skip (including this one!). Also, verify we have a 
+  # valid old and new state to work with, and that the last triggered time has changed.
+  condition:
+    - condition: template
+      value_template: >
+        {% set skip_list = [
+                            'initialize_turn_on_volume', 
+                            'log_automations', 
+                            'log_notifications', 
+                            'log_scripts',
+                            'perform_daily_chores',
+                            'publish_mqtt_automated_states',
+                            'remove_saved_notifications_on_dismiss',
+                            'restore_notifications',
+                            'resume_cinema', 
+                            'save_notifications_on_create', 
+                            'set_maximum_attic_temperature', 
+                            'set_maximum_garage_temperature', 
+                            'set_maximum_outdoor_temperature',
+                            'set_minimum_attic_temperature', 
+                            'set_minimum_garage_temperature', 
+                            'set_minimum_outdoor_temperature',
+                            'set_washer_operation',
+                            'update_openuv'
+                           ] %}
+        {{ trigger.event.data.entity_id.startswith('automation.') and
+           trigger.event.data.entity_id.split('.')[1] not in skip_list and
+           trigger.event.data.old_state is not none and
+           trigger.event.data.new_state is not none and
+           'last_triggered' in trigger.event.data.old_state.attributes and 'last_triggered' in trigger.event.data.new_state.attributes and
+           trigger.event.data.old_state.attributes.last_triggered != trigger.event.data.new_state.attributes.last_triggered }}
+  
+  action:
+    
+    # Log it.
+    - service: notify.automations_scripts
+      data_template:
+        message: >
+         {{ as_timestamp(trigger.event.data.new_state.last_updated) | timestamp_custom('%b %d: %X') }}: (A) {{ trigger.event.data.new_state.name }}
+
+#=====================#
+#     Scripts Log     #
+#=====================#
+
+# Record fired scripts in a log file.
+- alias: Log Scripts
+  id: log_scripts
+  mode: queued
+  max: 200
+  
+  # We trigger on all started scripts.
+  trigger:
+    - platform: event
+      event_type: script_started
+  
+  # Weed out non-scripts and some we want to skip.
+  condition:
+    - condition: template
+      value_template: >
+        {% set skip_list = [
+                            'change_downstairs_lighting',
+                            'concat_auto_scripts_log_files', 
+                            'concat_log_files', 
+                            'control_fan_for_temperature', 
+                            'evaluate_weather_condition', 
+                            'log_laundry_event',
+                            'mobile_notification_worker',
+                            'popup_light_group',
+                            'publish_mqtt_automated_states',
+                            'reset_smart_bulbs', 
+                            'restore_lighting_on_resume',
+                            'resume_cinema',
+                            'resume_worker', 
+                            'send_notification',
+                            'set_datetime_offset_days', 
+                            'set_datetime_offset_months', 
+                            'set_datetime_offset_weeks', 
+                            'set_fan_to_speed', 
+                            'set_theater_dark',
+                            'set_theater_dark_delay',
+                            'set_theater_dim',
+                            'set_theater_idle',
+                            'set_up_mqtt_automated_config',
+                            'start_activity', 
+                            'watch_app'
+                           ] %}
+        {{ trigger.event.data.entity_id.startswith('script.') and
+           trigger.event.data.entity_id.split('.')[1] not in skip_list }}
+  
+  action:
+    
+    # Log it.
+    - service: notify.automations_scripts
+      data_template:
+        message: >
+         {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: (S) {{ trigger.event.data.name }}
 
 #==================================#
 #     Persistent Notifications     #
@@ -388,36 +436,6 @@
 #========================#
 #     MQTT Discovery     #
 #========================#
-
-# Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
-- alias: Set Up MQTT Automated Config
-  id: set_up_mqtt_automated_config
-  
-  trigger:
-    - platform: homeassistant
-      event: start
-  
-  variables:
-    suffix: 'last_changed'
-    
-    items:
-      - "{{ 'ups_' ~ suffix }}"
-      - "{{ 'garage_door_north_' ~ suffix }}"
-      - "{{ 'garage_door_south_' ~ suffix }}"
-      - "{{ 'treadmill_' ~ suffix }}"
-      - "{{ 'washer_' ~ suffix }}"
-      - "{{ 'workout_' ~ suffix }}"
-  
-  action:
-    - repeat:
-        count: "{{ items | length }}"
-        
-        sequence:
-          - service: script.set_up_mqtt_automated_config
-            data:
-              domain: sensor
-              unique_id: "{{ items[repeat.index - 1] }}"
-              device_class: timestamp
 
 # Publish state & attributes for MQTT last changed sensors.
 - alias: Publish MQTT Automated States

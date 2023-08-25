@@ -2,7 +2,51 @@
 #     Home Assistant Sensors     #
 #================================#
 
+#---------------------------------#
+#   -- Global Variables Hack --   #
+#---------------------------------#
+
+- trigger:
+    - platform: event
+      event_type: set_variable
+  
+    - platform: event
+      event_type: remove_variable
+  
+  sensor:
+    - name: Variables
+      unique_id: variables
+      state: Variables
+      
+      attributes:
+        variables: >
+          {% set current = this.attributes.get('variables', {}) %}
+          {% if trigger.event.event_type == 'set_variable' %}
+            {% set new = {trigger.event.data.key: trigger.event.data.value} %}
+            {{ dict(current, **new) }}
+          {% elif trigger.event.event_type == 'remove_variable' %}
+            {{ dict(current.items() | rejectattr('0', 'eq', trigger.event.data.key)) }}
+          {% endif %}
+
 - sensor:
+
+    #--------------------------#
+    #   -- Sun Elevations --   #
+    #--------------------------#
+    
+    # These are required to pass into blueprints for use on 'above' and 'below' numeric_state triggers.
+
+    - name: 'Min Elevation'
+      unique_id: min_elevation
+      state: "{{ (state_attr('sensor.variables', 'variables').min_elevation) | float(0) }}"
+
+    - name: 'Med Elevation'
+      unique_id: med_elevation
+      state: "{{ (state_attr('sensor.variables', 'variables').med_elevation) | float(0) }}"
+
+    - name: 'Max Elevation'
+      unique_id: max_elevation
+      state: "{{ (state_attr('sensor.variables', 'variables').max_elevation) | float(0) }}"
 
     #-----------------#
     #   -- Dates --   #

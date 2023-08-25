@@ -13,9 +13,12 @@ blueprint:
         entity:
           domain: switch
 
+variables:
+  input_switch_entity: !input switch_entity
+
 sequence:
   - variables:
-      echo_name: "{{ state_attr(switch_entity, 'friendly_name') | replace(' do not disturb switch', '') }}"
+      echo_name: "{{ state_attr(input_switch_entity, 'friendly_name') | replace(' do not disturb switch', '') }}"
     
   # Simulate the request if testing mode is on.
   - if:

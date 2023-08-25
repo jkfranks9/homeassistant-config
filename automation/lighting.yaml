@@ -56,7 +56,7 @@
       at: '07:30:00'
     
     - platform: template
-      value_template: "{{ state_attr('sun.sun', 'elevation') | float(0) >= states('input_number.min_elevation') | float(0) }}"
+      value_template: "{{ state_attr('sun.sun', 'elevation') | float(0) >= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
     
     - platform: homeassistant
       event: start
@@ -67,7 +67,7 @@
         after: '07:30:00'
         before: '23:00:00'
       
-      - "{{ state_attr('sun.sun', 'elevation') | float(0) >= states('input_number.min_elevation') | float(0) }}"
+      - "{{ state_attr('sun.sun', 'elevation') | float(0) >= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
   
   action:
     - delay: 
@@ -120,7 +120,7 @@
   use_blueprint:
     path: lighting/sunrise_light_weather.yaml
     input:
-      elevation: input_number.min_elevation
+      elevation: sensor.min_elevation
       light_entity: light.daytime_lights
 
 # Check at a medium sun elevation.
@@ -133,7 +133,7 @@
   use_blueprint:
     path: lighting/sunrise_light_weather.yaml
     input:
-      elevation: input_number.med_elevation
+      elevation: sensor.med_elevation
       light_entity: light.daytime_lights
 
 # Check at a maximum sun elevation.
@@ -146,7 +146,7 @@
   use_blueprint:
     path: lighting/sunrise_light_weather.yaml
     input:
-      elevation: input_number.max_elevation
+      elevation: sensor.max_elevation
       light_entity: light.daytime_lights
 
 # Sunset ...
@@ -161,7 +161,7 @@
   use_blueprint:
     path: lighting/sunset_light_weather.yaml
     input:
-      elevation: input_number.max_elevation
+      elevation: sensor.max_elevation
       light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 # Check at a medium sun elevation.
@@ -174,7 +174,7 @@
   use_blueprint:
     path: lighting/sunset_light_weather.yaml
     input:
-      elevation: input_number.med_elevation
+      elevation: sensor.med_elevation
       light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 # Check at a minimum sun elevation.
@@ -187,7 +187,7 @@
   use_blueprint:
     path: lighting/sunset_light_weather.yaml
     input:
-      elevation: input_number.min_elevation
+      elevation: sensor.min_elevation
       light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
 
 #======================#
@@ -329,6 +329,20 @@
     - service: homeassistant.turn_off
       entity_id: light.away_lights
 
+# Turn off extended away mode when Jon is nearing home (proximity is somewhat unreliable, so if this doesn't trigger we have a failsafe 
+# below in Open House).
+- alias: Turn Off Extended Away Mode
+  id: 'turn_off_extended_away_mode'
+  
+  trigger:
+    - platform: template
+      value_template: "{{ is_state('proximity.jon_home') < 13000 if is_number('proximity.jon_home') }}"
+      
+  condition: "{{ is_state_attr('proximity.jon_home', 'dir_of_travel', 'towards') }}"
+  
+  action:
+    - service: script.turn_off_extended_away_mode
+
 #=========================#
 #     Motion Sensors      #
 #=========================#
@@ -381,9 +395,9 @@
       additional_fan_wait:    300
       windowed: true
 
-#======================#
-#     Guest Lights     #
-#======================#
+#===========================#
+#     Guest Lights/Fans     #
+#===========================#
 
 # Turn on guest lights near sunset or in the evening when children are home.
 - alias: Turn On Guest Lights Sunset
@@ -395,7 +409,7 @@
     # Note that we're using the effective sun sensor, which allows us to do testing using the
     # testing infrastructure. If we're not testing the sensor reflects the real sun.
     - platform: template
-      value_template: "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
+      value_template: "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
     
     - platform: time
       at: '19:30:00'
@@ -408,7 +422,7 @@
       entity_id: binary_sensor.children_home
       state: 'on'
     
-    - "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= states('input_number.min_elevation') | float(0) }}"
+    - "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
     
     - condition: time
       after: '19:30:00'
@@ -453,6 +467,21 @@
     - service: script.set_up_children_only_bedtime_environment
       data:
         stage: 'post'
+
+# Turn off upstairs bath fan after a while.
+- alias: Turn Off Upstairs Bath Fan
+  id: turn_off_upstairs_bath_fan
+  
+  trigger:
+    - platform: state
+      entity_id: switch.upstairs_bath_fan
+      from: 'off'
+      to: 'on'
+      for: '00:40:00'
+  
+  action:
+    - service: switch.turn_off
+      entity_id: switch.upstairs_bath_fan
 
 #==========================#
 #     Christmas Lights     #
@@ -584,3 +613,47 @@
   action:
     - service: automation.turn_on
       entity_id: automation.run_guest_bath_motion_based_light
+
+#============================#
+#     Ceiling Fan Lights     #
+#============================#
+
+# Turn off ceiling fan lights. This is triggered from scenes that turn off all/most lights.
+# We can't put the fan lights in the scenes themselves, due to those lights operating in optimistic mode.
+- alias: Turn Off Fan Lights
+  id: turn_off_fan_lights
+  
+  # Trigger on a toggle that's turned on by various scenes.
+  trigger:
+    - platform: state
+      entity_id: input_boolean.ceiling_fan_lights_off
+      from: 'off'
+      to: 'on'
+  
+  variables:
+    
+    # List of all ceiling fan light entities.
+    fan_lights: "{{ expand(state_attr('light.ceiling_fan_lights', 'entity_id')) | map(attribute = 'entity_id') | list }}"
+  
+  action:
+    
+    - repeat:
+        
+        # Repeat for all ceiling fan lights.
+        for_each: "{{ fan_lights }}"
+        
+        sequence:
+          
+          # Turn off the light if we think it's on.
+          - if:
+              - "{{ states(repeat.item) == 'on' }}"
+            
+            then:
+              - service: light.turn_off
+                target:
+                  entity_id: "{{ repeat.item }}"
+    
+    # Reset the toggle.
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.ceiling_fan_lights_off

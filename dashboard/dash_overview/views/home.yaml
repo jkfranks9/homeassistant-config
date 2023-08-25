@@ -20,4 +20,3 @@ cards:
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/home/weather.yaml
       - !include /config/dashboard/dash_overview/cards/home/status.yaml
-      - !include /config/dashboard/dash_overview/cards/home/other.yaml

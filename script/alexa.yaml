@@ -48,7 +48,7 @@ activate_alexa_actionable_notification:
   
   sequence:
     
-    # The Alexa skill depends on the parameters being save in this input text.
+    # The Alexa skill depends on the parameters being saved in this input text.
     - service: input_text.set_value
       data_template:
         entity_id: input_text.alexa_actionable_notification
@@ -56,8 +56,9 @@ activate_alexa_actionable_notification:
     
     # Fire off the Alexa skill. Once the user has responded the skill will fire the appropriate event.
     - service: media_player.play_media
-      data_template:
+      target:
         entity_id: "{{ alexa_device }}"
+      data:
         media_content_type: skill
         media_content_id: amzn1.ask.skill.7d2664dc-8458-4ad9-ad3f-93c95c8dae57
 
@@ -76,11 +77,20 @@ ask_fan_room:
   alias: Ask Fan Room
   
   sequence:
+    - service: alexa_media.update_last_called
+    - delay:
+        milliseconds: 1000
+    - service: homeassistant.update_entity
+      target:
+        entity_id: sensor.last_alexa
+    - delay:
+        milliseconds: 1000
+    
     - service: script.activate_alexa_actionable_notification
       data:
-        message: "Which room are you in? Family room, office or theater?"
+        message: "{{ 'Which room are you in? ' ~ state_attr('sensor.variables', 'variables').fan_rooms | join(', ') ~ '?' }}"
         event_id: actionable_notification_fan_room_choice
-        alexa_device: "{{ ['media_player.family_room_echo', 'media_player.office_echo', 'media_player.theater_echo'] }}"
+        alexa_device: "{{ states('sensor.last_alexa') }}"
         suppress_confirmation: true
 
 ask_fan_setting_family:
@@ -100,7 +110,7 @@ ask_fan_setting_family:
 
 # When I'm home alone I determine the room automatically:
 #
-# - for the office I use the human presence detector
+# - for the office I use the human presence sensor
 # - for the theater I use the theater AV system in use (I'm not going to be in that room otherwise)
 # - for the family room, I assume it's the default if neither of the above, since I won't kick off the process
 #   from a room without a fan
@@ -109,43 +119,50 @@ ask_fan_setting_home_alone:
   
   sequence:
     - variables:
-        rooms_with_fans: ['family room', 'office', 'theater']
-        
-        rooms_string: >
-          {% set result = namespace(string = '') %}
-          {% for room in rooms_with_fans %}
-            {% if loop.first %}
-              {% set result.string = result.string ~ room %}
-            {% elif loop.last %}
-              {% set result.string = result.string ~ ' or ' ~ room %}
-            {% else %}
-              {% set result.string = result.string ~ ', ' ~ room %}
-            {% endif %}
-          {% endfor %}
-          {{ result.string }}
+        fan_rooms: "{{ state_attr('sensor.variables', 'variables').fan_rooms }}"
+        fan_rooms_sensors: "{{ state_attr('sensor.variables', 'variables').fan_rooms_sensors }}"
         
         room: >
-          {% if is_state('binary_sensor.office_human_sensor_presence', 'on') %}
-            {{ rooms_with_fans[1] }}
-          {% elif is_state('binary_sensor.theater_av_system', 'on') %}
-            {{ rooms_with_fans[2] }}
-          {% else %}
-            {{ rooms_with_fans[0] }}
-          {% endif %}
+          {% set flag = namespace(done = false) %}
+          {% for sensor in fan_rooms_sensors %}
+            {% if not flag.done %}
+              {% if loop.last or is_state(sensor, 'on') %}
+                {% set flag.done = true %}
+                {{ fan_rooms[loop.index0] }}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
         
-        room_underscore: "{{ room | replace(' ', '_') }}"
+        room_name: "{{ iif(room == 'family', 'family_room' , room) }}"
     
     # Save the room so we can target the right echo device when we get the fan setting response.
     - service: input_text.set_value
       target:
         entity_id: input_text.alexa_fan_room
       data:
-        value: "{{ room_underscore }}"
+        value: "{{ room_name }}"
     
     # Ask for the fan setting.
     - service: script.activate_alexa_actionable_notification
       data:
         message: "What setting should I use for the {{ room }} fan?"
         event_id: actionable_notification_fan_setting_choice
-        alexa_device: "{{ 'media_player.' ~ room_underscore ~ '_echo' }}"
+        alexa_device: "{{ 'media_player.' ~ room_name ~ '_echo' }}"
+        suppress_confirmation: false
+
+#=====================#
+#     Room Lights     #
+#=====================#
+
+# Ask for the room in which the light lives. The Handle Light Room Response automation then operates the light.
+# This is intended to be called by an Alexa routine.
+ask_light_room:
+  alias: Ask Light Room
+  
+  sequence:
+    - service: script.activate_alexa_actionable_notification
+      data:
+        message: "{{ 'Which room are you in? ' ~ state_attr('sensor.variables', 'variables').light_rooms | join(', ') ~ '?' }}"
+        event_id: actionable_notification_light_room_choice
+        alexa_device: "{{ state_attr('media_player.room_echoes_with_light', 'entity_id') }}"
         suppress_confirmation: false

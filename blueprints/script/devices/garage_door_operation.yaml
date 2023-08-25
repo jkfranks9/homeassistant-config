@@ -35,6 +35,13 @@ blueprint:
 
 mode: parallel
 
+fields:
+  use_info_message:
+    name: Use Informational Message
+    description: Should an informational notification message be issued prior to operating the door?
+    selector:
+      boolean:
+
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
   input_name: !input name
@@ -55,11 +62,8 @@ sequence:
       - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
         
       # Send an informational notification that the door is about to be operated, if requested.
-      # NOTE: The input boolean must be set outside of the calling script.
       - if:
-          - condition: state
-            entity_id: input_boolean.garage_door_info_message
-            state: 'on'
+          - "{{ use_info_message == true }}"
           
         then:
           - service: script.send_notification
@@ -79,7 +83,7 @@ sequence:
           entity_id: !input switch
         
       # Wait a bit before confirming.
-      - delay: '00:01:00'
+      - delay: '00:00:15'
         
       # Confirm that the door is in the proper state. If so, we're done.
       - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
