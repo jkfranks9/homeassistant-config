@@ -120,7 +120,7 @@ enable_family_room_av:
       entity_id: switch.fire_tv
     
     - service: switch.turn_on
-      entity_id: switch.sonoff_family_room_av
+      entity_id: switch.family_room_av
 
 # Turn off family room AV.
 disable_family_room_av:
@@ -131,7 +131,7 @@ disable_family_room_av:
       entity_id: switch.fire_tv
     
     - service: switch.turn_off
-      entity_id: switch.sonoff_family_room_av
+      entity_id: switch.family_room_av
 
 #================#
 #     Vacuum     #
@@ -184,6 +184,64 @@ toggle_vacuum_automation:
               data:
                 category: vacuum
                 message: "{{ 'Vacuum name ' ~ vacuum_name ~ ' automation turned ' ~ operation }}"
+
+#=========================#
+#     Laundry History     #
+#=========================#
+
+# Update the washer/dryer start/stop time history entities. This is called by the appropriate automations when the washer or dryer are stopped.
+update_laundry_history_time_ranges:
+  alias: Update Laundry History Time Ranges
+  
+  fields:
+    is_washer:
+      description: True for washer, false for dryer.
+      selector:
+        boolean:
+    
+    start_time:
+      description: Start time of the laundry cycle, as a timestamp.
+      selector:
+        number:
+          min: 0
+          max: 4294967295
+    
+    stop_time:
+      description: Stop time of the laundry cycle, as a timestamp.
+      selector:
+        number:
+          min: 0
+          max: 4294967295
+  
+  sequence:
+    - variables:
+        
+        # These are the washer or dryer sensor entities we need.
+        ranges_entity: "{{ iif(is_washer, 'sensor.history_washer_debug_ranges', 'sensor.history_dryer_debug_ranges') }}"
+        index_entity: "{{ iif(is_washer, 'sensor.history_washer_debug_current_index', 'sensor.history_dryer_debug_current_index') }}"
+        
+        # This is the index suffix we need for the start/stop datetime entities. Since the index entity is zero origin
+        # and the datetime entities are 1 through n, we add 2 to the current index to arrive at the value we need.
+        next_index_suffix: "{{ states(index_entity) | int(0) + 2 }}"
+        
+        # Determine the start/stop datetime entities. Wrap from the last entity to the first if needed.
+        start_entity_prefix: "{{ iif(is_washer, 'input_datetime.history_washer_start_', 'input_datetime.history_dryer_start_') }}"
+        stop_entity_prefix: "{{ iif(is_washer, 'input_datetime.history_washer_stop_', 'input_datetime.history_dryer_stop_') }}"
+        start_entity: "{{ iif(next_index_suffix > states(ranges_entity) | int(0), start_entity_prefix ~ '1', start_entity_prefix ~ next_index_suffix) }}"
+        stop_entity: "{{ iif(next_index_suffix > states(ranges_entity) | int(0), stop_entity_prefix ~ '1', stop_entity_prefix ~ next_index_suffix) }}"
+    
+    # Set the start and stop times. This has the effect of updating the ranges and current index sensors for the next time we get called.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: "{{ start_entity }}"
+      data_template:
+        timestamp: "{{ start_time }}"
+    
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: "{{ stop_entity }}"
+      data_template:
+        timestamp: "{{ stop_time }}"
 
 #======================#
 #     Echo Devices     #
@@ -446,26 +504,3 @@ control_fan_for_temperature:
       data:
         entity_id: "{{ fan_entity_id }}"
         speed: 0
-
-#=================================#
-#     Ceiling Fan Convenience     #
-#=================================#
-
-# Used mostly via Alexa.
-change_fan_setting:
-  alias: Change Fan Setting
-  
-  sequence:
-    
-    # If I'm home alone, determine the room automatically then ask for the fan setting.
-    - if:
-        - condition: state
-          entity_id: binary_sensor.home_alone
-          state: 'on'
-      
-      then:
-        - service: script.ask_fan_setting_home_alone
-      
-      # Otherwise, first ask for the room then ask for the fan setting.
-      else:
-        - service: script.ask_fan_room

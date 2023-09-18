@@ -54,6 +54,7 @@
 !esphome
 !esphome/common/
 
+!group
 !pyscript
 !pyscript_modules
 !python

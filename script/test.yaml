@@ -1,16 +1,3 @@
-
-remove_global_variables:
-  alias: Remove Global Variables
-  
-  sequence:
-    
-    - event: remove_variable
-      event_data:
-        key: rooms_with_lights
-    - event: remove_variable
-      event_data:
-        key: rooms_with_lights_entities
-
 #==============#
 #     Kodi     #
 #==============#
@@ -98,46 +85,6 @@ test_kodi_video_playlist:
               method: Playlist.Add
       timeout: 3
 
-#====================#
-#     Thermostat     #
-#====================#
-
-test_temp_thermostat_hold:
-  alias: Test Temp Thermostat Hold
-  
-  sequence:
-    - service: script.set_temporary_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
-        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
-
-test_thermostat_hold:
-  alias: Test Thermostat Hold
-  
-  sequence:
-    - service: ecobee.create_vacation
-      data_template:
-        entity_id: climate.upstairs
-        vacation_name: "Temporary"
-        start_date: "{{ states('sensor.date') }}"
-        start_time: "{{ now().strftime('%H:%M:%S') }}"
-        end_date: "{{ (as_timestamp(states('sensor.date')) + 86400) | timestamp_custom('%Y-%m-%d') }}"
-        end_time: "{{ now().strftime('%H:%M:%S') }}"
-        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
-        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
-
-test_remove_thermostat_hold:
-  alias: Test Remove Thermostat Hold
-  
-  sequence:
-    - condition: template
-      value_template: "{{ state_attr('climate.upstairs', 'preset_mode') == 'temp' }}"
-    - service: ecobee.delete_vacation
-      data_template:
-        entity_id: climate.upstairs
-        vacation_name: "Temporary"
-
 #================#
 #     Shield     #
 #================#
@@ -150,107 +97,6 @@ test_shield_app:
       data:
         entity_id: media_player.shield_tv
         command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n com.hulu.livingroomplus/.MainActivity"
-
-#================#
-#     Notify     #
-#================#
-
-test_notify_echo:
-  alias: Test Notify Echo
-  
-  sequence:
-    - service: script.send_notification
-      data:
-        destination:
-          - echo
-        message: 'Testing 1 2 3'
-        media_player_entity: media_player.everywhere
-
-test_notify_persistent:
-  alias: Test Notify Persistent
-  
-  sequence:
-    - service: script.send_notification
-      data:
-        destination:
-          - persistent
-        title: 'Test:'
-        notification_id: 'testing123'
-        message: 'Testing 1 2 3'
-
-test_notify_mobile:
-  alias: Test Notify Mobile
-  
-  sequence:    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Test:'
-        message: 'Testing 1 2 3'
-        channel: standard
-        throttled: false
-    
-    - delay: '00:00:30'
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Test:'
-        message: 'Testing 1 2 3'
-        channel: temporary
-        throttled: false
-        timeout: 15
-    
-    - delay: '00:00:30'
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Test:'
-        message: 'Testing 1 2 3'
-        channel: persistent
-        throttled: false
-        tag: 'test123'
-    
-    - delay: '00:00:15'
-    
-    - service: notify.mobile_app_jon_companion
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'test123'
-    
-    - delay: '00:00:15'
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Test:'
-        message: 'Testing 1 2 3'
-        channel: critical
-        throttled: false
-        tag: 'testing123'
-
-test_notify_all:
-  alias: Test Notify All
-  
-  sequence:    
-    - service: script.send_notification
-      data:
-        destination:
-          - echo
-          - persistent
-          - mobile
-        title: 'Test:'
-        message: 'Testing 1 2 3'
-        channel: standard
-        throttled: false
-        media_player_entity: media_player.everywhere
-        notification_id: 'testing123'
 
 #==========================#
 #     Friendly Strings     #
@@ -344,3 +190,86 @@ test_group_remove:
     service: group.remove
     data:
       object_id: test_group
+
+#==========================#
+#     Global Variables     #
+#==========================#
+
+test_remove_global_variables:
+  alias: Test Remove Global Variables
+  
+  sequence:
+    
+    - event: remove_variable
+      event_data:
+        key: fan_rooms_sensors
+
+#=====================#
+#     Alexa Media     #
+#=====================#
+
+test_alexa_update_last_called:
+  alias: Test Alexa Update Last Called
+  
+  sequence:
+    - service: alexa_media.update_last_called
+
+#==================================#
+#     Riemann Sum Integrations     #
+#==================================#
+
+test_restore_riemann_integrations:
+  alias: Test Restore Riemann Integrations
+  
+  sequence:
+    - service: homeassistant.update_entity
+      target:
+        entity_id:
+        - sensor.attic_light_energy
+        - sensor.back_floodlight_energy
+        - sensor.back_yard_light_energy
+        - sensor.dining_room_hutch_energy
+        - sensor.dining_room_lamps_energy
+        - sensor.driveway_lights_energy
+        - sensor.family_room_av_energy
+        - sensor.family_room_fan_energy
+        - sensor.family_room_lamp_energy
+        - sensor.fire_tv_energy
+        - sensor.floor_fan_energy
+        - sensor.foyer_hutch_energy
+        - sensor.front_floodlight_energy
+        - sensor.garage_lights_energy
+        - sensor.guest_bath_fan_energy
+        - sensor.guest_bath_light_energy
+        - sensor.guest_bedroom_lamp_energy
+        - sensor.guest_bedroom_lamp_2_energy
+        - sensor.hallway_lamp_energy
+        - sensor.hallway_lights_energy
+        - sensor.island_light_energy
+        - sensor.kitchen_light_energy
+        - sensor.laundry_room_light_energy
+        - sensor.master_bath_fan_energy
+        - sensor.master_bath_light_energy
+        - sensor.master_bedroom_lamp_energy
+        - sensor.microwave_energy
+        - sensor.office_bookcase_light_energy
+        - sensor.office_fan_energy
+        - sensor.office_lamp_energy
+        - sensor.porch_light_energy
+        - sensor.projector_energy
+        - sensor.refrigerator_energy
+        - sensor.sink_light_energy
+        - sensor.snack_light_energy
+        - sensor.stairway_light_energy
+        - sensor.theater_av_energy
+        - sensor.theater_ceiling_energy
+        - sensor.theater_fan_energy
+        - sensor.theater_sconces_energy
+        - sensor.treadmill_energy
+        - sensor.upstairs_bath_fan_energy
+        - sensor.upstairs_bath_tub_light_energy
+        - sensor.upstairs_bath_vanity_light_energy
+        - sensor.upstairs_bedroom_light_energy
+        - sensor.upstairs_bedroom_outlet_energy
+        - sensor.utility_light_energy
+        - sensor.washer_energy

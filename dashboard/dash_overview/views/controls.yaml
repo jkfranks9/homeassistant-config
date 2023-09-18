@@ -18,3 +18,75 @@ cards:
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
       - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml
+      - type: custom:layout-break
+      
+      # We have conditionals to use a different history link card for each current index value for the
+      # History Washer/Dryer Debug Ranges sensors. I tried 42 different ways to do this and failed every time.
+      # So we have this.      
+      - type: custom:stack-in-card
+        title: History Links
+        cards:      
+      
+          # Washer
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "0"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/washer_history1.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "1"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/washer_history2.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "2"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/washer_history3.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "3"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/washer_history4.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "4"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/washer_history5.yaml     
+      
+          # Dryer
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "0"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/dryer_history1.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "1"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/dryer_history2.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "2"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/dryer_history3.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "3"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/dryer_history4.yaml
+          - type: conditional
+            conditions:
+              - entity: sensor.history_washer_debug_current_index
+                state: "4"
+            card:
+              !include /config/dashboard/dash_overview/cards/controls/dryer_history5.yaml

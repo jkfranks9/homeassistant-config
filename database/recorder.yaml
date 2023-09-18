@@ -76,14 +76,15 @@ include:
     - sensor.dryer_humidity
     - sensor.nighttime
     - sensor.porch_humidity
-    - sensor.sonoff_washer_power
     - sensor.total_daily_energy
     - sensor.total_power
+    - sensor.washer_current_consumption
     - sensor.washer_power_state
   
   entity_globs:
     
     - binary_sensor.*_occupancy
+    - binary_sensor.dryer_*_falling
     - binary_sensor.family_room_av_*
     - binary_sensor.theater_av_*
     - input_number.*_calories

@@ -51,7 +51,7 @@ cards:
         name: Master Bedroom Lamp
         icon: mdi:lamp
 
-      - entity: sensor.sonoff_microwave_energy
+      - entity: sensor.microwave_energy
         name: Microwave
         icon: mdi:microwave
 

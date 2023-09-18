@@ -66,103 +66,89 @@ activate_alexa_actionable_notification:
 #     Ceiling Fans     #
 #======================#
 
-# When family members are here, I can't automatically determine who kicked off a request or what room they are in.
-# So we have a 2 step ask & response. 
-#
-# The first script asks for the room, and suppresses the "OK" response from Alexa, since we're not done. 
-#
-# The second script (called from the Handle Fan Room Response automation) then asks for the fan setting, 
-# using the room from the first script as input.
-ask_fan_room:
-  alias: Ask Fan Room
+# Change a ceiling fan speed, including turning it off. This involves asking the user for the fan speed
+# and then taking action in the automation that triggers on the actionable notification event ID.
+# This is intended to be called by an Alexa routine.
+alexa_ask_fan_setting:
+  alias: Alexa Ask Fan Setting
   
-  sequence:
+  sequence:   
+    
+    # We need to update the last called echo device, because this information is not pushed to us by Alexa.
+    # This will in turn update the last alexa sensor.
     - service: alexa_media.update_last_called
-    - delay:
-        milliseconds: 1000
-    - service: homeassistant.update_entity
-      target:
-        entity_id: sensor.last_alexa
-    - delay:
-        milliseconds: 1000
     
-    - service: script.activate_alexa_actionable_notification
-      data:
-        message: "{{ 'Which room are you in? ' ~ state_attr('sensor.variables', 'variables').fan_rooms | join(', ') ~ '?' }}"
-        event_id: actionable_notification_fan_room_choice
-        alexa_device: "{{ states('sensor.last_alexa') }}"
-        suppress_confirmation: true
-
-ask_fan_setting_family:
-  alias: Ask Fan Setting Family
-  
-  fields:
-    room:
-      description: The room in which the fan lives.
-  
-  sequence:
-    - service: script.activate_alexa_actionable_notification
-      data:
-        message: "What setting should I use for the {{ room }} fan"
-        event_id: actionable_notification_fan_setting_choice
-        alexa_device: "{{ 'media_player.' ~ room ~ '_echo' }}"
-        suppress_confirmation: false
-
-# When I'm home alone I determine the room automatically:
-#
-# - for the office I use the human presence sensor
-# - for the theater I use the theater AV system in use (I'm not going to be in that room otherwise)
-# - for the family room, I assume it's the default if neither of the above, since I won't kick off the process
-#   from a room without a fan
-ask_fan_setting_home_alone:
-  alias: Ask Fan Setting Home Alone
-  
-  sequence:
+    # Then we need to wait a bit.
+    - delay: 
+        milliseconds: "{{ state_attr('sensor.variables', 'variables').last_called_delay }}"
+    
     - variables:
+        
+        # Extract the room from the updated last alexa sensor.
+        room: "{{ (states('sensor.last_alexa').split('.')[1]).split('_echo')[0] }}"
+        
+        # This defines the rooms with ceiling fans.
         fan_rooms: "{{ state_attr('sensor.variables', 'variables').fan_rooms }}"
-        fan_rooms_sensors: "{{ state_attr('sensor.variables', 'variables').fan_rooms_sensors }}"
-        
-        room: >
-          {% set flag = namespace(done = false) %}
-          {% for sensor in fan_rooms_sensors %}
-            {% if not flag.done %}
-              {% if loop.last or is_state(sensor, 'on') %}
-                {% set flag.done = true %}
-                {{ fan_rooms[loop.index0] }}
-              {% endif %}
-            {% endif %}
-          {% endfor %}
-        
-        room_name: "{{ iif(room == 'family', 'family_room' , room) }}"
     
-    # Save the room so we can target the right echo device when we get the fan setting response.
-    - service: input_text.set_value
-      target:
-        entity_id: input_text.alexa_fan_room
-      data:
-        value: "{{ room_name }}"
+    # Silently ignore any rooms we don't know about.
+    - if:
+        - "{{ room in fan_rooms }}"
+      
+      then:
     
-    # Ask for the fan setting.
-    - service: script.activate_alexa_actionable_notification
-      data:
-        message: "What setting should I use for the {{ room }} fan?"
-        event_id: actionable_notification_fan_setting_choice
-        alexa_device: "{{ 'media_player.' ~ room_name ~ '_echo' }}"
-        suppress_confirmation: false
+        # Save the room so we can target the right echo device when we get the fan setting response.
+        - service: input_text.set_value
+          target:
+            entity_id: input_text.alexa_fan_room
+          data:
+            value: "{{ room }}"
+        
+        # Remove any underscores from the room name, so Alexa doesn't sound so dumb.
+        - variables:
+            friendly_room: "{{ room.replace('_', ' ') }}"
+        
+        # Ask for the fan setting. The Handle Fan Setting Response automation operates the fan.
+        - service: script.activate_alexa_actionable_notification
+          data:
+            message: "What setting should I use for the {{ friendly_room }} fan"
+            event_id: actionable_notification_fan_setting_choice
+            alexa_device: "{{ 'media_player.' ~ room ~ '_echo' }}"
+            suppress_confirmation: false
 
 #=====================#
 #     Room Lights     #
 #=====================#
 
-# Ask for the room in which the light lives. The Handle Light Room Response automation then operates the light.
+# Toggle a light that lives in a room with an echo device.
 # This is intended to be called by an Alexa routine.
-ask_light_room:
-  alias: Ask Light Room
+alexa_toggle_room_light:
+  alias: Alexa Toggle Room Light
   
-  sequence:
-    - service: script.activate_alexa_actionable_notification
-      data:
-        message: "{{ 'Which room are you in? ' ~ state_attr('sensor.variables', 'variables').light_rooms | join(', ') ~ '?' }}"
-        event_id: actionable_notification_light_room_choice
-        alexa_device: "{{ state_attr('media_player.room_echoes_with_light', 'entity_id') }}"
-        suppress_confirmation: false
+  sequence:    
+    
+    # We need to update the last called echo device, because this information is not pushed to us by Alexa.
+    # This will in turn update the last alexa sensor.
+    - service: alexa_media.update_last_called
+    
+    # Then we need to wait a bit.
+    - delay: 
+        milliseconds: "{{ state_attr('sensor.variables', 'variables').last_called_delay }}"
+    
+    - variables:
+        
+        # Extract the room from the updated last alexa sensor.
+        room: "{{ (states('sensor.last_alexa').split('.')[1]).split('_echo')[0] }}"
+        
+        # These define the rooms and the lights in those rooms.
+        light_rooms: "{{ state_attr('sensor.variables', 'variables').light_rooms }}"
+        light_rooms_lights: "{{ state_attr('sensor.variables', 'variables').light_rooms_lights }}"
+    
+    # Silently ignore any rooms we don't know about.
+    - if:
+        - "{{ room in light_rooms }}"
+      
+      then:
+        # Toggle the light.
+        - service: light.toggle
+          target:
+            entity_id: "{{ light_rooms_lights[light_rooms.index(room)] }}"

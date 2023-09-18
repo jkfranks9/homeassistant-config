@@ -31,3 +31,8 @@ cards:
             - type: 'custom:button-card'
               template: input_button
               entity: input_number.user_weight
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.default_treadmill_minutes
+              name: Default Mins

@@ -71,6 +71,7 @@ config:
         - switch.dining_room_hutch
         - switch.dining_room_lamps
         - switch.driveway_lights
+        - switch.family_room_av
         - switch.fire_tv
         - switch.foyer_hutch
         - switch.front_floodlight
@@ -92,11 +93,10 @@ config:
         - switch.porch_light
         - switch.sink_light
         - switch.sonoff_family_room_christmas_tree
-        - switch.sonoff_family_room_av
         #- switch.sonoff_s31_zb           # zigbee router; can move if needed
-        - switch.sonoff_treadmill
         - switch.stair_railing
         - switch.stairway_light
+        - switch.treadmill
       state_action:
         action: call-service
         service: floorplan.class_set
@@ -222,9 +222,9 @@ config:
     
     # Appliances
     - entities:
-        - switch.sonoff_microwave
-        - switch.sonoff_refrigerator
-        - switch.sonoff_washer
+        - switch.microwave
+        - switch.refrigerator
+        - switch.washer
       tap_action: more-info
       state_action:
         action: call-service

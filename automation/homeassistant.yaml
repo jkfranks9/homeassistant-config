@@ -150,10 +150,14 @@
     
     # Turn off washer plug.
     - service: switch.turn_off
-      entity_id: switch.sonoff_washer
+      entity_id: switch.washer
     
     # Backup automations and scripts log files.
     - service: shell_command.backup_auto_scripts_log
+
+    # Make sure the dryer isn't running, just in case.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.dryer_running
     
     # Backup the laundry events log file if indicated.
     - if:
@@ -247,7 +251,8 @@
       value_template: >
         {% set skip_list = [
                             'initialize_turn_on_volume', 
-                            'log_automations', 
+                            'log_automations',  
+                            'log_dryer_trend_sensors', 
                             'log_notifications', 
                             'log_scripts',
                             'perform_daily_chores',
@@ -562,3 +567,76 @@
   action:
     - service: automation.turn_off
       entity_id: automation.notify_next_canes_game
+
+#==================================#
+#     Riemann Sum Integrations     #
+#==================================#
+
+# Riemann sum integrations become unavailable if their source sensors are zero for long periods. This then causes
+# the associated utility meter sensors to also become unavailable. This automation updates the Riemann sum integration
+# when that happens, which restores the sensor to its previous value. And all is well again.
+- alias: Restore Riemann Integration
+  id: restore_riemann_integration
+  
+  # We want to catch all such events, and there are a lot. Update the max value as needed.
+  mode: parallel
+  max: 50
+  
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.attic_light_energy
+        - sensor.back_floodlight_energy
+        - sensor.back_yard_light_energy
+        - sensor.dining_room_hutch_energy
+        - sensor.dining_room_lamps_energy
+        - sensor.driveway_lights_energy
+        - sensor.family_room_av_energy
+        - sensor.family_room_fan_energy
+        - sensor.family_room_lamp_energy
+        - sensor.fire_tv_energy
+        - sensor.floor_fan_energy
+        - sensor.foyer_hutch_energy
+        - sensor.front_floodlight_energy
+        - sensor.garage_lights_energy
+        - sensor.guest_bath_fan_energy
+        - sensor.guest_bath_light_energy
+        - sensor.guest_bedroom_lamp_energy
+        - sensor.guest_bedroom_lamp_2_energy
+        - sensor.hallway_lamp_energy
+        - sensor.hallway_lights_energy
+        - sensor.island_light_energy
+        - sensor.kitchen_light_energy
+        - sensor.laundry_room_light_energy
+        - sensor.master_bath_fan_energy
+        - sensor.master_bath_light_energy
+        - sensor.master_bedroom_lamp_energy
+        - sensor.microwave_energy
+        - sensor.office_bookcase_light_energy
+        - sensor.office_fan_energy
+        - sensor.office_lamp_energy
+        - sensor.porch_light_energy
+        - sensor.projector_energy
+        - sensor.refrigerator_energy
+        - sensor.sink_light_energy
+        - sensor.snack_light_energy
+        - sensor.stairway_light_energy
+        - sensor.theater_av_energy
+        - sensor.theater_ceiling_energy
+        - sensor.theater_fan_energy
+        - sensor.theater_sconces_energy
+        - sensor.treadmill_energy
+        - sensor.upstairs_bath_fan_energy
+        - sensor.upstairs_bath_tub_light_energy
+        - sensor.upstairs_bath_vanity_light_energy
+        - sensor.upstairs_bedroom_light_energy
+        - sensor.upstairs_bedroom_outlet_energy
+        - sensor.utility_light_energy
+        - sensor.washer_energy
+      to: 'unavailable'
+      for: '00:00:05'
+  
+  action:
+    - service: homeassistant.update_entity
+      target:
+        entity_id: "{{ trigger.entity_id }}"

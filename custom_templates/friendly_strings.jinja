@@ -9,9 +9,9 @@
 
 {% macro format_duration(time) %}
 
-	{% set delta_time = as_timestamp(now()) - time %}
+	{% set delta_seconds = as_timestamp(now()) - time %}
 
-	{% set minutes = (delta_time // 60) | int(0) %}
+	{% set minutes = (delta_seconds // 60) | int(0) %}
 	{% set hours = (minutes // 60) %}
 	{% set days = (hours // 24) %}
 	{% set weeks = (days // 7) %}
@@ -19,6 +19,8 @@
 	{% set minutes = (minutes % 60) %}
 	{% set hours =  (hours % 24) %}
 	{% set days = (days % 7) %}
+	
+	{% set seconds = (delta_seconds - (weeks * 604800) - (days * 86400) - (hours * 3600) - (minutes * 60)) | int(0) %}
 
 	{% macro phrase(value, name) %}
 		{%- set value = value %}
@@ -26,7 +28,7 @@
 		{{- '{} {}{}'.format(value, name, end) if value | int(0) > 0 else '' }}
 	{%- endmacro %}
 				
-	{% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
+	{% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min'), phrase(seconds, 'sec') ] | select('!=','') | list | join(', ') %}
 	{% set last_comma = text.rfind(',') %}
 	{% if last_comma != -1 %}
 	  {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}

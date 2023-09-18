@@ -87,11 +87,22 @@
     # These indicate if a device or device group (such as an AV system) are drawing power.
     - name: Family Room AV System
       unique_id: family_room_av_system
-      state: "{{ states('sensor.sonoff_family_room_av_power') | float(0) > 10 }}"
+      state: "{{ states('sensor.family_room_av_current_consumption') | float(0) > 10 }}"
       
     - name: Theater AV System
       unique_id: theater_av_system
-      state: "{{ states('sensor.projector_power') | float(0) > 0 and states('sensor.theater_av_current_consumption') | float(0) > 50 }}"
+      state: "{{ states('sensor.theater_av_current_consumption') | float(0) > 50 }}"
+
+    #-------------------------#
+    #   -- Dryer Control --   #
+    #-------------------------#
+
+    # This sensor controls when we turn off the dryer. There are trend sensors to detect temperature and humidity falling,
+    # but sometimes these can be spurious, for example getting 2 humidity falling events, then a temperature falling event.
+    # So we have a counter for each type of event, and only turn this sensor on when both counters are above zero.
+    - name: 'Dryer Done'
+      unique_id: dryer_done
+      state: "{{ states('counter.dryer_temperature_count') | int(0) > 0 and states('counter.dryer_humidity_count') | int(0) > 0 }}"
 
     #------------------------------#
     #   -- Presence Detection --   #
@@ -124,3 +135,36 @@
       unique_id: upstairs_bedroom_occupied
       state: >
         {{ states('input_select.occupied_bedrooms') in ['AdultUp', 'ChildUp', 'ChildDownPlus', 'ChildUpPlus', 'Both'] }}
+
+    #-----------------------#
+    #   -- Delivery UI --   #
+    #-----------------------#
+    
+    # These allow delivery buttons to be hidden when not needed.
+    - name: Hide Amazon Delivery
+      unique_id: hide_amazon_delivery
+      state: >
+        {{ (is_state('sensor.mail_amazon_packages', '0') and is_state('sensor.mail_amazon_packages_delivered', '0')) or 
+            states('sensor.mail_amazon_packages') in ['unknown', 'unavailable'] or 
+            states('sensor.mail_amazon_packages_delivered') in ['unknown', 'unavailable'] }}
+    
+    - name: Hide FedEx Delivery
+      unique_id: hide_fedex_delivery
+      state: >
+        {{ (is_state('sensor.mail_fedex_delivering', '0') and is_state('sensor.mail_fedex_delivered', '0')) or 
+            states('sensor.mail_fedex_delivering') in ['unknown', 'unavailable'] or 
+            states('sensor.mail_fedex_delivered') in ['unknown', 'unavailable'] }}
+    
+    - name: Hide UPS Delivery
+      unique_id: hide_ups_delivery
+      state: >
+        {{ (is_state('sensor.mail_ups_delivering', '0') and is_state('sensor.mail_ups_delivered', '0')) or 
+            states('sensor.mail_ups_delivering') in ['unknown', 'unavailable'] or 
+            states('sensor.mail_ups_delivered') in ['unknown', 'unavailable'] }}
+    
+    - name: Hide USPS Delivery
+      unique_id: hide_usps_delivery
+      state: >
+        {{ (is_state('sensor.mail_usps_delivering', '0') and is_state('sensor.mail_usps_delivered', '0')) or 
+            states('sensor.mail_usps_delivering') in ['unknown', 'unavailable'] or 
+            states('sensor.mail_usps_delivered') in ['unknown', 'unavailable'] }}

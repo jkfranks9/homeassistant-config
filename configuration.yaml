@@ -17,7 +17,9 @@ frontend:
 
 alexa:          !include database/alexa.yaml
 automation:     !include_dir_merge_list automation
+binary_sensor:  !include binary_sensor.yaml
 cover:          !include covers.yaml
+group:          !include_dir_merge_named group
 influxdb:       !include database/influxdb.yaml
 logger:         !include database/logger.yaml
 media_player:   !include media_player.yaml

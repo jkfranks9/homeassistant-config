@@ -1149,7 +1149,7 @@
           - mobile
           - echo
         title: 'Action required:'
-        message: 'Dryer has finished.'
+        message: 'Dryer has probably finished.'
         channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
@@ -1473,6 +1473,7 @@
                 
                 - variables:
                     device_name: "{{ prev_device_list[repeat.index - 1] }}"
+                    device_name_id: "{{ device_name | replace(' ', '_') | lower }}"
               
                 - if:
                     - "{{ device_name not in curr_device_list }}"
@@ -1480,7 +1481,7 @@
                   then:
                 
                     - variables:
-                        timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
+                        timestamp_entity: "{{ 'input_number.' ~ device_name_id }}"
                         from_time: "{{ states(timestamp_entity) | int(0) | timestamp_custom('%b %d %X') }}"
                         to_time: "{{ as_timestamp(now()) | timestamp_custom('%b %d %X') }}"
                         total_friendly: >
@@ -1493,7 +1494,7 @@
                         destination:
                           - persistent
                         title: 'Zigbee Device Restored:'
-                        notification_id: "{{ 'zigbee_device_restored_' ~ as_timestamp(now()) | int(0) }}"
+                        notification_id: "{{ 'zigbee_device_restored_' ~ device_name_id ~ '_' ~ as_timestamp(now()) | int(0) }}"
                         message: "{{ device_name ~ ' restored: (' ~ from_time ~ ' - ' ~ to_time ~ '), ' ~ total_friendly }}"
           
                     # Remove the timestamp for the device.

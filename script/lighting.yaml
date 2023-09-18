@@ -276,10 +276,11 @@ establish_bedtime_environment:
       # Family members are present.
       else:
     
-        # Turn off all but bedroom lights. Note that some upstairs lights are also left alone (as part of the scene)
+        # Turn off all but bedroom lights. Note that most upstairs lights are included with the upstairs suite
         # if the upstairs bedroom is occupied.
         - scene: scene.non_bedroom_lights_out
         
+        # Turn off all upstairs lights if the upstairs bedroom is not occupied.
         - if:
             - condition: state
               entity_id: binary_sensor.upstairs_bedroom_occupied
@@ -289,8 +290,7 @@ establish_bedtime_environment:
             - service: scene.apply
               data:
                 entities:
-                  light.theater_lights:         'off'
-                  light.upstairs_common_lights: 'off'
+                  light.upstairs_lights:                 'off'
         
         # Determine who is home and which bedrooms are occupied.
         - choose:
@@ -303,15 +303,14 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off bedroom lights and turn on night lights.
+              # Turn off downstairs guest lights and turn on night lights.
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'on'
-                    light.hallway_lamp:                  'on'
+                    light.daytime_lights:                'on'
+                    light.guest_bath_light:              'off'
                     light.guest_bedroom_lamp:            'off'
                     light.guest_bedroom_lamp_2:          'off'
-                    light.upstairs_guest_suite_lights:   'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -332,12 +331,13 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off bedroom lights and turn on night lights.
+              # Turn off guest lights and turn on upstairs night lights.
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'off'
+                    light.daytime_lights:                'off'
                     light.downstairs_guest_suite_lights: 'off'
+                    light.upstairs_bath_tub_light:       'off'
                     light.upstairs_bath_vanity_light:    'on'
                     light.upstairs_bedroom_light:        'off'
                     light.upstairs_bedroom_outlet:       'off'
@@ -355,13 +355,12 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off bedroom lights and night lights (we turn on the master bath light later as a night light).
+              # Turn off guest lights and night lights (we turn on the master bath light later as a night light).
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'off'
+                    light.daytime_lights:                'off'
                     light.downstairs_guest_suite_lights: 'off'
-                    light.upstairs_guest_suite_lights:   'off'
         
               # Set a temporary temperature hold downstairs.
               - service: script.set_temporary_thermostat_hold
@@ -398,12 +397,11 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off upstairs bedroom lights and downstairs night lights (except the hallway light, which is part of the downstairs suite).
+              # Turn off downstairs night lights.
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'off'
-                    light.upstairs_guest_suite_lights:   'off'
+                    light.daytime_lights:                'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -424,11 +422,11 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off downstairs bedroom lights and night lights.
+              # Turn off downstairs guest lights and night lights.
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'off'
+                    light.daytime_lights:                'off'
                     light.downstairs_guest_suite_lights: 'off'
               
               # Set up all the bedtime devices.
@@ -444,11 +442,11 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off downstairs night lights (except the hallway light, which is part of the downstairs suite).
+              # Turn off downstairs night lights.
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'off'
+                    light.daytime_lights:                'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -463,12 +461,12 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off downstairs bedroom lights and turn on night lights.
+              # Turn off downstairs guest lights and turn on night lights.
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'on'
-                    light.hallway_lamp:                  'on'
+                    light.daytime_lights:                'on'
+                    light.guest_bath_light:              'off'
                     light.guest_bedroom_lamp:            'off'
                     light.guest_bedroom_lamp_2:          'off'
               
@@ -485,11 +483,12 @@ establish_bedtime_environment:
             
             sequence:
                     
-              # Turn off upstairs bedroom lights and turn on night lights.
+              # Turn off upstairs guest lights and turn on night lights.
               - service: scene.apply
                 data:
                   entities:
-                    light.family_room_lamp:              'off'
+                    light.daytime_lights:                'off'
+                    light.upstairs_bath_tub_light:       'off'
                     light.upstairs_bath_vanity_light:    'on'
                     light.upstairs_bedroom_light:        'off'
                     light.upstairs_bedroom_outlet:       'off'

@@ -40,10 +40,8 @@ smart_home:
 
     include_entities:
       - scene.lights_out
-      - script.ask_light_room
       - script.awake
       - script.bedtime
-      - script.change_fan_setting
       - script.play_feature_movie
       - script.play_random_kodi_videos
       - script.set_theater_idle
@@ -70,5 +68,6 @@ smart_home:
       - script.*_bath_time
       - script.*_cinema
       - script.*_family_room_av
+      - script.alexa_*
       - script.restart_*_tv
       - script.turn_*_christmas_lights

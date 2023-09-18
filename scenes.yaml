@@ -36,17 +36,17 @@
 #     Non Bedroom Lights Out     #
 #================================#
 
-# Turn off all lights except bedrooms and related night lights.
-# Note that the theater and upstairs common lights are not included here, in case the upstairs
-# bedroom is occupied. In that case, such lights might be still in use at my bedtime. The 
-# Establish Bedtime Environment script takes care of that.
+# Turn off all lights except guest suites and related night lights.
+# Note that the theater and most upstairs common lights are not included here, in case the upstairs
+# bedroom is occupied. In that case, such lights might still be in use at my bedtime. The 
+# Establish Bedtime Environment script takes care of any additional lights that need to be off, based 
+# on occupied bedrooms.
 - id: 'non_bedroom_lights_out'
   name: Non Bedroom Lights Out
   entities:
     light.master_bath_light:              'off'
-    light.guest_bath_light:               'off'
     light.stairway_light:                 'off'
-    light.upstairs_bath_tub_light:        'off'
+    light.utility_light:                  'off'
     light.downstairs_common_lights:       'off'
     light.kitchen_lights:                 'off'
     light.office_lights:                  'off'

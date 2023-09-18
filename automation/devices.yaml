@@ -479,6 +479,7 @@
         # So start a timer to do that in a bit.
         # Note that we're using the effective sun sensor, which allows us to do testing using the
         # testing infrastructure. If we're not testing the sensor reflects the real sun.
+        # Also, since it's dark, turn on some outdoor lights.
         - if:
             - condition: state
               entity_id: sensor.effective_sun
@@ -489,6 +490,12 @@
               data:
                 entity_id: timer.garage_north_close
                 duration: '00:30:00'
+            
+            - service: scene.apply
+              data:
+                entities:
+                  light.driveway_light:   'on'
+                  light.front_floodlight: 'on'
         
         # Open garage door.
         - service: script.turn_on
@@ -671,8 +678,9 @@
   trigger:
     - platform: state
       entity_id:
-        - device_tracker.jon_galaxy
-        - device_tracker.life360_jon_franks
+        - device_tracker.jon_companion
+        - device_tracker.jon_traccar
+        - device_tracker.jon_franks
       from: 'not_home'
       to: 'home'
   
@@ -702,8 +710,9 @@
   trigger:
     - platform: state
       entity_id:
-        - device_tracker.jon_galaxy
-        - device_tracker.life360_jon_franks
+        - device_tracker.jon_companion
+        - device_tracker.jon_traccar
+        - device_tracker.jon_franks
       from: 'home'
       to: 'not_home'
   
@@ -829,7 +838,7 @@
       sensor_entity: input_boolean.office_occupied
       temperature_entity: sensor.office_temperature
       fan_entity: fan.office_fan
-      thresholds: [79, 77, 75]
+      thresholds: [80, 79, 75]
 
 # Operate the family room fan when the AV system is on.
 - alias: Operate Family Room Fan
@@ -841,7 +850,7 @@
       sensor_entity: binary_sensor.family_room_av_system
       temperature_entity: sensor.main_floor_temperature
       fan_entity: fan.family_room_fan
-      thresholds: [79, 76, 74]
+      thresholds: [80, 78, 75]
 
 # Operate the theater fan when the AV system is on.
 - alias: Operate Theater Fan
@@ -853,7 +862,7 @@
       sensor_entity: binary_sensor.theater_av_system
       temperature_entity: sensor.theater_temperature
       fan_entity: fan.theater_fan
-      thresholds: [79, 74, 72]
+      thresholds: [81, 77, 74]
 
 #===================#
 #     Treadmill     #
@@ -866,7 +875,7 @@
   # Trigger when the power usage of the treadmill rises above a threshold that indicates typical usage.
   trigger:
     - platform: numeric_state
-      entity_id: sensor.sonoff_treadmill_power
+      entity_id: sensor.treadmill_current_consumption
       above: 200
   
   # If the treadmill is paused during a workout, the power usage drops below the above threshold then rises again.
@@ -890,6 +899,94 @@
       target:
         entity_id: input_boolean.treadmill_triggered
 
+# Treadmill power interrupted ... unfortunately the power plug might become unavailable while in use.
+# We handle this as follows:
+#
+# 1) This automation detects the unavailable state ... if we're not close to being done, set the Treadmill Power timer for the expected done time, otherwise trigger Stop Treadmill
+# 2) If we set a timer in step 1, Handle Treadmill Power Timer triggers Stop Treadmill at the timer expiration
+# 3) If the plug becomes available again, cancel the timer if it's still running
+- alias: Detect Treadmill Power Unavailable
+  id: detect_treadmill_power_unavailable
+  
+  # Trigger when the power plug becomes unavailable.
+  trigger:
+    - platform: state
+      entity_id: sensor.treadmill_current_consumption
+      to: 'unavailable'
+  
+  # Only continue if the start automation was previously triggered.
+  condition:
+    - condition: state
+      entity_id: input_boolean.treadmill_triggered
+      state: 'on'
+  
+  action:
+    - variables:
+        minutes_since_start: >
+          {% from 'utilities.jinja' import calc_time_diff %}
+          {{ calc_time_diff('input_datetime.treadmill_start') | int(0) }}
+        
+        default_minutes: "{{ states('input_number.default_treadmill_minutes') | int(0) }}"
+        
+        offset_minutes: 2
+    
+    - if: 
+        - "{{ minutes_since_start <= (default_minutes - offset_minutes) }}"
+      
+      then:    
+        - service: timer.start
+          data:
+            entity_id: timer.treadmill_power
+            duration: "{{ (default_minutes - minutes_since_start) * 60 }}"
+      
+      else:
+        - service: automation.trigger
+          data:
+            entity_id: automation.stop_treadmill
+            skip_condition: false
+
+# Cancel the Treadmill Power timer if the power plug becomes available.
+- alias: Cancel Treadmill Power Timer
+  id: cancel_treadmill_power_timer
+  
+  # Trigger when the power plug becomes available.
+  trigger:
+    - platform: state
+      entity_id: sensor.treadmill_current_consumption
+      from: 'unavailable'
+  
+  # Only continue if the start automation was previously triggered.
+  condition:
+    - condition: state
+      entity_id: input_boolean.treadmill_triggered
+      state: 'on'
+  
+  action:
+    - if:
+        - condition: state
+          entity_id: timer.treadmill_power
+          state: 'active'
+      
+      then:
+        - service: timer.cancel
+          entity_id: timer.treadmill_power
+
+# Trigger Stop Treadmill when the Treadmill Power timer expires.
+- alias: Handle Treadmill Power Timer
+  id: handle_treadmill_power_timer
+  
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.treadmill_power
+  
+  action:
+    - service: automation.trigger
+      data:
+        entity_id: automation.stop_treadmill
+        skip_condition: false
+
 # Treadmill stop
 - alias: Stop Treadmill
   id: 'stop_treadmill'
@@ -897,7 +994,7 @@
   # Trigger when the power usage of the treadmill indicates it's been turned off.
   trigger:
     - platform: numeric_state
-      entity_id: sensor.sonoff_treadmill_power
+      entity_id: sensor.treadmill_current_consumption
       below: 7
   
   # Only continue if the start automation was previously triggered.
@@ -916,7 +1013,7 @@
     # Turn off the treadmill power to conserve energy (a few watts are used for an illuminated power toggle).
     - service: switch.turn_off
       target:
-        entity_id: switch.sonoff_treadmill
+        entity_id: switch.treadmill
     
     # Indicate we used the treadmill today.
     - service: input_boolean.turn_on
@@ -1003,7 +1100,7 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.sonoff_refrigerator
+      device_entity: switch.refrigerator
       component_name: sonoff
       device_name: Refrigerator
 
@@ -1013,7 +1110,7 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.sonoff_microwave
+      device_entity: switch.microwave
       component_name: sonoff
       device_name: Microwave
 
@@ -1125,7 +1222,7 @@
       data:
         event_type: basic
         prefix: Washer
-        message: starting
+        message: "starting: softener {{ states('input_boolean.washer_fabric_softener') }}"
 
 # Set the washer load size, based on the amount of time spent on the initial fill. This is triggered only
 # when the power state changes from fill to raise, and the washer state is Wash Fill.
@@ -1374,16 +1471,25 @@
             prefix: Washer
             message: "state changed from {{ s }} to {{ states('input_select.washer_state') }}"
         
-        # If the washer just stopped, log that as well.
+        # Perform washer stopped tasks.
         - if:
             - "{{ is_state('input_select.washer_state', 'Stop') }}"
           
           then:
+            
+            # Log the washer stop event.
             - service: script.log_laundry_event
               data:
                 event_type: basic
                 prefix: Washer
                 message: stopped
+            
+            # Update the washer history time ranges.
+            - service: script.update_laundry_history_time_ranges
+              data:
+                is_washer: true
+                start: "{{ state_attr('input_datetime.washer_start', 'timestamp') | int(0) }}"
+                stop: "{{ as_timestamp(now()) | round(0) }}"
 
 #===============#
 #     Dryer     #
@@ -1410,8 +1516,8 @@
         event_type: basic
         prefix: Dryer
         message: >
-          {% set intemp  = state_attr('climate.downstairs', 'current_temperature') %}
-          {% set inhum   = state_attr('climate.downstairs', 'current_humidity') %}
+          {% set intemp  = states('sensor.downstairs_temperature') %}
+          {% set inhum   = states('sensor.downstairs_humidity') %}
           {% set outtemp = states('sensor.porch_temperature') %}
           {% set outhum  = states('sensor.porch_humidity') %}
           {% set drytemp = states('sensor.dryer_temperature') %}
@@ -1423,15 +1529,28 @@
   id: turn_on_dryer_running
   
   trigger:
-    
-    # Trigger when the dryer vibration sensor activates.
-    - platform: state
-      entity_id: binary_sensor.dryer_vibration_sensor_vibration
-      from: 'off'
-      to: 'on'
-      for: 90
+
+    # Trigger when the dryer temperature rises a bit above ambient.
+    - platform: template
+      value_template: >
+        {{ states('sensor.dryer_temperature') not in ['unavailable', 'unknown'] and states('sensor.downstairs_temperature') not in ['unavailable', 'unknown'] and
+           states('sensor.dryer_temperature') | int(0) > (states('sensor.downstairs_temperature') | int(0) + 30) }}
       
   action:
+    
+    # Set the dryer start time. Note that we delay this until we detect a rising temperature because nothing interesting
+    # happens before then.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.dryer_start
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+    # Initialize the temperature & humidity counts. This has the side effect of turning off the Dryer Done binary sensor.
+    - service: counter.reset
+      entity_id:
+        - counter.dryer_temperature_count
+        - counter.dryer_humidity_count
     
     # Indicate the dryer is running.
     - service: input_boolean.turn_on
@@ -1440,21 +1559,77 @@
     # Log temperature detected in the laundry events log.
     - service: script.log_laundry_event
       data:
-        event_type: basic
+        event_type: metric
         prefix: Dryer
-        message: running
+        message: temperature detected
+        entity_id_1: sensor.dryer_temperature
+
+- alias: Register Dryer Event
+  id: register_dryer_event
+
+  trigger:
+
+    # Since our humidity trend sensor is looking for a drop of 30 points, only trigger if the current humidity is 70 or below.
+    # This should weed out inaccurate trend sensor readings.
+    # NOTE: The drop amount here must be kept in sync with the Dryer Humidity Falling trend sensor.
+    - platform: template
+      value_template: "{{ states('binary_sensor.dryer_humidity_falling') == 'on' and states('sensor.dryer_humidity') | int(0) <= 70 }}"
+      id: humidity
+
+    # We don't bother doing the above for temperature. This would require saving the initial temperature when we detect the dryer is running, 
+    # and I don't want to.
+    - platform: state
+      entity_id: binary_sensor.dryer_temperature_falling
+      to: 'on'
+      id: temperature
+
+  condition:
+
+    # Make sure the dryer is running ... we could easily detect changes at any time, since the sensor lives in the dryer vent connected to the outdoors.
+    - condition: state
+      entity_id: input_boolean.dryer_running
+      state: 'on'
+
+  action: 
+
+    # Bump the appropriate count. The dryer done binary sensor only turns on when both counts are above 0. We use counts in case we get 
+    # spurious triggers, for example back to back humidity falling.
+    - if:
+        - "{{ trigger.id == 'temperature' }}"
+
+      then:
+        - service: counter.increment
+          entity_id: counter.dryer_temperature_count
+
+        # Log the event in the laundry events log.
+        - service: script.log_laundry_event
+          data:
+            event_type: metric
+            prefix: Dryer
+            message: temperature falling
+            entity_id_1: sensor.dryer_temperature
+
+      else:
+        - service: counter.increment
+          entity_id: counter.dryer_humidity_count
+
+        # Log the event in the laundry events log.
+        - service: script.log_laundry_event
+          data:
+            event_type: metric
+            prefix: Dryer
+            message: humidity falling
+            entity_id_1: sensor.dryer_humidity
 
 - alias: Turn Off Dryer Running
   id: turn_off_dryer_running
   
   trigger:
     
-    # Trigger when the dryer vibration sensor deactivates.
+    # Trigger when the dryer done binary sensor turns on, indicating that both temperature and humidity have fallen.
     - platform: state
-      entity_id: binary_sensor.dryer_vibration_sensor_vibration
-      from: 'on'
-      to: 'off'
-      for: 30
+      entity_id: binary_sensor.dryer_done
+      to: 'on'
   
   action:
     
@@ -1468,6 +1643,59 @@
         event_type: basic
         prefix: Dryer
         message: stopped
+            
+    # Update the dryer history time ranges.
+    - service: script.update_laundry_history_time_ranges
+      data:
+        is_washer: false
+        start_time: "{{ state_attr('input_datetime.dryer_start', 'timestamp') | int(0) }}"
+        stop_time: "{{ as_timestamp(now()) | round(0) }}"
+
+# Log the dryer trend sensors for debugging purposes. I anticipate needing a lot of dryer runs in different seasons
+# and conditions before settling on the final settings for the trend sensors that trigger the end of the cycle.
+- alias: Log Dryer Trend Sensors
+  id: log_dryer_trend_sensors
+  mode: queued
+
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.dryer_humidity_falling
+      attribute: gradient
+      id: humidity
+    - platform: state
+      entity_id: binary_sensor.dryer_temperature_falling
+      attribute: gradient
+      id: temperature
+
+  condition:
+    - condition: state
+      entity_id: input_boolean.dryer_running
+      state: 'on'
+
+  action:
+
+    # Log either the humidity or the temperature, based on the trigger id.
+    - if:
+        - condition: trigger
+          id: humidity
+
+      then:
+        - service: script.log_laundry_event
+          data:
+            event_type: metric_plus_gradient
+            prefix: Dryer
+            message: humidity
+            entity_id_1: sensor.dryer_humidity
+            entity_id_2: binary_sensor.dryer_humidity_falling
+
+      else:
+        - service: script.log_laundry_event
+          data:
+            event_type: metric_plus_gradient
+            prefix: Dryer
+            message: temperature
+            entity_id_1: sensor.dryer_temperature
+            entity_id_2: binary_sensor.dryer_temperature_falling
 
 #=======================#
 #     Treadmill Fan     #
@@ -1553,6 +1781,12 @@
     - platform: state
       entity_id: sensor.ble_house_blue_charm_distance
       id: House distance
+  
+  condition:
+    
+    # Ignore any change to or from unavailable state.
+    - condition: template
+      value_template: "{{ trigger.from_state.state != 'unavailable' and trigger.to_state.state != 'unavailable' }}"
   
   action:
     - service: system_log.write

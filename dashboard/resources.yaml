@@ -13,6 +13,10 @@
 # Button Card
 - url: /local/community/button-card/button-card.js
   type: module
+  
+# Config Template Card
+- url: /local/community/config-template-card/config-template-card.js
+  type: module
 
 # Decluttering Card
 - url: /local/community/decluttering-card/decluttering-card.js

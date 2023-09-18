@@ -29,21 +29,6 @@ cards:
       - entity: sensor.shelly1_garage_south_rssi
         name: Garage South
       
-      - entity: sensor.sonoff_family_room_av_rssi
-        name: Family Room AV
-      
-      - entity: sensor.sonoff_microwave_rssi
-        name: Microwave
-      
-      - entity: sensor.sonoff_refrigerator_rssi
-        name: Refrigerator
-      
-      - entity: sensor.sonoff_treadmill_rssi
-        name: Treadmill
-      
-      - entity: sensor.sonoff_washer_rssi
-        name: Washer
-      
       - entity: sensor.ble_garage_wifi_signal
         name: BLE Garage Sensor
       

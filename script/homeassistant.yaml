@@ -59,23 +59,23 @@ initialize_global_variables:
     - event: set_variable
       event_data:
         key: light_rooms
-        value: ['family', 'guest', 'master', 'theater', 'upstairs']    
+        value: ['family_room', 'guest_bedroom', 'master_bedroom', 'office', 'theater', 'upstairs_bedroom']    
     - event: set_variable
       event_data:
         key: light_rooms_lights
-        value: ['light.family_room_lamp', 'light.guest_bedroom_lamp_1', 'light.master_bedroom_lamp', 'light.theater_ceiling', 'light.upstairs_bedroom_light']
+        value: ['light.family_room_lamp', 'light.guest_bedroom_lamp_2', 'light.master_bedroom_lamp', 'light.office_lamp', 'light.theater_ceiling', 'light.upstairs_bedroom_light']
     
     # Rooms with fans are for voice control of ceiling fans in certain rooms.
-    # NOTE: The next 2 variables are related and must be kept in sync. Also, there is no sensor for the family room; it's the default, 
-    # and must be last in the list.
     - event: set_variable
       event_data:
         key: fan_rooms
-        value: ['office', 'theater', 'family']    
+        value: ['family_room', 'office', 'theater']
+    
+    # Delay in milliseconds to allow Alexa last called to be updated.
     - event: set_variable
       event_data:
-        key: fan_rooms_sensors
-        value: ['binary_sensor.office_human_sensor_presence', 'binary_sensor.theater_av_system', '']
+        key: last_called_delay
+        value: 1000
 
 #===================#
 #     Utilities     #
@@ -168,11 +168,16 @@ set_datetime_offset_months:
       data:
         entity_id: '{{ entity }}'
         datetime: >
-          {%- set dtobj=now().fromtimestamp(as_timestamp(states(entity))) %}
-          {%- set sub_months=((dtobj.year) * 12 + (dtobj.month + amount - 1)) %}
-          {%- set new_months=((sub_months) % 12) + 1 %}
-          {%- set new_year=((sub_months - new_months + 1) / 12) | int(0) %}
-          {{ dtobj.replace(month=new_months, year=new_year) }}
+          {% set dtobj=now().fromtimestamp(as_timestamp(states(entity))) %} 
+          {% set sub_months=((dtobj.year * 12) + (dtobj.month + amount - 1)) %}
+          {% set new_months=((sub_months) % 12) + 1 %}
+          {% set new_year=((sub_months - new_months + 1) / 12) | int(0) %}
+          {% set new_day = dtobj.day %}
+          {% if new_day == 31 and new_months in [9, 4, 6, 11] or new_months == 2 and new_day > 28 %}
+            {% set new_months = new_months + 1 %}
+            {% set new_day = 1 %}
+          {% endif %}
+          {{ dtobj.replace(day=new_day, month=new_months, year=new_year) }}
 
 # Set an input number entity with an offset value.
 set_number_offset:
@@ -323,6 +328,7 @@ log_laundry_event:
           options:
             - basic
             - metric
+            - metric_plus_gradient
             - fill_plus_load
             - timer
     
@@ -369,6 +375,14 @@ log_laundry_event:
           - service: notify.laundry_events
             data_template:
               message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }})"
+
+      # A metric plus gradient message includes both a single metric plus a trend sensor gradient. Obviously this only applies to the dryer.
+      - conditions: "{{ event_type == 'metric_plus_gradient' }}"
+
+        sequence:
+          - service: notify.laundry_events
+            data_template:
+              message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }}) {{ state_attr(entity_id_2, 'gradient') | round(5) }}"
     
       # A fill plus load message includes both the washer fill seconds and calculated load size.
       - conditions: "{{ event_type == 'fill_plus_load' }}"

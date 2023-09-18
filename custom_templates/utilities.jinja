@@ -10,3 +10,15 @@
 	{% endif %}
 
 {% endmacro %}
+
+{# Calculate a time difference in minutes between a datetime and now. #}
+
+{% macro calc_time_diff(datetime) %}
+
+	{% set start = as_timestamp(strptime(states(datetime), '%Y-%m-%d %H:%M:%S')) %}
+	{% set num = (now().timestamp() - start) // 60 %}
+	{% set minutes = (num - (num % 5)) %}
+	{{ minutes }}
+
+{% endmacro %}
+

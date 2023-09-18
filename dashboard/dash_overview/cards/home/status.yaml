@@ -42,14 +42,22 @@ entities:
           name: Washer
         - entity: input_select.washer_load_size
           name: Load
-  
-  # Only dryer on.
+
+  # NOTE: We have multiple conditionals for the dryer (either on by itself or with the washer also on).
+  # This is so we can color the temperature or humidity red once the associated "falling" sensor has tripped at least once.
+  # We don't need a conditional for both of those sensors tripped, because the dryer is done at that point.
+
+  # Only dryer on (temp/humidity haven't fallen).
   - type: conditional
     conditions:
       - entity: input_select.washer_state
         state: 'Stop'
       - entity: input_boolean.dryer_running
         state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
@@ -61,14 +69,68 @@ entities:
           name: Washer
         - entity: sensor.dryer_temperature
           name: Temp
-  
-  # Washer and dryer both on.
+
+  # Only dryer on (humidity has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state_not: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      styles:
+        color: red
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: sensor.dryer_temperature
+          name: Temp
+
+  # Only dryer on (temperature has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state_not: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: sensor.dryer_temperature
+          name: Temp
+          styles:
+            color: red
+
+  # Washer and dryer both on (temp/humidity haven't fallen).
   - type: conditional
     conditions:
       - entity: input_select.washer_state
         state_not: 'Stop'
       - entity: input_boolean.dryer_running
         state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
@@ -82,6 +144,60 @@ entities:
           name: Load
         - entity: sensor.dryer_temperature
           name: Temp
+
+  # Washer and dryer both on (humidity has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state_not: '0'
+      - entity: counter.dryer_temperature_count
+        state: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      styles:
+        color: red
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+        - entity: sensor.dryer_temperature
+          name: Temp
+
+  # Washer and dryer both on (temperature has fallen).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Stop'
+      - entity: input_boolean.dryer_running
+        state: 'on'
+      - entity: counter.dryer_humidity_count
+        state: '0'
+      - entity: counter.dryer_temperature_count
+        state_not: '0'
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.dryer_humidity
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Humidity
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+        - entity: sensor.dryer_temperature
+          name: Temp
+          styles:
+            color: red
   
   #-------------------------------------------------
   

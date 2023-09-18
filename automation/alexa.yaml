@@ -15,51 +15,9 @@
 #     Ceiling Fans     #
 #======================#
 
-- alias: Handle Fan Room Response
-  id: handle_fan_room_response
-  
-  trigger:
-    - platform: event
-      event_type: alexa_actionable_notification
-      event_data:
-        event_id: actionable_notification_fan_room_choice
-        event_response_type: ResponseString
-  
-  action:
-    - variables:
-        fan_rooms: "{{ state_attr('sensor.variables', 'variables').fan_rooms }}"
-        response_room: "{{ trigger.event.data.event_response.split(' ')[0] }}"
-        room: "{{ iif(response_room == 'family', 'family_room' , response_room) }}"
-    
-    # Check for a valid response.
-    - if:
-        - "{{ response_room in fan_rooms }}"
-      
-      then:
-        
-        # Save the room so we can target the right echo device when we get the fan setting response.
-        - service: input_text.set_value
-          target:
-            entity_id: input_text.alexa_fan_room
-          data:
-            value: "{{ room }}"
-        
-        # Ask for the fan setting.
-        - service: script.ask_fan_setting_family
-          data:
-            room: "{{ room }}"
-      
-      # Issue instructions to the clueless user.
-      else:
-        - service: script.send_notification
-          data:
-            destination:
-              - echo
-            message: "{{ response_room }} is not valid. You must pick one of {{ (fan_rooms) | join(', ') }}"
-            media_player_entity: "{{ state_attr('media_player.room_echoes_with_fan', 'entity_id') }}"
-
-- alias: Handle Fan Setting Response
-  id: handle_fan_setting_response
+# Respond to the user's fan setting request.
+- alias: Alexa Handle Fan Setting Response
+  id: alexa_handle_fan_setting_response
   
   trigger:
     - platform: event
@@ -76,8 +34,13 @@
         # So this is what I came up with.
         fan_settings: ['fan off', 'fan low', 'fan medium', 'fan high']
         
+        # This is the fan speed for each fan setting.
         fan_speeds: ['0', '33', '66', '99']
+        
+        # This is the response from the user.
         response_setting: "{{ trigger.event.data.event_response }}"
+        
+        # This is the room, saved by the Ask Fan Setting script.
         room: "{{ states('input_text.alexa_fan_room') }}"
     
     # Check for a valid response.
@@ -86,11 +49,6 @@
       
       # All is well, set the fan!
       then:
-      
-        # Turn off the Operate <name> Fan automation to stop the automatic speed control.
-        - service: automation.turn_off
-          data:
-            entity_id: "{{ 'automation.operate_' ~ room ~ '_fan' }}"
         
         - service: script.set_fan_to_speed
           data:
@@ -105,43 +63,3 @@
               - echo
             message: "{{ response_setting }} is not valid. You must pick one of {{ (fan_settings) | join(', ') }}"
             media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
-
-#=====================#
-#     Room Lights     #
-#=====================#
-
-- alias: Handle Light Room Response
-  id: handle_light_room_response
-  
-  trigger:
-    - platform: event
-      event_type: alexa_actionable_notification
-      event_data:
-        event_id: actionable_notification_light_room_choice
-        event_response_type: ResponseString
-  
-  action:
-    - variables:
-        light_rooms: "{{ state_attr('sensor.variables', 'variables').light_rooms }}"
-        light_rooms_lights: "{{ state_attr('sensor.variables', 'variables').light_rooms_lights }}"
-        response_room: "{{ (trigger.event.data.event_response).split(' ')[0] }}"
-    
-    # Check for a valid response.
-    - if:
-        - "{{ response_room in light_rooms }}"
-      
-      then:
-        
-        # Toggle the light.
-        - service: light.toggle
-          target:
-            entity_id: "{{ light_rooms_lights[light_rooms.index(response_room)] }}"
-      
-      # Issue instructions to the clueless user.
-      else:
-        - service: script.send_notification
-          data:
-            destination:
-              - echo
-            message: "{{ response_room }} is not valid. You must pick one of {{ (light_rooms) | join(', ') }}"
-            media_player_entity: "{{ state_attr('media_player.room_echoes_with_light', 'entity_id') }}"

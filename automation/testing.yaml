@@ -118,7 +118,7 @@
   trigger:
     - platform: template
       value_template: "{{    states('sun.sun') == 'below_horizon' and state_attr('sun.sun', 'elevation') | float(0) >= -1 
-                          or states('sun.sun') == 'above_horizon' and state_attr('sun.sun', 'elevation') | float(0) <= states('input_number.max_elevation') | float(0) and state_attr('sun.sun', 'rising') == false }}"
+                          or states('sun.sun') == 'above_horizon' and state_attr('sun.sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) and state_attr('sun.sun', 'rising') == false }}"
     
   action:
           

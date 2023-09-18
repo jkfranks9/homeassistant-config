@@ -400,7 +400,7 @@
       unit_of_measurement: 'W'
       icon: mdi:flash
       state: "{{ (
-                  states('sensor.sonoff_family_room_av_power') | float(0)
+                  states('sensor.family_room_av_current_consumption') | float(0)
                  ) | round(2)
               }}"
 
@@ -413,10 +413,10 @@
       unit_of_measurement: 'W'
       icon: mdi:flash
       state: "{{ (
-                  states('sensor.sonoff_microwave_power') | float(0) +
-                  states('sensor.sonoff_refrigerator_power') | float(0) +
-                  states('sensor.sonoff_treadmill_power') | float(0) +
-                  states('sensor.sonoff_washer_power') | float(0)
+                  states('sensor.microwave_current_consumption') | float(0) +
+                  states('sensor.refrigerator_current_consumption') | float(0) +
+                  states('sensor.treadmill_current_consumption') | float(0) +
+                  states('sensor.washer_current_consumption') | float(0)
                  ) | round(2)
               }}"
 
@@ -555,14 +555,14 @@
       unit_of_measurement: 'kWh'
       icon: mdi:flash
       state: "{{ (
+                  states('sensor.family_room_av_daily_energy') | float(0) +
                   states('sensor.family_room_lamp_daily_energy') | float(0) +
                   states('sensor.master_bedroom_lamp_daily_energy') | float(0) +
                   states('sensor.office_lamp_daily_energy') | float(0) +
-                  states('sensor.sonoff_family_room_av_daily_energy') | float(0) +
-                  states('sensor.sonoff_microwave_daily_energy') | float(0) +
-                  states('sensor.sonoff_refrigerator_daily_energy') | float(0) +
-                  states('sensor.sonoff_treadmill_daily_energy') | float(0) +
-                  states('sensor.sonoff_washer_daily_energy') | float(0)
+                  states('sensor.microwave_daily_energy') | float(0) +
+                  states('sensor.refrigerator_daily_energy') | float(0 +
+                  states('sensor.treadmill_daily_energy') | float(0)) +
+                  states('sensor.washer_daily_energy') | float(0)
                  ) | round(2)
               }}"
     
@@ -651,14 +651,14 @@
       unit_of_measurement: 'kWh'
       icon: mdi:flash
       state: "{{ (
+                  states('sensor.family_room_av_monthly_energy') | float(0) +
                   states('sensor.family_room_lamp_monthly_energy') | float(0) +
                   states('sensor.master_bedroom_lamp_monthly_energy') | float(0) +
                   states('sensor.office_lamp_monthly_energy') | float(0) +
-                  states('sensor.sonoff_family_room_av_monthly_energy') | float(0) +
-                  states('sensor.sonoff_microwave_monthly_energy') | float(0) +
-                  states('sensor.sonoff_refrigerator_monthly_energy') | float(0) +
-                  states('sensor.sonoff_treadmill_monthly_energy') | float(0) +
-                  states('sensor.sonoff_washer_monthly_energy') | float(0)
+                  states('sensor.microwave_monthly_energy') | float(0) +
+                  states('sensor.refrigerator_monthly_energy') | float(0) +
+                  states('sensor.treadmill_monthly_energy') | float(0) +
+                  states('sensor.washer_monthly_energy') | float(0)
                  ) | round(2)
               }}"
     

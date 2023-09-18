@@ -104,7 +104,7 @@
       state: >
         {# --Set variables-- #}
         {% set s = states('sensor.washer_power_state') %}
-        {% set p = states('sensor.sonoff_washer_power') | float(0) %}
+        {% set p = states('sensor.washer_current_consumption') | float(0) %}
           
         {# --Power level indicates stopped-- #}
         {% if p < 3 %} stop
