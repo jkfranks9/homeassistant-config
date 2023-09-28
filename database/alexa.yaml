@@ -68,6 +68,7 @@ smart_home:
       - script.*_bath_time
       - script.*_cinema
       - script.*_family_room_av
+      - script.*_kitchen_lights
       - script.alexa_*
       - script.restart_*_tv
       - script.turn_*_christmas_lights

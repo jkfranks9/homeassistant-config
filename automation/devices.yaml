@@ -679,7 +679,6 @@
     - platform: state
       entity_id:
         - device_tracker.jon_companion
-        - device_tracker.jon_traccar
         - device_tracker.jon_franks
       from: 'not_home'
       to: 'home'
@@ -711,7 +710,6 @@
     - platform: state
       entity_id:
         - device_tracker.jon_companion
-        - device_tracker.jon_traccar
         - device_tracker.jon_franks
       from: 'home'
       to: 'not_home'
@@ -946,8 +944,8 @@
             skip_condition: false
 
 # Cancel the Treadmill Power timer if the power plug becomes available.
-- alias: Cancel Treadmill Power Timer
-  id: cancel_treadmill_power_timer
+- alias: Detect Treadmill Power Available
+  id: detect_treadmill_power_available
   
   # Trigger when the power plug becomes available.
   trigger:
@@ -955,21 +953,32 @@
       entity_id: sensor.treadmill_current_consumption
       from: 'unavailable'
   
-  # Only continue if the start automation was previously triggered.
-  condition:
-    - condition: state
-      entity_id: input_boolean.treadmill_triggered
-      state: 'on'
-  
   action:
+    
+    # If the start automation was previously triggered, cancel the timer if it's running.
     - if:
         - condition: state
-          entity_id: timer.treadmill_power
-          state: 'active'
+          entity_id: input_boolean.treadmill_triggered
+          state: 'on'
       
       then:
-        - service: timer.cancel
-          entity_id: timer.treadmill_power
+        - if:
+            - condition: state
+              entity_id: timer.treadmill_power
+              state: 'active'
+          
+          then:
+            - service: timer.cancel
+              entity_id: timer.treadmill_power
+      
+      # The treadmill is not currently in use.
+      else:
+    
+        # Turn off the treadmill power to conserve energy. Normally this happens in Stop Treadmill,
+        # but if the power plug was unavailable at that time, we do it here.
+        - service: switch.turn_off
+          target:
+            entity_id: switch.treadmill
 
 # Trigger Stop Treadmill when the Treadmill Power timer expires.
 - alias: Handle Treadmill Power Timer
@@ -1283,6 +1292,7 @@
 # which would shorten the wash cycle dramatically.
 - alias: Start Washer Wash Blackout Timer
   id: 'start_washer_wash_blackout_timer'
+  
   trigger:
     - platform: state 
       entity_id: input_select.washer_state
@@ -1290,23 +1300,27 @@
       to: 'Wash'
   
   action:
+    - variables:
+        duration: '00:01:00'
+    
     - service: timer.start
       data:
         entity_id: timer.washer_wash_blackout
-        duration: '00:01:00'
+        duration: "{{ duration }}"
     
     # Log the event in the laundry events log.
     - service: script.log_laundry_event
       data:
         event_type: timer
         prefix: Washer
-        message: timer started
+        message: "timer started ({{ duration }})"
         entity_id_1: timer.washer_wash_blackout
 
 # Start the washer rinse fill blackout timer. This is used to ignore the fabric softener injection
 # during the rinse fill, which otherwise wreaks havoc on the operation control algorithm.
 - alias: Start Washer Rinse Fill Blackout Timer
   id: 'start_washer_rinse_fill_blackout_timer'
+  
   trigger:
     - platform: state 
       entity_id: input_select.washer_state
@@ -1319,66 +1333,31 @@
       state: 'on'
   
   action:
+    - variables:
+        
+        # The timer amount is based on the washer load size. If it's invalid, use the medium value and hope for the best.
+        duration: >
+          {% set load_size = states('input_select.washer_load_size') %}
+          {{ iif(load_size == 'Small', '00:03:00', iif(load_size == 'Large', '00:05:00', '00:04:00')) }}
     
-    # The timer amount is based on the washer load size.
-    - choose:
-      
-      # Small
-      - conditions:
-        - condition: state
-          entity_id: input_select.washer_load_size
-          state: 'Small'
-        sequence:
-          - service: timer.start
-            data:
-              entity_id: timer.washer_rinse_fill_blackout
-              duration: '00:03:00'
-        
-      # Medium
-      - conditions:
-        - condition: state
-          entity_id: input_select.washer_load_size
-          state: 'Medium'
-        sequence:
-          - service: timer.start
-            data:
-              entity_id: timer.washer_rinse_fill_blackout
-              duration: '00:04:00'
-        
-      # Large
-      - conditions:
-        - condition: state
-          entity_id: input_select.washer_load_size
-          state: 'Large'
-        sequence:
-          - service: timer.start
-            data:
-              entity_id: timer.washer_rinse_fill_blackout
-              duration: '00:05:00'
-      
-      # Invalid load size, log it. Then use the medium value and hope for the best.
-      default:
-        - service: system_log.write
-          data:
-            message: "Invalid washer load size {{ states('input_select.washer_load_size') }} specified"
-            level: error
-        - service: timer.start
-          data:
-            entity_id: timer.washer_rinse_fill_blackout
-            duration: '00:04:00'
+    -  service: timer.start
+       data:
+         entity_id: timer.washer_rinse_fill_blackout
+         duration: "{{ duration }}"
     
     # Log the event in the laundry events log.
     - service: script.log_laundry_event
       data:
         event_type: timer
         prefix: Washer
-        message: timer started
+        message: "timer started ({{ duration }})"
         entity_id_1: timer.washer_rinse_fill_blackout
 
 # Start the washer rinse blackout timer. This is used to ignore a potential early drop,
 # which would shorten the rinse cycle dramatically.
 - alias: Start Washer Rinse Blackout Timer
   id: 'start_washer_rinse_blackout_timer'
+  
   trigger:
     - platform: state 
       entity_id: input_select.washer_state
@@ -1386,17 +1365,20 @@
       to: 'Rinse'
   
   action:
+    - variables:
+        duration: '00:01:00'
+    
     - service: timer.start
       data:
         entity_id: timer.washer_rinse_blackout
-        duration: '00:01:00'
+        duration: "{{ duration }}"
     
     # Log the event in the laundry events log.
     - service: script.log_laundry_event
       data:
         event_type: timer
         prefix: Washer
-        message: timer started
+        message: "timer started ({{ duration }})"
         entity_id_1: timer.washer_rinse_blackout
 
 # Washer operation control. This uses the washer power state sensor and other controls to step through the following washer states:
@@ -1488,8 +1470,8 @@
             - service: script.update_laundry_history_time_ranges
               data:
                 is_washer: true
-                start: "{{ state_attr('input_datetime.washer_start', 'timestamp') | int(0) }}"
-                stop: "{{ as_timestamp(now()) | round(0) }}"
+                start_time: "{{ state_attr('input_datetime.washer_start', 'timestamp') | int(0) }}"
+                stop_time: "{{ as_timestamp(now()) | round(0) }}"
 
 #===============#
 #     Dryer     #
@@ -1630,6 +1612,13 @@
     - platform: state
       entity_id: binary_sensor.dryer_done
       to: 'on'
+
+  condition:
+
+    # Make sure the dryer is running.
+    - condition: state
+      entity_id: input_boolean.dryer_running
+      state: 'on'
   
   action:
     

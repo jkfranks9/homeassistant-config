@@ -105,6 +105,7 @@
         {# --Set variables-- #}
         {% set s = states('sensor.washer_power_state') %}
         {% set p = states('sensor.washer_current_consumption') | float(0) %}
+        {% set t1 = states('timer.washer_wash_blackout') %}
           
         {# --Power level indicates stopped-- #}
         {% if p < 3 %} stop
@@ -114,7 +115,7 @@
         
         {# --Power level indicates a drop to a lower level--  #}
         {% elif 20 <= p <= 80 %}
-          {{ 'drop' if s in ['raise'] else s }}
+          {{ 'drop' if t1 != 'active' else s }}
           
         {# --Power level indicates a raise to a higher level-- #}
         {% elif p > 330 %} raise

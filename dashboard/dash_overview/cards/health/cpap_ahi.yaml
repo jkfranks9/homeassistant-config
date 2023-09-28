@@ -1,0 +1,11 @@
+#=======================#
+#     CPAP AHI Card     #
+#=======================#
+
+type: 'custom:decluttering-card'
+template: bar_graph_card
+variables:
+  - entity: sensor.cpap_ahi_events_per_hour
+  - name: CPAP AHI - Week
+  - icon: timelapse
+  - hours: 168

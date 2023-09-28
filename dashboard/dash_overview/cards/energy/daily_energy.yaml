@@ -2,14 +2,10 @@
 #     Daily Energy Card     #
 #===========================#
 
-type: 'custom:mini-graph-card'
-name: Daily Energy - Week
-icon: mdi:flash
-hours_to_show: 168
-aggregate_func: max
-group_by: date
-show:
-  graph: bar
-  
-entities:
+type: 'custom:decluttering-card'
+template: bar_graph_card
+variables:
   - entity: sensor.total_daily_energy
+  - name: Daily Energy - Week
+  - icon: flash
+  - hours: 168

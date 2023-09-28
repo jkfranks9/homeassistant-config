@@ -1,9 +1,0 @@
-#=========================#
-#     Epson projector     #
-#=========================#
-
-# This uses the custom component epson_projector.
-- platform: epson_projector
-  name: Epson Projector
-  host: !secret projector_ip_addr
-  password: !secret epson_password

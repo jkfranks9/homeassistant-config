@@ -1006,3 +1006,39 @@ start_bath_time:
       data:
         entity_id: timer.bath_time
         duration: '00:45:00'
+
+#========================#
+#     Kitchen Lights     #
+#========================#
+
+turn_on_kitchen_lights:
+  alias: Turn On Kitchen Lights
+  
+  sequence:
+    
+    - service: light.turn_on
+      entity_id:
+        - light.island_light
+        - light.sink_light
+
+turn_on_bright_kitchen_lights:
+  alias: Turn On Bright Kitchen Lights
+  
+  sequence:
+    
+    - service: light.turn_on
+      entity_id:
+        - light.island_light
+        - light.sink_light
+        - light.kitchen_light
+
+turn_off_kitchen_lights:
+  alias: Turn Off Kitchen Lights
+  
+  sequence:
+    
+    - service: light.turn_off
+      entity_id:
+        - light.island_light
+        - light.sink_light
+        - light.kitchen_light

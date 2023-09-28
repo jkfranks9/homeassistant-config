@@ -74,8 +74,10 @@ open_cinema:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Turn on the necessary devices.
-    - service: switch.turn_on
-      entity_id: switch.harmony_hub_open_cinema
+    - service: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: Open Cinema
     
     # Turn on some lights.
     - service: script.turn_on
@@ -384,8 +386,10 @@ watch_app:
   
     # First, turn on the harmony activity that ensures the projector, receiver and Shield TV are powered on. The receiver at this 
     # point is switched to an unused input so the screen will be dark.
-    - service: switch.turn_on
-      entity_id: switch.harmony_hub_enable_streaming
+    - service: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: Enable Streaming
     
     # After a short delay, bring up the target application on the Shield TV.
     - delay: '00:00:03'
@@ -658,8 +662,10 @@ activate_cinema:
         - service: script.set_theater_idle
   
         # Start the 'enable streaming' Harmony activity, which ensures the correct devices are on and the screen is dark.
-        - service: switch.turn_on
-          entity_id: switch.harmony_hub_enable_streaming
+        - service: remote.turn_on
+          entity_id: remote.harmony_hub
+          data:
+            activity: Enable Streaming
       
         # Delay for a bit to let the projector warm up.
         - delay: '00:04:00'

@@ -11,7 +11,7 @@ cards:
     entity: sensor.brother_printer_black_toner_remaining
   - type: gauge
     name: Drum Life Remaining
-    entity: sensor.brother_printer_drum_remaining_life
+    entity: sensor.brother_printer_drum_remaining_lifetime
   - type: gauge
     name: Pages Printed
     min: 100

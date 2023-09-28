@@ -118,27 +118,32 @@ satellite_pass:
               template: satellite_compass
               entity: '[[entity]]'
 
-#===================#
-#     CPAP Card     #
-#===================#
+#========================#
+#     Bar Graph Card     #
+#========================#
 
-cpap_data:
+bar_graph_card:
   card:
     type: 'custom:mini-graph-card'
     name: '[[name]]'
     icon: 'mdi:[[icon]]'
-    hours_to_show: 168
+    font_size_header: 20
+    hours_to_show: '[[hours]]'
     aggregate_func: max
     group_by: date
-    group: true
-    height: 100
     show:
       graph: bar
-      average: true
-      state: false
       
     entities:
       - entity: '[[entity]]'
+
+    style: |
+      ha-card > div:first-child {
+      }
+      .name > span {
+        font-weight: 400 !important;
+        opacity: 1 !important;
+      }
 
 #==========================#
 #     Temperature Card     #

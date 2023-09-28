@@ -226,8 +226,14 @@ entities:
         attribute: wired
         name: Wired
       - entity: sensor.unifi_counter
-        attribute: white-rabbit-theater
+        attribute: White Rabbit Gardens
         name: WiFi
+      - entity: sensor.unifi_counter
+        attribute: White Rabbit IoT
+        name: IoT
+      - entity: sensor.unifi_counter
+        attribute: White Rabbit NoT
+        name: NoT
       - entity: sensor.unifi_counter
         attribute: Guest
         name: Guest
@@ -240,7 +246,7 @@ entities:
     state_header: U6
     entities:
       - entity: sensor.unifi_counter
-        attribute: 'AP White Rabbit Gardens'
+        attribute: 'AP UDM'
         name: UDM
   
   #-------------------------------------------------

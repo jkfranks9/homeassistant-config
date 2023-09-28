@@ -390,7 +390,7 @@ log_laundry_event:
         sequence:
           - service: notify.laundry_events
             data_template:
-              message: "{{ timestamp }} {{ prefix }} {{ message }} {{ states(entity_id_1) }}, {{ states(entity_id_2) }}"
+              message: "{{ timestamp }} {{ prefix }} {{ message }}: {{ states(entity_id_1) }}, {{ states(entity_id_2) }}"
     
       # A timer message indicates the name of the timer.
       - conditions: "{{ event_type == 'timer' }}"

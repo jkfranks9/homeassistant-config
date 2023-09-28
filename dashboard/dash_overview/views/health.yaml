@@ -20,5 +20,6 @@ cards:
       - !include /config/dashboard/dash_overview/cards/health/daily_time.yaml
       - !include /config/dashboard/dash_overview/cards/health/calories_history.yaml
       - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/health/cpap.yaml
+      - !include /config/dashboard/dash_overview/cards/health/cpap_ahi.yaml
+      - !include /config/dashboard/dash_overview/cards/health/cpap_usage.yaml
       - !include /config/dashboard/dash_overview/cards/health/viewing_history.yaml

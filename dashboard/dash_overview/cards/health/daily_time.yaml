@@ -2,14 +2,10 @@
 #     Daily Exercise Card     #
 #=============================#
 
-type: 'custom:mini-graph-card'
-name: Daily Exercise Time - Week
-icon: mdi:timelapse
-hours_to_show: 168
-aggregate_func: max
-group_by: date
-show:
-  graph: bar
-  
-entities:
+type: 'custom:decluttering-card'
+template: bar_graph_card
+variables:
   - entity: sensor.total_daily_time
+  - name: Daily Exercise Time - Week
+  - icon: timelapse
+  - hours: 168

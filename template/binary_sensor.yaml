@@ -76,8 +76,8 @@
       unique_id: theater_av_usage
       state: >
         {{ is_state('binary_sensor.theater_av_system', 'on')  and
-           (is_state('switch.harmony_hub_stream_player', 'off') or
-             (is_state('switch.harmony_hub_stream_player', 'on') and
+           (not is_state('sensor.harmony_hub', 'Stream Player') or
+             (is_state('sensor.harmony_hub', 'Stream Player') and
               is_state('media_player.shield_tv', 'playing'))) }}
 
     #------------------------------#

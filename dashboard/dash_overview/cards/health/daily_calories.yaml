@@ -2,14 +2,10 @@
 #     Daily Calories Card     #
 #=============================#
 
-type: 'custom:mini-graph-card'
-name: Daily Calories - Week
-icon: mdi:food-apple-outline
-hours_to_show: 168
-aggregate_func: max
-group_by: date
-show:
-  graph: bar
-  
-entities:
+type: 'custom:decluttering-card'
+template: bar_graph_card
+variables:
   - entity: sensor.total_daily_calories
+  - name: Daily Calories - Week
+  - icon: food-apple-outline
+  - hours: 168

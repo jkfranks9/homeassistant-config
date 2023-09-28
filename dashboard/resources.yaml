@@ -46,6 +46,10 @@
 - url: /local/community/lovelace-fold-entity-row/fold-entity-row.js
   type: module
 
+# Lovelace Horizon Card
+- url: /local/community/lovelace-horizon-card/lovelace-horizon-card.js
+  type: module
+
 # Lovelace Layout Card
 - url: /local/community/lovelace-layout-card/layout-card.js
   type: module

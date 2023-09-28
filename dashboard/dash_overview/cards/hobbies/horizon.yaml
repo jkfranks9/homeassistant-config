@@ -1,0 +1,8 @@
+#======================#
+#     Horizon Card     #
+#======================#
+
+type: custom:horizon-card
+title: Sun & Moon
+fields:
+  sun_elevation: true

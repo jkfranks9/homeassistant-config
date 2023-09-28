@@ -42,6 +42,11 @@ condition: "{{ not is_state(input_device_entity, 'on') }}"
 
 action:
     
+  # Wait a few seconds, then verify that the device is still not on. We don't need to worry about very short transients.
+  - delay: 30
+  
+  - condition: "{{ not is_state(input_device_entity, 'on') }}"
+  
   # Send a warning notification that the device is being turned on.
   - service: script.send_notification
     data:
@@ -64,7 +69,7 @@ action:
       entity_id: !input device_entity
     
   # Wait a bit.
-  - delay: '00:10:00'
+  - delay: '00:01:00'
     
   # Confirm that the device is on. If so, we're done.
   - condition: "{{ not is_state(input_device_entity, 'on') }}"

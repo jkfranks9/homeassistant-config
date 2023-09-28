@@ -13,9 +13,9 @@ cards:
       - entity: input_datetime.reminder_spraying_frontage_driveway
       - name: Frontage / Driveway
       - icon: spray
-      - interval: 2
-      - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
+      - interval: 15
+      - period: 'days'
+      - service: script.set_datetime_offset_days
   
   # Back / side / roadside
   - type: 'custom:decluttering-card'
@@ -24,9 +24,9 @@ cards:
       - entity: input_datetime.reminder_spraying_back_side_roadside
       - name: Back / Side / Roadside
       - icon: spray
-      - interval: 2
-      - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
+      - interval: 15
+      - period: 'days'
+      - service: script.set_datetime_offset_days
   
   # Front / edge / courtyard / orchard
   - type: 'custom:decluttering-card'
@@ -35,6 +35,6 @@ cards:
       - entity: input_datetime.reminder_spraying_front_edge_courtyard_orchard
       - name: Front / Edge / Courtyard / Orchard
       - icon: spray
-      - interval: 2
-      - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
+      - interval: 15
+      - period: 'days'
+      - service: script.set_datetime_offset_days

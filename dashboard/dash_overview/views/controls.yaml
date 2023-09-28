@@ -62,31 +62,31 @@ cards:
           # Dryer
           - type: conditional
             conditions:
-              - entity: sensor.history_washer_debug_current_index
+              - entity: sensor.history_dryer_debug_current_index
                 state: "0"
             card:
               !include /config/dashboard/dash_overview/cards/controls/dryer_history1.yaml
           - type: conditional
             conditions:
-              - entity: sensor.history_washer_debug_current_index
+              - entity: sensor.history_dryer_debug_current_index
                 state: "1"
             card:
               !include /config/dashboard/dash_overview/cards/controls/dryer_history2.yaml
           - type: conditional
             conditions:
-              - entity: sensor.history_washer_debug_current_index
+              - entity: sensor.history_dryer_debug_current_index
                 state: "2"
             card:
               !include /config/dashboard/dash_overview/cards/controls/dryer_history3.yaml
           - type: conditional
             conditions:
-              - entity: sensor.history_washer_debug_current_index
+              - entity: sensor.history_dryer_debug_current_index
                 state: "3"
             card:
               !include /config/dashboard/dash_overview/cards/controls/dryer_history4.yaml
           - type: conditional
             conditions:
-              - entity: sensor.history_washer_debug_current_index
+              - entity: sensor.history_dryer_debug_current_index
                 state: "4"
             card:
               !include /config/dashboard/dash_overview/cards/controls/dryer_history5.yaml
