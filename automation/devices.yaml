@@ -269,7 +269,7 @@
     
     # Turn on appropriate lights if it's dark-ish.
     - if:
-        - "{{ state_attr('sun.sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
+        - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
       
       then:        
         - service: light.turn_on
@@ -514,7 +514,7 @@
         # Turn on bedroom light if needed.
         - service: script.change_lighting_per_weather_simple
           data:
-            light_entity: light.guest_bedroom_lamp_2
+            light_entity: light.studio_lamp_2
             turn_on: true
 
 # Close house when all family members leave.
@@ -550,11 +550,11 @@
     # Restore the upstairs bedroom to normal.
     - if:
         - condition: state
-          entity_id: binary_sensor.upstairs_bedroom_occupied
+          entity_id: binary_sensor.penthouse_occupied
           state: 'on'
       
       then:
-        - service: script.restore_normal_upstairs_bedroom
+        - service: script.restore_normal_penthouse_bedroom
     
     # Reset occupied bedrooms.
     - service: input_select.select_option
@@ -567,30 +567,30 @@
     - service: scene.apply
       data:
         entities:
-          light.guest_bedroom_lamp:          'off'
-          light.guest_bedroom_lamp_2:        'off'
-          light.upstairs_guest_suite_lights: 'off'
-          light.upstairs_common_lights:      'off'
-          light.theater_lights:              'off'
-          switch.upstairs_bath_fan:          'off'
-          fan.theater_fan:                   'off'
+          light.studio_lamp_1:          'off'
+          light.studio_lamp_2:          'off'
+          light.penthouse_lights:       'off'
+          light.upstairs_common_lights: 'off'
+          light.theater_lights:         'off'
+          switch.penthouse_fan:         'off'
+          fan.theater_fan:              'off'
     
     # Reset Child Alone.
     - service: input_boolean.turn_off
       target:
         entity_id: input_boolean.child_alone
 
-#============================#
-#     Upstairs Occupancy     #
-#============================#
+#=============================#
+#     Penthouse Occupancy     #
+#=============================#
 
-# Set the upstairs thermostat and bedroom vents appropriately when the occupied bedrooms change.
+# Set the penthouse devices appropriately when the occupied bedrooms change.
 # Normally this only happens when family members arrive, but it could also be done manually via the UI.
-- alias: Prepare Upstairs Bedroom For Family
-  id: 'prepare_upstairs_bedroom_for_family'
+- alias: Prepare Penthouse Bedroom For Family
+  id: 'prepare_penthouse_bedroom_for_family'
   mode: queued
   
-  # Trigger when the upstairs bedroom is occupied by an adult.
+  # Trigger when the penthouse bedroom is occupied by an adult.
   trigger:
     - platform: state
       entity_id: input_select.occupied_bedrooms
@@ -621,8 +621,8 @@
 
 # If a child is home with parents, we don't have a way to determine if the parents leave (not a temporary leave),
 # but the child stays home longer. So we use the Child Alone button triggered via the UI to indicate this.
-- alias: Restore Normal Upstairs Bedroom
-  id: 'restore_normal_upstairs_bedroom'
+- alias: Restore Normal Penthouse Bedroom
+  id: 'restore_normal_penthouse_bedroom'
   
   # Trigger when the Child Alone button is pressed on the UI.
   trigger:
@@ -632,8 +632,8 @@
   
   action:
     
-    # Restore the upstairs bedroom to normal.
-    - service: script.restore_normal_upstairs_bedroom
+    # Restore the penthouse bedroom to normal.
+    - service: script.restore_normal_penthouse_bedroom
     
     # Reset occupied bedrooms. For now this is ChildDown, until I figure out a more complete solution.
     - service: input_select.select_option
@@ -642,15 +642,15 @@
       data:
         option: ChildDown
     
-    # Turn off upstairs guest suite lights and fans.
+    # Turn off penthouse lights and fans.
     - service: scene.apply
       data:
         entities:
-          light.upstairs_guest_suite_lights: 'off'
-          light.upstairs_common_lights:      'off'
-          light.theater_lights:              'off'
-          switch.upstairs_bath_fan:          'off'
-          fan.theater_fan:                   'off'
+          light.penthouse_lights:       'off'
+          light.upstairs_common_lights: 'off'
+          light.theater_lights:         'off'
+          switch.penthouse_fan:         'off'
+          fan.theater_fan:              'off'
     
     # Reset Child Alone.
     - service: input_boolean.turn_off
@@ -822,9 +822,9 @@
       target:
         entity_id: input_boolean.office_occupied
 
-#======================#
-#     Ceiling Fans     #
-#======================#
+#==============#
+#     Fans     #
+#==============#
 
 # Operate the office fan when the office is occupied.
 - alias: Operate Office Fan
@@ -861,6 +861,21 @@
       temperature_entity: sensor.theater_temperature
       fan_entity: fan.theater_fan
       thresholds: [81, 77, 74]
+
+# Turn off penthouse fan after a while.
+- alias: Turn Off Penthouse Fan
+  id: turn_off_penthouse_fan
+  
+  trigger:
+    - platform: state
+      entity_id: switch.penthouse_fan
+      from: 'off'
+      to: 'on'
+      for: '00:40:00'
+  
+  action:
+    - service: switch.turn_off
+      entity_id: switch.penthouse_fan
 
 #===================#
 #     Treadmill     #
@@ -1872,8 +1887,8 @@
   action:
     - service: switch.turn_off
       entity_id:
-        - switch.guest_bedroom_echo_do_not_disturb_switch
-        - switch.upstairs_bedroom_echo_do_not_disturb_switch
+        - switch.studio_echo_do_not_disturb_switch
+        - switch.penthouse_echo_do_not_disturb_switch
 
 #====================#
 #     HVAC Vents     #
@@ -1902,3 +1917,26 @@
   
   action:
     - service: script.close_hvac_vents
+
+#=======================#
+#     Network Debug     #
+#=======================#
+
+- alias: Log Unifi Changes
+  id: log_unifi_changes
+  
+  trigger:
+    - platform: state
+      entity_id: sensor.unifi_counter
+  
+  action:
+    - variables:
+        IoT: "{{ state_attr('sensor.unifi_counter', 'White Rabbit IoT') }}"
+        NoT: "{{ state_attr('sensor.unifi_counter', 'White Rabbit NoT') }}"
+        UDM: "{{ state_attr('sensor.unifi_counter', 'AP UDM') }}"
+        U6: "{{ state_attr('sensor.unifi_counter', 'AP U6-Lite') }}"
+    
+    - service: system_log.write
+      data:
+        message: "{{ 'JKF: IoT (' ~ IoT ~ '); NoT (' ~ NoT ~ '); UDM (' ~ UDM ~ '); U6 (' ~ U6 ~ ')' }}"
+        level: warning

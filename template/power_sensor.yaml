@@ -58,11 +58,6 @@
           0
         {% endif %}
 
-    - name: 'Floor Fan Power'
-      unique_id: floor_fan_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('switch.treadmill_fan', 'on'), 120, 0) }}"
-
     - name: 'Foyer Hutch Power'
       unique_id: foyer_hutch_power
       unit_of_measurement: 'W'
@@ -77,26 +72,6 @@
       unique_id: garage_lights_power
       unit_of_measurement: 'W'
       state: "{{ iif(is_state('light.garage_light', 'on'), 27, 0) }}"
-
-    - name: 'Guest Bath Fan Power'
-      unique_id: guest_bath_fan_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('switch.guest_bath_fan', 'on'), 40, 0) }}"
-
-    - name: 'Guest Bath Light Power'
-      unique_id: guest_bath_light_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.guest_bath_light', 'on'), 25, 0) }}"
-
-    - name: 'Guest Bedroom Lamp Power'
-      unique_id: guest_bedroom_lamp_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.guest_bedroom_lamp', 'on'), 12, 0) }}"
-
-    - name: 'Guest Bedroom Lamp 2 Power'
-      unique_id: guest_bedroom_lamp_2_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.guest_bedroom_lamp_2', 'on'), 12, 0) }}"
 
     - name: 'Hallway Lamp Power'
       unique_id: hallway_lamp_power
@@ -157,6 +132,31 @@
           0
         {% endif %}
 
+    - name: 'Penthouse Fan Power'
+      unique_id: penthouse_fan_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.penthouse_fan', 'on'), 6, 0) }}"
+
+    - name: 'Penthouse Lamp Power'
+      unique_id: penthouse_lamp_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.penthouse_lamp', 'on'), 7.5, 0) }}"
+
+    - name: 'Penthouse Light Power'
+      unique_id: penthouse_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.penthouse_light', 'on'), 40, 0) }}"
+
+    - name: 'Penthouse Tub Light Power'
+      unique_id: penthouse_tub_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.penthouse_tub_light', 'on'), 14, 0) }}"
+
+    - name: 'Penthouse Vanity Light Power'
+      unique_id: penthouse_vanity_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.penthouse_vanity_light', 'on'), 24, 0) }}"
+
     - name: 'Porch Light Power'
       unique_id: porch_light_power
       unit_of_measurement: 'W'
@@ -176,6 +176,26 @@
       unique_id: stairway_light_power
       unit_of_measurement: 'W'
       state: "{{ iif(is_state('light.stairway_light', 'on'), 8, 0) }}"
+
+    - name: 'Studio Fan Power'
+      unique_id: studio_fan_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('switch.studio_fan', 'on'), 40, 0) }}"
+
+    - name: 'Studio Lamp 1 Power'
+      unique_id: studio_lamp_1_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.studio_lamp_1', 'on'), 12, 0) }}"
+
+    - name: 'Studio Lamp 2 Power'
+      unique_id: studio_lamp_2_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.studio_lamp_2', 'on'), 12, 0) }}"
+
+    - name: 'Studio Light Power'
+      unique_id: studio_light_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.studio_light', 'on'), 25, 0) }}"
 
     - name: 'Theater Ceiling Power'
       unique_id: theater_ceiling_power
@@ -218,30 +238,10 @@
           0
         {% endif %}
 
-    - name: 'Upstairs Bath Fan Power'
-      unique_id: upstairs_bath_fan_power
+    - name: 'Treadmill Fan Power'
+      unique_id: treadmill_fan_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('switch.upstairs_bath_fan', 'on'), 6, 0) }}"
-
-    - name: 'Upstairs Bath Tub Light Power'
-      unique_id: upstairs_bath_tub_light_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.upstairs_bath_tub_light', 'on'), 14, 0) }}"
-
-    - name: 'Upstairs Bath Vanity Light Power'
-      unique_id: upstairs_bath_vanity_light_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.upstairs_bath_vanity_light', 'on'), 24, 0) }}"
-
-    - name: 'Upstairs Bedroom Light Power'
-      unique_id: upstairs_bedroom_light_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('light.upstairs_bedroom_light', 'on'), 40, 0) }}"
-
-    - name: 'Upstairs Bedroom Outlet Power'
-      unique_id: upstairs_bedroom_outlet_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('switch.upstairs_bedroom_outlet', 'on'), 7.5, 0) }}"
+      state: "{{ iif(is_state('switch.treadmill_fan', 'on'), 120, 0) }}"
 
     - name: 'Utility Light Power'
       unique_id: utility_light_power
@@ -282,9 +282,6 @@
                   states('sensor.foyer_hutch_power') | float(0) +
                   states('sensor.front_floodlight_power') | float(0) +
                   states('sensor.garage_lights_power') | float(0) +
-                  states('sensor.guest_bath_light_power') | float(0) +
-                  states('sensor.guest_bedroom_lamp_power') | float(0) +
-                  states('sensor.guest_bedroom_lamp_2_power') | float(0) +
                   states('sensor.hallway_lamp_power') | float(0) +
                   states('sensor.island_light_power') | float(0) +
                   states('sensor.kitchen_light_power') | float(0) +
@@ -293,7 +290,10 @@
                   states('sensor.office_bookcase_light_power') | float(0) +
                   states('sensor.porch_light_power') | float(0) +
                   states('sensor.sink_light_power') | float(0) +
-                  states('sensor.stairway_light_power') | float(0)
+                  states('sensor.stairway_light_power') | float(0) +
+                  states('sensor.studio_lamp_1_power') | float(0) +
+                  states('sensor.studio_lamp_2_power') | float(0) +
+                  states('sensor.studio_light_power') | float(0)
                  ) | round(2)
               }}"
 
@@ -307,10 +307,10 @@
       icon: mdi:flash
       state: "{{ (
                   states('sensor.family_room_fan_power') | float(0) +
-                  states('sensor.floor_fan_power') | float(0) +
-                  states('sensor.guest_bath_fan_power') | float(0) +
                   states('sensor.master_bath_fan_power') | float(0) +
-                  states('sensor.office_fan_power') | float(0)
+                  states('sensor.office_fan_power') | float(0) +
+                  states('sensor.studio_fan_power') | float(0) +
+                  states('sensor.treadmill_fan_power') | float(0)
                  ) | round(2)
               }}"
 
@@ -338,13 +338,13 @@
       state: "{{ (
                   states('sensor.attic_light_power') | float(0) +
                   states('sensor.hallway_lights_power') | float(0) +
+                  states('sensor.penthouse_lamp_power') | float(0) +
+                  states('sensor.penthouse_light_power') | float(0) +
+                  states('sensor.penthouse_tub_light_power') | float(0) +
+                  states('sensor.penthouse_vanity_light_power') | float(0) +
                   states('sensor.snack_light_power') | float(0) +
                   states('sensor.theater_ceiling_power') | float(0) +
                   states('sensor.theater_sconces_power') | float(0) +
-                  states('sensor.upstairs_bath_tub_light_power') | float(0) +
-                  states('sensor.upstairs_bath_vanity_light_power') | float(0) +
-                  states('sensor.upstairs_bedroom_light_power') | float(0) +
-                  states('sensor.upstairs_bedroom_outlet_power') | float(0) +
                   states('sensor.utility_light_power') | float(0)
                  ) | round(2)
               }}"
@@ -357,9 +357,8 @@
       unique_id: second_floor_fans_calculated_power
       unit_of_measurement: 'W'
       icon: mdi:flash
-      state: "{{ (
-                  states('sensor.theater_fan_power') | float(0) +
-                  states('sensor.upstairs_bath_fan_power') | float(0)
+      state: "{{ (states('sensor.penthouse_fan_power') | float(0) +
+                  states('sensor.theater_fan_power') | float(0)
                  ) | round(2)
               }}"
 
@@ -507,14 +506,9 @@
                   states('sensor.driveway_lights_daily_energy') | float(0) +
                   states('sensor.family_room_fan_daily_energy') | float(0) +
                   states('sensor.fire_tv_daily_energy') | float(0) +
-                  states('sensor.floor_fan_daily_energy') | float(0) +
                   states('sensor.foyer_hutch_daily_energy') | float(0) +
                   states('sensor.front_floodlight_daily_energy') | float(0) +
                   states('sensor.garage_lights_daily_energy') | float(0) +
-                  states('sensor.guest_bath_fan_daily_energy') | float(0) +
-                  states('sensor.guest_bath_light_daily_energy') | float(0) +
-                  states('sensor.guest_bedroom_lamp_daily_energy') | float(0) +
-                  states('sensor.guest_bedroom_lamp_2_daily_energy') | float(0) +
                   states('sensor.hallway_lamp_daily_energy') | float(0) +
                   states('sensor.island_light_daily_energy') | float(0) +
                   states('sensor.kitchen_light_daily_energy') | float(0) +
@@ -525,7 +519,12 @@
                   states('sensor.office_fan_daily_energy') | float(0) +
                   states('sensor.porch_light_daily_energy') | float(0) +
                   states('sensor.sink_light_daily_energy') | float(0) +
-                  states('sensor.stairway_light_daily_energy') | float(0)
+                  states('sensor.stairway_light_daily_energy') | float(0) +
+                  states('sensor.studio_fan_daily_energy') | float(0) +
+                  states('sensor.studio_lamp_1_daily_energy') | float(0) +
+                  states('sensor.studio_lamp_2_daily_energy') | float(0) +
+                  states('sensor.studio_light_daily_energy') | float(0) +
+                  states('sensor.treadmill_fan_daily_energy') | float(0)
                  ) | round(2)
               }}"
     
@@ -536,16 +535,16 @@
       state: "{{ (
                   states('sensor.attic_light_daily_energy') | float(0) +
                   states('sensor.hallway_lights_daily_energy') | float(0) +
+                  states('sensor.penthouse_fan_daily_energy') | float(0) +
+                  states('sensor.penthouse_lamp_daily_energy') | float(0) +
+                  states('sensor.penthouse_light_daily_energy') | float(0) +
+                  states('sensor.penthouse_tub_light_daily_energy') | float(0) +
+                  states('sensor.penthouse_vanity_light_daily_energy') | float(0) +
                   states('sensor.projector_daily_energy') | float(0) +
                   states('sensor.snack_light_daily_energy') | float(0) +
                   states('sensor.theater_ceiling_daily_energy') | float(0) +
                   states('sensor.theater_fan_daily_energy') | float(0) +
                   states('sensor.theater_sconces_daily_energy') | float(0) +
-                  states('sensor.upstairs_bath_fan_daily_energy') | float(0) +
-                  states('sensor.upstairs_bath_tub_light_daily_energy') | float(0) +
-                  states('sensor.upstairs_bath_vanity_light_daily_energy') | float(0) +
-                  states('sensor.upstairs_bedroom_light_daily_energy') | float(0) +
-                  states('sensor.upstairs_bedroom_outlet_daily_energy') | float(0) +
                   states('sensor.utility_light_daily_energy') | float(0)
                  ) | round(2)
               }}"
@@ -603,14 +602,9 @@
                   states('sensor.driveway_lights_monthly_energy') | float(0) +
                   states('sensor.family_room_fan_monthly_energy') | float(0) +
                   states('sensor.fire_tv_monthly_energy') | float(0) +
-                  states('sensor.floor_fan_monthly_energy') | float(0) +
                   states('sensor.foyer_hutch_monthly_energy') | float(0) +
                   states('sensor.front_floodlight_monthly_energy') | float(0) +
                   states('sensor.garage_lights_monthly_energy') | float(0) +
-                  states('sensor.guest_bath_fan_monthly_energy') | float(0) +
-                  states('sensor.guest_bath_light_monthly_energy') | float(0) +
-                  states('sensor.guest_bedroom_lamp_monthly_energy') | float(0) +
-                  states('sensor.guest_bedroom_lamp_2_monthly_energy') | float(0) +
                   states('sensor.hallway_lamp_monthly_energy') | float(0) +
                   states('sensor.island_light_monthly_energy') | float(0) +
                   states('sensor.kitchen_light_monthly_energy') | float(0) +
@@ -621,7 +615,12 @@
                   states('sensor.office_fan_monthly_energy') | float(0) +
                   states('sensor.porch_light_monthly_energy') | float(0) +
                   states('sensor.sink_light_monthly_energy') | float(0) +
-                  states('sensor.stairway_light_monthly_energy') | float(0)
+                  states('sensor.stairway_light_monthly_energy') | float(0) +
+                  states('sensor.studio_fan_monthly_energy') | float(0) +
+                  states('sensor.studio_lamp_1_monthly_energy') | float(0) +
+                  states('sensor.studio_lamp_2_monthly_energy') | float(0) +
+                  states('sensor.studio_light_monthly_energy') | float(0) +
+                  states('sensor.treadmill_fan_monthly_energy') | float(0)
                  ) | round(2)
               }}"
     
@@ -632,16 +631,16 @@
       state: "{{ (
                   states('sensor.attic_light_monthly_energy') | float(0) +
                   states('sensor.hallway_lights_monthly_energy') | float(0) +
+                  states('sensor.penthouse_fan_monthly_energy') | float(0) +
+                  states('sensor.penthouse_lamp_monthly_energy') | float(0) +
+                  states('sensor.penthouse_light_monthly_energy') | float(0) +
+                  states('sensor.penthouse_tub_light_monthly_energy') | float(0) +
+                  states('sensor.penthouse_vanity_light_monthly_energy') | float(0) +
                   states('sensor.projector_monthly_energy') | float(0) +
                   states('sensor.snack_light_monthly_energy') | float(0) +
                   states('sensor.theater_ceiling_monthly_energy') | float(0) +
                   states('sensor.theater_fan_monthly_energy') | float(0) +
                   states('sensor.theater_sconces_monthly_energy') | float(0) +
-                  states('sensor.upstairs_bath_fan_monthly_energy') | float(0) +
-                  states('sensor.upstairs_bath_tub_light_monthly_energy') | float(0) +
-                  states('sensor.upstairs_bath_vanity_light_monthly_energy') | float(0) +
-                  states('sensor.upstairs_bedroom_light_monthly_energy') | float(0) +
-                  states('sensor.upstairs_bedroom_outlet_monthly_energy') | float(0) +
                   states('sensor.utility_light_monthly_energy') | float(0)
                  ) | round(2)
               }}"

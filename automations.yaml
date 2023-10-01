@@ -7,15 +7,6 @@
       person_entity: person.jon
       zone_entity: zone.home
       notify_device: a9570941d9dcebbd74ecb611f829a0f2
-- id: '1628199776406'
-  alias: Motion-activated Light
-  description: ''
-  use_blueprint:
-    path: homeassistant/motion_light.yaml
-    input:
-      motion_entity: binary_sensor.guest_bath_motion_occupancy
-      light_target:
-        entity_id: light.guest_bath_light
 - id: '1655124375247'
   alias: Kodi Test
   description: ''

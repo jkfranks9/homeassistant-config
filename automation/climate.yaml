@@ -56,7 +56,7 @@
   
   condition:
     - condition: state
-      entity_id: binary_sensor.upstairs_bedroom_occupied
+      entity_id: binary_sensor.penthouse_occupied
       state: 'on'
   
   action:

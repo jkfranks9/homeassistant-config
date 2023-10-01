@@ -314,26 +314,26 @@
         data:
           tag: 'tablet_battery'
 
-# Guest bath motion detector battery is too low.
-- alias: Notify Guest Bath Motion Battery Low
-  id: 'notify_guest_bath_motion_battery_low'
+# Studio motion detector battery is too low.
+- alias: Notify Studio Motion Battery Low
+  id: 'notify_studio_motion_battery_low'
   
   use_blueprint:
     path: notification/maint_binary_notify.yaml
     input:
-      sensor_entity: binary_sensor.guest_bath_motion_detector_battery_low
-      timer_entity: timer.guest_bath_motion_detector_battery_notification
-      message: 'Guest bath motion detector battery needs replacing.'
+      sensor_entity: binary_sensor.studio_motion_detector_battery_low
+      timer_entity: timer.studio_motion_detector_battery_notification
+      message: 'Studio motion detector battery needs replacing.'
       persistent: true
-      tag: 'guest_bath_motion_battery'
+      tag: 'studio_motion_battery'
 
 # Clear persistent notification.
-- alias: Clear Guest Bath Motion Battery Notification
-  id: 'clear_guest_bath_motion_battery_notification'
+- alias: Clear Studio Motion Battery Notification
+  id: 'clear_studio_motion_battery_notification'
   
   trigger:
     - platform: state
-      entity_id: binary_sensor.guest_bath_motion_detector_battery_low
+      entity_id: binary_sensor.studio_motion_detector_battery_low
       from: 'on'
       to: 'off'
   
@@ -342,7 +342,7 @@
       data:
         message: 'clear_notification'
         data:
-          tag: 'guest_bath_motion_battery'
+          tag: 'studio_motion_battery'
 
 # Laundry room motion detector battery is too low.
 - alias: Notify Laundry Room Motion Battery Low
@@ -811,17 +811,17 @@
     date_entities: [
                     'input_datetime.reminder_cleaning_dining_foyer',
                     'input_datetime.reminder_cleaning_family_room',
-                    'input_datetime.reminder_cleaning_guest_bath',
-                    'input_datetime.reminder_cleaning_guest_bedroom',
                     'input_datetime.reminder_cleaning_kitchen',
                     'input_datetime.reminder_cleaning_laundry_room',
                     'input_datetime.reminder_cleaning_master_bath',
                     'input_datetime.reminder_cleaning_master_bedroom',
                     'input_datetime.reminder_cleaning_office',
+                    'input_datetime.reminder_cleaning_penthouse_bath',
+                    'input_datetime.reminder_cleaning_penthouse_bedroom',
                     'input_datetime.reminder_cleaning_snack_bar',
+                    'input_datetime.reminder_cleaning_studio_bath',
+                    'input_datetime.reminder_cleaning_studio_bedroom',
                     'input_datetime.reminder_cleaning_theater',
-                    'input_datetime.reminder_cleaning_upstairs_bath',
-                    'input_datetime.reminder_cleaning_upstairs_bedroom',
                     'input_datetime.reminder_cleaning_utility'
                    ]
     

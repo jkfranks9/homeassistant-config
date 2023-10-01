@@ -27,6 +27,22 @@ cards:
         name: Stairway Light
         icon: mdi:dome-light
 
+      - entity: sensor.studio_fan_energy
+        name: Studio Fan
+        icon: mdi:fan
+
+      - entity: sensor.studio_lamp_1_energy
+        name: Studio Lamp 1
+        icon: mdi:lamp
+
+      - entity: sensor.studio_lamp_2_energy
+        name: Studio Lamp 2
+        icon: mdi:lamp
+
+      - entity: sensor.studio_light_energy
+        name: Studio Light
+        icon: mdi:dome-light
+
       - entity: sensor.theater_av_energy
         name: Theater AV
         icon: mdi:audio-video
@@ -47,25 +63,9 @@ cards:
         name: Treadmill
         icon: mdi:walk
 
-      - entity: sensor.upstairs_bath_fan_energy
-        name: Upstairs Bath Fan
+      - entity: sensor.treadmill_fan_energy
+        name: Treadmill Fan
         icon: mdi:fan
-
-      - entity: sensor.upstairs_bath_tub_light_energy
-        name: Upstairs Bath Tub Light
-        icon: mdi:dome-light
-
-      - entity: sensor.upstairs_bath_vanity_light_energy
-        name: Upstairs Bath Vanity Light
-        icon: mdi:vanity-light
-
-      - entity: sensor.upstairs_bedroom_light_energy
-        name: Upstairs Bedroom Light
-        icon: mdi:dome-light
-
-      - entity: sensor.upstairs_bedroom_outlet_energy
-        name: Upstairs Bedroom Outlet
-        icon: mdi:lamp
 
       - entity: sensor.utility_light_energy
         name: Utility Light

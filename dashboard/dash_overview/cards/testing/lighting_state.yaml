@@ -21,12 +21,12 @@ cards:
             - type: 'custom:button-card'
               template: sensor_button
               name: 1st BR
-              entity: light.guest_bedroom_lamp_2
+              entity: light.studio_lamp_2
             
             - type: 'custom:button-card'
               template: sensor_button
               name: 2nd BR
-              entity: light.upstairs_bedroom_outlet
+              entity: light.penthouse_lamp
             
             - type: 'custom:button-card'
               template: sensor_button
@@ -49,7 +49,7 @@ cards:
             - type: 'custom:button-card'
               template: sensor_button
               name: 2nd Night
-              entity: light.upstairs_bath_vanity_light
+              entity: light.penthouse_vanity_light
             
             - type: 'custom:button-card'
               template: sensor_button

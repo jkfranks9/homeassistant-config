@@ -31,10 +31,10 @@ reset_jon_away:
     - service: input_boolean.turn_off
       entity_id: input_boolean.jon_away
 
-# Restore the upstairs bedroom to normal. This can happen when all family members leave, or when just parents
+# Restore the penthouse bedroom to normal. This can happen when all family members leave, or when just parents
 # leave, but a child remains.
-restore_normal_upstairs_bedroom:
-  alias: Restore Normal Upstairs Bedroom
+restore_normal_penthouse_bedroom:
+  alias: Restore Normal Penthouse Bedroom
   
   sequence:
     
@@ -248,12 +248,12 @@ update_laundry_history_time_ranges:
 #======================#
 
 # Mute bedroom echo devices until 9 AM the next morning (unmuted in Unmute Guest Bedroom Echos automation).
-mute_guest_bedroom_echo:
-  alias: Mute Guest Bedroom Echo
+mute_studio_echo:
+  alias: Mute Studio Echo
   use_blueprint:
     path: devices/echo_do_not_disturb.yaml
     input:
-      switch_entity: switch.guest_bedroom_echo_do_not_disturb_switch
+      switch_entity: switch.studio_echo_do_not_disturb_switch
 
 mute_master_bedroom_echo:
   alias: Mute Master Bedroom Echo
@@ -262,12 +262,12 @@ mute_master_bedroom_echo:
     input:
       switch_entity: switch.master_bedroom_echo_do_not_disturb_switch
 
-mute_upstairs_bedroom_echo:
-  alias: Mute Upstairs Bedroom Echo
+mute_penthouse_echo:
+  alias: Mute Penthouse Echo
   use_blueprint:
     path: devices/echo_do_not_disturb.yaml
     input:
-      switch_entity: switch.upstairs_bedroom_echo_do_not_disturb_switch
+      switch_entity: switch.penthouse_echo_do_not_disturb_switch
 
 #======================#
 #     Garage Doors     #

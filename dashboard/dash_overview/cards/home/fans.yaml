@@ -41,8 +41,8 @@ cards:
 
             - type: 'custom:button-card'
               template: bath_fan_button
-              entity: switch.guest_bath_fan
-              name: Guest
+              entity: switch.studio_fan
+              name: Studio
       
             - type: 'custom:button-card'
               template: bath_fan_button
@@ -51,5 +51,5 @@ cards:
       
             - type: 'custom:button-card'
               template: bath_fan_button
-              entity: switch.upstairs_bath_fan
-              name: Upstairs
+              entity: switch.penthouse_fan
+              name: Penthouse

@@ -12,8 +12,8 @@ cards:
     unit: lqi
     entities:
       
-      - entity: sensor.guest_bath_motion_detector_linkquality
-        name: Guest Bath Motion Detector
+      - entity: sensor.studio_motion_detector_linkquality
+        name: Studio Motion Detector
       
       - entity: sensor.laundry_room_motion_detector_linkquality
         name: Laundry Room Motion Detector

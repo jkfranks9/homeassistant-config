@@ -11,26 +11,6 @@ cards:
     show_header_toggle: false
     entities:
 
-      - entity: sensor.guest_bedroom_lamp_energy
-        name: Guest Bedroom Lamp
-        icon: mdi:lamp
-
-      - entity: sensor.guest_bedroom_lamp_2_energy
-        name: Guest Bedroom Lamp 2
-        icon: mdi:lamp
-
-      - entity: sensor.hallway_lamp_energy
-        name: Hallway Lamp
-        icon: mdi:lamp
-
-      - entity: sensor.hallway_lights_energy
-        name: Hallway Lights
-        icon: mdi:dome-light
-
-      - entity: sensor.island_light_energy
-        name: Island Light
-        icon: mdi:light-recessed
-
       - entity: sensor.kitchen_light_energy
         name: Kitchen Light
         icon: mdi:light-recessed
@@ -66,6 +46,26 @@ cards:
       - entity: sensor.office_lamp_energy
         name: Office Lamp
         icon: mdi:lamp
+
+      - entity: sensor.penthouse_fan_energy
+        name: Penthouse Fan
+        icon: mdi:fan
+
+      - entity: sensor.penthouse_lamp_energy
+        name: Penthouse Lamp
+        icon: mdi:lamp
+
+      - entity: sensor.penthouse_light_energy
+        name: Penthouse Light
+        icon: mdi:dome-light
+
+      - entity: sensor.penthouse_tub_light_energy
+        name: Penthouse Tub Light
+        icon: mdi:dome-light
+
+      - entity: sensor.penthouse_vanity_light_energy
+        name: Penthouse Vanity Light
+        icon: mdi:vanity-light
 
       - entity: sensor.porch_light_energy
         name: Porch Light

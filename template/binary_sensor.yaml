@@ -32,6 +32,11 @@
       device_class: light
       state: "{{ is_state('switch.kitchen_light', 'on') }}"
     
+    - name: 'Penthouse Light Mirror'
+      unique_id: penthouse_light_mirror
+      device_class: light
+      state: "{{ is_state('switch.penthouse_light', 'on') }}"
+    
     - name: 'Snack Light Mirror'
       unique_id: snack_light_mirror
       device_class: light
@@ -46,11 +51,6 @@
       unique_id: theater_ceiling_mirror
       device_class: light
       state: "{{ is_state('light.theater_ceiling', 'on') }}"
-    
-    - name: 'Upstairs Bedroom Light Mirror'
-      unique_id: upstairs_bedroom_light_mirror
-      device_class: light
-      state: "{{ is_state('switch.upstairs_bedroom_light', 'on') }}"
 
     #-------------------------#
     #   -- History Stats --   #
@@ -126,13 +126,13 @@
       state: "{{ states('zone.home') | int(0) == 1 and state_attr('zone.home', 'persons') == ['person.jon'] }}"
       device_class: presence
 
-    #-------------------------------------#
-    #   -- Upstairs Bedroom Occupied --   #
-    #-------------------------------------#
+    #------------------------------#
+    #   -- Penthouse Occupied --   #
+    #------------------------------#
     
     # Note that the house is considered a device.
-    - name: Upstairs Bedroom Occupied
-      unique_id: upstairs_bedroom_occupied
+    - name: Penthouse Occupied
+      unique_id: penthouse_occupied
       state: >
         {{ states('input_select.occupied_bedrooms') in ['AdultUp', 'ChildUp', 'ChildDownPlus', 'ChildUpPlus', 'Both'] }}
 

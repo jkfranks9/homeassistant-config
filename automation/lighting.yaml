@@ -56,7 +56,7 @@
       at: '07:30:00'
     
     - platform: template
-      value_template: "{{ state_attr('sun.sun', 'elevation') | float(0) >= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
+      value_template: "{{ state_attr('sun.sun', 'elevation') | float(0) >= states('sensor.min_elevation') | float(0) }}"
     
     - platform: homeassistant
       event: start
@@ -67,7 +67,7 @@
         after: '07:30:00'
         before: '23:00:00'
       
-      - "{{ state_attr('sun.sun', 'elevation') | float(0) >= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
+      - "{{ state_attr('sun.sun', 'elevation') | float(0) >= states('sensor.min_elevation') | float(0) }}"
   
   action:
     - delay: 
@@ -347,8 +347,8 @@
 #     Motion Sensors      #
 #=========================#
 
-- alias: Run Guest Bath Motion Based Light
-  id: 'run_guest_bath_motion_based_light'
+- alias: Run Studio Motion Based Light
+  id: 'run_studio_motion_based_light'
   
   trace:
     stored_traces: 20
@@ -356,9 +356,9 @@
   use_blueprint:
     path: lighting/motion_light_with_fan.yaml
     input:
-      motion_entity: binary_sensor.guest_bath_motion_detector_occupancy
-      light_entity: light.guest_bath_light
-      fan_entity: switch.guest_bath_fan
+      motion_entity: binary_sensor.studio_motion_detector_occupancy
+      light_entity: light.studio_light
+      fan_entity: switch.studio_fan
       no_motion_wait_fan_off: 120
       no_motion_wait_fan_on:  420
       additional_fan_wait:    300
@@ -409,7 +409,7 @@
     # Note that we're using the effective sun sensor, which allows us to do testing using the
     # testing infrastructure. If we're not testing the sensor reflects the real sun.
     - platform: template
-      value_template: "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
+      value_template: "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
     
     - platform: time
       at: '19:30:00'
@@ -422,7 +422,7 @@
       entity_id: binary_sensor.children_home
       state: 'on'
     
-    - "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
+    - "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
     
     - condition: time
       after: '19:30:00'
@@ -441,7 +441,7 @@
     
     # Always turn on the downstairs bedroom light; that's home base.
     - service: light.turn_on
-      entity_id: light.guest_bedroom_lamp_2
+      entity_id: light.studio_lamp_2
 
 # Turn off guest lights after bedtime when grandchildren are home.
 - alias: Turn Off Guest Lights Bedtime
@@ -467,21 +467,6 @@
     - service: script.set_up_children_only_bedtime_environment
       data:
         stage: 'post'
-
-# Turn off upstairs bath fan after a while.
-- alias: Turn Off Upstairs Bath Fan
-  id: turn_off_upstairs_bath_fan
-  
-  trigger:
-    - platform: state
-      entity_id: switch.upstairs_bath_fan
-      from: 'off'
-      to: 'on'
-      for: '00:40:00'
-  
-  action:
-    - service: switch.turn_off
-      entity_id: switch.upstairs_bath_fan
 
 #==========================#
 #     Christmas Lights     #
@@ -612,7 +597,7 @@
   
   action:
     - service: automation.turn_on
-      entity_id: automation.run_guest_bath_motion_based_light
+      entity_id: automation.run_studio_motion_based_light
 
 #============================#
 #     Ceiling Fan Lights     #

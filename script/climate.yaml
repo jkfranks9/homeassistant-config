@@ -109,7 +109,7 @@ set_thermostat_preset:
     
         # Bypass setting the mode if the request is for the upstairs thermostat and the upstairs bedroom is occupied.
         - if:
-            - "{{ climate_name != 'upstairs' or is_state('binary_sensor.upstairs_bedroom_occupied', 'off') }}"
+            - "{{ climate_name != 'upstairs' or is_state('binary_sensor.penthouse_occupied', 'off') }}"
           
           then:    
             - service: climate.set_preset_mode

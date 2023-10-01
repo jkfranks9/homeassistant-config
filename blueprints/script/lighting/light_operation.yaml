@@ -28,10 +28,12 @@ variables:
   #
   # NOTE: We do not expect this to resolve to an empty string, but we check for that below anyway.
   light_entity: >
-    {% if room in ['family_room', 'guest_bedroom', 'master_bedroom', 'office'] %}
+    {% if room in ['family_room', 'master_bedroom', 'office'] %}
       {{ 'light.' ~ room ~ '_lamp' }}
-    {% elif room == 'upstairs_bedroom' %}
-      light.upstairs_bedroom_light
+    {% elif room == 'studio_bedroom' %}
+      light.studio_lamp_1
+    {% elif room == 'penthouse_bedroom' %}
+      light.penthouse_light
     {% elif room == 'theater' %}
       light.theater_sconces
     {% endif %}

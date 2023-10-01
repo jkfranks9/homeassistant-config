@@ -21,7 +21,7 @@
   entities:
     light.master_bath_light:              'off'
     light.downstairs_common_lights:       'off'
-    light.downstairs_guest_suite_lights:  'off'
+    light.studio_lights:                  'off'
     light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
     light.office_lights:                  'off'
@@ -84,11 +84,11 @@
 - id: 'fans_off'
   name: Fans Off
   entities:
-    fan.family_room_fan:      'off'
-    fan.office_fan:           'off'
-    fan.theater_fan:          'off'
+    fan.family_room_fan:    'off'
+    fan.office_fan:         'off'
+    fan.theater_fan:        'off'
     
-    switch.guest_bath_fan:    'off'
-    switch.master_bath_fan:   'off'
-    switch.upstairs_bath_fan: 'off'
+    switch.master_bath_fan: 'off'
+    switch.studio_fan:      'off'
+    switch.penthouse_fan:   'off'
     

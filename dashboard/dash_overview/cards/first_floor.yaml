@@ -77,10 +77,6 @@ config:
         - switch.front_floodlight
         - switch.garage_lights
         - switch.treadmill_fan
-        - switch.guest_bath_fan
-        - switch.guest_bath_light
-        - switch.guest_bedroom_lamp
-        - switch.guest_bedroom_lamp_2
         - switch.hallway_lamp
         - switch.island_light
         - switch.kitchen_christmas_tree
@@ -96,6 +92,10 @@ config:
         #- switch.sonoff_s31_zb           # zigbee router; can move if needed
         - switch.stair_railing
         - switch.stairway_light
+        - switch.studio_fan
+        - switch.studio_lamp_1
+        - switch.studio_lamp_2
+        - switch.studio_light
         - switch.treadmill
       state_action:
         action: call-service
@@ -149,8 +149,8 @@ config:
     - entities:
         - media_player.family_room_echo
         - media_player.master_bedroom_echo
-        - media_player.guest_bedroom_echo
         - media_player.office_echo
+        - media_player.studio_echo
       tap_action: more-info
       state_action:
         action: call-service
@@ -160,7 +160,7 @@ config:
     # Motion detectors and vibration sensors
     - entities:
         - binary_sensor.master_bath_motion_detector_occupancy
-        - binary_sensor.guest_bath_motion_detector_occupancy
+        - binary_sensor.studio_motion_detector_occupancy
         - binary_sensor.laundry_room_motion_detector_occupancy
         - binary_sensor.downstairs_occupancy
         - binary_sensor.main_floor_occupancy

@@ -31,6 +31,7 @@ logs:
   homeassistant.components.automation.log_blue_charm_debug:                   warning
   homeassistant.components.automation.log_dryer_trend_sensors:                warning
   homeassistant.components.automation.log_scripts:                            warning
+  homeassistant.components.automation.log_unifi_changes:                      warning
   homeassistant.components.automation.notify_weekly_cleaning:                 warning
   homeassistant.components.automation.notify_zigbee_device_unavailable:       warning
   homeassistant.components.automation.operate_family_room_fan:                warning
@@ -39,10 +40,10 @@ logs:
   homeassistant.components.automation.perform_daily_chores:                   warning
   homeassistant.components.automation.process_kodi_video_results:             warning
   homeassistant.components.automation.publish_mqtt_automated_states:          warning
-  homeassistant.components.automation.removed_saved_notifications_on_dismiss: warning
+  homeassistant.components.automation.remove_saved_notifications_on_dismiss:  warning
   homeassistant.components.automation.reset_virtual_variables:                warning
   homeassistant.components.automation.resume_cinema:                          warning
-  homeassistant.components.automation.run_guest_bath_motion_based_light:      warning
+  homeassistant.components.automation.run_studio_motion_based_light:          warning
   homeassistant.components.automation.run_laundry_room_motion_based_light:    warning
   homeassistant.components.automation.run_master_bath_motion_based_light:     warning
   homeassistant.components.automation.save_notifications_on_create:           warning

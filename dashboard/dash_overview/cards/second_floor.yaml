@@ -46,15 +46,15 @@ config:
         - light.theater_sconces
         - switch.attic_light
         - switch.hallway_lights
+        - switch.penthouse_fan
+        - switch.penthouse_lamp
+        - switch.penthouse_light
+        - switch.penthouse_tub_light
+        - switch.penthouse_vanity_light
         - switch.shield_tv
         - switch.snack_light
         - switch.stairway_light
         - switch.theater_av
-        - switch.upstairs_bath_fan
-        - switch.upstairs_bath_tub_light
-        - switch.upstairs_bath_vanity_light
-        - switch.upstairs_bedroom_light
-        - switch.upstairs_bedroom_outlet
         - switch.utility_light
       state_action:
         action: call-service
@@ -106,12 +106,12 @@ config:
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
-    - entity: binary_sensor.upstairs_bedroom_light_mirror
+    - entity: binary_sensor.penthouse_light_mirror
       tap_action:
         action: call-service
         service: switch.toggle
         service_data:
-          entity_id: switch.upstairs_bedroom_light
+          entity_id: switch.penthouse_light
       state_action:
         action: call-service
         service: floorplan.class_set
@@ -129,9 +129,9 @@ config:
     - entities:
         - media_player.epson_projector
         - media_player.marantz_sr7012
+        - media_player.penthouse_echo
         - media_player.shield_tv
         - media_player.theater_echo
-        - media_player.upstairs_bedroom_echo
       tap_action: more-info
       state_action:
         action: call-service

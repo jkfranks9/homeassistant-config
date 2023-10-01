@@ -51,10 +51,6 @@ cards:
         name: Fire TV
         icon: mdi:television-classic
 
-      - entity: sensor.floor_fan_energy
-        name: Floor Fan
-        icon: mdi:fan
-
       - entity: sensor.foyer_hutch_energy
         name: Foyer Hutch
         icon: mdi:lightbulb-on-outline
@@ -67,10 +63,14 @@ cards:
         name: Garage Lights
         icon: mdi:dome-light
 
-      - entity: sensor.guest_bath_fan_energy
-        name: Guest Bath Fan
-        icon: mdi:fan
+      - entity: sensor.hallway_lamp_energy
+        name: Hallway Lamp
+        icon: mdi:lamp
 
-      - entity: sensor.guest_bath_light_energy
-        name: Guest Bath Light
+      - entity: sensor.hallway_lights_energy
+        name: Hallway Lights
         icon: mdi:dome-light
+
+      - entity: sensor.island_light_energy
+        name: Island Light
+        icon: mdi:light-recessed

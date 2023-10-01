@@ -22,8 +22,8 @@ cards:
       - entity: sensor.porch_battery_level
         name: Porch Sensor
       
-      - entity: sensor.guest_bath_motion_detector_battery
-        name: Guest Bath Motion Detector
+      - entity: sensor.studio_motion_detector_battery
+        name: Studio Motion Detector
       
       - entity: sensor.laundry_room_motion_detector_battery
         name: Laundry Room Motion Detector

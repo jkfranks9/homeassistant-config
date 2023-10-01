@@ -100,13 +100,13 @@ cards:
               variables:
                 entities_group: light.master_suite_lights
                     
-            # Downstairs guest suite lights.
+            # Sudio lights.
             - type: 'custom:button-card'
               template: light_group_button
-              name: Guest 1st
-              entity: light.downstairs_guest_suite_lights
+              name: Studio
+              entity: light.studio_lights
               variables:
-                entities_group: light.downstairs_guest_suite_lights
+                entities_group: light.studio_lights
       
             # Display downstairs common lights according to Christmas mode.
             - type: conditional
@@ -182,13 +182,13 @@ cards:
                 variables:
                   entities_group: light.dashboard_outdoor_christmas_lights
                     
-            # Upstairs guest suite lights.
+            # Penthouse lights.
             - type: 'custom:button-card'
               template: light_group_button
-              name: Guest 2nd
-              entity: light.upstairs_guest_suite_lights
+              name: Penthouse
+              entity: light.penthouse_lights
               variables:
-                entities_group: light.upstairs_guest_suite_lights
+                entities_group: light.penthouse_lights
                 
             # Upstairs common lights.
             - type: 'custom:button-card'

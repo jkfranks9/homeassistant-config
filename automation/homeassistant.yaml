@@ -202,7 +202,7 @@
         - automation.close_house
         - automation.notify_zigbee_device_unavailable
         - automation.open_house
-        - automation.run_guest_bath_motion_based_light
+        - automation.run_studio_motion_based_light
         - automation.run_master_bath_motion_based_light
         - automation.turn_on_christmas_lights
         - automation.turn_on_guest_lights_sunset
@@ -255,6 +255,7 @@
                             'log_dryer_trend_sensors', 
                             'log_notifications', 
                             'log_scripts',
+                            'log_unifi_changes',
                             'perform_daily_chores',
                             'publish_mqtt_automated_states',
                             'remove_saved_notifications_on_dismiss',
@@ -595,14 +596,9 @@
         - sensor.family_room_fan_energy
         - sensor.family_room_lamp_energy
         - sensor.fire_tv_energy
-        - sensor.floor_fan_energy
         - sensor.foyer_hutch_energy
         - sensor.front_floodlight_energy
         - sensor.garage_lights_energy
-        - sensor.guest_bath_fan_energy
-        - sensor.guest_bath_light_energy
-        - sensor.guest_bedroom_lamp_energy
-        - sensor.guest_bedroom_lamp_2_energy
         - sensor.hallway_lamp_energy
         - sensor.hallway_lights_energy
         - sensor.island_light_energy
@@ -615,22 +611,27 @@
         - sensor.office_bookcase_light_energy
         - sensor.office_fan_energy
         - sensor.office_lamp_energy
+        - sensor.penthouse_fan_energy
+        - sensor.penthouse_lamp_energy
+        - sensor.penthouse_light_energy
+        - sensor.penthouse_tub_light_energy
+        - sensor.penthouse_vanity_light_energy
         - sensor.porch_light_energy
         - sensor.projector_energy
         - sensor.refrigerator_energy
         - sensor.sink_light_energy
         - sensor.snack_light_energy
         - sensor.stairway_light_energy
+        - sensor.studio_fan_energy
+        - sensor.studio_lamp_1_energy
+        - sensor.studio_lamp_2_energy
+        - sensor.studio_light_energy
         - sensor.theater_av_energy
         - sensor.theater_ceiling_energy
         - sensor.theater_fan_energy
         - sensor.theater_sconces_energy
         - sensor.treadmill_energy
-        - sensor.upstairs_bath_fan_energy
-        - sensor.upstairs_bath_tub_light_energy
-        - sensor.upstairs_bath_vanity_light_energy
-        - sensor.upstairs_bedroom_light_energy
-        - sensor.upstairs_bedroom_outlet_energy
+        - sensor.treadmill_fan_energy
         - sensor.utility_light_energy
         - sensor.washer_energy
       to: 'unavailable'

@@ -6,6 +6,28 @@ type: custom:stack-in-card
 title: Upstairs
 cards:
       
+  # Penthouse Bath
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_penthouse_bath
+      - name: Bath
+      - icon: bathtub
+      - interval: 6
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Penthouse Bedroom
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.reminder_cleaning_penthouse_bedroom
+      - name: Bedroom
+      - icon: bed
+      - interval: 8
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
   # Snack Bar
   - type: 'custom:decluttering-card'
     template: next_event
@@ -25,28 +47,6 @@ cards:
       - name: Theater
       - icon: theater
       - interval: 5
-      - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
-      
-  # Upstairs Bath
-  - type: 'custom:decluttering-card'
-    template: next_event
-    variables:
-      - entity: input_datetime.reminder_cleaning_upstairs_bath
-      - name: Bath
-      - icon: bathtub
-      - interval: 6
-      - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
-      
-  # Upstairs Bedroom
-  - type: 'custom:decluttering-card'
-    template: next_event
-    variables:
-      - entity: input_datetime.reminder_cleaning_upstairs_bedroom
-      - name: Bedroom
-      - icon: bed
-      - interval: 8
       - period: 'weeks'
       - service: script.set_datetime_offset_weeks
       

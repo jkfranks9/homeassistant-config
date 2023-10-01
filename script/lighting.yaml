@@ -185,9 +185,9 @@ set_up_children_only_bedtime_environment:
               - service: scene.apply
                 data:
                   entities:
-                    light.guest_bedroom_lamp:      'off'
-                    light.guest_bedroom_lamp_2:    'on'
-                    light.upstairs_bedroom_outlet: 'off'
+                    light.studio_lamp_1:           'off'
+                    light.studio_lamp_2:           'on'
+                    light.penthouse_lamp:          'off'
                     light.master_bedroom_lamp:     'off'
       
           - conditions:
@@ -199,8 +199,8 @@ set_up_children_only_bedtime_environment:
               - service: scene.apply
                 data:
                   entities:
-                    light.guest_bedroom_lamp:      'off'
-                    light.upstairs_bedroom_outlet: 'on'
+                    light.studio_lamp_1:           'off'
+                    light.penthouse_lamp:          'on'
                     light.master_bedroom_lamp:     'off'
       
           - conditions:
@@ -212,8 +212,8 @@ set_up_children_only_bedtime_environment:
               - service: scene.apply
                 data:
                   entities:
-                    light.guest_bedroom_lamp:      'off'
-                    light.upstairs_bedroom_outlet: 'off'
+                    light.studio_lamp_1:           'off'
+                    light.penthouse_lamp:          'off'
                     light.master_bedroom_lamp:     'on'
     
       # Post-asleep stage: reset bedroom light and turn on appropriate night light if needed.
@@ -232,7 +232,7 @@ set_up_children_only_bedtime_environment:
           
             sequence:
               - service: light.turn_off
-                entity_id: light.guest_bedroom_lamp_2
+                entity_id: light.studio_lamp_2
       
           # Upstairs: I'm assuming I'm also using the same bedroom. Turn on the night light, but don't turn off the bedroom
           # light if it's nighttime.
@@ -243,14 +243,14 @@ set_up_children_only_bedtime_environment:
           
             sequence:
               - service: light.turn_on
-                entity_id: light.upstairs_bath_vanity_light
+                entity_id: light.penthouse_vanity_light
             
               - condition: state
                 entity_id: input_boolean.nighttime
                 state: 'off'
             
               - service: light.turn_off
-                entity_id: light.upstairs_bedroom_outlet
+                entity_id: light.penthouse_lamp
 
 #=============================#
 #     Bedtime Environment     #
@@ -283,7 +283,7 @@ establish_bedtime_environment:
         # Turn off all upstairs lights if the upstairs bedroom is not occupied.
         - if:
             - condition: state
-              entity_id: binary_sensor.upstairs_bedroom_occupied
+              entity_id: binary_sensor.penthouse_occupied
               state: 'off'
           
           then:
@@ -308,9 +308,9 @@ establish_bedtime_environment:
                 data:
                   entities:
                     light.daytime_lights:                'on'
-                    light.guest_bath_light:              'off'
-                    light.guest_bedroom_lamp:            'off'
-                    light.guest_bedroom_lamp_2:          'off'
+                    light.studio_light:                  'off'
+                    light.studio_lamp_1:                 'off'
+                    light.studio_lamp_2:                 'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -336,11 +336,11 @@ establish_bedtime_environment:
                 data:
                   entities:
                     light.daytime_lights:                'off'
-                    light.downstairs_guest_suite_lights: 'off'
-                    light.upstairs_bath_tub_light:       'off'
-                    light.upstairs_bath_vanity_light:    'on'
-                    light.upstairs_bedroom_light:        'off'
-                    light.upstairs_bedroom_outlet:       'off'
+                    light.studio_lights:                 'off'
+                    light.penthouse_tub_light:           'off'
+                    light.penthouse_vanity_light:        'on'
+                    light.penthouse_light:               'off'
+                    light.penthouse_lamp:                'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -360,7 +360,7 @@ establish_bedtime_environment:
                 data:
                   entities:
                     light.daytime_lights:                'off'
-                    light.downstairs_guest_suite_lights: 'off'
+                    light.studio_lights:                 'off'
         
               # Set a temporary temperature hold downstairs.
               - service: script.set_temporary_thermostat_hold
@@ -427,7 +427,7 @@ establish_bedtime_environment:
                 data:
                   entities:
                     light.daytime_lights:                'off'
-                    light.downstairs_guest_suite_lights: 'off'
+                    light.studio_lights:                 'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -466,9 +466,9 @@ establish_bedtime_environment:
                 data:
                   entities:
                     light.daytime_lights:                'on'
-                    light.guest_bath_light:              'off'
-                    light.guest_bedroom_lamp:            'off'
-                    light.guest_bedroom_lamp_2:          'off'
+                    light.studio_light:                  'off'
+                    light.studio_lamp_1:                 'off'
+                    light.studio_lamp_2:                 'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -488,10 +488,10 @@ establish_bedtime_environment:
                 data:
                   entities:
                     light.daytime_lights:                'off'
-                    light.upstairs_bath_tub_light:       'off'
-                    light.upstairs_bath_vanity_light:    'on'
-                    light.upstairs_bedroom_light:        'off'
-                    light.upstairs_bedroom_outlet:       'off'
+                    light.penthouse_tub_light:           'off'
+                    light.penthouse_vanity_light:        'on'
+                    light.penthouse_light:               'off'
+                    light.penthouse_lamp:                'off'
               
               # Set up all the bedtime devices.
               - service: script.set_up_bedroom_devices
@@ -534,9 +534,9 @@ set_up_bedroom_devices:
               cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
               days: 1
 
-          # Mute downstairs guest bedroom echo device.
+          # Mute studio echo device.
           - service: script.turn_on
-            entity_id: script.mute_guest_bedroom_echo
+            entity_id: script.mute_studio_echo
       
       # Upstairs bedroom occupied. We don't change the upstairs thermostat, vents or vacuum here. 
       # That's done once when family members arrive.
@@ -544,9 +544,9 @@ set_up_bedroom_devices:
       
         sequence:
 
-          # Mute upstairs guest bedroom echo device.
+          # Mute penthouse echo device.
           - service: script.turn_on
-            entity_id: script.mute_upstairs_bedroom_echo
+            entity_id: script.mute_penthouse_echo
         
       # Both bedrooms occupied. We don't change the upstairs thermostat, vents or vacuum here. 
       # That's done once when family members arrive.
@@ -562,13 +562,13 @@ set_up_bedroom_devices:
               cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
               days: 1
 
-          # Mute downstairs guest bedroom echo device.
+          # Mute studio echo device.
           - service: script.turn_on
-            entity_id: script.mute_guest_bedroom_echo
+            entity_id: script.mute_studio_echo
 
-          # Mute upstairs guest bedroom echo device.
+          # Mute penthouse echo device.
           - service: script.turn_on
-            entity_id: script.mute_upstairs_bedroom_echo
+            entity_id: script.mute_penthouse_echo
 
 # Reset the bedtime environment in the morning. This is called by an automation that triggers on the nighttime flag turning off.
 reset_bedtime_environment:
@@ -587,7 +587,7 @@ reset_bedtime_environment:
       then:    
         - service: script.change_lighting_per_weather_simple
           data:
-            light_entity: light.upstairs_bath_vanity_light
+            light_entity: light.penthouse_vanity_light
             turn_on: false  
   
     # Turn on all automations that were turned off.
@@ -634,9 +634,9 @@ change_lighting_per_weather:
         
     - variables:
         sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-        min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
-        med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
-        max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
+        min_elevation: "{{ states('sensor.min_elevation') }}"
+        med_elevation: "{{ states('sensor.med_elevation') }}"
+        max_elevation: "{{ states('sensor.max_elevation') }}"
     
     # Perform the appropriate actions based on the caller, sun rising state and weather.
     - if:
@@ -724,9 +724,9 @@ change_lighting_per_weather_simple:
         # Note that we're using the effective sun sensor, which allows us to do testing using the
         # testing infrastructure. If we're not testing the sensor reflects the real sun.
         sun_elevation: "{{ state_attr('sensor.effective_sun', 'elevation') }}"
-        min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
-        med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
-        max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
+        min_elevation: "{{ states('sensor.min_elevation') }}"
+        med_elevation: "{{ states('sensor.med_elevation') }}"
+        max_elevation: "{{ states('sensor.max_elevation') }}"
     
     # Perform the appropriate action based on turning on or off, sun rising state and weather.
     - if:
@@ -802,9 +802,9 @@ reset_smart_bulb_sky_conditions:
         
     - variables:
         sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-        min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
-        med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
-        max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
+        min_elevation: "{{ states('sensor.min_elevation') }}"
+        med_elevation: "{{ states('sensor.med_elevation') }}"
+        max_elevation: "{{ states('sensor.max_elevation') }}"
     
     # Use the evaluated weather conditions and sun elevation.
     - condition: template
@@ -949,7 +949,7 @@ turn_on_christmas_lights:
       state: 'on'
     
     - if:
-      - "{{ state_attr('sun.sun', 'elevation') | float(0) <= state_attr('sensor.variables', 'variables').min_elevation | float(0) }}"
+      - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
     
       then:    
         - service: light.turn_on
@@ -1000,7 +1000,7 @@ start_bath_time:
   sequence:
     
     - service: automation.turn_off
-      entity_id: automation.run_guest_bath_motion_based_light
+      entity_id: automation.run_studio_motion_based_light
     
     - service: timer.start
       data:

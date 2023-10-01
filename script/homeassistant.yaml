@@ -8,25 +8,11 @@
 # state_attr('sensor.variables', 'variables').<var name>
 
 # Trigger-based template sensors are restored on HA start, so we only need to initialize the variables once, which 
-# is the purpose of this script. As such, it never needs to be called normally.
+# is the purpose of this script. As such, it only needs to be called when anything here is new, changed or deleted.
 initialize_global_variables:
   alias: Initialize Global Variables
   
   sequence:
-    
-    # Sun elevation angles used for lighting blueprints, automations and scripts.
-    - event: set_variable
-      event_data:
-        key: min_elevation
-        value: 3
-    - event: set_variable
-      event_data:
-        key: med_elevation
-        value: 6
-    - event: set_variable
-      event_data:
-        key: max_elevation
-        value: 9
     
     # Thermostat temperatures.
     - event: set_variable
@@ -59,11 +45,11 @@ initialize_global_variables:
     - event: set_variable
       event_data:
         key: light_rooms
-        value: ['family_room', 'guest_bedroom', 'master_bedroom', 'office', 'theater', 'upstairs_bedroom']    
+        value: ['family_room', 'master_bedroom', 'office', 'penthouse_bedroom', 'studio_bedroom', 'theater']
     - event: set_variable
       event_data:
         key: light_rooms_lights
-        value: ['light.family_room_lamp', 'light.guest_bedroom_lamp_2', 'light.master_bedroom_lamp', 'light.office_lamp', 'light.theater_ceiling', 'light.upstairs_bedroom_light']
+        value: ['light.family_room_lamp', 'light.master_bedroom_lamp', 'light.office_lamp', 'light.penthouse_light', 'light.studio_lamp_2', 'light.theater_ceiling']
     
     # Rooms with fans are for voice control of ceiling fans in certain rooms.
     - event: set_variable

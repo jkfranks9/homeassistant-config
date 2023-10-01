@@ -114,7 +114,7 @@ test_friendly_time:
         notification_id: 'test_friendly'
         message: >
           {% from 'friendly_strings.jinja' import format_duration %}
-          {{ format_duration(state_attr('input_datetime.reminder_cleaning_guest_bath', 'timestamp')) }}
+          {{ format_duration(state_attr('input_datetime.reminder_cleaning_studio_bath', 'timestamp')) }}
 
 #================#
 #     Lights     #
@@ -181,7 +181,7 @@ test_group_modify:
       entities:
         - light.family_room_lamp
         - light.hallway_lamp
-        - light.guest_bath_light
+        - light.studio_light
 
 test_group_remove:
   alias: Test Group Remove
@@ -202,7 +202,13 @@ test_remove_global_variables:
     
     - event: remove_variable
       event_data:
-        key: fan_rooms_sensors
+        key: min_elevation
+    - event: remove_variable
+      event_data:
+        key: med_elevation
+    - event: remove_variable
+      event_data:
+        key: max_elevation
 
 #=====================#
 #     Alexa Media     #
@@ -235,14 +241,9 @@ test_restore_riemann_integrations:
         - sensor.family_room_fan_energy
         - sensor.family_room_lamp_energy
         - sensor.fire_tv_energy
-        - sensor.floor_fan_energy
         - sensor.foyer_hutch_energy
         - sensor.front_floodlight_energy
         - sensor.garage_lights_energy
-        - sensor.guest_bath_fan_energy
-        - sensor.guest_bath_light_energy
-        - sensor.guest_bedroom_lamp_energy
-        - sensor.guest_bedroom_lamp_2_energy
         - sensor.hallway_lamp_energy
         - sensor.hallway_lights_energy
         - sensor.island_light_energy
@@ -255,21 +256,26 @@ test_restore_riemann_integrations:
         - sensor.office_bookcase_light_energy
         - sensor.office_fan_energy
         - sensor.office_lamp_energy
+        - sensor.penthouse_fan_energy
+        - sensor.penthouse_lamp_energy
+        - sensor.penthouse_light_energy
+        - sensor.penthouse_tub_light_energy
+        - sensor.penthouse_vanity_light_energy
         - sensor.porch_light_energy
         - sensor.projector_energy
         - sensor.refrigerator_energy
         - sensor.sink_light_energy
         - sensor.snack_light_energy
         - sensor.stairway_light_energy
+        - sensor.studio_fan_energy
+        - sensor.studio_lamp_1_energy
+        - sensor.studio_lamp_2_energy
+        - sensor.studio_light_energy
         - sensor.theater_av_energy
         - sensor.theater_ceiling_energy
         - sensor.theater_fan_energy
         - sensor.theater_sconces_energy
         - sensor.treadmill_energy
-        - sensor.upstairs_bath_fan_energy
-        - sensor.upstairs_bath_tub_light_energy
-        - sensor.upstairs_bath_vanity_light_energy
-        - sensor.upstairs_bedroom_light_energy
-        - sensor.upstairs_bedroom_outlet_energy
+        - sensor.treadmill_fan_energy
         - sensor.utility_light_energy
         - sensor.washer_energy

@@ -110,24 +110,6 @@
           
         {{ curr.index }}
 
-    #--------------------------#
-    #   -- Sun Elevations --   #
-    #--------------------------#
-    
-    # These are required to pass into blueprints for use on 'above' and 'below' numeric_state triggers.
-
-    - name: 'Min Elevation'
-      unique_id: min_elevation
-      state: "{{ (state_attr('sensor.variables', 'variables').min_elevation) | float(0) }}"
-
-    - name: 'Med Elevation'
-      unique_id: med_elevation
-      state: "{{ (state_attr('sensor.variables', 'variables').med_elevation) | float(0) }}"
-
-    - name: 'Max Elevation'
-      unique_id: max_elevation
-      state: "{{ (state_attr('sensor.variables', 'variables').max_elevation) | float(0) }}"
-
     #-----------------#
     #   -- Dates --   #
     #-----------------#

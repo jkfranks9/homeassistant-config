@@ -74,9 +74,9 @@ action:
         
       - variables:
           sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-          min_elevation: "{{ state_attr('sensor.variables', 'variables').min_elevation }}"
-          med_elevation: "{{ state_attr('sensor.variables', 'variables').med_elevation }}"
-          max_elevation: "{{ state_attr('sensor.variables', 'variables').max_elevation }}"
+          min_elevation: "{{ states('sensor.min_elevation') }}"
+          med_elevation: "{{ states('sensor.med_elevation') }}"
+          max_elevation: "{{ states('sensor.max_elevation') }}"
       
       # Pick one invocation on which to take action. Each stanza below corresponds to one of the
       # possible input elevations. The second condition in each stanza (or only one for the default)

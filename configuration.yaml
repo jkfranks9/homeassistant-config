@@ -53,6 +53,32 @@ lovelace:
       show_in_sidebar: true
       require_admin: true
 
+#===================#
+#     Variables     #
+#===================#
+
+# These are global variables (or constants).
+#
+# We also use the Variables template sensor, which also contains variables or constants, and is the
+# preferred way to define such. But anything that is used in template triggers, or is used in other
+# template sensors should be defined here. This is due to timing issues when HA is restarted or 
+# templates are reloaded, resulting in a bunch of ugly error messages in the log.
+variable:
+  
+  # Sun elevation angles used for lighting blueprints, automations and scripts.
+  # Note that we don't ask for them to be restored on restart, which means they use the initial values defined here.
+  min_elevation:
+    value: 3
+    restore: false
+  
+  med_elevation:
+    value: 6
+    restore: false
+  
+  max_elevation:
+    value: 9
+    restore: false
+
 #==================#
 #     Presence     #
 #==================#
