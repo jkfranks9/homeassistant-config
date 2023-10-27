@@ -39,5 +39,3 @@ cards:
         entities:
           - attribute: backups_in_home_assistant
             name: Number
-      
-      - entity: sensor.influxdb_db_size

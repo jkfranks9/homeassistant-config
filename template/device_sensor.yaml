@@ -110,7 +110,7 @@
         {# --Power level indicates stopped-- #}
         {% if p < 3 %} stop
           
-        {# --Power level indicates filling if the current state is stopped--  #}
+        {# --Power level indicates filling--  #}
         {% elif 7 <= p <= 13 %} fill
         
         {# --Power level indicates a drop to a lower level--  #}
@@ -118,7 +118,7 @@
           {{ 'drop' if t1 != 'active' else s }}
           
         {# --Power level indicates a raise to a higher level-- #}
-        {% elif p > 330 %} raise
+        {% elif p > 325 %} raise
           
         {# --Power level outside the above ranges, so keep the current state #}
         {% else %} {{ s }}
@@ -136,16 +136,16 @@
       
       attributes:
         device_list: >
-          {# --List of device entities, associated last seen sensors, and friendly names-- #}
+          {# --List of device entities, associated last seen sensors-- #}
           {% set device_list = [
-                                ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen', 'Back Door Sensor'],
-                                ['binary_sensor.guest_br_window_sensor_contact', 'sensor.guest_br_window_sensor_last_seen', 'Guest BR Window Sensor'],
-                                ['binary_sensor.dryer_vibration_sensor_vibration', 'sensor.dryer_vibration_sensor_last_seen', 'Dryer Vibration Sensor'],
-                                ['binary_sensor.studio_motion_detector_occupancy', 'sensor.studio_motion_detector_last_seen', 'Studio Motion Detector'],
-                                ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen', 'Laundry Room Motion Detector'],
-                                ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen', 'Master Bath Motion Detector'],
-                                ['cover.master_br_vent_1', 'sensor.master_br_vent_1_last_seen', 'Master BR Vent 1'],
-                                ['cover.master_br_vent_2', 'sensor.master_br_vent_2_last_seen', 'Master BR Vent 2']
+                                ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen'],
+                                ['binary_sensor.guest_br_window_sensor_contact', 'sensor.guest_br_window_sensor_last_seen'],
+                                ['binary_sensor.dryer_vibration_sensor_vibration', 'sensor.dryer_vibration_sensor_last_seen'],
+                                ['binary_sensor.studio_motion_detector_occupancy', 'sensor.studio_motion_detector_last_seen'],
+                                ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen'],
+                                ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen'],
+                                ['cover.master_br_vent_1', 'sensor.master_br_vent_1_last_seen'],
+                                ['cover.master_br_vent_2', 'sensor.master_br_vent_2_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -157,13 +157,12 @@
             {# --Set variables-- #}
             {% set device_entity = device[0] %}
             {% set sensor_entity = device[1] %}
-            {% set device_name = device[2] %}
             {% set timeout_minutes = 150 %}
           
             {# --Add a device to the list if the device entity is unavailable, or hasn't been seen in the timeout window-- #}
             {% if states(device_entity) in ['unknown', 'unavailable']
                   or as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (timeout_minutes * 60) %}
-              {% set unavail_device_list.list = unavail_device_list.list + [device_name] %}
+              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(device_entity, 'friendly_name')] %}
             {% endif %}
           {% endfor %}
           
@@ -177,31 +176,95 @@
       
       attributes:
         device_list: >
-          {# --List of timestamp entities and friendly names-- #}
+          {# --List of timestamp entities-- #}
           {% set device_list = [
-                                ['input_number.back_door_sensor', 'Back Door Sensor'],
-                                ['input_number.guest_br_window_sensor', 'Guest BR Window Sensor'],
-                                ['input_number.dryer_vibration_sensor', 'Dryer Vibration Sensor'],
-                                ['input_number.studio_motion_detector', 'Studio Motion Detector'],
-                                ['input_number.laundry_room_motion_detector', 'Laundry Room Motion Detector'],
-                                ['input_number.master_bath_motion_detector', 'Master Bath Motion Detector'],
-                                ['input_number.master_br_vent_1', 'Master BR Vent 1'],
-                                ['input_number.master_br_vent_2', 'Master BR Vent 2']
+                                'input_number.back_door_sensor',
+                                'input_number.guest_br_window_sensor',
+                                'input_number.dryer_vibration_sensor',
+                                'input_number.studio_motion_detector',
+                                'input_number.laundry_room_motion_detector',
+                                'input_number.master_bath_motion_detector',
+                                'input_number.master_br_vent_1',
+                                'input_number.master_br_vent_2'
                                ] %}
                                
           {# --Create an empty list to start-- #}
           {% set unavail_device_list = namespace(list = []) %}
           
           {# --Walk through all devices-- #}
-          {% for device in device_list %}
-          
-            {# --Set variables-- #}
-            {% set timestamp_entity = device[0] %}
-            {% set device_name = device[1] %}
+          {% for timestamp_entity in device_list %}
           
             {# --Add a device to the list if the device timestamp is not 0-- #}
             {% if states(timestamp_entity) | int(0) > 0 %}
-              {% set unavail_device_list.list = unavail_device_list.list + [device_name] %}
+              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(timestamp_entity, 'friendly_name')] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ unavail_device_list.list }}
+
+    #------------------------------------#
+    #   -- Echo Unavailable Devices --   #
+    #------------------------------------#
+    
+    # Current list of unavailable echo device friendly names. This is updated whenever a device becomes unavailable. 
+    # The state is a count of all such devices.
+    - name: 'Current Echo Unavailable Devices'
+      unique_id: current_echo_unavailable_devices
+      state: "{{ this.attributes.device_list | length }}"
+      
+      attributes:
+        device_list: >
+          {# --List of device entities-- #}
+          {% set device_list = [
+                                'media_player.family_room_echo',
+                                'media_player.master_bedroom_echo',
+                                'media_player.office_echo',
+                                'media_player.penthouse_echo',
+                                'media_player.studio_echo',
+                                'media_player.theater_echo'
+                               ] %}
+                               
+          {# --Create an empty list to start-- #}
+          {% set unavail_device_list = namespace(list = []) %}
+              
+          {# --Walk through all devices-- #}
+          {% for device_entity in device_list %}
+              
+            {# --Add a device to the list if the device entity is unavailable-- #}
+            {% if states(device_entity) in ['unknown', 'unavailable'] %}
+              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(device_entity, 'friendly_name')] %}
+            {% endif %}
+          {% endfor %}
+              
+          {{ unavail_device_list.list }}
+    
+    # Previous list of unavailable echo device friendly names. This allows us to detect which of a list of unavailable devices is new when the 
+    # Notify Echo Device Unavailable automation runs. The state is a count of all such devices.
+    - name: 'Previous Echo Unavailable Devices'
+      unique_id: previous_echo_unavailable_devices
+      state: "{{ this.attributes.device_list | length }}"
+      
+      attributes:
+        device_list: >
+          {# --List of timestamp entities-- #}
+          {% set device_list = [
+                                'input_number.family_room_echo',
+                                'input_number.master_bedroom_echo',
+                                'input_number.office_echo',
+                                'input_number.penthouse_echo',
+                                'input_number.studio_echo',
+                                'input_number.theater_echo'
+                               ] %}
+                               
+          {# --Create an empty list to start-- #}
+          {% set unavail_device_list = namespace(list = []) %}
+          
+          {# --Walk through all devices-- #}
+          {% for timestamp_entity in device_list %}
+          
+            {# --Add a device to the list if the device timestamp is not 0-- #}
+            {% if states(timestamp_entity) | int(0) > 0 %}
+              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(timestamp_entity, 'friendly_name')] %}
             {% endif %}
           {% endfor %}
           

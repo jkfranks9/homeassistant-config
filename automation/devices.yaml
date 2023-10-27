@@ -1778,9 +1778,9 @@
       entity_id: sensor.blue_charm_presence
       id: Blue Charm
     
-    - platform: state
-      entity_id: sensor.ble_garage_blue_charm_distance
-      id: Garage distance
+    # - platform: state
+      # entity_id: sensor.ble_garage_blue_charm_distance
+      # id: Garage distance
     
     - platform: state
       entity_id: sensor.ble_house_blue_charm_distance
@@ -1832,10 +1832,11 @@
   # time to initialize the BLE readers (garage and house). We don't want to turn off children home in this case.
   # So we verify that the wifi sensors in both readers are in a good state before continuing. Yeah, I know.
   variables:
-    garage_wifi: "{{ states('sensor.ble_garage_wifi_signal') }}"
+    #garage_wifi: "{{ states('sensor.ble_garage_wifi_signal') }}"
     house_wifi: "{{ states('sensor.ble_house_wifi_signal') }}"
   
-  condition: "{{ garage_wifi not in ['unknown', 'unavailable'] and house_wifi not in ['unknown', 'unavailable'] }}"
+  #condition: "{{ garage_wifi not in ['unknown', 'unavailable'] and house_wifi not in ['unknown', 'unavailable'] }}"
+  condition: "{{ house_wifi not in ['unknown', 'unavailable'] }}"
   
   action:
     - service: mqtt.publish

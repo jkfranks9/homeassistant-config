@@ -3,10 +3,9 @@
 #==================#
 
 db_url: !secret mariadb_url
-purge_keep_days: 10
+purge_keep_days: 15
 
 # NOTES:
-# - Identical to influxdb configuration.
 # - Everything included here is in history and logbook, thus no configuration for those is required.
 
 #==== Exclusions

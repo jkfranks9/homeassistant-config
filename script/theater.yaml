@@ -102,6 +102,12 @@ open_cinema:
         thermostat_entity: climate.upstairs
         preset: 'Home'
     
+    # Turn off the upstairs Ecobee minimum fan time (it makes me cold sometimes).
+    - service: ecobee.set_fan_min_on_time
+      data:
+        entity_id: climate.upstairs
+        fan_min_on_time: 0
+    
     # If no family are home, delay, then turn off some downstairs lights.
     - delay: '00:05:00'
     
@@ -227,6 +233,13 @@ close_cinema:
           data:
             thermostat_entity: climate.upstairs
             preset: 'Away'
+    
+    # Turn on the upstairs ecobee minimum fan time.
+    # NOTE: The time amount should be coordinated with the ecobee system settings, using the app or the thermostat.
+    - service: ecobee.set_fan_min_on_time
+      data:
+        entity_id: climate.upstairs
+        fan_min_on_time: 5
     
     # Turn off all lights.
     - delay: '00:05:00'

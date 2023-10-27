@@ -36,14 +36,17 @@ trigger:
     event_data:
       component: !input component_name
 
-# Continue if the device is not on. We deliberately do not use off state in case the state is
-# some weird value, like unknown.
-condition: "{{ not is_state(input_device_entity, 'on') }}"
+# Continue if the device is not on. Weed out changing to/from unavailable or unknown states.
+condition: "{{ trigger.from_state.state not in ['unavailable', 'unknown'] and trigger.to_state.state not in ['unavailable', 'unknown'] and not is_state(input_device_entity, 'on') }}"
 
 action:
     
-  # Wait a few seconds, then verify that the device is still not on. We don't need to worry about very short transients.
-  - delay: 30
+  # Indicate a possible power glitch occurred.
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.possible_power_glitch
+    
+  # Wait a few seconds, then verify that the device is still not on. We don't need to worry about short transients.
+  - delay: 5
   
   - condition: "{{ not is_state(input_device_entity, 'on') }}"
   
@@ -58,10 +61,6 @@ action:
       throttled: false
       tag: ''
       timeout: 0
-    
-  # Indicate a possible power glitch occurred.
-  - service: input_boolean.turn_on
-    entity_id: input_boolean.possible_power_glitch
   
   # Turn the device back on.
   - service: homeassistant.turn_on

@@ -30,6 +30,9 @@ trigger:
     attribute: app_name
     to: !input appl_name
 
+# Weed out spurious broken pipe errors, which for some odd reason show up in the app name.
+condition: "{{ 'Broken pipe' not in trigger.from_state.attributes.app_name }}"
+
 action:
   - service: system_log.write
     data:

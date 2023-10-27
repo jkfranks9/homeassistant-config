@@ -217,7 +217,7 @@ entities:
   
   - type: custom:multiple-entity-row
     entity: sensor.unifi_counter
-    name: Unifi Networks
+    name: Unifi
     icon: mdi:router-network
     state_header: Total
     unit: false
@@ -227,7 +227,7 @@ entities:
         name: Wired
       - entity: sensor.unifi_counter
         attribute: White Rabbit Gardens
-        name: WiFi
+        name: WRG
       - entity: sensor.unifi_counter
         attribute: White Rabbit IoT
         name: IoT
@@ -237,17 +237,12 @@ entities:
       - entity: sensor.unifi_counter
         attribute: Guest
         name: Guest
-  
-  - type: custom:multiple-entity-row
-    entity: sensor.unifi_counter
-    attribute: 'AP U6-Lite'
-    name: Unifi APs
-    icon: mdi:access-point
-    state_header: U6
-    entities:
       - entity: sensor.unifi_counter
         attribute: 'AP UDM'
         name: UDM
+      - entity: sensor.unifi_counter
+        attribute: 'AP U6-Lite'
+        name: U6
   
   #-------------------------------------------------
   
@@ -294,3 +289,32 @@ entities:
         format: precision0
       - entity: sensor.treadmill_current_hours
         name: Sole Hours
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: sensor.best_price_gas_pittsboro
+    name: Gas
+    icon: mdi:gas-station
+    format: precision2
+    unit: false
+    styles:
+      width: 38px
+    state_header: PB Price
+    entities:
+      - entity: sensor.best_price_gas_siler_city
+        attribute: station_name
+        name: SC Name
+        styles:
+          width: 101px
+      - entity: sensor.best_price_gas_siler_city
+        name: SC Price
+        format: precision2
+        unit: false
+        styles:
+          width: 38px
+      - entity: sensor.best_price_gas_pittsboro
+        attribute: station_name
+        name: PB Name
+        styles:
+          width: 101px

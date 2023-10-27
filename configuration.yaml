@@ -20,7 +20,6 @@ automation:     !include_dir_merge_list automation
 binary_sensor:  !include binary_sensor.yaml
 cover:          !include covers.yaml
 group:          !include_dir_merge_named group
-influxdb:       !include database/influxdb.yaml
 logger:         !include database/logger.yaml
 panel_custom:   !include panel_custom.yaml
 recorder:       !include database/recorder.yaml
@@ -41,6 +40,7 @@ lovelace:
     dashboard-overview:
       mode: yaml
       title: Overview
+      icon: mdi:monitor-dashboard
       filename: dashboard_overview.yaml
       show_in_sidebar: true
       require_admin: false
@@ -139,15 +139,6 @@ proximity:
 #==============#
 
 mqtt:
-  
-  sensor:
-    
-    # InfluxDB database size for the front end.
-    - name: InfluxDB DB Size
-      unit_of_measurement: 'MB'
-      icon: hass:chart-line
-      state_topic: "homeassistant/sensor/dbsize"
-      value_template: "{{ (value.split('\t')[0]|int(0)/1000)|round(3) }}"
   
   device_tracker:
     

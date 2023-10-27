@@ -2,6 +2,41 @@
 #     Binary Sensors     #
 #========================#
 
+#------------------------------#
+#   -- Device Power Flags --   #
+#------------------------------#
+
+# These indicate if a device or device group (such as an AV system) are drawing power.
+- trigger:
+    - platform: template
+      value_template: >
+        {% set cstate = states('sensor.family_room_av_current_consumption') %}
+        {% if cstate not in ['unavailable', 'unknown'] %}
+          {{ cstate  | float(0) > 10 }}
+        {% else %}
+          false
+        {% endif %}
+    
+  binary_sensor:
+    - name: Family Room AV System
+      unique_id: family_room_av_system
+      state: "{{ states('sensor.family_room_av_current_consumption') | float(0) > 10 }}"
+
+- trigger:
+    - platform: template
+      value_template: >
+        {% set cstate = states('sensor.theater_av_current_consumption') %}
+        {% if cstate not in ['unavailable', 'unknown'] %}
+          {{ cstate  | float(0) > 50 }}
+        {% else %}
+          false
+        {% endif %}
+    
+  binary_sensor:      
+    - name: Theater AV System
+      unique_id: theater_av_system
+      state: "{{ states('sensor.theater_av_current_consumption') | float(0) > 50 }}"
+
 - binary_sensor:
 
     #-----------------------------#
@@ -79,19 +114,6 @@
            (not is_state('sensor.harmony_hub', 'Stream Player') or
              (is_state('sensor.harmony_hub', 'Stream Player') and
               is_state('media_player.shield_tv', 'playing'))) }}
-
-    #------------------------------#
-    #   -- Device Power Flags --   #
-    #------------------------------#
-    
-    # These indicate if a device or device group (such as an AV system) are drawing power.
-    - name: Family Room AV System
-      unique_id: family_room_av_system
-      state: "{{ states('sensor.family_room_av_current_consumption') | float(0) > 10 }}"
-      
-    - name: Theater AV System
-      unique_id: theater_av_system
-      state: "{{ states('sensor.theater_av_current_consumption') | float(0) > 50 }}"
 
     #-------------------------#
     #   -- Dryer Control --   #

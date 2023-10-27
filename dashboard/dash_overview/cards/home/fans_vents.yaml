@@ -1,9 +1,9 @@
-#===================#
-#     Fans Card     #
-#===================#
+#===========================#
+#     Fans & Vents Card     #
+#===========================#
 
 type: custom:stack-in-card
-title: Fans
+title: Fans & Vents
 mode: vertical
 cards:
   
@@ -53,3 +53,13 @@ cards:
               template: bath_fan_button
               entity: switch.penthouse_fan
               name: Penthouse
+  
+            - type: custom:button-card
+              template: hvac_vent_button
+              entity: cover.master_br_vent_1
+              name: Master BR 1
+              
+            - type: custom:button-card
+              template: hvac_vent_button
+              entity: cover.master_br_vent_2
+              name: Master BR 2

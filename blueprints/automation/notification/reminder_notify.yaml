@@ -25,6 +25,12 @@ blueprint:
     tag_prefix:
       name: Tag Prefix
       description: Tag prefix; the suffix is formed dynamically.
+    
+    category_uppercase:
+      name: Category Uppercase
+      description: True if the entity category should be uppercased (for example 'HVAC').
+      selector:
+        boolean:
   
 # Trigger daily at the specified time, or when HA starts (in case HA is rebooting when the trigger would have occurred).
 trigger:
@@ -46,6 +52,7 @@ variables:
     {{ actionable_list.list }}  
   input_message_prefix: !input message_prefix  
   input_tag_prefix: !input tag_prefix
+  input_category_uppercase: !input category_uppercase
   
 condition:
   - condition: template
@@ -65,14 +72,22 @@ action:
       sequence:
         - variables:
             entity_category: "{{ (repeat.item).split('_')[-2] }}"
+            friendly_category: >
+              {% if input_category_uppercase == true %}
+                {{ entity_category | upper }}
+              {% else %}
+                {{ entity_category | capitalize }}
+              {% endif %}
             entity_suffix: "{{ (repeat.item).split('_')[-1] }}"
+            friendly_name: "{{ state_attr(repeat.item, 'friendly_name') }}"
+            friendly_short_name: "{{ friendly_name.split('Reminder ' ~ friendly_category ~ ' ')[-1] }}"
         
         - service: script.send_notification
           data:
             destination:
               - mobile
             title: 'Action required:'
-            message: "{{ input_message_prefix ~ ' (' ~ entity_suffix ~ ').' }}"
+            message: "{{ input_message_prefix ~ ' (' ~ friendly_short_name ~ ').' }}"
             channel: persistent
             throttled: true
             timer_entity: "{{ 'timer.reminder_' ~ entity_category ~ '_' ~ entity_suffix }}"
