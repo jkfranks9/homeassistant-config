@@ -143,9 +143,9 @@ cards:
               label: >
                 [[[
                   if (states['sensor.mail_usps_mail'].state == 1)
-                    return states['sensor.mail_usps_mail'].state + " piece";
+                    return states['sensor.mail_usps_mail'].state + " item";
                   else
-                    return states['sensor.mail_usps_mail'].state + " pieces";
+                    return states['sensor.mail_usps_mail'].state + " items";
                 ]]]
               icon: |-
                 [[[

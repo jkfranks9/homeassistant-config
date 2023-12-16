@@ -29,8 +29,5 @@ cards:
       - entity: sensor.shelly1_garage_south_rssi
         name: Garage South
       
-      # - entity: sensor.ble_garage_wifi_signal
-        # name: BLE Garage Sensor
-      
       - entity: sensor.ble_house_wifi_signal
         name: BLE House Sensor

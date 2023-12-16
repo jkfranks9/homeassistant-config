@@ -32,11 +32,8 @@
   id: close_cinema
   trigger:
     - platform: state
-      entity_id: remote.harmony_hub
-      attribute: current_activity
-      to:
-        - 'power_off'
-        - 'PowerOff'
+      entity_id: sensor.harmony_hub
+      to: 'PowerOff'
   
   # Sanity check to prevent false triggers, which can happen if the network is twitchy.
   condition:
@@ -52,8 +49,8 @@
 #===================================#
 
 # To prevent the projector and other components from frequent on/off cycles, the cinema can only be opened or closed
-# about 10 minutes after being closed or opened. This is largely controlled by the Open Cinema and Close Cinema scripts,
-# but they use a timer to delay the actual open or close. We handle the timer expiration here.
+# about 10 minutes after being closed or opened. This is largely controlled by the Check Cinema Usage Control script,
+# but it uses a timer to delay the actual open or close. We handle the timer expiration here.
 - alias: Handle Cinema Usage Delay
   id: handle_cinema_usage_delay
   
@@ -72,6 +69,65 @@
       
       else:
         - service: script.close_cinema
+
+#==================================#
+#     Projector Error Handling     #
+#==================================#
+
+# The projector sometimes encounters a (bogus) lamp error when powering on. We detect that here and try to
+# automatically handle it.
+- alias: Handle Projector Error
+  id: handle_projector_error
+  
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        name: 'custom_components.epson_projector_link.projector.projector'
+        level: 'ERROR'
+  
+  condition: "{{ 'Lamp ON failure' in trigger.event.data.message[0] }}"
+  
+  action:
+    - service: notify.alexa_media
+      data:
+        message: "Projector lamp error detected. Please wait a few minutes while I try to fix it."
+        target:
+          - media_player.family_room_echo
+          - media_player.theater_echo
+        data:
+          type: tts
+    
+    # Wait a few minutes for the projector to turn itself off.
+    - delay: '00:02:00'
+    
+    # Turn off the power for a bit.
+    - service: switch.turn_off
+      entity_id: switch.projector_plug
+    
+    - delay: '00:00:30'
+    
+    # Turn the power back on.
+    - service: switch.turn_on
+      entity_id: switch.projector_plug
+    
+    - service: notify.alexa_media
+      data:
+        message: "I'm turning the projector back on. Keep your fingers crossed!"
+        target:
+          - media_player.family_room_echo
+          - media_player.theater_echo
+        data:
+          type: tts
+    
+    - delay: '00:00:10'
+    
+    # Finally, power on the projector.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'PowerOn'
+        device: Epson Projector
 
 #==================================#
 #     Automatic Volume Control     #

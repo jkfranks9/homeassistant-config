@@ -22,14 +22,6 @@
       #unit_of_measurement: 'h'
       state: "{{ '%.2f' | format(states('sensor.cpap_usage_minutes') | float(0) / 60) }}"
 
-    #-----------------------#
-    #   -- Harmony Hub --   #
-    #-----------------------#
-    
-    - name: 'Harmony Hub'
-      unique_id: harmony_hub
-      state: "{{ state_attr('remote.harmony_hub', 'current_activity') }}"
-
     #--------------------------#
     #   -- Ecovacs DEEBOT --   #
     #--------------------------#
@@ -38,14 +30,6 @@
       unique_id: ecovacs_battery
       unit_of_measurement: '%'
       state: "{{ state_attr('vacuum.ecovacs_deebot', 'battery_level') }}"
-
-    #---------------------------#
-    #   -- Epson Projector --   #
-    #---------------------------#
-    
-    - name: 'Epson Lamp Hours'
-      unique_id: epson_lamp_hours
-      state: "{{ state_attr('media_player.epson_projector', 'lamp_hours') }}"
 
     #----------------------#
     #   -- Last Alexa --   #
@@ -56,7 +40,7 @@
       unique_id: last_alexa
       state: >
         {{ expand(integration_entities('alexa_media') | select('search', 'media_player'))
-         | selectattr('attributes.last_called', 'eq', True) | map(attribute = 'entity_id') | first }}
+         | selectattr('attributes.last_called', 'eq', True) | map(attribute = 'entity_id') | list }}
 
     #-----------------------------#
     #   -- Treadmill Service --   #
@@ -71,23 +55,10 @@
     #   -- Beacon Presence --   #
     #---------------------------#
     
-    # Blue charm beacon presence, based on scanner lowest distance.
+    # Blue charm beacon presence, based on scanner distance being a valid number.
     - name: 'Blue Charm Presence'
       unique_id: blue_charm_presence
-      state: >
-        {% set garage_dist = states('sensor.ble_garage_blue_charm_distance') %}
-        {% set house_dist = states('sensor.ble_house_blue_charm_distance') %}
-        {% set bad = ['unknown', 'unavailable'] %}
-        
-        {% if garage_dist not in bad and house_dist not in bad %}
-          {{ iif(house_dist <= garage_dist, 'House', 'Garage') }}
-        {% elif garage_dist in bad and house_dist not in bad %}
-          House
-        {% elif garage_dist not in bad and house_dist in bad %}
-          Garage
-        {% else %}
-          Away
-        {% endif %}
+      state: "{{ iif(states('sensor.ble_house_blue_charm_distance') is number, 'House', 'Away') }}"
 
     #------------------------------#
     #   -- Washer Power State --   #

@@ -135,7 +135,6 @@ logs:
   custom_components.pyscript.file.populate_all_movies: info
   custom_components.pyscript.file.restore_all_movies:  info
   custom_components.sonoff.sonoff_cloud:               info
-  custom_components.thermal_comfort:                   info
 
   # Other
   aioesphomeapi.connection:                info
@@ -193,10 +192,6 @@ filters:
   custom_components.satellitetracker:
     - "Unexpected error fetching .* data: Server disconnected"
     - "Unexpected error fetching .* data: Cannot connect to host .* [Try again]"
-  
-  custom_components.thermal_comfort.sensor:
-    - "Temperature has an invalid value:"
-    - "Relative humidity has an invalid value:"
   
   custom_components.unifics.sensor:
     - "Unexpected error fetching sensor data: Expecting value:"

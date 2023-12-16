@@ -141,14 +141,6 @@
           {% endfor %}
           
           {{ vars.lowest_price_details }}
-        
-        station_name: >
-          {% set vars = namespace(name = None) %}
-          {% set details = this.attributes.lowest_price_details %}
-          {% set station = details.get('station') %}
-          {% set vars.name = station.get('name') %}
-          
-          {{ vars.name }}
 
 # Lowest price for all gas stations in Pittsboro.
 - trigger:
@@ -259,22 +251,36 @@
           {% endfor %}
           
           {{ vars.lowest_price_details }}
-        
-        station_name: >
-          {% set vars = namespace(name = None) %}
-          {% set details = this.attributes.lowest_price_details %}
-          {% set station = details.get('station') %}
-          {% set vars.name = station.get('name') %}
-          
-          {{ vars.name }}
 
 - sensor:
+
+    #----------------------#
+    #   -- Gas Prices --   #
+    #----------------------#
+    
+    - name: Gas Station Name Siler City
+      unique_id: gas_station_name_siler_city
+      state: >
+        {% set details = state_attr('sensor.best_price_gas_siler_city', 'lowest_price_details') %}
+        {% set station = details.get('station') %}
+        {% set name = station.get('name') %}
+          
+        {{ name }}
+    
+    - name: Gas Station Name Pittsboro
+      unique_id: gas_station_name_pittsboro
+      state: >
+        {% set details = state_attr('sensor.best_price_gas_pittsboro', 'lowest_price_details') %}
+        {% set station = details.get('station') %}
+        {% set name = station.get('name') %}
+          
+        {{ name }}
 
     #---------------------------#
     #   -- History Linking --   #
     #---------------------------#
     
-    # List of washer start/stop timestamps for history purposes. The state is a count of all history sets.
+    # List of washer start/stop datetimes for history purposes. The state is a count of all history sets.
     - name: History Washer Debug Ranges
       unique_id: history_washer_debug_ranges
       state: "{{ this.attributes.time_ranges | length }}"
@@ -282,11 +288,11 @@
       attributes:
         time_ranges: >
           {% set time_ranges = [
-                                [state_attr('input_datetime.history_washer_start_1', 'timestamp'), state_attr('input_datetime.history_washer_stop_1', 'timestamp')],
-                                [state_attr('input_datetime.history_washer_start_2', 'timestamp'), state_attr('input_datetime.history_washer_stop_2', 'timestamp')],
-                                [state_attr('input_datetime.history_washer_start_3', 'timestamp'), state_attr('input_datetime.history_washer_stop_3', 'timestamp')],
-                                [state_attr('input_datetime.history_washer_start_4', 'timestamp'), state_attr('input_datetime.history_washer_stop_4', 'timestamp')],
-                                [state_attr('input_datetime.history_washer_start_5', 'timestamp'), state_attr('input_datetime.history_washer_stop_5', 'timestamp')]
+                                ['input_datetime.history_washer_start_1', 'input_datetime.history_washer_stop_1'],
+                                ['input_datetime.history_washer_start_2', 'input_datetime.history_washer_stop_2'],
+                                ['input_datetime.history_washer_start_3', 'input_datetime.history_washer_stop_3'],
+                                ['input_datetime.history_washer_start_4', 'input_datetime.history_washer_stop_4'],
+                                ['input_datetime.history_washer_start_5', 'input_datetime.history_washer_stop_5']
                                ] %}
           
           {{ time_ranges }}
@@ -301,7 +307,7 @@
         {% for time_range in state_attr('sensor.history_washer_debug_ranges', 'time_ranges') %}
             
           {# --We only need to check one value, so we choose the start-- #}
-          {% set start = time_range[0] | int(0) %}
+          {% set start = state_attr(time_range[0], 'timestamp') | int(0) %}
             
           {# --Update the current index and timestamp if this is the most recent-- #}
           {% if start > curr.timestamp %}
@@ -320,11 +326,11 @@
       attributes:
         time_ranges: >
           {% set time_ranges = [
-                                [state_attr('input_datetime.history_dryer_start_1', 'timestamp'), state_attr('input_datetime.history_dryer_stop_1', 'timestamp')],
-                                [state_attr('input_datetime.history_dryer_start_2', 'timestamp'), state_attr('input_datetime.history_dryer_stop_2', 'timestamp')],
-                                [state_attr('input_datetime.history_dryer_start_3', 'timestamp'), state_attr('input_datetime.history_dryer_stop_3', 'timestamp')],
-                                [state_attr('input_datetime.history_dryer_start_4', 'timestamp'), state_attr('input_datetime.history_dryer_stop_4', 'timestamp')],
-                                [state_attr('input_datetime.history_dryer_start_5', 'timestamp'), state_attr('input_datetime.history_dryer_stop_5', 'timestamp')]
+                                ['input_datetime.history_dryer_start_1', 'input_datetime.history_dryer_stop_1'],
+                                ['input_datetime.history_dryer_start_2', 'input_datetime.history_dryer_stop_2'],
+                                ['input_datetime.history_dryer_start_3', 'input_datetime.history_dryer_stop_3'],
+                                ['input_datetime.history_dryer_start_4', 'input_datetime.history_dryer_stop_4'],
+                                ['input_datetime.history_dryer_start_5', 'input_datetime.history_dryer_stop_5']
                                ] %}
           
           {{ time_ranges }}
@@ -339,7 +345,7 @@
         {% for time_range in state_attr('sensor.history_dryer_debug_ranges', 'time_ranges') %}
             
           {# --We only need to check one value, so we choose the start-- #}
-          {% set start = time_range[0] | int(0) %}
+          {% set start = state_attr(time_range[0], 'timestamp') | int(0) %}
             
           {# --Update the current index and timestamp if this is the most recent-- #}
           {% if start > curr.timestamp %}
@@ -514,11 +520,6 @@
     #----------------#
     #   -- Misc --   #
     #----------------#
-    
-    - name: 'PC RAM free GB'
-      unique_id: pc_ram_free_gb
-      unit_of_measurement: 'GB'
-      state: "{{ states('sensor.legion_t530_memory_total') }}"
       
     - name: 'Warm Weather'
       unique_id: warm_weather
@@ -529,29 +530,67 @@
     - name: 'Canes Game Status'
       unique_id: canes_game_status
       state: >
-        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.teams is defined %}
-          {{ iif(state_attr('sensor.next_canes_game', 'teams')['home']['team']['name'] == 'Carolina Hurricanes', 'Home', 'Away') }}
+        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.homeTeam is defined %}
+          {{ iif(state_attr('sensor.next_canes_game', 'homeTeam')['abbrev'] == 'CAR', 'Home', 'Away') }}
         {% else %}
-          'Unknown'
+          Unknown
         {% endif %}
 
     - name: 'Canes Opponent'
       unique_id: canes_opponent
       state: >
-        {% from 'friendly_strings.jinja' import format_hockey_opposition_team %}
-        {{ format_hockey_opposition_team('sensor.canes_game_status', 'sensor.next_canes_game') }}
+        {% if states('sensor.canes_game_status') == 'Home' %}
+          {{ state_attr('sensor.next_canes_game', 'awayTeam')['abbrev'] }}
+        {% elif states('sensor.canes_game_status') == 'Away' %}
+          {{ state_attr('sensor.next_canes_game', 'homeTeam')['abbrev'] }}
+        {% else %}
+          Unknown
+        {% endif %}
+      
+      attributes:
+        friendly_opponent: >
+          {% set vars = namespace(name = 'Unknown') %}
+          
+          {% set abbrev = this.state %}
+          {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
+            {% if team[0] == abbrev %}
+              {% set vars.name = team[1] %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ vars.name }}
 
     - name: 'Flyers Game Status'
       unique_id: flyers_game_status
       state: >
-        {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.teams is defined %}
-          {{ iif(state_attr('sensor.next_flyers_game', 'teams')['home']['team']['name'] == 'Philadelphia Flyers', 'Home', 'Away') }}
+        {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.homeTeam is defined %}
+          {{ iif(state_attr('sensor.next_flyers_game', 'homeTeam')['abbrev'] == 'PHI', 'Home', 'Away') }}
         {% else %}
-          'Unknown'
+          Unknown
         {% endif %}
 
     - name: 'Flyers Opponent'
       unique_id: flyers_opponent
       state: >
-        {% from 'friendly_strings.jinja' import format_hockey_opposition_team %}
-        {{ format_hockey_opposition_team('sensor.flyers_game_status', 'sensor.next_flyers_game') }}
+        {% if states('sensor.flyers_game_status') == 'Home' %}
+          {{ state_attr('sensor.next_flyers_game', 'awayTeam')['abbrev'] }}
+        {% elif states('sensor.flyers_game_status') == 'Away' %}
+          {{ state_attr('sensor.next_flyers_game', 'homeTeam')['abbrev'] }}
+        {% else %}
+          Unknown
+        {% endif %}
+      
+      attributes:
+        friendly_opponent: >
+          {% set vars = namespace(name = 'Unknown') %}
+          
+          {% set abbrev = this.state %}
+          {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
+            {% if team[0] == abbrev %}
+              {% set vars.name = team[1] %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ vars.name }}

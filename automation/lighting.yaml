@@ -244,9 +244,54 @@
     - service: light.turn_off
       entity_id: light.office_lamp
 
-#==============================#
-#     Extended Away Lights     #
-#==============================#
+#============================#
+#     Extended Away Mode     #
+#============================#
+
+# Triggered on the start of an extended away period.
+- alias: Enable Extended Away Mode
+  id: enable_extended_away_mode
+  
+  trigger:
+    - platform: time
+      at: input_datetime.extended_away_start
+  
+  action:
+    
+    # Turn on extended away mode.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.extended_away_mode
+    
+    # Set thermostat holds.
+    - service: script.set_extended_thermostat_holds
+      data:
+        heat_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_heat_temp }}"
+        cool_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_cool_temp }}"
+
+# Triggered on the end of an extended away period.
+- alias: Disable Extended Away Mode
+  id: disable_extended_away_mode
+  
+  trigger:
+    - platform: time
+      at: input_datetime.extended_away_end
+  
+  action:
+    
+    # Turn off extended away mode.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.extended_away_mode
+    
+    # Remove thermostat holds.
+    - service: script.remove_thermostat_hold
+      data:
+        thermostat_entity: climate.downstairs
+        extended: true
+    
+    - service: script.remove_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        extended: true
 
 # Randomly turn certain lights on/off during extended away mode, between ~sunset and nighttime start, and
 # between nighttime end and ~sunrise (only occurs during winter-ish months).
@@ -287,17 +332,26 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
+    # Set variables.
+    - variables:
+        group_id: 'light.away_lights'
+        max_on: 3
+        normal_lights: "{{ ['light.family_room_lamp', 'light.office_lamp'] }}"
+        group_lights_entities: "{{ expand(group_id) | map(attribute = 'entity_id') | list }}"
+        group_lights_filtered_entities: "{{ expand(group_id) | rejectattr('entity_id', 'in', normal_lights) | map(attribute = 'entity_id') | list }}"
+              
+    # Initialize the early return toggle.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.extended_away_early_return
+    
     # Repeat until the conditions are no longer met.
     - repeat:
       
         sequence:
         
           - variables:
-              group_id: 'light.away_lights'
-              max_on: 3
               lights_on_count: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | list | length }}"
               lights_on_entities: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | map(attribute = 'entity_id') | list }}"
-              group_lights_entities: "{{ expand(group_id) | map(attribute = 'entity_id') | list }}"
               toggle_entity: >
                 {% if lights_on_count > max_on %}
                   {{ lights_on_entities | random }}
@@ -313,9 +367,21 @@
             data:
               entity_id: "{{ toggle_entity }}"
      
-          # Delay for a random number of minutes.
-          - delay: 
+          # Delay for a random number of minutes. I want to exit early if I return home before the end of the
+          # extended away period. In this case, the extended away flag is turned off due to proximity, or when 
+          # the Open House automation runs (as a failsafe). This causes the wait_template to complete with the 
+          # variable wait.completed set to true.
+          - wait_template: "{{ is_state('input_boolean.extended_away_mode', 'off') }}"
+            timeout:
               minutes: "{{ range(10, 60) | random }}"
+          - if:
+              - "{{ wait.completed }}"
+            
+            then:
+              
+              # Turn on the early return toggle. Due to local variable scope, I can't just use the wait.completed flag below.
+              - service: input_boolean.turn_on
+                entity_id: input_boolean.extended_away_early_return
       
         # Conditions that cause us to end the repeat sequence.
         until:        
@@ -325,9 +391,26 @@
                  is_state('input_boolean.nighttime', 'on') or
                  states('sun.sun') == 'above_horizon' }}
     
-    # The conditions are no longer true, so turn off all of the away lights.
-    - service: homeassistant.turn_off
-      entity_id: light.away_lights
+    # The conditions are no longer true, so turn off unneeded away lights. Normally, this is all away lights.
+    # But if I returned home early, the early return toggle will be on. In this case I only want to turn off away lights
+    # that are not normally on when I'm home (and make sure the normal lights are turned on).
+    - if:
+        - condition: state
+          entity_id: input_boolean.extended_away_early_return
+          state: 'off'
+      
+      then:
+        - service: homeassistant.turn_off
+          entity_id: light.away_lights
+      
+      else:
+        - service: homeassistant.turn_on
+          data:
+            entity_id: "{{ normal_lights }}"
+        
+        - service: homeassistant.turn_off
+          data:
+            entity_id: "{{ group_lights_filtered_entities }}"
 
 # Turn off extended away mode when Jon is nearing home (proximity is somewhat unreliable, so if this doesn't trigger we have a failsafe 
 # below in Open House).

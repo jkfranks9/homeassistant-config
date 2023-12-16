@@ -28,8 +28,10 @@ variables:
   input_time_entity: !input time_entity
   
   valid: "{{ input_exercise_type in ['workout', 'yard_work'] }}"
-  daily_calories_entity: "{{ 'input_number.' ~ input_exercise_type ~ '_daily_calories' }}"  
-  calories_per_hour: "{{ iif(input_exercise_type == 'workout', 200, 250) }}"
+  daily_calories_entity: "{{ 'input_number.' ~ input_exercise_type ~ '_daily_calories' }}"
+  workout_calories_per_hour: "{{ state_attr('sensor.variables', 'variables').workout_calories_per_hour }}"
+  yard_work_calories_per_hour: "{{ state_attr('sensor.variables', 'variables').yard_work_calories_per_hour }}"
+  calories_per_hour: "{{ iif(input_exercise_type == 'workout', workout_calories_per_hour, yard_work_calories_per_hour) }}"
 
 # Trigger when the time entity is updated.
 trigger:

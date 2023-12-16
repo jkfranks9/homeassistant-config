@@ -173,14 +173,11 @@ set_temporary_thermostat_hold:
             category: climate
             message: "{{ 'Climate name ' ~ climate_name ~ ' vacation (temporary) set: ' ~ cool_temp ~ '°' ~ '-' ~ heat_temp ~ '°' }}"
 
-# Set extended thermostat hold.
-set_extended_thermostat_hold:
-  alias: Set Extended Thermostat Hold
+# Set extended thermostat holds.
+set_extended_thermostat_holds:
+  alias: Set Extended Thermostat Holds
   
   fields:
-    thermostat_entity:
-      description: The thermostat on which to create a hold.
-    
     heat_temp:
       description: The desired heat temperature.
     
@@ -189,8 +186,10 @@ set_extended_thermostat_hold:
   
   sequence:
     - variables:
-        climate_name: "{{ thermostat_entity.replace('climate.', '') }}"
-        vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
+        start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
+        end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
+        end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
     
     # Simulate the request if testing mode is on.
     - if:
@@ -198,16 +197,27 @@ set_extended_thermostat_hold:
       
       then:
     
-        # Create a vacation to simulate a hold, using the extended away dates/times. 
-        # We should remove the vacation when the extended away ends.
+        # Create vacations to simulate a hold, using the extended away dates/times. 
+        # We should remove the vacations when the extended away ends.
         - service: ecobee.create_vacation
           data_template:
-            entity_id: "{{ thermostat_entity }}"
-            vacation_name: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-            start_date: "{{ states('input_datetime.extended_away_start').split(' ')[0] }}"
-            start_time: "{{ states('input_datetime.extended_away_start').split(' ')[1] }}"
-            end_date: "{{ states('input_datetime.extended_away_end').split(' ')[0] }}"
-            end_time: "{{ states('input_datetime.extended_away_end').split(' ')[1] }}"
+            entity_id: climate.downstairs
+            vacation_name: "{{ start_date }}"
+            start_date: "{{ start_date }}"
+            start_time: "{{ start_time }}"
+            end_date: "{{ end_date }}"
+            end_time: "{{ end_time }}"
+            heat_temp: "{{ heat_temp }}"
+            cool_temp: "{{ cool_temp }}"
+        
+        - service: ecobee.create_vacation
+          data_template:
+            entity_id: climate.upstairs
+            vacation_name: "{{ start_date }}"
+            start_date: "{{ start_date }}"
+            start_time: "{{ start_time }}"
+            end_date: "{{ end_date }}"
+            end_time: "{{ end_time }}"
             heat_temp: "{{ heat_temp }}"
             cool_temp: "{{ cool_temp }}"
       
@@ -215,7 +225,7 @@ set_extended_thermostat_hold:
         - service: script.log_testing_simulation
           data:
             category: climate
-            message: "{{ 'Climate name ' ~ climate_name ~ ' vacation (' ~ vacation_name ~ ') set: ' ~ start_date ~ ' ' ~ start_time ~ ' to ' ~ end_date ~ ' ' ~ end_time ~ ', ' ~ cool_temp ~ '°' ~ '-' ~ heat_temp ~ '°' }}"
+            message: "{{ 'Climate vacations set: ' ~ start_date ~ ' ' ~ start_time ~ ' to ' ~ end_date ~ ' ' ~ end_time ~ ', ' ~ cool_temp ~ '°' ~ '-' ~ heat_temp ~ '°' }}"
 
 # Remove a temperature hold for a given thermostat.
 remove_thermostat_hold:

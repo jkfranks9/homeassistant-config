@@ -25,8 +25,10 @@
       entity_id: sensor.epson_lamp_hours
       below: 1999
   
+  condition: "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
+  
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -56,7 +58,7 @@
       above: 10
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -127,7 +129,7 @@
       above: input_number.f150_mileage
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -157,7 +159,7 @@
       above: sensor.treadmill_current_hours
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -233,7 +235,7 @@
     - platform: event
       event_type: system_log_event
       event_data:
-        source: 'sleekxmppfs.basexmpp'
+        name: 'sleekxmppfs.basexmpp'
         level: 'ERROR'
   
   condition: "{{ 'error' in trigger.event.data.message }}"
@@ -278,7 +280,7 @@
       above: 50
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -308,7 +310,7 @@
       above: 50
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -338,7 +340,7 @@
       to: 'off'
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -368,7 +370,7 @@
       to: 'off'
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -398,7 +400,7 @@
       to: 'off'
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -467,7 +469,7 @@
       above: 95
   
   action:
-    - service: notify.mobile_app_jon_companion
+    - service: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
@@ -1124,7 +1126,7 @@
     - platform: state
       entity_id: input_select.washer_state
       from: Rinse Drain
-      to: Stop
+      to: 'Off'
   action:
     - service: script.send_notification
       data:
@@ -1172,8 +1174,8 @@
   trigger:
     - platform: template
       value_template: >
-        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes.gameDate is defined %}
-          {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'gameDate'), now()) %}
+        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
+          {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), now()) %}
           {% set now =  as_timestamp(now()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600) | round(0)) < 12, false) }}
         {% else %}

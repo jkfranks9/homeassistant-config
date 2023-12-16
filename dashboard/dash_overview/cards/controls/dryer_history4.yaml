@@ -19,6 +19,7 @@ variables:
     etime => {
       var end_time = new Date(etime * 1000);
       return "&end_date=" + end_time.toISOString();
+    }
     
   start_1: states['input_datetime.history_dryer_start_1'].attributes.timestamp
   end_1:   states['input_datetime.history_dryer_stop_1'].attributes.timestamp

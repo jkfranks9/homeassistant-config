@@ -8,11 +8,16 @@ blueprint:
   
   input:
     sensor_entity:
-      name: Fan Entity
+      name: Sensor Entity
       description: Sensor entity on which to trigger.
       selector:
         entity:
-          domain: binary_sensor
+    
+    sensor_off_state:
+      name: Sensor Off State
+      description: The sensor state that indicates off. For a binary sensor this is 'off', but for a non-binary sensor it could be, for example, 'PowerOff'.
+      selector:
+        entity:
     
     temperature_entity:
       name: Temperature Entity
@@ -36,6 +41,10 @@ blueprint:
           min: 0
           max: 100
 
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_sensor_off_state: !input sensor_off_state
+
 # Trigger on any change to the sensor entity.
 trigger:
   - platform: state
@@ -47,7 +56,7 @@ action:
   - choose:
       
     # Sensor turned on.
-    - conditions: "{{ trigger.from_state.state == 'off' and trigger.to_state.state == 'on' }}"
+    - conditions: "{{ trigger.from_state.state == input_sensor_off_state and trigger.to_state.state != input_sensor_off_state }}"
       
       sequence:
             
@@ -62,7 +71,7 @@ action:
               timeout: 0
       
     # Sensor turned off.
-    - conditions: "{{ trigger.from_state.state == 'on' and trigger.to_state.state == 'off' }}"
+    - conditions: "{{ trigger.from_state.state != input_sensor_off_state and trigger.to_state.state == input_sensor_off_state }}"
         
       # Turn off the fan.
       sequence:

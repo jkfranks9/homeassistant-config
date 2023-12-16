@@ -19,6 +19,9 @@ blueprint:
           min: 0.48
           max: 0.64
           mode: slider
+  
+trace:
+  stored_traces: 20
 
 variables:
   input_appl_name: !input appl_name
@@ -31,7 +34,7 @@ trigger:
     to: !input appl_name
 
 # Weed out spurious broken pipe errors, which for some odd reason show up in the app name.
-condition: "{{ 'Broken pipe' not in trigger.from_state.attributes.app_name }}"
+condition: "{{ trigger.from_state.attributes.app_name is defined and 'Broken pipe' not in trigger.from_state.attributes.app_name }}"
 
 action:
   - service: system_log.write

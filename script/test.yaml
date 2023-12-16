@@ -202,13 +202,7 @@ test_remove_global_variables:
     
     - event: remove_variable
       event_data:
-        key: min_elevation
-    - event: remove_variable
-      event_data:
-        key: med_elevation
-    - event: remove_variable
-      event_data:
-        key: max_elevation
+        key: laundry_sensing
 
 #=====================#
 #     Alexa Media     #
@@ -279,3 +273,28 @@ test_restore_riemann_integrations:
         - sensor.treadmill_fan_energy
         - sensor.utility_light_energy
         - sensor.washer_energy
+
+#=======================#
+#     Extended Away     #
+#=======================#
+
+# NOTE: This must be tested after sundown.
+test_extended_away_early_return:
+  alias: Test Extended Away Early Return
+  
+  sequence:
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.extended_away_start
+      data:
+        datetime: "{{ (now() + timedelta(minutes = 2)).strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.extended_away_end
+      data:
+        datetime: "{{ (now() + timedelta(minutes = 300)).strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    - delay: '01:40:00'
+    
+    - service: script.turn_off_extended_away_mode

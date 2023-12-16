@@ -61,34 +61,3 @@
     {{ timestamp | timestamp_custom('%H:%M on %a') }} {{ date }} {{ timestamp | timestamp_custom('%b %Y') }}
 
 {% endmacro %}
-
-{# Create a friendly opposition hockey team name, for example "Red Wings". The city/region name is not included. #}
-
-{% macro format_hockey_opposition_team(status_entity, next_game_entity) %}
-
-    {% if states(next_game_entity) is defined and state_attr(next_game_entity, 'teams') != None %}
-		{% if states(status_entity) == 'Home' %}
-		  {% set opp_team_list = (state_attr(next_game_entity, 'teams')['away']['team']['name']).split() %}
-		{% elif states(status_entity) == 'Away' %}
-		  {% set opp_team_list = (state_attr(next_game_entity, 'teams')['home']['team']['name']).split() %}
-		{% else %}
-		  {% set opp_team_list = ['None'] %}
-		{% endif %}
-		
-		{% if opp_team_list | wordcount > 2 %}
-		  {% set two_word_suffixes = ['Leafs', 'Wings', 'Jackets', 'Knights'] %}
-		  {% if opp_team_list[-1] in two_word_suffixes %}
-			{% set opp_team = opp_team_list[-2] ~ ' ' ~ opp_team_list[-1] %}
-		  {% else %}
-			{% set opp_team = opp_team_list[-1] %}
-		  {% endif %}
-		{% else %}
-		  {% set opp_team = opp_team_list[-1] %}
-		{% endif %}
-	{% else %}
-		{% set opp_team = 'Unknown' %}
-	{% endif %}
-	
-	{{ opp_team }}
-
-{% endmacro %}

@@ -11,8 +11,8 @@ entities:
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state: 'Stop'
-      - entity: input_boolean.dryer_running
+        state: 'Off'
+      - entity: binary_sensor.dryer_active
         state: 'off'
     row:
       type: custom:multiple-entity-row
@@ -28,8 +28,8 @@ entities:
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state_not: 'Stop'
-      - entity: input_boolean.dryer_running
+        state_not: 'Off'
+      - entity: binary_sensor.dryer_active
         state: 'off'
     row:
       type: custom:multiple-entity-row
@@ -46,12 +46,30 @@ entities:
   # NOTE: We have multiple conditionals for the dryer (either on by itself or with the washer also on).
   # This is so we can color the temperature or humidity red once the associated "falling" sensor has tripped at least once.
   # We don't need a conditional for both of those sensors tripped, because the dryer is done at that point.
+  # We also have the initial state before temperature has been detected, where we indicate "*sensing*".
+
+  # Only dryer on (temperature not detected yet).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state: 'Off'
+      - entity: input_boolean.dryer_started
+        state: 'on'
+    row:
+      type: custom:multiple-entity-row
+      entity: input_text.laundry_sensing
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Dryer
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
 
   # Only dryer on (temp/humidity haven't fallen).
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state: 'Stop'
+        state: 'Off'
       - entity: input_boolean.dryer_running
         state: 'on'
       - entity: counter.dryer_humidity_count
@@ -74,7 +92,7 @@ entities:
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state: 'Stop'
+        state: 'Off'
       - entity: input_boolean.dryer_running
         state: 'on'
       - entity: counter.dryer_humidity_count
@@ -99,7 +117,7 @@ entities:
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state: 'Stop'
+        state: 'Off'
       - entity: input_boolean.dryer_running
         state: 'on'
       - entity: counter.dryer_humidity_count
@@ -120,11 +138,30 @@ entities:
           styles:
             color: red
 
+  # Washer and dryer both on (temperature not detected yet).
+  - type: conditional
+    conditions:
+      - entity: input_select.washer_state
+        state_not: 'Off'
+      - entity: input_boolean.dryer_started
+        state: 'on'
+    row:
+      type: custom:multiple-entity-row
+      entity: input_text.laundry_sensing
+      name: Washer/Dryer State
+      icon: mdi:washing-machine
+      state_header: Dryer
+      entities:
+        - entity: input_select.washer_state
+          name: Washer
+        - entity: input_select.washer_load_size
+          name: Load
+
   # Washer and dryer both on (temp/humidity haven't fallen).
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state_not: 'Stop'
+        state_not: 'Off'
       - entity: input_boolean.dryer_running
         state: 'on'
       - entity: counter.dryer_humidity_count
@@ -149,7 +186,7 @@ entities:
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state_not: 'Stop'
+        state_not: 'Off'
       - entity: input_boolean.dryer_running
         state: 'on'
       - entity: counter.dryer_humidity_count
@@ -176,7 +213,7 @@ entities:
   - type: conditional
     conditions:
       - entity: input_select.washer_state
-        state_not: 'Stop'
+        state_not: 'Off'
       - entity: input_boolean.dryer_running
         state: 'on'
       - entity: counter.dryer_humidity_count
@@ -302,8 +339,7 @@ entities:
       width: 38px
     state_header: PB Price
     entities:
-      - entity: sensor.best_price_gas_siler_city
-        attribute: station_name
+      - entity: sensor.gas_station_name_siler_city
         name: SC Name
         styles:
           width: 101px
@@ -313,8 +349,7 @@ entities:
         unit: false
         styles:
           width: 38px
-      - entity: sensor.best_price_gas_pittsboro
-        attribute: station_name
+      - entity: sensor.gas_station_name_pittsboro
         name: PB Name
         styles:
           width: 101px

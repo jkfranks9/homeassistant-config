@@ -13,9 +13,8 @@
 #                   it changes to 'home' or 'away' (first character lowercase). Confusingly, it also can be 'Vacation' for
 #                   a scheduled vacation, even though that value cannot be assigned as a climate or preset mode.
 
-#===== Transition from Home to Sleep mode upstairs if the cinema is not in use =====#
-
-# Transition to Sleep mode.
+# Transition from Home to Sleep mode upstairs if the cinema is not in use, and extended away is not active
+# (extended away controls the thermostats).
 - alias: Transition To Sleep Mode
   id: transition_to_sleep_mode
   
@@ -25,8 +24,8 @@
   
   condition:
     - condition: state
-      entity_id: binary_sensor.theater_av_system
-      state: 'off'
+      entity_id: sensor.harmony_hub
+      state: 'PowerOff'
     
     - condition: state
       entity_id: input_boolean.extended_away_mode
@@ -71,62 +70,6 @@
       data:
         message: "Upstairs thermostat unexpectedly transitioned from {{ trigger.from_state.attributes.preset_mode }} to {{ trigger.to_state.attributes.preset_mode }}; resetting back to vacation mode."
         level: error
-
-#============================#
-#     Extended Away Mode     #
-#============================#
-
-# Triggered on the start of an extended away period.
-- alias: Enable Extended Away Mode
-  id: enable_extended_away_mode
-  
-  trigger:
-    - platform: time
-      at: input_datetime.extended_away_start
-  
-  action:
-    
-    # Turn on extended away mode.
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.extended_away_mode
-    
-    # Set thermostat holds.
-    - service: script.set_extended_thermostat_hold
-      data:
-        thermostat_entity: climate.downstairs
-        heat_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_heat_temp }}"
-        cool_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_cool_temp }}"
-    
-    - service: script.set_extended_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        heat_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_heat_temp }}"
-        cool_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_cool_temp }}"
-
-# Triggered on the end of an extended away period.
-- alias: Disable Extended Away Mode
-  id: disable_extended_away_mode
-  
-  trigger:
-    - platform: time
-      at: input_datetime.extended_away_end
-  
-  action:
-    
-    # Turn off extended away mode.
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.extended_away_mode
-    
-    # Remove thermostat holds.
-    - service: script.remove_thermostat_hold
-      data:
-        thermostat_entity: climate.downstairs
-        extended: true
-    
-    - service: script.remove_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        extended: true
 
 #============================================#
 #     Temperature High / Low Water Marks     #

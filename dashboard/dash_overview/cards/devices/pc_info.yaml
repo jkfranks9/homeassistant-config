@@ -13,7 +13,7 @@ entities:
   - entity: sensor.pc_uptime
     name: Uptime
     icon: mdi:clock-start
-  - entity: sensor.pc_ram_free_gb
+  - entity: sensor.legion_t530_memory_total
     name: Total Memory
     icon: mdi:memory
   

@@ -1,0 +1,38 @@
+#=================================#
+#     Reminder Lookahead Card     #
+#=================================#
+
+type: custom:stack-in-card
+title: Reminder Lookahead
+mode: vertical
+cards:
+  
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 3
+          square: false
+          cards:
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.reminder_lookahead_days
+              name: Days
+            
+            - type: button
+              name: Gather
+              show_state: false
+              tap_action:
+                action: call-service
+                service: script.turn_on
+                data:
+                  entity_id: script.gather_upcoming_reminders
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_select.reminder_lookahead_items
+              name: Results

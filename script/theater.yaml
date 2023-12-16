@@ -1,134 +1,471 @@
 #===========================#
-#     Cinema Open/Close     #
+#     Cinema Activation     #
 #===========================#
 
-# Open the cinema to turn on some lights and warm up the projector and receiver.
-open_cinema:
-  alias: Open Cinema
+# There are several ways to use the cinema:
+#
+# 1) Open for general usage
+# 2) Play a feature movie
+# 3) Play a random set of music videos
+# 4) Start a specific Harmony activity
+# 5) Watch a specific Shield TV app
+#
+# It is possible to use these in various combinations; a few examples:
+#
+# - open, watch an app, watch another app, ...
+# - open, play a feature movie
+# - open, start an activity, watch an app, watch videos
+#
+# So we need a generic script that is a front end to all of these. It needs to do the following:
+#
+# - Enforce cinema usage control, to prevent rapid open/close activity.
+# - Turn on the desired Harmony activity, which ensures the correct devices are turned on.
+# - Wait for the projector to warm up if needed.
+# - Activate the Kodi app if needed.
+# - Perform post-open tasks if needed.
+
+activate_cinema:
+  alias: Activate Cinema
+  
+  fields:
+    activity:
+      description: The desired Harmony activity name.
+    
+    need_kodi:
+      description: True if we need to start the Kodi app.
+  
+  variables:
+    cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' }}"
   
   sequence:
     
-    # Ensure the cinema is not already open.
+    # Ensure the cinema has not been closed recently, if it was off upon entry.
     - if:
-        - "{{ states('input_boolean.theater_open') == 'on' }}"
-      
+        - "{{ cinema_off_upon_entry }}"
+    
       then:
+        - service: script.check_cinema_usage_control
+          data:
+            opening: true
+          response_variable: result
+        
+        - if:
+            - "{{ result.allowed == false }}"
+          
+          then:
+            - stop: "Cinema usage is denied."
+              response_variable: result
+  
+    # Start the input Harmony activity, which ensures the correct devices are on.
+    # However, if Enable Streaming is requested but the cinema is currently on, then use the Stream Player
+    # activity instead. The only difference between those activities is the receiver input (CD for 
+    # Enable Streaming and CBL/SAT for Stream Player). This allows us to keep the screen dark when the
+    # cinema is first opened, but not switch inputs if it's already open. I probably haven't explained
+    # this very well. Sorry.
+    - if:
+        - "{{ activity == 'Enable Streaming' and not cinema_off_upon_entry }}"
+    
+      then:
+    
+        - service: remote.turn_on
+          entity_id: remote.harmony_hub
+          data:
+            activity: Stream Player
+      
+      else:
+        - service: remote.turn_on
+          entity_id: remote.harmony_hub
+          data:
+            activity: "{{ activity }}"
+  
+    # Do a few things if the cinema was off upon entry.
+    - if:
+        - "{{ cinema_off_upon_entry }}"
+    
+      then:
+        
+        # Indicate the cinema is open.
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.theater_open
+    
+        # Turn on some lights.
+        - service: script.set_theater_idle
+    
+        # Announce the projector warm-up delay.
         - service: notify.alexa_media
           data:
-            message: "Cinema is already open!!"
+            message: "I'm waiting a few minutes for the projector to warm up."
             target:
               - media_player.family_room_echo
               - media_player.theater_echo
             data:
               type: tts
-        
-        - stop: "Cinema is already open."
-    
-    # Ensure the cinema has not been closed recently. I don't want to jerk the projector around.
-    - variables:
-        delta_time: >
-          {% set start = as_timestamp(strptime(states('input_datetime.cinema_usage_control'), '%Y-%m-%d %H:%M:%S')) %}
-          {% set seconds = (now().timestamp() - start) %}
-          {{ seconds }}
-    
-    - if:
-        - "{{ delta_time | float(0) < 600 }}"
       
-      then:
-        - variables:
-            delay: "{{ (600 - delta_time) | round }}"
-        
-        # Bypass the message and timer start if the timer is already running. Someone is being a jerk.
-        - if:
-            - "{{ is_state('timer.cinema_usage_delay', 'idle') }}"
-          
-          then:        
-            - service: notify.alexa_media
-              data:
-                message: >
-                  {% set delay_minutes = (delay / 60) | round %}
-                  {% set delay_display =iif(delay_minutes >= 1, delay_minutes, 1) %}
-                  Cinema has been closed recently. Delaying cinema open for {{ delay_display }} {{ iif(delay_display == 1, 'minute', 'minutes') }}
-                target:
-                  - media_player.family_room_echo
-                  - media_player.theater_echo
-                data:
-                  type: tts
-        
-            - service: timer.start
-              data:
-                entity_id: timer.cinema_usage_delay
-                duration: "{{ delay }}"
-        
-        - stop: "Cinema has been closed recently."
+        # Delay for a bit to let the projector turn on. I'm assuming if it's on it's warmed up.
+        - wait_template: "{{ is_state('media_player.epson_projector', 'on') }}"
+          timeout: '00:02:00'
     
-    # Indicate the theater is open.
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.theater_open
+        # Perform post-open tasks.
+        - service: script.turn_on
+          entity_id: script.perform_post_open_tasks
+  
+    # Activate Kodi if requested.
+    - if:
+        - "{{ need_kodi }}"
     
-    # Set the usage control timestamp.
-    - service: input_datetime.set_datetime
-      target:
-        entity_id: input_datetime.cinema_usage_control
-      data_template:
-        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      then:        
+        - service: script.activate_kodi
+
+#==========================================#
+#     1) Open Cinema For General Usage     #
+#==========================================#
+
+open_cinema:
+  alias: Open Cinema
+  
+  sequence:
     
-    # Turn on the necessary devices.
-    - service: remote.turn_on
-      entity_id: remote.harmony_hub
+    # Activate the cinema.
+    - service: script.activate_cinema
       data:
         activity: Open Cinema
+        need_kodi: false
+      response_variable: result
     
-    # Turn on some lights.
+    - if:
+        - "{{ result.allowed == false }}"
+      
+      then:
+        - stop: "Cinema usage is denied."
+
+#===============================#
+#     2) Play Feature Movie     #
+#===============================#
+
+play_feature_movie:
+  alias: Play Feature Movie
+  
+  sequence:
+    
+    # Activate the cinema.
+    - service: script.activate_cinema
+      data:
+        activity: Enable Streaming
+        need_kodi: true
+      response_variable: result
+    
+    - if:
+        - "{{ result.allowed == false }}"
+      
+      then:
+        - stop: "Cinema usage is denied."
+  
+    # Send the GetMovies command to Kodi, with the target movie name. The Handle Kodi Movies Result script calls 
+    # Process Single Kodi Movie Result below with the command result.
+    - service: kodi.call_method
+      data:
+        entity_id: media_player.kodi
+        method: VideoLibrary.GetMovies
+        filter:
+          field: title
+          operator: is
+          value: "{{ states('input_select.kodi_movies') }}"
+        limits:
+          end: 1
+          start: 0
+
+# Process the single movie returned by Kodi.
+process_single_kodi_movie_result:
+  alias: Process Single Kodi Movie Result
+  
+  fields:
+    result:
+      description: The result from the GetMovies Kodi call.
+  
+  sequence:
+    
+    # Pick up the movie ID.
+    - variables:
+        movieid: "{{ result.movies.0.movieid }}"
+    
+    # Build a set of random music videos as a preamble to the movie. These are added to a playlist.
+    - service: script.get_all_kodi_videos
+          
+    # Add the movie to the playlist.
+    - service: kodi.call_method
+      target:
+        entity_id: media_player.kodi
+      data:
+        method: Playlist.Add
+        playlistid: 1
+        item:
+          movieid: "{{ movieid }}"
+  
+    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'InputCbl/Sat'
+        device: Marantz Receiver
+  
+    # Play the playlist.
+    - service: script.play_kodi_playlist
+  
+    # Darken the theater.
     - service: script.turn_on
-      entity_id: script.set_theater_idle
+      entity_id: script.set_theater_dark_delay
+
+#=====================================#
+#     3) Play Random Music Videos     #
+#=====================================#
+
+# Play random videos using Kodi. This is intended to be run standalone. Playing videos as a preamble to a movie
+# uses some of the same technology, but is part of the Play Feature Movie script.
+play_random_kodi_videos:
+  alias: Play Random Kodi Videos
+  
+  sequence:
     
-    # Say something appropriate.
-    - service: notify.alexa_media
+    # Activate the cinema.
+    - service: script.activate_cinema
       data:
-        message: "{{ ['Cinema is open for business!', 
-                      'Enjoy the show!', 
-                      'Theater is ready!'
-                     ] | random }}"
-        target:
-          - media_player.family_room_echo
-          - media_player.theater_echo
-        data:
-          type: tts
+        activity: Enable Streaming
+        need_kodi: true
+      response_variable: result
     
-    # Set the upstairs Ecobee to home mode.
-    - service: script.set_thermostat_preset
+    - if:
+        - "{{ result.allowed == false }}"
+      
+      then:
+        - stop: "Cinema usage is denied."
+
+    # Build a set of random music videos. These are added to a playlist.
+    - service: script.get_all_kodi_videos
+  
+    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
       data:
-        thermostat_entity: climate.upstairs
-        preset: 'Home'
-    
-    # Turn off the upstairs Ecobee minimum fan time (it makes me cold sometimes).
-    - service: ecobee.set_fan_min_on_time
-      data:
-        entity_id: climate.upstairs
-        fan_min_on_time: 0
-    
-    # If no family are home, delay, then turn off some downstairs lights.
-    - delay: '00:05:00'
-    
-    - service: script.change_downstairs_lighting
-      data:
-        turn_on: false
-        christmas: true
-    
-    # Turn off the family room AV system if it's late enough and no one else is home.
-    - condition:
-        - condition: state
-          entity_id: 
-            - binary_sensor.adults_home
-            - binary_sensor.children_home
-          state: 'off'
+        command: 'InputCbl/Sat'
+        device: Marantz Receiver
         
-        - condition: time
-          after:  '18:00:00'
-          before: '23:30:00'
+    # Play the playlist.
+    - service: script.play_kodi_playlist
+  
+    # Darken the theater.
+    - service: script.turn_on
+      entity_id: script.set_theater_dark_delay
+
+#====================================#
+#     4) Start Harmony Activity      #
+#====================================#
+
+# Template script that does the work.
+start_activity:
+  alias: Start Activity
+  fields:
+    activity:
+      description: 'The Harmony activity name to be started.'
+      example: 'BD Player'
+    lighting:
+      description: 'Script or scene that establishes the desired lighting.'
+      example: 'script.set_theater_dark'
+  
+  sequence:
     
-    - service: script.disable_family_room_av
+    # Activate the cinema.
+    - service: script.activate_cinema
+      data:
+        activity: "{{ activity }}"
+        need_kodi: false
+      response_variable: result
+    
+    - if:
+        - "{{ result.allowed == false }}"
+      
+      then:
+        - stop: "Cinema usage is denied."
+  
+    # Establish the target lighting.
+    - service: "{{ lighting }}"
+
+#----------------------#
+#   -- Activities --   #
+#----------------------#
+
+# Shield TV (streaming)
+start_streaming:
+  alias: Start Streaming
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'Stream Player'
+        lighting: 'script.set_theater_dark_delay'
+
+# Blu-ray
+start_bluray:
+  alias: Start Bluray
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'BD Player'
+        lighting: 'script.set_theater_dark_delay'
+
+# Laserdisc
+start_laserdisc:
+  alias: Start Laserdisc
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'LD Player'
+        lighting: 'script.set_theater_dark_delay'
+
+# Turntable
+start_turntable:
+  alias: Start Turntable
+  sequence:
+    - service: script.start_activity
+      data:
+        activity: 'LP Player'
+        lighting: 'script.set_theater_dim'
+
+#=================================#
+#     5) Watch Shield TV App      #
+#=================================#
+
+# Template script that does the work.
+watch_app:
+  alias: Watch Application
+  
+  fields:
+    component:
+      description: 'The component name of the target Shield TV application. These are obtained by querying the Shield TV box.'
+      example: 'com.netflix.ninja/.MainActivity'
+    
+    lighting:
+      description: 'Script or scene that establishes the desired lighting.'
+      example: 'script.set_theater_dark'
+  
+  sequence:
+    
+    # Activate the cinema.
+    - service: script.activate_cinema
+      data:
+        activity: Enable Streaming
+        need_kodi: false
+      response_variable: result
+    
+    - if:
+        - "{{ result.allowed == false }}"
+      
+      then:
+        - stop: "Cinema usage is denied."
+    
+    # After a short delay, bring up the target application on the Shield TV.
+    - delay: '00:00:02'
+    - service: androidtv.adb_command
+      data:
+        entity_id: media_player.shield_tv
+        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n {{ component }}"
+  
+    # Now switch the receiver to the proper input so the application can be viewed on screen.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'InputCbl/Sat'
+        device: Marantz Receiver
+  
+    # Establish the target lighting.
+    - service: "{{ lighting }}"
+
+#------------------------#
+#   -- Applications --   #
+#------------------------#
+
+# Amazon Prime
+watch_amazon_prime:
+  alias: Watch Amazon Prime
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.amazon.amazonvideo.livingroom/com.amazon.ignition.IgnitionActivity'
+        lighting: 'script.set_theater_dark_delay'
+
+# Disney Plus
+watch_disney_plus:
+  alias: Watch Disney Plus
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.disney.disneyplus/com.bamtechmedia.dominguez.main.MainActivity'
+        lighting: 'script.set_theater_dark_delay'
+
+# Max
+watch_max:
+  alias: Watch Max
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.wbd.stream/com.wbd.beam.BeamActivity'
+        lighting: 'script.set_theater_dark_delay'
+
+# Hulu
+watch_hulu:
+  alias: Watch Hulu
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.hulu.livingroomplus/.WKFactivity'
+        lighting: 'script.set_theater_dark_delay'
+
+# Kodi
+watch_kodi:
+  alias: Watch Kodi
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'org.xbmc.kodi/.Splash'
+        lighting: 'script.set_theater_dark_delay'
+
+# Netflix
+watch_netflix:
+  alias: Watch Netflix
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.netflix.ninja/.MainActivity'
+        lighting: 'script.set_theater_dark_delay'
+
+# Paramount Plus
+watch_paramount_plus:
+  alias: Watch Paramount Plus
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.cbs.ott/com.paramount.android.pplus.splash.tv.ui.activity.SplashActivity'
+        lighting: 'script.set_theater_dark_delay'
+
+# Peacock
+watch_peacock:
+  alias: Watch Peacock
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.peacocktv.peacockandroid/com.peacock.peacocktv.GoogleMainActivity'
+        lighting: 'script.set_theater_dark_delay'
+
+# Youtube TV
+watch_youtube_tv:
+  alias: Watch Youtube TV
+  sequence:
+    - service: script.watch_app
+      data:
+        component: 'com.google.android.youtube.tvunplugged/com.google.android.apps.youtube.tvunplugged.activity.MainActivity'
+        lighting: 'script.set_theater_dark_delay'
+
+#=======================#
+#     Cinema Close      #
+#=======================#
 
 # Close the cinema by turning off the current harmony activity, and relevant lights after a delay.
 #
@@ -139,61 +476,19 @@ close_cinema:
   
   sequence:
     
-    # Ensure the cinema is not already closed.
-    - if:
-        - "{{ states('input_boolean.theater_open') == 'off' }}"
-      
-      then:
-        - service: notify.alexa_media
-          data:
-            message: "Cinema is already closed!!"
-            target:
-              - media_player.family_room_echo
-              - media_player.theater_echo
-            data:
-              type: tts
-        
-        - stop: "Cinema is already closed."
-    
-    # Ensure the cinema has not been opened recently. I don't want to jerk the projector around.
-    - variables:
-        delta_time: >
-          {% set start = as_timestamp(strptime(states('input_datetime.cinema_usage_control'), '%Y-%m-%d %H:%M:%S')) %}
-          {% set seconds = (now().timestamp() - start) %}
-          {{ seconds }}
+    # Ensure the cinema is not already closed, and has not been opened recently.
+    - service: script.check_cinema_usage_control
+      data:
+        opening: false
+      response_variable: result
     
     - if:
-        - "{{ delta_time | float(0) < 600 }}"
+        - "{{ result.allowed == false }}"
       
       then:
-        - variables:
-            delay: "{{ (600 - delta_time) | round }}"
+        - stop: "Cinema usage is denied."
         
-        # Bypass the message and timer start if the timer is already running. Someone is being a jerk.
-        - if:
-            - "{{ is_state('timer.cinema_usage_delay', 'idle') }}"
-          
-          then:        
-            - service: notify.alexa_media
-              data:
-                message: >
-                  {% set delay_minutes = (delay / 60) | round %}
-                  {% set delay_display =iif(delay_minutes >= 1, delay_minutes, 1) %}
-                  Cinema has been opened recently. Delaying cinema close for {{ delay_display }} {{ iif(delay_display == 1, 'minute', 'minutes') }}
-                target:
-                  - media_player.family_room_echo
-                  - media_player.theater_echo
-                data:
-                  type: tts
-        
-            - service: timer.start
-              data:
-                entity_id: timer.cinema_usage_delay
-                duration: "{{ delay }}"
-        
-        - stop: "Cinema has been opened recently."
-    
-    # Indicate the theater is closed.
+    # Indicate the cinema is closed.    
     - service: input_boolean.turn_off
       entity_id: input_boolean.theater_open
     
@@ -246,6 +541,153 @@ close_cinema:
     
     - service: script.turn_on
       entity_id: script.set_theater_dark
+
+#====================================#
+#     Cinema Open/Close Control      #
+#====================================#
+
+# We don't want to allow operation if the cinema has been closed or opened within a few minutes ago, as this might cause
+# undue wear and tear on the projector.
+check_cinema_usage_control:
+  alias: Check Cinema Usage Control
+  
+  fields:
+    opening:
+      description: True if the cinema is being opened, false if it's being closed.
+      selector:
+        boolean:
+  
+  variables:
+    message_state1: "{{ iif(opening == true, 'closed', 'opened') }}"
+    message_state2: "{{ iif(opening == true, 'open', 'close') }}"
+    
+    # Elapsed time in seconds since the last open or close.
+    delta_time: >
+      {% set start = as_timestamp(strptime(states('input_datetime.cinema_usage_control'), '%Y-%m-%d %H:%M:%S')) %}
+      {% set seconds = (now().timestamp() - start) %}
+      {{ seconds }}
+    
+    # Time in seconds we must wait between open and close or vice versa.
+    delay_time: 300
+    
+    # Time in seconds to delay the requested open or close.
+    delay: "{{ (delay_time - delta_time) | round }}"
+    
+    # Response variables.
+    response_allowed: "{{ {'allowed': true} }}"
+    response_denied: "{{ {'allowed': false} }}"
+  
+  sequence:
+    
+    # Ensure the cinema has not been used recently. I don't want to jerk the projector around.    
+    - if:
+        - "{{ delta_time | float(0) < delay_time }}"
+      
+      then:
+        
+        # Bypass the message and timer start if the timer is already running. Someone is being a jerk.
+        - if:
+            - "{{ is_state('timer.cinema_usage_delay', 'idle') }}"
+          
+          then:        
+            - service: notify.alexa_media
+              data:
+                message: >
+                  {% set delay_minutes = (delay / 60) | round %}
+                  {% set delay_display = iif(delay_minutes >= 1, delay_minutes, 1) %}
+                  {{ 'Cinema has been ' ~ message_state1 ~ ' recently. Delaying cinema ' ~ message_state2 ~ ' for ' ~ delay_display ~ ' ' ~ iif(delay_display == 1, 'minute', 'minutes') ~ '.' }}
+                target:
+                  - media_player.family_room_echo
+                  - media_player.theater_echo
+                data:
+                  type: tts
+        
+            - service: timer.start
+              data:
+                entity_id: timer.cinema_usage_delay
+                duration: "{{ delay }}"
+        
+        # Return a denied response.
+        - stop: "{{ 'Cinema has been ' ~ message_state1 ~ ' recently. }}"
+          response_variable: response_denied
+      
+      else:
+    
+        # Set the usage control timestamp.
+        - service: input_datetime.set_datetime
+          target:
+            entity_id: input_datetime.cinema_usage_control
+          data_template:
+            datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+        
+        # Return an allowed response.
+        - stop: All is well
+          response_variable: response_allowed
+
+#==========================#
+#     Post-Open Tasks      #
+#==========================#
+
+# The cinema can be opened for general usage (Open Cinema), a feature film (Play Feature) or to play a set
+# of random music videos (Play Random Kodi Videos). In all of these cases there are some common tasks, which
+# we perform here.
+
+perform_post_open_tasks:
+  alias: Perform Post-Open Tasks
+  
+  sequence:
+    
+    # Say something appropriate.
+    - service: notify.alexa_media
+      data:
+        message: >
+          {{ ["Cinema is now open to the public!!", 
+              "Hope you enjoy the show!!", 
+              "White Rabbit Theater is ready!!",
+              "Don't forget to silence your phones!!",
+              "Please don't lose your children in the dark!!",
+              "Watch for weeping angels!!",
+              "Come relax in our state of the art theater!!"
+             ] | random }}
+        target:
+          - media_player.family_room_echo
+          - media_player.theater_echo
+        data:
+          type: tts
+    
+    # Set the upstairs Ecobee to home mode.
+    - service: script.set_thermostat_preset
+      data:
+        thermostat_entity: climate.upstairs
+        preset: 'Home'
+    
+    # Turn off the upstairs Ecobee minimum fan time (it makes me cold sometimes).
+    - service: ecobee.set_fan_min_on_time
+      data:
+        entity_id: climate.upstairs
+        fan_min_on_time: 0
+    
+    # Turn off some downstairs lights after a delay, if appropriate.
+    - delay: '00:05:00'
+    
+    - service: script.change_downstairs_lighting
+      data:
+        turn_on: false
+        christmas: true
+    
+    # Turn off the family room AV system if it's late enough and no one else is home.
+    - condition:
+        - condition: state
+          entity_id: 
+            - binary_sensor.adults_home
+            - binary_sensor.children_home
+          state: 'off'
+        
+        - condition: time
+          after:  '18:00:00'
+          before: '23:30:00'
+    
+    - service: script.disable_family_room_av
 
 #===========================#
 #     Theater Lighting      #
@@ -377,201 +819,6 @@ change_downstairs_lighting:
             - light.stairway_light
             - light.island_light
 
-#==============================#
-#     Watch Shield TV App      #
-#==============================#
-
-# Template script that does the work.
-watch_app:
-  alias: Watch Application
-  fields:
-    component:
-      description: 'The component name of the target Shield TV application. These are obtained by querying the Shield TV box.'
-      example: 'com.netflix.ninja/.MainActivity'
-    lighting:
-      description: 'Script or scene that establishes the desired lighting.'
-      example: 'script.set_theater_dark'
-  
-  sequence:
-    
-    # Turn on some lights.
-    - service: script.set_theater_idle
-  
-    # First, turn on the harmony activity that ensures the projector, receiver and Shield TV are powered on. The receiver at this 
-    # point is switched to an unused input so the screen will be dark.
-    - service: remote.turn_on
-      entity_id: remote.harmony_hub
-      data:
-        activity: Enable Streaming
-    
-    # After a short delay, bring up the target application on the Shield TV.
-    - delay: '00:00:03'
-    - service: androidtv.adb_command
-      data:
-        entity_id: media_player.shield_tv
-        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n {{ component }}"
-  
-    # Now switch the receiver to the proper input so the application can be viewed on screen.
-    - service: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'InputCbl/Sat'
-        device: Marantz Receiver
-  
-    # Establish the target lighting.
-    - service: "{{ lighting }}"
-
-#------------------------#
-#   -- Applications --   #
-#------------------------#
-
-# Amazon Prime
-watch_amazon_prime:
-  alias: Watch Amazon Prime
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.amazon.amazonvideo.livingroom/com.amazon.ignition.IgnitionActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Disney Plus
-watch_disney_plus:
-  alias: Watch Disney Plus
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.disney.disneyplus/com.bamtechmedia.dominguez.main.MainActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Max
-watch_max:
-  alias: Watch Max
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.wbd.stream/com.wbd.beam.BeamActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Hulu
-watch_hulu:
-  alias: Watch Hulu
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.hulu.livingroomplus/.WKFactivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Kodi
-watch_kodi:
-  alias: Watch Kodi
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'org.xbmc.kodi/.Splash'
-        lighting: 'script.set_theater_dark_delay'
-
-# Netflix
-watch_netflix:
-  alias: Watch Netflix
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.netflix.ninja/.MainActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Paramount Plus
-watch_paramount_plus:
-  alias: Watch Paramount Plus
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.cbs.ott/com.paramount.android.pplus.splash.tv.ui.activity.SplashActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Peacock
-watch_peacock:
-  alias: Watch Peacock
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.peacocktv.peacockandroid/com.peacock.peacocktv.GoogleMainActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Youtube TV
-watch_youtube_tv:
-  alias: Watch Youtube TV
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.google.android.youtube.tvunplugged/com.google.android.apps.youtube.tvunplugged.activity.MainActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-#=============================#
-#     Harmony Activities      #
-#=============================#
-
-# Template script that does the work.
-start_activity:
-  alias: Start Activity
-  fields:
-    activity:
-      description: 'The Harmony activity name to be started.'
-      example: 'BD Player'
-    lighting:
-      description: 'Script or scene that establishes the desired lighting.'
-      example: 'script.set_theater_dark'
-  
-  sequence:
-  
-    # Turn on the target activity.
-    - service: remote.turn_on
-      entity_id: remote.harmony_hub
-      data:
-        activity: "{{ activity }}"
-  
-    # Establish the target lighting.
-    - service: "{{ lighting }}"
-
-#----------------------#
-#   -- Activities --   #
-#----------------------#
-
-# Shield TV (streaming)
-start_streaming:
-  alias: Start Streaming
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'Stream Player'
-        lighting: 'script.set_theater_dark_delay'
-
-# Blu-ray
-start_bluray:
-  alias: Start Bluray
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'BD Player'
-        lighting: 'script.set_theater_dark_delay'
-
-# Laserdisc
-start_laserdisc:
-  alias: Start Laserdisc
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'LD Player'
-        lighting: 'script.set_theater_dark_delay'
-
-# Turntable
-start_turntable:
-  alias: Start Turntable
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'LP Player'
-        lighting: 'script.set_theater_dim'
-
 #========================#
 #     Cinema Resume      #
 #========================#
@@ -654,34 +901,9 @@ restore_lighting_on_resume:
         turn_on: false
         christmas: false
 
-#===========================#
-#     Kodi Misc Control     #
-#===========================#
-
-# Activate the cinema if needed. This is necessary if Play Feature Movie or Play Random Kodi Videos is started when the
-# cinema is off.
-activate_cinema:
-  alias: Activate Cinema
-  
-  sequence:
-  
-    #
-    - if:
-        - "{{ states('binary_sensor.theater_av_system') == 'off' }}"
-    
-      then:
-    
-        # Turn on some lights.
-        - service: script.set_theater_idle
-  
-        # Start the 'enable streaming' Harmony activity, which ensures the correct devices are on and the screen is dark.
-        - service: remote.turn_on
-          entity_id: remote.harmony_hub
-          data:
-            activity: Enable Streaming
-      
-        # Delay for a bit to let the projector warm up.
-        - delay: '00:04:00'
+#=======================#
+#     Activate Kodi     #
+#=======================#
 
 # Activate Kodi on the Shield TV. We make no assumptions here about the rest of the theater; for example we don't
 # require the projector to be on. All we need is the Shield TV on and the Kodi application running on it.
@@ -690,11 +912,17 @@ activate_kodi:
   
   sequence:
   
-    # Turn on the Shield TV so we can host the Kodi application.
-    - service: media_player.turn_on
-      data:
-        entity_id: media_player.shield_tv
-    - delay: '00:00:02'
+    # Turn on the Shield TV if needed so we can host the Kodi application.
+    - if:
+        - condition: state
+          entity_id: media_player.shield_tv
+          state: 'off'
+      
+      then:    
+        - service: media_player.turn_on
+          data:
+            entity_id: media_player.shield_tv
+        - delay: '00:00:02'
   
     # Start Kodi on the Shield TV.
     - service: androidtv.adb_command
@@ -793,111 +1021,6 @@ process_all_kodi_movies_result:
     - service: media_player.turn_off
       data:
         entity_id: media_player.shield_tv
-
-#===========================#
-#     Kodi Play Feature     #
-#===========================#
-
-# Play feature movie! 
-play_feature_movie:
-  alias: Play Feature Movie
-  
-  sequence:
-    
-    # Prepare the cinema if needed.
-    - service: script.activate_cinema
-    
-    # Activate Kodi on the Shield TV.
-    - service: script.activate_kodi
-  
-    # Send the GetMovies command to Kodi, with the target movie name. The Handle Kodi Movies Result script calls 
-    # Process Single Kodi Movie Result below with the command result.
-    - service: kodi.call_method
-      data:
-        entity_id: media_player.kodi
-        method: VideoLibrary.GetMovies
-        filter:
-          field: title
-          operator: is
-          value: "{{ states('input_select.kodi_movies') }}"
-        limits:
-          end: 1
-          start: 0
-
-# Process the single movie returned by Kodi.
-process_single_kodi_movie_result:
-  alias: Process Single Kodi Movie Result
-  
-  fields:
-    result:
-      description: The result from the GetMovies Kodi call.
-  
-  sequence:
-    
-    # Pick up the movie ID.
-    - variables:
-        movieid: "{{ result.movies.0.movieid }}"
-    
-    # Build a set of random music videos as a preamble to the movie. These are added to a playlist.
-    - service: script.get_all_kodi_videos
-          
-    # Add the movie to the playlist.
-    - service: kodi.call_method
-      target:
-        entity_id: media_player.kodi
-      data:
-        method: Playlist.Add
-        playlistid: 1
-        item:
-          movieid: "{{ movieid }}"
-  
-    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
-    - service: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'InputCbl/Sat'
-        device: Marantz Receiver
-  
-    # Play the playlist.
-    - service: script.play_kodi_playlist
-  
-    # Darken the theater.
-    - service: script.turn_on
-      entity_id: script.set_theater_dark_delay
-
-#=================================#
-#     Kodi Play Random Videos     #
-#=================================#
-
-# Play random videos using Kodi. This is intended to be run standalone. Playing videos as a preamble to a movie
-# uses some of the same technology, but is part of the Play Feature Movie script.
-play_random_kodi_videos:
-  alias: Play Random Kodi Videos
-  
-  sequence:
-    
-    # Prepare the cinema if needed.
-    - service: script.activate_cinema
-    
-    # Activate Kodi on the Shield TV.
-    - service: script.activate_kodi
-
-    # Build a set of random music videos. These are added to a playlist.
-    - service: script.get_all_kodi_videos
-  
-    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
-    - service: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'InputCbl/Sat'
-        device: Marantz Receiver
-        
-    # Play the playlist.
-    - service: script.play_kodi_playlist
-  
-    # Darken the theater.
-    - service: script.turn_on
-      entity_id: script.set_theater_dark_delay
 
 #=====================================#
 #     Kodi Video Playlist Control     #

@@ -5,6 +5,8 @@
 title: Total Energy
 icon: mdi:home-lightning-bolt
 panel: true
+visible:
+  - user: f02fbce66df546fa90f8f3d03283b55e
 cards:
   - type: custom:layout-card
     layout_type: custom:vertical-layout

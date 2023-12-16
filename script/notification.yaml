@@ -38,7 +38,7 @@ mobile_notification_worker:
       - conditions: "{{ channel == 'standard' }}"
         
         sequence:
-          - service: notify.mobile_app_jon_companion
+          - service: notify.mobile_app_jon_galaxy
             data:
               title: "{{ title }}"
               message: "{{ message }}"
@@ -49,7 +49,7 @@ mobile_notification_worker:
       - conditions: "{{ channel == 'temporary' }}"
           
         sequence:
-          - service: notify.mobile_app_jon_companion
+          - service: notify.mobile_app_jon_galaxy
             data:
               title: "{{ title }}"
               message: "{{ message }}"
@@ -62,7 +62,7 @@ mobile_notification_worker:
       - conditions: "{{ channel == 'persistent' }}"
         
         sequence:
-          - service: notify.mobile_app_jon_companion
+          - service: notify.mobile_app_jon_galaxy
             data:
               title: "{{ title }}"
               message: "{{ message }}"
@@ -76,7 +76,7 @@ mobile_notification_worker:
       - conditions: "{{ channel == 'critical' }}"
         
         sequence:
-          - service: notify.mobile_app_jon_companion
+          - service: notify.mobile_app_jon_galaxy
             data:
               title: "{{ title }}"
               message: "{{ message }}"

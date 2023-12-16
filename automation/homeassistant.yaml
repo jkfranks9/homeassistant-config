@@ -257,7 +257,6 @@
                             'log_scripts',
                             'log_unifi_changes',
                             'perform_daily_chores',
-                            'publish_mqtt_automated_states',
                             'remove_saved_notifications_on_dismiss',
                             'restore_notifications',
                             'resume_cinema', 
@@ -306,16 +305,12 @@
     - condition: template
       value_template: >
         {% set skip_list = [
-                            'change_downstairs_lighting',
                             'concat_auto_scripts_log_files', 
-                            'concat_log_files', 
-                            'control_fan_for_temperature', 
+                            'concat_log_files',
                             'evaluate_weather_condition', 
                             'log_laundry_event',
                             'mobile_notification_worker',
                             'popup_light_group',
-                            'publish_mqtt_automated_states',
-                            'reset_smart_bulbs', 
                             'restore_lighting_on_resume',
                             'resume_cinema',
                             'resume_worker', 
@@ -328,7 +323,6 @@
                             'set_theater_dark_delay',
                             'set_theater_dim',
                             'set_theater_idle',
-                            'set_up_mqtt_automated_config',
                             'start_activity', 
                             'watch_app'
                            ] %}
@@ -475,7 +469,7 @@
     
     - platform: state
       entity_id: input_select.washer_state
-      from: 'Stop'
+      from: 'Off'
       not_to:
         - 'Unknown'
         - 'unknown'

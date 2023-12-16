@@ -62,6 +62,27 @@ initialize_global_variables:
       event_data:
         key: last_called_delay
         value: 1000
+    
+    # Map of hockey team abbreviations to the full team name. I wish I could do this using the NHL API, but the JSON result
+    # doesn't adhere to HA requirements (is not a dictionary or list with 0th element a dictionary). Lame.
+    - event: set_variable
+      event_data:
+        key: hockey_teams
+        value: [['ANA', 'Ducks'], ['ARI', 'Coyotes'], ['BOS', 'Bruins'], ['BUF', 'Sabres'], ['CAR', 'Hurricanes'], ['CBJ', 'Blue Jackets'], ['CGY', 'Flames'], ['CHI', 'Blackhawks'], ['COL', 'Avalanche'], ['DAL', 'Stars'], 
+                ['DET', 'Red Wings'], ['EDM', 'Oilers'], ['FLA', 'Panthers'], ['LAK', 'Kings'], ['MIN', 'Wild'], ['MTL', 'Canadiens'], ['NJD', 'Devils'], ['NSH', 'Predators'], ['NYI', 'Islanders'], ['NYR', 'Rangers'], 
+                ['OTT', 'Senators'], ['PHI', 'Flyers'], ['PIT', 'Penguins'], ['SEA', 'Kraken'], ['SJS', 'Sharks'], ['STL', 'Blues'], ['TBL', 'Lightning'], ['TOR', 'Maple Leafs'], ['VAN', 'Canucks'], ['VGK', 'Golden Knights'], 
+                ['WPG', 'Jets'], ['WSH', 'Capitals']]
+    
+    # Calorie values for simple exercise types.
+    - event: set_variable
+      event_data:
+        key: workout_calories_per_hour
+        value: 200
+    
+    - event: set_variable
+      event_data:
+        key: yard_work_calories_per_hour
+        value: 250
 
 #===================#
 #     Utilities     #
@@ -393,3 +414,55 @@ log_laundry_event:
           data:
             message: "Event type invalid value ({{ event_type }})"
             level: error
+
+#============================#
+#     Reminder Lookahead     #
+#============================#
+
+gather_upcoming_reminders:
+  alias: Gather Upcoming Reminders
+  
+  variables:
+    
+    # List of all reminder datetimes of interest.
+    reminder_dates: >
+      {% set reminder_dates = [
+                               'input_datetime.reminder_payment_amazon',
+                               'input_datetime.reminder_payment_creditunion',
+                               'input_datetime.reminder_payment_johndeere',
+                               'input_datetime.reminder_payment_mortgage',
+                               'input_datetime.reminder_payment_randolph',
+                               'input_datetime.reminder_payment_wellsfargo',
+                               'input_datetime.reminder_medication_bloodbuilder',
+                               'input_datetime.reminder_medication_eliquis',
+                               'input_datetime.reminder_medication_gabapentin',
+                               'input_datetime.reminder_medication_methylb12',
+                               'input_datetime.reminder_medication_metoprolol',
+                               'input_datetime.reminder_medication_rosuvastatin'
+                              ] %}
+       
+       {{ reminder_dates }}
+  
+  sequence:
+          
+    # Set the appropriate items in the result dropdown.
+    - service: input_select.set_options
+      target:
+        entity_id: input_select.reminder_lookahead_items
+      data:
+        options: >
+          {% set vars = namespace(items = []) %}
+          {% set days = (states('input_number.reminder_lookahead_days') | int(0)) %}
+          
+          {% if days > 0 %}
+            {% for date in reminder_dates %}
+              {% if (now().date() + timedelta(days=days)) | string >= states(date) %}
+                {% set vars.items = vars.items + [ state_attr(date, 'friendly_name') ]  %}
+              {% endif %}
+            {% endfor %}
+          
+          {% else %}
+            {% set vars.items = vars.items + [ 'Empty' ]  %}
+          {% endif %}
+          
+          {{ vars.items }}

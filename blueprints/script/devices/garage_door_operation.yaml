@@ -48,6 +48,7 @@ variables:
   input_operation: !input operation
   input_contact: !input contact
   
+  lockout_timer: "{{ 'timer.garage_door_' ~ input_name ~ '_lockout' }}"  
   msg_operation: "{{ iif(input_operation == 'Open', 'Opening', 'Closing') }}"
 
 sequence:
@@ -57,9 +58,13 @@ sequence:
       - "{{ is_state('input_boolean.testing_mode', 'off') }}"
       
     then:
-    
+      
       # Action is only required if the door is currently in the opposite state (contact on means closed).
       - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
+      
+      # Prevent multiple quick actions, for example trying to open the door twice because I arrived home at the same time as a 
+      # family member. Such rapid actions leave the door partially open. We use a timer for this purpose.
+      - condition: "{{ states(lockout_timer) == 'idle' }}"
         
       # Send an informational notification that the door is about to be operated, if requested.
       - if:

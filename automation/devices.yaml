@@ -834,6 +834,7 @@
     path: devices/operate_ceiling_fans.yaml
     input:
       sensor_entity: input_boolean.office_occupied
+      sensor_off_state: 'off'
       temperature_entity: sensor.office_temperature
       fan_entity: fan.office_fan
       thresholds: [80, 79, 75]
@@ -846,6 +847,7 @@
     path: devices/operate_ceiling_fans.yaml
     input:
       sensor_entity: binary_sensor.family_room_av_system
+      sensor_off_state: 'off'
       temperature_entity: sensor.main_floor_temperature
       fan_entity: fan.family_room_fan
       thresholds: [80, 78, 75]
@@ -857,7 +859,8 @@
   use_blueprint:
     path: devices/operate_ceiling_fans.yaml
     input:
-      sensor_entity: binary_sensor.theater_av_system
+      sensor_entity: sensor.harmony_hub
+      sensor_off_state: 'PowerOff'
       temperature_entity: sensor.theater_temperature
       fan_entity: fan.theater_fan
       thresholds: [81, 77, 74]
@@ -1398,14 +1401,14 @@
 
 # Washer operation control. This uses the washer power state sensor and other controls to step through the following washer states:
 #
-# - Stop
+# - Off
 # - Wash Fill
 # - Wash
 # - Wash Drain
 # - Rinse Fill
 # - Rinse
 # - Rinse Drain
-# - Stop
+# - Off
 - alias: Set Washer Operation
   id: 'set_washer_operation'
   
@@ -1451,8 +1454,8 @@
           {% elif fr == 'fill'  and to in ['drop', 'raise'] %} {{ s }}
           {% elif fr == 'raise' and to in ['fill', 'drop'] %}  {{ s }}
           
-          {# --Catch-all, default to Stop-- #}
-          {% else %} Stop
+          {# --Catch-all, default to Off-- #}
+          {% else %} Off
           {% endif %}
     
     # Continue if the state changed.
@@ -1470,7 +1473,7 @@
         
         # Perform washer stopped tasks.
         - if:
-            - "{{ is_state('input_select.washer_state', 'Stop') }}"
+            - "{{ is_state('input_select.washer_state', 'Off') }}"
           
           then:
             
@@ -1501,7 +1504,11 @@
       from: 'off'
       to: 'on'
   
-  action:
+  action:    
+    
+    # Indicate the dryer has started. This is the initial state before the temperature has been detected (in Turn On Dryer Running).
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.dryer_started
     
     # Remember to backup the log tomorrow morning.
     - service: input_boolean.turn_on
@@ -1551,7 +1558,11 @@
     
     # Indicate the dryer is running.
     - service: input_boolean.turn_on
-      entity_id: input_boolean.dryer_running
+      entity_id: input_boolean.dryer_running   
+    
+    # Turn off dryer started.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.dryer_started
     
     # Log temperature detected in the laundry events log.
     - service: script.log_laundry_event
@@ -1778,10 +1789,6 @@
       entity_id: sensor.blue_charm_presence
       id: Blue Charm
     
-    # - platform: state
-      # entity_id: sensor.ble_garage_blue_charm_distance
-      # id: Garage distance
-    
     - platform: state
       entity_id: sensor.ble_house_blue_charm_distance
       id: House distance
@@ -1805,10 +1812,7 @@
   trigger:
     - platform: state
       entity_id: sensor.blue_charm_presence
-      #from: 'Away'
-      to:
-        - 'Garage'
-        - 'House'
+      to: 'House'
   
   action:
     - service: mqtt.publish
@@ -1823,19 +1827,15 @@
   trigger:
     - platform: state
       entity_id: sensor.blue_charm_presence
-      from:
-        - 'Garage'
-        - 'House'
+      from: 'House'
       to: 'Away'
   
   # So we have a possible timing problem: during startup, the Blue Charm Presence sensor can change to Away if ESPHome has not had 
-  # time to initialize the BLE readers (garage and house). We don't want to turn off children home in this case.
-  # So we verify that the wifi sensors in both readers are in a good state before continuing. Yeah, I know.
+  # time to initialize the BLE reader. We don't want to turn off children home in this case.
+  # So we verify that the wifi sensor in the reader is in a good state before continuing. Yeah, I know.
   variables:
-    #garage_wifi: "{{ states('sensor.ble_garage_wifi_signal') }}"
     house_wifi: "{{ states('sensor.ble_house_wifi_signal') }}"
   
-  #condition: "{{ garage_wifi not in ['unknown', 'unavailable'] and house_wifi not in ['unknown', 'unavailable'] }}"
   condition: "{{ house_wifi not in ['unknown', 'unavailable'] }}"
   
   action:

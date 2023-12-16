@@ -28,14 +28,15 @@
 - platform: rest
   name: Next Canes Game
   scan_interval: 31536000
-  json_attributes_path: "$.teams[0].nextGameSchedule.dates[0].games[0]"
+  json_attributes_path: "$.games[0]"
   json_attributes:
-    - gameDate
-    - teams
-  resource: https://statsapi.web.nhl.com/api/v1/teams/12?expand=team.schedule.next
-  value_template: >
-    {% if value_json is defined and value_json | length and value_json.teams[0].nextGameSchedule is defined %}
-      {{ as_timestamp(value_json.teams[0].nextGameSchedule.dates[0].games[0].gameDate) | timestamp_custom('%b %d %I:%M%p') }}
+    - startTimeUTC
+    - awayTeam
+    - homeTeam
+  resource_template: https://api-web.nhle.com/v1/club-schedule/CAR/week/{{ now().strftime('%Y-%m-%d') }}
+  value_template: >   
+    {% if value_json is defined and value_json | length and value_json.games[0].startTimeUTC is defined %}
+      {{ as_timestamp(value_json.games[0].startTimeUTC) | timestamp_custom('%b %d %I:%M%p') }}
     {% else %}
       {{ as_timestamp(now().today() + timedelta(days = 5)) | timestamp_custom('%b %d %I:%M%p') }}
     {% endif %}
@@ -44,14 +45,15 @@
 - platform: rest
   name: Next Flyers Game
   scan_interval: 31536000
-  json_attributes_path: "$.teams[0].nextGameSchedule.dates[0].games[0]"
+  json_attributes_path: "$.games[0]"
   json_attributes:
-    - gameDate
-    - teams
-  resource: https://statsapi.web.nhl.com/api/v1/teams/4?expand=team.schedule.next
-  value_template: >    
-    {% if value_json is defined and value_json | length and value_json.teams[0].nextGameSchedule is defined %}
-      {{ as_timestamp(value_json.teams[0].nextGameSchedule.dates[0].games[0].gameDate) | timestamp_custom('%b %d %I:%M%p') }}
+    - startTimeUTC
+    - awayTeam
+    - homeTeam
+  resource_template: https://api-web.nhle.com/v1/club-schedule/PHI/week/{{ now().strftime('%Y-%m-%d') }}
+  value_template: >   
+    {% if value_json is defined and value_json | length and value_json.games[0].startTimeUTC is defined %}
+      {{ as_timestamp(value_json.games[0].startTimeUTC) | timestamp_custom('%b %d %I:%M%p') }}
     {% else %}
       {{ as_timestamp(now().today() + timedelta(days = 5)) | timestamp_custom('%b %d %I:%M%p') }}
     {% endif %}
@@ -66,18 +68,6 @@
   username: !secret unifi_username
   password: !secret unifi_password
   udm: True
-
-#================#
-#     Random     #
-#================#
-
-# This is used to provide a jittered power amount to Riemann integrations to help prevent them from becoming unavailable.
-# See the Jittered Riemann Sum Integration section of the power template sensors.
-- platform: random
-  name: 'Random Sensor'
-  minimum: 0
-  maximum: 10
-  unit_of_measurement: "w"
 
 #====================#
 #     Gas Prices     #

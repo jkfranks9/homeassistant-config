@@ -16,6 +16,7 @@ entities:
         name: Date
         format: datetime
       - entity: sensor.canes_opponent
+        attribute: friendly_opponent
         name: Opponent
   
   - type: custom:multiple-entity-row
@@ -28,4 +29,5 @@ entities:
         name: Date
         format: datetime
       - entity: sensor.flyers_opponent
+        attribute: friendly_opponent
         name: Opponent
