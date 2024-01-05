@@ -13,21 +13,24 @@
       unit_of_measurement: 'Kcal'
       state: "{{ (states('input_number.treadmill_daily_calories') | float(0) +
                   states('input_number.yard_work_daily_calories') | float(0) +
-                  states('input_number.workout_daily_calories') | float(0)) | round(2) }}"
+                  states('input_number.workout_daily_calories') | float(0) +
+                  states('input_number.steps_daily_calories') | float(0)) | round(2) }}"
     
     - name: 'Total Weekly Calories'
       unique_id: total_weekly_calories
       unit_of_measurement: 'Kcal'
       state: "{{ (states('input_number.treadmill_weekly_calories') | float(0) +
                   states('input_number.yard_work_weekly_calories') | float(0) +
-                  states('input_number.workout_weekly_calories') | float(0)) | round(2) }}"
+                  states('input_number.workout_weekly_calories') | float(0) +
+                  states('input_number.steps_weekly_calories') | float(0)) | round(2) }}"
     
     - name: 'Total Monthly Calories'
       unique_id: total_monthly_calories
       unit_of_measurement: 'Kcal'
       state: "{{ (states('input_number.treadmill_monthly_calories') | float(0) +
                   states('input_number.yard_work_monthly_calories') | float(0) +
-                  states('input_number.workout_monthly_calories') | float(0)) | round(2) }}"
+                  states('input_number.workout_monthly_calories') | float(0) +
+                  states('input_number.steps_monthly_calories') | float(0)) | round(2) }}"
 
     #-------------------------------#
     #   -- Total Exercise Time --   #

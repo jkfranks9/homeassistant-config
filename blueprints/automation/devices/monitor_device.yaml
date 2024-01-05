@@ -36,8 +36,8 @@ trigger:
     event_data:
       component: !input component_name
 
-# Continue if the device is not on. Weed out changing to/from unavailable or unknown states.
-condition: "{{ trigger.from_state.state not in ['unavailable', 'unknown'] and trigger.to_state.state not in ['unavailable', 'unknown'] and not is_state(input_device_entity, 'on') }}"
+# Continue if the device is not on. Weed out changing to unavailable or unknown states.
+condition: "{{ trigger.to_state.state not in ['unavailable', 'unknown'] and not is_state(input_device_entity, 'on') }}"
 
 action:
     

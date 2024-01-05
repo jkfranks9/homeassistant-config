@@ -572,6 +572,17 @@ thermostat_button:
       - display: >-
           [[[ return entity.attributes.fan &&
           entity.attributes.fan === 'on' ? "block" : "none" ]]]
+      - color: >-
+          [[[ 
+            if (entity.attributes.hvac_action === 'heating')
+              return 'var(--error-color)'
+            else if (entity.attributes.hvac_action === 'cooling')
+              return 'var(--paper-item-icon-color)'
+            else if (entity.attributes.hvac_action === 'fan')
+              return 'var(--state-active-color)'
+            else
+              return 'none'
+          ]]]
     
   custom_fields:
     low:

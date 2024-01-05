@@ -20,12 +20,12 @@
   
   # Determine the previous month using the 'from' state's last changed value.
   variables:
-    month: "{{ as_timestamp(strptime(trigger.from_state.last_changed.strftime('%Y-%m-%d %H:%M:%S.%f'), '%Y-%m-%d %H:%M:%S.%f')) | timestamp_custom('%b') | lower() }}"
+    month: "{{ as_timestamp(strptime(trigger.from_state.last_changed.strftime('%Y-%m-%d %H:%M:%S.%f'), '%Y-%m-%d %H:%M:%S.%f%z')) | timestamp_custom('%b') | lower() }}"
   
   action:
     - service: system_log.write
       data:
-        message: "calories from state last changed: '{{ trigger.from_state.last_changed }}'"
+        message: "{{ 'calories from state last changed/month: ' ~ trigger.from_state.last_changed ~ ' / ' ~ month }}"
         level: info
     
     # Set the correct history value using the month variable to complete the target entity ID.
@@ -79,6 +79,24 @@
 #==========================#
 #     Manual Exercise      #
 #==========================#
+    
+# The companion app on Android keeps a single steps counter that just keeps increasing (yeah, rather useless). We have a utility meter
+# that translates this to a daily value, but since this updates many times per day, it's not useful for keeping track of the steps as 
+# an exercise metric. So each night, copy the utility meter value to an input number, which then drives the Process Steps Exercise
+# automation to manage the exercise metric.
+- alias: Copy Daily Steps
+  id: copy_daily_steps
+  
+  trigger:
+    - platform: time
+      at: '23:59:00'
+  
+  action:
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.steps_daily
+      data:
+        value: "{{ states('sensor.steps_daily') }}"
 
 # Workout exercise.
 - alias: Process Workout Exercise
@@ -87,7 +105,7 @@
     path: health/process_exercise.yaml
     input:
       exercise_type: workout
-      time_entity: input_number.workout_daily_time
+      units_entity: input_number.workout_daily_time
 
 # Yard work exercise.
 - alias: Process Yard Work Exercise
@@ -96,4 +114,13 @@
     path: health/process_exercise.yaml
     input:
       exercise_type: yard_work
-      time_entity: input_number.yard_work_daily_time
+      units_entity: input_number.yard_work_daily_time
+
+# Steps exercise.
+- alias: Process Steps Exercise
+  id: 'process_steps_exercise'
+  use_blueprint:
+    path: health/process_exercise.yaml
+    input:
+      exercise_type: steps
+      units_entity: input_number.steps_daily

@@ -83,6 +83,11 @@ initialize_global_variables:
       event_data:
         key: yard_work_calories_per_hour
         value: 250
+    
+    - event: set_variable
+      event_data:
+        key: steps_calories_per_thousand
+        value: 40.2
 
 #===================#
 #     Utilities     #

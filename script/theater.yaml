@@ -641,14 +641,18 @@ perform_post_open_tasks:
     - service: notify.alexa_media
       data:
         message: >
-          {{ ["Cinema is now open to the public!!", 
-              "Hope you enjoy the show!!", 
-              "White Rabbit Theater is ready!!",
-              "Don't forget to silence your phones!!",
-              "Please don't lose your children in the dark!!",
-              "Watch for weeping angels!!",
-              "Come relax in our state of the art theater!!"
-             ] | random }}
+          <speak>
+            <amazon:emotion name="excited" intensity="medium">
+            {{ ["Cinema is now open to the public!", 
+                "Hope you enjoy the show!", 
+                "White Rabbit Theater is ready!",
+                "Don't forget to silence your phones!",
+                "Please don't lose your children in the dark!",
+                "Watch for weeping angels!",
+                "Come relax in our state of the art theater!"
+               ] | random }}
+            </amazon:emotion>
+          </speak>
         target:
           - media_player.family_room_echo
           - media_player.theater_echo

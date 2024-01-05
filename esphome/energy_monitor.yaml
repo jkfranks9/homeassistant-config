@@ -1,0 +1,194 @@
+substitutions:
+  
+  # Used by boards
+  device_name:      energy-mon-2
+  loglevel:         DEBUG
+  
+  # Used by WiFi and sensors
+  friendly_name:    EM2
+  update_interval:  10s
+
+  # Current Transformers:
+  #  20A/25mA SCT-006: 11143
+  #  30A/1V SCT-013-030: 8650
+  #  50A/1V SCT-013-050: 15420
+  #  50A/16.6mA SCT-010: 41334
+  #  80A/26.6mA SCT-010: 41660
+  #  100A/50ma SCT-013-000: 27518
+  #  120A/40mA: SCT-016: 41787
+  #  200A/100mA SCT-024: 27518
+  #  200A/50mA SCT-024: 55036
+  SCT_006_cal: '11143'
+  SCT_010_cal: '41660'
+  SCT_013_cal: '27518'
+
+  # Jameco 9VAC Transformer: 
+  #  For meter versions: 
+  #  >= v1.3: 7305
+  voltage_cal: '7305'
+
+# Pull in common configuration
+packages:
+  esp32_base: !include common/esp32_base.yaml
+  wifi:       !include common/wifi.yaml
+
+# Enable Home Assistant API
+api:
+
+#web_server:
+#  port: 80
+
+# SPI is needed for the 6 channel energy monitor
+spi:
+  clk_pin: 18
+  miso_pin: 19
+  mosi_pin: 23
+
+# Sensors
+sensor:
+
+# There are 2 ICs on the energy monitor. Each one handles 3 of the 6 energy monitoring channels.
+# They are referred to as "phases".
+
+# IC1 ... the board allows for two separate voltages to be measured, but we only need one. It's configured
+# on the first phase of IC1.
+  - platform: atm90e32
+    cs_pin:
+      number: 5
+      ignore_strapping_warning: true
+    
+    phase_a:
+      voltage:
+        name: ${friendly_name} Volts A
+        id: ic1Volts
+        accuracy_decimals: 1
+      current:
+        name: ${friendly_name} CT1 Amps
+        id: ct1Amps
+# The max value for current that the meter can output is 65.535. If you expect to measure current over 65A, 
+# divide the gain_ct by 2 (120A CT) or 4 (200A CT) and multiply the current and power values by 2 or 4 by uncommenting the filter below
+#        filters:
+#          - multiply: 2
+      power:
+        name: ${friendly_name} CT1 Watts
+        id: ct1Watts
+#        filters:
+#          - multiply: 2
+      gain_voltage: ${voltage_cal}
+      gain_ct: ${SCT_006_cal}
+    
+    phase_b:
+      current:
+        name: ${friendly_name} CT2 Amps
+        id: ct2Amps
+      power:
+        name: ${friendly_name} CT2 Watts
+        id: ct2Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: ${SCT_006_cal}
+    
+    phase_c:
+      current:
+        name: ${friendly_name} CT3 Amps
+        id: ct3Amps
+      power:
+        name: ${friendly_name} CT3 Watts
+        id: ct3Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: ${SCT_010_cal}
+    
+    line_frequency: 60Hz
+    gain_pga: 1X
+    update_interval: ${update_interval}
+
+# IC2
+  - platform: atm90e32
+    cs_pin: 4
+    
+    phase_a:
+# This voltage is only needed if monitoring 2 voltages
+#      voltage:
+#        name: ${friendly_name} Volts B
+#        id: ic2Volts
+#        accuracy_decimals: 1
+      current:
+        name: ${friendly_name} CT4 Amps
+        id: ct4Amps
+      power:
+        name: ${friendly_name} CT4 Watts
+        id: ct4Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: ${SCT_013_cal}
+    
+    phase_b:
+      current:
+        name: ${friendly_name} CT5 Amps
+        id: ct5Amps
+      power:
+        name: ${friendly_name} CT5 Watts
+        id: ct5Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: ${SCT_010_cal}
+    
+    phase_c:
+      current:
+        name: ${friendly_name} CT6 Amps
+        id: ct6Amps
+      power:
+        name: ${friendly_name} CT6 Watts
+        id: ct6Watts
+      gain_voltage: ${voltage_cal}
+      gain_ct: ${SCT_010_cal}
+    
+    line_frequency: 60Hz
+    gain_pga: 1X
+    update_interval: ${update_interval}
+        
+# Total Amps   
+  - platform: template
+    name: ${friendly_name} Total Amps
+    id: totalAmps
+    lambda: return id(ct1Amps).state + id(ct2Amps).state + id(ct3Amps).state + id(ct4Amps).state + id(ct5Amps).state + id(ct6Amps).state ;
+    accuracy_decimals: 2
+    unit_of_measurement: A
+    device_class: current
+    update_interval: ${update_interval}         
+
+# Total Watts
+  - platform: template
+    name: ${friendly_name} Total Watts
+    id: totalWatts
+    lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
+    accuracy_decimals: 1
+    unit_of_measurement: W
+    device_class: power
+    update_interval: ${update_interval}
+
+# These will show up on the Home Assistant energy dashboard
+  - platform: total_daily_energy
+    name: ${friendly_name} Air Handler kWh
+    power_id: ct4Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing 
+  
+  - platform: total_daily_energy
+    name: ${friendly_name} Total kWh
+    power_id: totalWatts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing 
+
+# This is needed for the Home Assistant energy dashboard.
+time:
+  - platform: sntp
+    id: sntp_time   
+
+# Restart switch
+switch:
+  - platform: restart
+    name: ${friendly_name} Restart

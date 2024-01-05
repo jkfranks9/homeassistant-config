@@ -9,45 +9,61 @@ cards:
     entities:
       
       - type: custom:multiple-entity-row
-        entity: input_number.treadmill_monthly_calories
-        name: Treadmill
-        icon: mdi:walk
-        state_header: Monthly
+        entity: sensor.total_daily_calories
+        format: precision0
+        name: Daily
+        icon: mdi:calendar-today
+        state_header: Total
         entities:
           - entity: input_number.treadmill_daily_calories
-            name: Daily
-          - entity: input_number.treadmill_weekly_calories
-            name: Weekly
-      
-      - type: custom:multiple-entity-row
-        entity: input_number.workout_monthly_calories
-        name: Workout
-        icon: mdi:weight-lifter
-        state_header: Monthly
-        entities:
+            format: precision0
+            name: Treadmill
           - entity: input_number.workout_daily_calories
-            name: Daily
-          - entity: input_number.workout_weekly_calories
-            name: Weekly
+            format: precision0
+            name: Workout
+          - entity: input_number.yard_work_daily_calories
+            format: precision0
+            name: Yard
+          - entity: input_number.steps_daily_calories
+            format: precision0
+            name: Steps
       
       - type: custom:multiple-entity-row
-        entity: input_number.yard_work_monthly_calories
-        name: Yard Work
-        icon: mdi:shovel
-        state_header: Monthly
+        entity: sensor.total_weekly_calories
+        format: precision0
+        name: Weekly
+        icon: mdi:calendar-week
+        state_header: Total
         entities:
-          - entity: input_number.yard_work_daily_calories
-            name: Daily
+          - entity: input_number.treadmill_weekly_calories
+            format: precision0
+            name: Treadmill
+          - entity: input_number.workout_weekly_calories
+            format: precision0
+            name: Workout
           - entity: input_number.yard_work_weekly_calories
-            name: Weekly
+            format: precision0
+            name: Yard
+          - entity: input_number.steps_weekly_calories
+            format: precision0
+            name: Steps
       
       - type: custom:multiple-entity-row
         entity: sensor.total_monthly_calories
-        name: Total
-        icon: mdi:sigma
-        state_header: Monthly
+        format: precision0
+        name: Monthly
+        icon: mdi:calendar-month
+        state_header: Total
         entities:
-          - entity: sensor.total_daily_calories
-            name: Daily
-          - entity: sensor.total_weekly_calories
-            name: Weekly
+          - entity: input_number.treadmill_monthly_calories
+            format: precision0
+            name: Treadmill
+          - entity: input_number.workout_monthly_calories
+            format: precision0
+            name: Workout
+          - entity: input_number.yard_work_monthly_calories
+            format: precision0
+            name: Yard
+          - entity: input_number.steps_monthly_calories
+            format: precision0
+            name: Steps

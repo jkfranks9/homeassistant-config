@@ -111,7 +111,7 @@
     - name: 'Office Bookcase Light Power'
       unique_id: office_bookcase_light_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('input_boolean.alexa_ha_plug', 'on'), 6, 0) }}"
+      state: "{{ iif(is_state('switch.office_bookcase', 'on'), 6, 0) }}"
 
     - name: 'Office Fan Power'
       unique_id: office_fan_power
@@ -256,11 +256,6 @@
       unique_id: fire_tv_power
       unit_of_measurement: 'W'
       state: "{{ iif(is_state('switch.fire_tv', 'on'), 4, 0) }}"
-    
-    - name: 'Projector Power'
-      unique_id: projector_power
-      unit_of_measurement: 'W'
-      state: "{{ iif(is_state('media_player.epson_projector', 'on'), 264, 0) }}"
 
     # NOTE: The following groups are needed for the UI, which displays groups of things so as to not be
     #       overwhelming. These groups are only needed for power, not for daily/monthly energy.
@@ -362,19 +357,6 @@
                  ) | round(2)
               }}"
 
-    #--------------------------------------------#
-    #   -- Second Floor AV Group Calculated --   #
-    #--------------------------------------------#
-
-    - name: 'Second Floor AV Calculated Power'
-      unique_id: second_floor_av_calculated_power
-      unit_of_measurement: 'W'
-      icon: mdi:flash
-      state: "{{ (
-                  states('sensor.projector_power') | float(0)
-                 ) | round(2)
-              }}"
-
     #---------------------------------------------#
     #   -- First Floor Lights Group Measured --   #
     #---------------------------------------------#
@@ -428,7 +410,8 @@
       unit_of_measurement: 'W'
       icon: mdi:flash
       state: "{{ (
-                  states('sensor.theater_av_current_consumption') | float(0)
+                  states('sensor.theater_av_current_consumption') | float(0) +
+                  states('sensor.projector_plug_power') | float(0)
                  ) | round(2)
               }}"
 
@@ -453,8 +436,7 @@
       icon: mdi:flash
       state: "{{ (
                   states('sensor.second_floor_lights_calculated_power') | float(0) +
-                  states('sensor.second_floor_fans_calculated_power') | float(0) +
-                  states('sensor.second_floor_av_calculated_power') | float(0)
+                  states('sensor.second_floor_fans_calculated_power') | float(0)
                  ) | round(2)
               }}"
     

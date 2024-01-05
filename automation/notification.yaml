@@ -1190,9 +1190,9 @@
         title: 'Attention:'
         message: >
           {% if states('sensor.canes_game_status') == 'Home' %}
-            {{ states('sensor.canes_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }}
+            {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }}
           {% else %}
-            Hurricanes at {{ states('sensor.canes_opponent') }}, {{ states('sensor.next_canes_game') }}
+            Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }}
           {% endif %}
         channel: standard
         throttled: false

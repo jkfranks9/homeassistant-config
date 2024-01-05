@@ -58,7 +58,13 @@
     # Blue charm beacon presence, based on scanner distance being a valid number.
     - name: 'Blue Charm Presence'
       unique_id: blue_charm_presence
-      state: "{{ iif(states('sensor.ble_house_blue_charm_distance') is number, 'House', 'Away') }}"
+      state: >
+        {% set distance = states('sensor.ble_house_blue_charm_distance') %}
+        {% if distance is number %}
+          House
+        {% else %}
+          Away
+        {% endif %}
 
     #------------------------------#
     #   -- Washer Power State --   #

@@ -214,7 +214,9 @@ set_up_children_only_bedtime_environment:
                   entities:
                     light.studio_lamp_1:           'off'
                     light.penthouse_lamp:          'off'
-                    light.master_bedroom_lamp:     'on'
+                    light.master_bedroom_lamp:
+                      state: 'on'
+                      brightness_pct: 100
     
       # Post-asleep stage: reset bedroom light and turn on appropriate night light if needed.
       else:
@@ -637,6 +639,11 @@ change_lighting_per_weather:
         min_elevation: "{{ states('sensor.min_elevation') }}"
         med_elevation: "{{ states('sensor.med_elevation') }}"
         max_elevation: "{{ states('sensor.max_elevation') }}"
+        
+        # I only have a few smart bulbs, but want to provide the brightness for those sometimes. So rather than
+        # defining another input field, I just use the brightness value if it's passed as data. Note that
+        # non-smart lights (for example switches) just ignore the brigtness value.
+        brightness: "{{ brightness_pct if brightness_pct is defined else 100 }}"
     
     # Perform the appropriate actions based on the caller, sun rising state and weather.
     - if:
@@ -663,9 +670,11 @@ change_lighting_per_weather:
                     sun_elevation < max_elevation | float(max_elevation) and
                     states('input_select.weather_condition') == 'gloomy') }}
                 
-            - service: homeassistant.turn_on
-              data_template:
+            - service: light.turn_on
+              target:
                 entity_id: "{{ light_entity }}"
+              data:
+                brightness_pct: "{{ brightness }}"
               
           # Not called for wakeup
           else:
@@ -678,8 +687,8 @@ change_lighting_per_weather:
                     states('input_select.weather_condition') == 'hazy') or
                     sun_elevation > max_elevation | float(max_elevation) }}
               
-            - service: homeassistant.turn_off
-              data_template:
+            - service: light.turn_off
+              target:
                 entity_id: "{{ light_entity }}"
       
       # Sun setting
@@ -693,9 +702,11 @@ change_lighting_per_weather:
                 states('input_select.weather_condition') == 'hazy') or
                 sun_elevation < min_elevation | float(min_elevation) }}
         
-        - service: homeassistant.turn_on
-          data_template:
+        - service: light.turn_on
+          target:
             entity_id: "{{ light_entity }}"
+          data:
+            brightness_pct: "{{ brightness }}"
 
 #===================================================#
 #     Turn On/Off Lights Per Weather Conditions     #

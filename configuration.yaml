@@ -184,28 +184,6 @@ mqtt:
 
 wake_on_lan:
 
-#==================#
-#     Switches     #
-#==================#
-
-switch:
-  
-  # Amazon Smart Plug ... copies the input boolean of the same name, allowing the plug to be a switch (and thus a light),
-  # which in turn allows it to be placed in a group.
-  - platform: template
-    switches:
-      alexa_ha_plug:
-        friendly_name: Office Bookcase
-        value_template: "{{ is_state('input_boolean.alexa_ha_plug', 'on') }}"
-        turn_on:
-          - service: input_boolean.turn_on
-            entity_id:
-              - input_boolean.alexa_ha_plug
-        turn_off:
-          - service: input_boolean.turn_off
-            entity_id:
-              - input_boolean.alexa_ha_plug
-
 #=================#
 #     Devices     #
 #=================#

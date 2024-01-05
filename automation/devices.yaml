@@ -1121,25 +1121,33 @@
 #     Appliances     #
 #====================#
 
-# Check if the refrigerator is somehow off.
+# Check if certain devices are somehow off.
 - alias: Check Refrigerator Off
   id: check_refrigerator_off
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
       device_entity: switch.refrigerator
-      component_name: sonoff
+      component_name: tplink
       device_name: Refrigerator
 
-# Check if the microwave is somehow off.
 - alias: Check Microwave Off
   id: check_microwave_off
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
       device_entity: switch.microwave
-      component_name: sonoff
+      component_name: tplink
       device_name: Microwave
+
+- alias: Check Projector Off
+  id: check_projector_off
+  use_blueprint:
+    path: devices/monitor_device.yaml
+    input:
+      device_entity: switch.projector_plug
+      component_name: sonoff
+      device_name: Projector
 
 #======================#
 #     Robot Vacuum     #

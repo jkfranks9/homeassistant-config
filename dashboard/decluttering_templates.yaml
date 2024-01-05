@@ -23,13 +23,14 @@ next_event:
             base_entity: '[[base_entity]]'
             amount: '[[interval]]'
     
-    style: |
-      {%- set ts_event = as_timestamp(states.[[entity]].state, default=0) %}
-      {%- set ts_now = as_timestamp(now()) | round(0) %}
-      {%- set ts_delta = (ts_now - ts_event) %}
-      ha-card {
-        color: {% if (ts_delta >= 0) %}red {% elif ts_delta > (-86400) %}yellow {% else %}var(--primary-text-color) {% endif %};
-      }
+    card_mod:
+      style: |
+        {%- set ts_event = as_timestamp(states.[[entity]].state, default=0) %}
+        {%- set ts_now = as_timestamp(now()) | round(0) %}
+        {%- set ts_delta = (ts_now - ts_event) %}
+        ha-card {
+          color: {% if (ts_delta >= 0) %}red {% elif ts_delta > (-86400) %}yellow {% else %}var(--primary-text-color) {% endif %};
+        }
 
 next_event_numeric:
   default:
@@ -52,11 +53,12 @@ next_event_numeric:
             base_entity: '[[base_entity]]'
             amount: '[[interval]]'
     
-    style: |
-      {%- set ts_delta = (states.[[entity]].state | int - states.[[base_entity]].state | int) %}
-      ha-card {
-        color: {% if (ts_delta <= 0) %}red {% elif ts_delta < ([[interval]] * 7.5/100) %}yellow {% else %}var(--primary-text-color) {% endif %};
-      }
+    card_mod:
+      style: |
+        {%- set ts_delta = (states.[[entity]].state | int - states.[[base_entity]].state | int) %}
+        ha-card {
+          color: {% if (ts_delta <= 0) %}red {% elif ts_delta < ([[interval]] * 7.5/100) %}yellow {% else %}var(--primary-text-color) {% endif %};
+        }
 
 #==================#
 #     Bar Card     #
@@ -137,13 +139,14 @@ bar_graph_card:
     entities:
       - entity: '[[entity]]'
 
-    style: |
-      ha-card > div:first-child {
-      }
-      .name > span {
-        font-weight: 400 !important;
-        opacity: 1 !important;
-      }
+    card_mod:
+      style: |
+        ha-card > div:first-child {
+        }
+        .name > span {
+          font-weight: 400 !important;
+          opacity: 1 !important;
+        }
 
 #==========================#
 #     Temperature Card     #

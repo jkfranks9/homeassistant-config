@@ -14,10 +14,11 @@ blueprint:
           options:
             - workout
             - yard_work
+            - steps
     
-    time_entity:
-      name: Time Entity
-      description: Entity that contains the amount of time spent on the exercise, in minutes.
+    units_entity:
+      name: Units Entity
+      description: Entity that contains the units spent on the exercise (time in minutes or number of steps).
       selector:
         entity:
           domain: input_number
@@ -25,20 +26,29 @@ blueprint:
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_exercise_type: !input exercise_type
-  input_time_entity: !input time_entity
+  input_units_entity: !input units_entity
   
-  valid: "{{ input_exercise_type in ['workout', 'yard_work'] }}"
+  valid: "{{ input_exercise_type in ['workout', 'yard_work', 'steps'] }}"
   daily_calories_entity: "{{ 'input_number.' ~ input_exercise_type ~ '_daily_calories' }}"
-  workout_calories_per_hour: "{{ state_attr('sensor.variables', 'variables').workout_calories_per_hour }}"
-  yard_work_calories_per_hour: "{{ state_attr('sensor.variables', 'variables').yard_work_calories_per_hour }}"
-  calories_per_hour: "{{ iif(input_exercise_type == 'workout', workout_calories_per_hour, yard_work_calories_per_hour) }}"
+  workout_calories_per_unit: "{{ state_attr('sensor.variables', 'variables').workout_calories_per_hour }}"
+  yard_work_calories_per_unit: "{{ state_attr('sensor.variables', 'variables').yard_work_calories_per_hour }}"
+  steps_calories_per_unit: "{{ state_attr('sensor.variables', 'variables').steps_calories_per_thousand }}"
+  calories_per_unit: >
+    {% if input_exercise_type == 'workout' %}
+      {{ workout_calories_per_unit }}
+    {% elif input_exercise_type == 'yard_work' %}
+      {{ yard_work_calories_per_unit }}
+    {% elif input_exercise_type == 'steps' %}
+      {{ steps_calories_per_unit }}
+    {% endif %}
+  units_divisor: "{{ iif(input_exercise_type in ['workout', 'yard_work'], 60, 1000) }}"
 
-# Trigger when the time entity is updated.
+# Trigger when the units entity is updated.
 trigger:
   - platform: state
-    entity_id: !input time_entity
+    entity_id: !input units_entity
   
-# Don't do anything if the time entity was reset to 0, as happens in the Perform Daily Chores automation.
+# Don't do anything if the units entity was reset to 0, as happens in the Perform Daily Chores automation.
 condition: "{{ trigger.to_state.state | int(0) > 0 }}"
 
 action:
@@ -54,7 +64,7 @@ action:
         target:
           entity_id: "{{ daily_calories_entity }}"
         data:
-          value: "{{ ((states(input_time_entity) | int(0) / 60) * calories_per_hour) | int(0) }}"
+          value: "{{ ((states(input_units_entity) | int(0) / units_divisor) * calories_per_unit) | int(0) }}"
 
       # Register weekly and monthly exercise metrics.
       - service: script.register_exercise_metrics

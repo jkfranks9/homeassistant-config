@@ -60,9 +60,10 @@ register_exercise_metrics:
             - treadmill
             - workout
             - yard_work
+            - steps
   
   variables:
-    valid: "{{ exercise_type in ['treadmill', 'workout', 'yard_work'] }}"
+    valid: "{{ exercise_type in ['treadmill', 'workout', 'yard_work', 'steps'] }}"
     weekly_time_entity: "{{ 'input_number.' ~ exercise_type ~ '_weekly_time' }}"
     weekly_calories_entity: "{{ 'input_number.' ~ exercise_type ~ '_weekly_calories' }}"
     monthly_time_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_time' }}"
@@ -78,31 +79,49 @@ register_exercise_metrics:
       
       then:
         
-        # Update the weekly metrics.
-        - service: input_number.set_value
-          target:
-            entity_id: "{{ weekly_time_entity }}"
-          data:
-            value: "{{ states(weekly_time_entity) | int(0) + daily_time }}"
-        
+        # Update the calorie metrics.        
         - service: input_number.set_value
           target:
             entity_id: "{{ weekly_calories_entity }}"
           data:
             value: "{{ states(weekly_calories_entity) | int(0) + daily_calories }}"
         
-        # Update the monthly metrics.
-        - service: input_number.set_value
-          target:
-            entity_id: "{{ monthly_time_entity }}"
-          data:
-            value: "{{ states(monthly_time_entity) | int(0) + daily_time }}"
-        
         - service: input_number.set_value
           target:
             entity_id: "{{ monthly_calories_entity }}"
           data:
             value: "{{ states(monthly_calories_entity) | int(0) + daily_calories }}"
+        
+        # Update the time metrics for the appropriate exercise types.
+        - if:
+            - "{{ exercise_type != 'steps' }}"
+          
+          then:
+            - service: input_number.set_value
+              target:
+                entity_id: "{{ weekly_time_entity }}"
+              data:
+                value: "{{ states(weekly_time_entity) | int(0) + daily_time }}"
+            
+            - service: input_number.set_value
+              target:
+                entity_id: "{{ monthly_time_entity }}"
+              data:
+                value: "{{ states(monthly_time_entity) | int(0) + daily_time }}"
+          
+          # Update the steps metrics.
+          else:
+            - service: input_number.set_value
+              target:
+                entity_id: input_number.steps_weekly
+              data:
+                value: "{{ states('input_number.steps_weekly') | int(0) + states('sensor.steps_daily') | int(0) }}"
+            
+            - service: input_number.set_value
+              target:
+                entity_id: input_number.steps_monthly
+              data:
+                value: "{{ states('input_number.steps_monthly') | int(0) + states('sensor.steps_daily') | int(0) }}"
       
       # Invalid exercise type, log it.
       else:

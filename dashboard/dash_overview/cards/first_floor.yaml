@@ -59,7 +59,6 @@ config:
     
     # Lights and switches
     - entities:
-        - input_boolean.alexa_ha_plug
         - light.family_room_lamp
         - light.master_bedroom_lamp
         - light.office_lamp
@@ -85,6 +84,7 @@ config:
         - switch.mantle_bookcase
         - switch.master_bath_fan
         - switch.master_bath_light
+        - switch.office_bookcase
         - switch.outdoor_christmas
         - switch.porch_light
         - switch.sink_light

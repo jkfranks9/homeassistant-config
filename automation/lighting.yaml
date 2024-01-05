@@ -606,46 +606,6 @@
         seconds: "{{ range(2, 15) | random }}"
     - service: script.turn_off_christmas_lights
 
-#===================================#
-#     Amazon Smart Plug Control     #
-#===================================#
-
-# See the alexa_ha_plug input boolean for more details. The media_content_id defines the voice command sent
-# to Alexa, and must match the corresponding voice trigger defined in the Alexa routines.
-- alias: Turn On Office Bookcase Via Alexa
-  id: 'turn_on_office_bookcase_via_alexa'
-
-  trigger:
-  - platform: state
-    entity_id: input_boolean.alexa_ha_plug
-    to: 'on'
-  
-  action:
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.family_room_echo
-      data:
-        media_content_id: HA Office Bookcase On
-        media_content_type: routine
-      metadata: {}
-
-- alias: Turn Off Office Bookcase Via Alexa
-  id: 'turn_off_office_bookcase_via_alexa'
-
-  trigger:
-  - platform: state
-    entity_id: input_boolean.alexa_ha_plug
-    to: 'off'
-  
-  action:
-    - service: media_player.play_media
-      target:
-        entity_id: media_player.family_room_echo
-      data:
-        media_content_id: HA Office Bookcase Off
-        media_content_type: routine
-      metadata: {}
-
 #=====================#
 #     Smart Bulbs     #
 #=====================#

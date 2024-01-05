@@ -7,19 +7,6 @@
     - 'date'
     - 'time'
 
-#======================#
-#     Raspberry Pi     #
-#======================#.
-
-# Last boot time, disk, memory & CPU usage
-- platform: systemmonitor
-  resources:
-    - type: last_boot
-    - type: disk_use_percent
-      arg: /
-    - type: memory_use_percent
-    - type: processor_use
-
 #================#
 #     Hockey     #
 #================#

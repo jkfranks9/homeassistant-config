@@ -28,10 +28,11 @@ entities:
     show_legend: false
     y_axis: secondary
 
-style: |
-  ha-card > div:first-child {
-  }
-  .name > span {
-    font-weight: 400 !important;
-    opacity: 1 !important;
-  }
+card_mod:
+  style: |
+    ha-card > div:first-child {
+    }
+    .name > span {
+      font-weight: 400 !important;
+      opacity: 1 !important;
+    }
