@@ -33,3 +33,8 @@ cards:
               template: toggle_button
               entity: input_boolean.hockey_season
               name: Hockey
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.variables_workout_time
+              name: Ex Time

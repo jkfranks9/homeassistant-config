@@ -434,6 +434,7 @@ gather_upcoming_reminders:
       {% set reminder_dates = [
                                'input_datetime.reminder_payment_amazon',
                                'input_datetime.reminder_payment_creditunion',
+                               'input_datetime.reminder_payment_disney',
                                'input_datetime.reminder_payment_johndeere',
                                'input_datetime.reminder_payment_mortgage',
                                'input_datetime.reminder_payment_randolph',

@@ -174,7 +174,11 @@
     
     # Instruct the vacuum to return home.
     - service: vacuum.return_to_base
-      entity_id: vacuum.ecovacs_deebot 
+      entity_id: vacuum.ecovacs_deebot
+    
+    # The theater might have been on when power went out; reset the flag so it will open the next time.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.theater_open
 
 # Restart the NUT server service if it becomes unavailable.
 - alias: Reboot NUT Service

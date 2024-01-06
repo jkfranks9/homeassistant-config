@@ -735,6 +735,7 @@
       date_entities: [
                       'input_datetime.reminder_payment_amazon', 
                       'input_datetime.reminder_payment_creditunion', 
+                      'input_datetime.reminder_payment_disney',
                       'input_datetime.reminder_payment_johndeere',
                       'input_datetime.reminder_payment_mortgage', 
                       'input_datetime.reminder_payment_randolph', 
@@ -754,6 +755,7 @@
       date_entities: [
                       'input_datetime.reminder_payment_amazon', 
                       'input_datetime.reminder_payment_creditunion', 
+                      'input_datetime.reminder_payment_disney',
                       'input_datetime.reminder_payment_johndeere',
                       'input_datetime.reminder_payment_mortgage', 
                       'input_datetime.reminder_payment_randolph', 
