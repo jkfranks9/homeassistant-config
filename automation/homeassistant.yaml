@@ -637,3 +637,83 @@
     - service: homeassistant.update_entity
       target:
         entity_id: "{{ trigger.entity_id }}"
+
+#======================#
+#     Mobile Texts     #
+#======================#
+
+# I'm using the last notification sensor from the HA companion app on my phone. If I'm not available
+# to respond (sleeping, on the treadmill, maybe driving), and the text is from a family member, I want
+# to send a response indicating I can't respond right now.
+- alias: Respond To Mobile Text
+  id: respond_to_mobile_text
+  
+  # Trigger on any state change to the last notification sensor.
+  trigger:
+    - platform: state
+      entity_id: sensor.jon_galaxy_last_notification
+      to:
+  
+  variables:
+    title: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.title') }}"
+    text: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.text') }}"
+    
+    from_michael: "{{ iif ('Michael' in title or 'Michael' in text, true, false) }}"
+    from_maryam: "{{ iif ('Maryam' in title or 'Maryam' in text, true, false) }}"
+    from_sarah: "{{ iif ('Sarah' in title or 'Sarah' in text, true, false) }}"
+    from_david: "{{ iif ('David' in title or 'David' in text, true, false) }}"
+    
+    on_treadmill: "{{ states('input_boolean.treadmill_triggered') == 'on' }}"
+    sleeping: "{{ states('input_boolean.sleeptime') == 'on' }}"
+    driving: "{{ states('binary_sensor.jon_driving') == 'on' }}"
+  
+  condition:
+    - and:
+    
+      # Text must be from family member
+      - "{{ from_michael or from_maryam or from_sarah or from_david }}"
+      
+      # And any of the following. These are all mutually exclusive.
+      - or:
+    
+        # I'm on the treadmill.
+        - "{{ on_treadmill }}"
+    
+        # I'm sleeping.
+        - "{{ sleeping }}"
+    
+        # I'm driving.
+        - "{{ driving }}"
+  
+  action:
+    - variables:
+        number: >
+          {% if from_michael %}
+            9199246845
+          {% elif from_maryam %}
+            9197571974
+          {% elif from_sarah %}
+            2522302146
+          {% elif from_david %}
+            2522991689
+          {% else %}
+            0000000000
+          {% endif %}
+        
+        activity: >
+          {% if on_treadmill %}
+            'on the treadmill'
+          {% elif sleeping %}
+            'asleep, and dreaming of sugarplums'
+          {% elif driving %}
+            'driving, or at least in a vehicle'
+          {% else %}
+            'unavailable for some unknown reason'
+          {% endif %}
+    
+    # Send the response via gmail to the mobile number.
+    - service: notify.gmail
+      data:
+        title: ' '
+        target: "{{ number ~ '@vtext.com' }}"
+        message: "{{ 'Sorry, I am ' ~ activity ~ '. I will respond when available.' }}"

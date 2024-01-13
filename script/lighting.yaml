@@ -141,6 +141,17 @@ wakeup:
     - service: light.turn_off
       entity_id: light.island_light
 
+# Toggle master suite lights. Mostly used after Awake (at least master lamp is on), but Wakeup not needed or desired
+# because the sun is up and it's bright enough. Basically I want to turn the master lamp off in an easy way because
+# I'm lazy. I also sometimes need to turn the lights on outside of bedtime.
+toggle_master_lights:
+  alias: Toggle Master Lights
+  
+  sequence:
+    - service: homeassistant.toggle
+      target:
+        entity_id: light.master_suite_lights
+
 #===========================================#
 #     Children-Only Bedtime Environment     #
 #===========================================#

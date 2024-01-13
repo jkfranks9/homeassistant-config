@@ -454,14 +454,14 @@
     input:
       sensor_entity: sensor.porch_battery_level
       threshold: 20.0
-      timer_entity: timer.porch_battery_notification
+      timer_entity: timer.porch_battery_low_notification
       message: 'Porch sensor battery needs recharging.'
       persistent: true
-      tag: 'porch_battery'
+      tag: 'porch_battery_low'
 
 # Clear persistent notification.
-- alias: Clear Porch Sensor Notification
-  id: 'clear_porch_sensor_notification'
+- alias: Clear Porch Sensor Low Notification
+  id: 'clear_porch_sensor_low_notification'
   
   trigger:
     - platform: numeric_state
@@ -473,7 +473,45 @@
       data:
         message: 'clear_notification'
         data:
-          tag: 'porch_battery'
+          tag: 'porch_battery_low'
+
+# Porch sensor battery is probably dead.
+- alias: Notify Porch Sensor Battery Dead
+  id: notify_porch_sensor_battery_dead
+  
+  trigger:
+    - platform: template
+      value_template: >
+        {{ now() - states.sensor.porch_temperature.last_changed >= timedelta(hours = 1) and now() - states.sensor.porch_humidity.last_changed >= timedelta(hours = 1) }}
+  
+  action:
+    - service: script.send_notification
+      data:
+        destination:
+          - mobile
+        title: 'Action required:'
+        message: 'Porch sensor battery appears to be dead.'
+        channel: persistent
+        throttled: true
+        timer_entity: timer.porch_battery_dead_notification
+        tag: 'porch_battery_dead'
+        timeout: 0
+
+# Clear persistent notification.
+- alias: Clear Porch Sensor Dead Notification
+  id: 'clear_porch_sensor_dead_notification'
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.porch_battery_level
+      above: 95
+  
+  action:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'porch_battery_dead'
 
 # Master BR Vent 1 batteries are too low.
 - alias: Notify Master BR Vent 1 Batteries Low

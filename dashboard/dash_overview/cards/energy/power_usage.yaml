@@ -43,9 +43,6 @@ cards:
           - entity: sensor.second_floor_fans_calculated_power
             name: Fans
             icon: mdi:fan
-          - entity: sensor.second_floor_av_calculated_power
-            name: AV
-            icon: mdi:audio-video
       
       - type: custom:fold-entity-row
         head: sensor.second_floor_measured_power

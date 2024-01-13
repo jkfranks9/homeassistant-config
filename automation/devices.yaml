@@ -179,6 +179,11 @@
     # The theater might have been on when power went out; reset the flag so it will open the next time.
     - service: input_boolean.turn_off
       entity_id: input_boolean.theater_open
+    
+    # Also, make sure the theater devices are turned off. The Activate Cinema script won't function properly
+    # otherwise.
+    - service: remote.turn_off
+      entity_id: remote.harmony_hub
 
 # Restart the NUT server service if it becomes unavailable.
 - alias: Reboot NUT Service
@@ -260,16 +265,6 @@
     
     # Turn off extended away mode (this should have happened above based on proximity ... this is a failsafe).
     - service: script.turn_off_extended_away_mode
-    
-    # Disarm Alexa Guard mode if armed.
-    - if:
-        - condition: state
-          entity_id: alarm_control_panel.alexa_guard
-          state: armed_away
-      
-      then:
-        - service: alarm_control_panel.alarm_disarm
-          entity_id: alarm_control_panel.alexa_guard
     
     # Turn on appropriate lights if it's dark-ish.
     - if:
@@ -369,10 +364,6 @@
                 - automation.turn_on_christmas_lights
                 - automation.turn_on_guest_lights_sunset
                 - automation.turn_on_office_light
-            
-            # Arm Alexa Guard mode.  
-            - service: alarm_control_panel.alarm_arm_away
-              entity_id: alarm_control_panel.alexa_guard
       
       # Must be sunset.
       else:
@@ -1152,6 +1143,7 @@
       device_entity: switch.projector_plug
       component_name: sonoff
       device_name: Projector
+      conditional_processing: "{{ states('input_boolean.projector_plug_powered_off') }}"
 
 #======================#
 #     Robot Vacuum     #

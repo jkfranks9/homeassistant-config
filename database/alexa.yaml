@@ -52,6 +52,7 @@ smart_home:
       - script.start_rainbow
       - script.start_streaming
       - script.start_turntable
+      - script.toggle_master_lights
       - script.turn_on_bathroom_light
       - script.wakeup
       - script.watch_amazon_prime

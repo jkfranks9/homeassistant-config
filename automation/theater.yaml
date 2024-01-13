@@ -101,6 +101,11 @@
     # Wait a few minutes for the projector to turn itself off.
     - delay: '00:02:00'
     
+    # Set the expected powered off flag. This prevents the Check Projector Off automation from turning the plug
+    # back on.
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.projector_plug_powered_off
+    
     # Turn off the power for a bit.
     - service: switch.turn_off
       entity_id: switch.projector_plug
@@ -111,6 +116,11 @@
     - service: switch.turn_on
       entity_id: switch.projector_plug
     
+    # Reset the expected powered off flag.
+    - delay: '00:00:01'
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.projector_plug_powered_off
+    
     - service: notify.alexa_media
       data:
         message: "I'm turning the projector back on. Keep your fingers crossed!"
@@ -120,7 +130,7 @@
         data:
           type: tts
     
-    - delay: '00:00:10'
+    - delay: '00:00:05'
     
     # Finally, power on the projector.
     - service: remote.send_command

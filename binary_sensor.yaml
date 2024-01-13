@@ -21,3 +21,38 @@
       sample_duration: 600    # 10m * 60s
       max_samples: 132        # 600 / 5 (sampling interval) + 10%
       min_gradient: -0.03333  # -20 / 600
+
+#=================#
+#     Driving     #
+#=================#
+
+- platform: bayesian
+  name: Jon Driving
+  unique_id: jon_driving
+  prior: 0.2
+  probability_threshold : 0.8
+  
+  observations:
+    - platform: state
+      entity_id: binary_sensor.jon_companion_driving
+      to_state: 'on'
+      prob_given_true: 0.9
+      prob_given_false: 0.1
+      
+    - platform: state
+      entity_id: binary_sensor.jon_owntracks_driving
+      to_state: 'on'
+      prob_given_true: 0.9
+      prob_given_false: 0.1
+
+    - platform: numeric_state
+      entity_id: proximity.jon_home
+      above: 200
+      prob_given_true: 0.9
+      prob_given_false: 0.1
+
+    - platform: state
+      entity_id: sensor.jon_galaxy_detected_activity
+      to_state: 'in-vehicle'
+      prob_given_true: 0.5
+      prob_given_false: 0.1

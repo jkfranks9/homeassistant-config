@@ -155,7 +155,7 @@
         device_list: >
           {# --List of timestamp entities-- #}
           {% set device_list = [
-                                'input_number.back_door_sensor',
+                                'input_number.back_door_sensor_door',
                                 'input_number.guest_br_window_sensor',
                                 'input_number.dryer_vibration_sensor',
                                 'input_number.studio_motion_detector',

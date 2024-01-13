@@ -12,6 +12,13 @@ blueprint:
       selector:
         entity:
     
+    conditional_processing:
+      name: Conditional Processing
+      description: Flag that must be true in order to proceed. This allows a device's state to be ignored during expected power off periods.
+      default: true
+      selector:
+        boolean:
+    
     component_name:
       name: Component Name
       description: Name of the component, so it can be monitored for loading.
@@ -24,6 +31,7 @@ blueprint:
 variables:
   input_device_entity: !input device_entity
   input_device_name: !input device_name
+  input_conditional_processing: !input conditional_processing
 
 # Trigger on any change to the device entity, or when the component is loaded.
 trigger:
@@ -36,8 +44,13 @@ trigger:
     event_data:
       component: !input component_name
 
-# Continue if the device is not on. Weed out changing to unavailable or unknown states.
-condition: "{{ trigger.to_state.state not in ['unavailable', 'unknown'] and not is_state(input_device_entity, 'on') }}"
+condition: 
+  
+  # Only continue if the optional conditional processing flag is true.
+  - "{{ input_conditional_processing }}"
+  
+  # Continue if the device is not on. Weed out changing to unavailable or unknown states.
+  - "{{ trigger.to_state.state not in ['unavailable', 'unknown'] and not is_state(input_device_entity, 'on') }}"
 
 action:
     

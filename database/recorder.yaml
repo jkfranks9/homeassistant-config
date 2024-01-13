@@ -66,6 +66,7 @@ include:
     - input_number.washer_fill_seconds
     - input_select.washer_load_size
     - input_select.washer_state
+    - proximity.jon_home
     - sensor.ahi_average
     - sensor.blue_charm_presence
     - sensor.cpap_ahi_events_per_hour
@@ -77,6 +78,7 @@ include:
     - sensor.dryer_humidity
     - sensor.em2_air_handler_kwh
     - sensor.em2_total_kwh
+    - sensor.jon_galaxy_detected_activity
     - sensor.memory_use_percent
     - sensor.nighttime
     - sensor.porch_humidity
@@ -92,6 +94,7 @@ include:
     - binary_sensor.*_occupancy
     - binary_sensor.dryer_*_falling
     - binary_sensor.family_room_av_*
+    - binary_sensor.*_driving
     - binary_sensor.theater_av_*
     - input_number.*_calories
     - input_number.*_time

@@ -177,3 +177,22 @@
         {{ (is_state('sensor.mail_usps_delivering', '0') and is_state('sensor.mail_usps_delivered', '0')) or 
             states('sensor.mail_usps_delivering') in ['unknown', 'unavailable'] or 
             states('sensor.mail_usps_delivered') in ['unknown', 'unavailable'] }}
+
+    #-------------------#
+    #   -- Driving --   #
+    #-------------------#
+    
+    # These are inputs to the bayesian sensor Jon Driving. The delay off configuration helps smooth out
+    # delays from traffic, construction, or traffic lights. The amount of delay can never be perfect,
+    # but it's better than nothing.
+    - name: Jon Companion Driving
+      unique_id: jon_companion_driving
+      state: "{{ state_attr('device_tracker.jon_companion', 'speed') > 10 }}"
+      delay_off:
+        minutes: 2
+    
+    - name: Jon OwnTracks Driving
+      unique_id: jon_owntracks_driving
+      state: "{{ state_attr('device_tracker.jon_galaxy', 'velocity') > 10 }}"
+      delay_off:
+        minutes: 2
