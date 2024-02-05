@@ -39,12 +39,12 @@ cards:
       - period: 'months'
       - service: script.set_datetime_offset_months
       
-  # Headgear / Mask / Humidifier
+  # Headgear / Humidifier
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
       - entity: input_datetime.reminder_cpap_humidifier
-      - name: Headgear / Mask / Humidifier
+      - name: Headgear / Humidifier
       - icon: air-humidifier
       - interval: 6
       - period: 'months'

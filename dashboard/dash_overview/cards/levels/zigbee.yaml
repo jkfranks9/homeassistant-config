@@ -38,3 +38,9 @@ cards:
       
       - entity: sensor.master_br_vent_2_linkquality
         name: Master BR Vent 2
+      
+      - entity: sensor.cc2530_router_linkquality
+        name: CC2530 Router
+      
+      - entity: sensor.sonoff_router_linkquality
+        name: Sonoff Router

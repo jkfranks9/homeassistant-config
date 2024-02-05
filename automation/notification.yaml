@@ -101,7 +101,8 @@
         title: 'Action required:'
         message: 'Pool might need chlorine tablets.'
         channel: standard
-        throttled: false
+        throttled: true
+        timer_entity: timer.pool_chlorine_notification
         tag: ''
         timeout: 0
 
@@ -480,9 +481,13 @@
   id: notify_porch_sensor_battery_dead
   
   trigger:
+    
+    # Check if the porch temperature has not been changed for a while, or the value differs significantly from the OpenWeatherMap value.
     - platform: template
       value_template: >
-        {{ now() - states.sensor.porch_temperature.last_changed >= timedelta(hours = 1) and now() - states.sensor.porch_humidity.last_changed >= timedelta(hours = 1) }}
+        {% set owm_temp = states('sensor.openweathermap_temperature') | int(0) %}
+        {% set porch_temp = states('sensor.porch_temperature') | int(0) %}
+        {{ now() - states.sensor.porch_temperature.last_changed >= timedelta(hours = 1) or porch_temp < (owm_temp - 10) or porch_temp > (owm_temp + 10) }}
   
   action:
     - service: script.send_notification
@@ -1214,7 +1219,7 @@
   trigger:
     - platform: template
       value_template: >
-        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
+        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
           {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), now()) %}
           {% set now =  as_timestamp(now()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600) | round(0)) < 12, false) }}

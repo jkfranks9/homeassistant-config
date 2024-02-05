@@ -20,7 +20,7 @@
   
   # Determine the previous month using the 'from' state's last changed value.
   variables:
-    month: "{{ as_timestamp(strptime(trigger.from_state.last_changed.strftime('%Y-%m-%d %H:%M:%S.%f'), '%Y-%m-%d %H:%M:%S.%f%z')) | timestamp_custom('%b') | lower() }}"
+    month: "{{ as_timestamp(trigger.from_state.last_changed) | timestamp_custom('%b') | lower() }}"
   
   action:
     - service: system_log.write

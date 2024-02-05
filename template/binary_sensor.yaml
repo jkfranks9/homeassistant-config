@@ -134,6 +134,52 @@
       unique_id: home_alone
       state: "{{ states('zone.home') | int(0) == 1 and state_attr('zone.home', 'persons') == ['person.jon'] }}"
       device_class: presence
+    
+    # Downstairs motion detection.
+    - name: Downstairs Motion
+      unique_id: downstairs_motion
+      
+      state: "{{ iif(this.attributes.devices | length > 0, 'on', 'off') }}"
+        
+      attributes:
+        devices: >
+          {% set devices = [ 'binary_sensor.downstairs_occupancy',
+                             'binary_sensor.main_floor_occupancy',
+                             'binary_sensor.laundry_room_motion_detector_occupancy',
+                             'binary_sensor.studio_motion_detector_occupancy',
+                             'binary_sensor.master_bath_motion_detector_occupancy',
+                             'binary_sensor.office_human_sensor_presence'
+                           ] %}
+          
+          {% set vars = namespace(motion = []) %}
+            {% for device in devices %}
+              {% if is_state(device, 'on') %}
+                {% set vars.motion = vars.motion + [device] %}
+              {% endif %}
+            {% endfor %}
+          
+          {{ vars.motion }}
+    
+    # Upstairs motion detection.
+    - name: Upstairs Motion
+      unique_id: upstairs_motion
+      
+      state: "{{ iif(this.attributes.devices | length > 0, 'on', 'off') }}"
+        
+      attributes:
+        devices: >
+          {% set devices = [ 'binary_sensor.upstairs_occupancy',
+                             'binary_sensor.theater_occupancy'
+                           ] %}
+          
+          {% set vars = namespace(motion = []) %}
+            {% for device in devices %}
+              {% if is_state(device, 'on') %}
+                {% set vars.motion = vars.motion + [device] %}
+              {% endif %}
+            {% endfor %}
+          
+          {{ vars.motion }}
 
     #------------------------------#
     #   -- Penthouse Occupied --   #
@@ -193,6 +239,6 @@
     
     - name: Jon OwnTracks Driving
       unique_id: jon_owntracks_driving
-      state: "{{ state_attr('device_tracker.jon_galaxy', 'velocity') > 10 }}"
+      state: "{{ not is_state('device_tracker.jon_galaxy', 'unavailable') and state_attr('device_tracker.jon_galaxy', 'velocity') > 10 }}"
       delay_off:
         minutes: 2

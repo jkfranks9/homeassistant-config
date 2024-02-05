@@ -8,6 +8,12 @@ globals:
   - id: blue_charm_uuid
     type: std::string
     initial_value: '"736e6f63-6165-426d-7261-684365756c42"'
+  - id: jon_phone_name
+    type: std::string
+    initial_value: '"jon_phone"'
+  - id: jon_phone_uuid
+    type: std::string
+    initial_value: '"f5e3d66b-d5e5-4608-8349-2b15af48c8a4"'
 
 esphome:
   
@@ -22,6 +28,7 @@ esphome:
     then:
       lambda: |-
         addTracker(id(blue_charm_name), id(blue_charm_uuid));
+        addTracker(id(jon_phone_name), id(jon_phone_uuid));
 
 # Parse all received iBeacon advertisements. Only devices added on boot are tracked.
 esp32_ble_tracker:
@@ -46,3 +53,15 @@ sensor:
     entity_category: "diagnostic"
     lambda: |-
       return getTracker(id(blue_charm_name)).get_dist();
+  
+  - platform: template
+    name: ${friendly_name} Jon Phone Distance
+    id: ${sensor_id_prefix}_jon_phone_dist
+    update_interval: ${sensor_interval}
+    unit_of_measurement: "ft"
+    device_class: ""
+    state_class: "measurement"
+    accuracy_decimals: 1
+    entity_category: "diagnostic"
+    lambda: |-
+      return getTracker(id(jon_phone_name)).get_dist();

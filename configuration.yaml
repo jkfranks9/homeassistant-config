@@ -7,7 +7,7 @@ default_config:
 
 # Front end and themes
 frontend:
-  themes: !include_dir_merge_named themes
+  #themes: !include_dir_merge_named themes
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
 
@@ -177,6 +177,18 @@ mqtt:
       state_topic: "homeassistant/device_tracker/virtual_skylar"
       payload_home: "home"
       payload_not_home: "not_home"
+  
+  sensor:
+    
+    # For the Zigbee2mqtt Networkmap UI card.
+    - name: Zigbee2mqtt Networkmap
+      # if you change base_topic of Zigbee2mqtt, change state_topic accordingly
+      state_topic: zigbee2mqtt/bridge/response/networkmap
+      value_template: >-
+        {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+      # again, if you change base_topic of Zigbee2mqtt, change json_attributes_topic accordingly
+      json_attributes_topic: zigbee2mqtt/bridge/response/networkmap
+      json_attributes_template: "{{ value_json.data.value | tojson }}"
 
 #==========================#
 #     Computer Control     #
@@ -260,5 +272,5 @@ shell_command:
   backup_testing_log:             'python /config/python/backup_logs.py /config/debug_logs/testing_scenarios.log'
   concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
   concat_auto_scripts_log_files:  'python /config/python/concat_logs.py /config/debug_logs/automations_scripts'
-  delete_junk_log_files:          'rm -f /config/home-assistant.log.1; rm -f /config/home-assistant.log.fault'
+  delete_junk_log_files:          'rm -f /config/home-assistant.log.1'
   reboot_nut_service:             bash /config/reboot_nut_server.sh

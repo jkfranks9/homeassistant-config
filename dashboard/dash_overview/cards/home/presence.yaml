@@ -22,11 +22,35 @@ cards:
               template: motion_button
               entity: binary_sensor.downstairs_motion
               name: Downstairs
+  
+              state_display: |
+                [[[
+                  if (states['sensor.downstairs_motion_device_name'].state == 'Downstairs Occupancy')
+                    return 'Ecobee';
+                  else if (states['sensor.downstairs_motion_device_name'].state == 'Main Floor Occupancy')
+                    return 'Sensor';
+                  else if (states['sensor.downstairs_motion_device_name'].state == 'Laundry Room Motion Detector Motion')
+                    return 'Laundry';
+                  else if (states['sensor.downstairs_motion_device_name'].state == 'Studio Motion Detector Motion')
+                    return 'Studio';
+                  else if (states['sensor.downstairs_motion_device_name'].state == 'Master Bath Motion Detector Motion')
+                    return 'Master';
+                  else if (states['sensor.downstairs_motion_device_name'].state == 'Office Human Sensor Presence')
+                    return 'Office';
+                ]]]
             
             - type: 'custom:button-card'
               template: motion_button
               entity: binary_sensor.upstairs_motion
               name: Upstairs
+  
+              state_display: |
+                [[[
+                  if (states['sensor.upstairs_motion_device_name'].state == 'Upstairs Occupancy')
+                    return 'Ecobee';
+                  else if (states['sensor.upstairs_motion_device_name'].state == 'Theater Occupancy')
+                    return 'Sensor';
+                ]]]
             
             - type: 'custom:button-card'
               template: sensor_button

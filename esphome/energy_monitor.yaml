@@ -65,6 +65,7 @@ sensor:
       current:
         name: ${friendly_name} CT1 Amps
         id: ct1Amps
+
 # The max value for current that the meter can output is 65.535. If you expect to measure current over 65A, 
 # divide the gain_ct by 2 (120A CT) or 4 (200A CT) and multiply the current and power values by 2 or 4 by uncommenting the filter below
 #        filters:
@@ -111,12 +112,19 @@ sensor:
 #        name: ${friendly_name} Volts B
 #        id: ic2Volts
 #        accuracy_decimals: 1
+      
+      # This is the upstairs air handler. I currently only have one CT clamp, so am doubling the 
+      # values to compensate, as per Circuit Setup instructions.
       current:
         name: ${friendly_name} CT4 Amps
         id: ct4Amps
+        filters:
+          - multiply: 2
       power:
         name: ${friendly_name} CT4 Watts
         id: ct4Watts
+        filters:
+          - multiply: 2
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_013_cal}
     

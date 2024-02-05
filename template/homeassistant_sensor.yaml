@@ -262,8 +262,12 @@
       unique_id: gas_station_name_siler_city
       state: >
         {% set details = state_attr('sensor.best_price_gas_siler_city', 'lowest_price_details') %}
-        {% set station = details.get('station') %}
-        {% set name = station.get('name') %}
+        {% if details != None %}
+          {% set station = details.get('station') %}
+          {% set name = station.get('name') %}
+        {% else %}
+          {% set name = '' %}
+        {% endif %}
           
         {{ name }}
     
@@ -271,8 +275,12 @@
       unique_id: gas_station_name_pittsboro
       state: >
         {% set details = state_attr('sensor.best_price_gas_pittsboro', 'lowest_price_details') %}
-        {% set station = details.get('station') %}
-        {% set name = station.get('name') %}
+        {% if details != None %}
+          {% set station = details.get('station') %}
+          {% set name = station.get('name') %}
+        {% else %}
+          {% set name = '' %}
+        {% endif %}
           
         {{ name }}
 
@@ -552,12 +560,14 @@
           {% set vars = namespace(name = 'Unknown') %}
           
           {% set abbrev = this.state %}
-          {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
-            {% if team[0] == abbrev %}
-              {% set vars.name = team[1] %}
-              {% break %}
-            {% endif %}
-          {% endfor %}
+          {% if state_attr('sensor.variables', 'variables') != None %}
+            {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
+              {% if team[0] == abbrev %}
+                {% set vars.name = team[1] %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
           
           {{ vars.name }}
 
@@ -586,11 +596,13 @@
           {% set vars = namespace(name = 'Unknown') %}
           
           {% set abbrev = this.state %}
-          {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
-            {% if team[0] == abbrev %}
-              {% set vars.name = team[1] %}
-              {% break %}
-            {% endif %}
-          {% endfor %}
+          {% if state_attr('sensor.variables', 'variables') != None %}
+            {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
+              {% if team[0] == abbrev %}
+                {% set vars.name = team[1] %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
           
           {{ vars.name }}

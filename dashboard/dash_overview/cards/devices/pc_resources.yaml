@@ -11,32 +11,31 @@ cards:
     cards:
       - type: gauge
         name: CPU
-        entity: sensor.legion_t530_cpu_usage
+        entity: sensor.legion_t530_cpuload
+      - type: gauge
+        name: GPU
+        entity: sensor.legion_t530_gpuload
       - type: gauge
         name: Memory
-        entity: sensor.legion_t530_memory_usage
+        entity: sensor.legion_t530_memoryusage
       - type: gauge
         name: C Drive
-        entity: sensor.legion_t530_storage_c_usage
+        entity: sensor.pc_c_drive_used
       - type: gauge
         name: E Drive
-        entity: sensor.legion_t530_storage_e_usage
+        entity: sensor.pc_e_drive_used
     
   - type: custom:stack-in-card
     title: PC Resources Free
     mode: horizontal
     cards:
       - type: gauge
-        name: Memory
-        unit: GB
-        entity: sensor.legion_t530_memory_available
-      - type: gauge
         name: C Drive
         min: 0
         max: 1000
-        entity: sensor.legion_t530_storage_c_total_free_space
+        entity: sensor.pc_c_drive_available_gb
       - type: gauge
         name: E Drive
         min: 0
         max: 1000
-        entity: sensor.legion_t530_storage_e_total_free_space
+        entity: sensor.pc_e_drive_available_gb

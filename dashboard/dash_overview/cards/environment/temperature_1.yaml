@@ -15,17 +15,17 @@ cards:
   - type: 'custom:decluttering-card'
     template: temperature_data
     variables:
+      - entity: sensor.main_floor_temperature
+      - name: Main Floor
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
       - entity: climate.upstairs
       - attribute: current_temperature
 
   - type: 'custom:decluttering-card'
     template: temperature_data
     variables:
-      - entity: sensor.attic_temperature
-      - name: Attic
-
-  - type: 'custom:decluttering-card'
-    template: temperature_data
-    variables:
-      - entity: sensor.garage_temperature
-      - name: Garage
+      - entity: sensor.theater_temperature
+      - name: Theater

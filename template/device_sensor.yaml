@@ -4,6 +4,48 @@
 
 - sensor:
 
+    #----------------------#
+    #   -- PC Metrics --   #
+    #----------------------#
+    
+    - name: PC C Drive Label
+      unique_id: pc_c_drive_label
+      state: "{{ state_attr('sensor.legion_t530_storage_c', 'Label') }}"
+    
+    - name: PC E Drive Label
+      unique_id: pc_e_drive_label
+      state: "{{ state_attr('sensor.legion_t530_storage_e', 'Label') }}"
+    
+    - name: PC C Drive Used
+      unique_id: pc_c_drive_used
+      unit_of_measurement: '%'
+      state: "{{ state_attr('sensor.legion_t530_storage_c', 'UsedSpacePercentage') }}"
+    
+    - name: PC E Drive Used
+      unique_id: pc_e_drive_used
+      unit_of_measurement: '%'
+      state: "{{ state_attr('sensor.legion_t530_storage_e', 'UsedSpacePercentage') }}"
+    
+    - name: PC C Drive Total GB
+      unique_id: pc_c_drive_total_gb
+      unit_of_measurement: 'GB'
+      state: "{{ '%.0f' | format(state_attr('sensor.legion_t530_storage_c', 'TotalSizeMB') | float(0) / 1024) }}"
+    
+    - name: PC C Drive Available GB
+      unique_id: pc_c_drive_available_gb
+      unit_of_measurement: 'GB'
+      state: "{{ '%.0f' | format(state_attr('sensor.legion_t530_storage_c', 'AvailableSpaceMB') | float(0) / 1024) }}"
+    
+    - name: PC E Drive Total GB
+      unique_id: pc_e_drive_total_gb
+      unit_of_measurement: 'GB'
+      state: "{{ '%.0f' | format(state_attr('sensor.legion_t530_storage_e', 'TotalSizeMB') | float(0) / 1024) }}"
+    
+    - name: PC E Drive Available GB
+      unique_id: pc_e_drive_available_gb
+      unit_of_measurement: 'GB'
+      state: "{{ '%.0f' | format(state_attr('sensor.legion_t530_storage_e', 'AvailableSpaceMB') | float(0) / 1024) }}"
+
     #--------------------------#
     #   -- CP UPS Runtime --   #
     #--------------------------#
@@ -60,7 +102,7 @@
       unique_id: blue_charm_presence
       state: >
         {% set distance = states('sensor.ble_house_blue_charm_distance') %}
-        {% if distance is number %}
+        {% if distance not in ['unknown', 'unavailable'] %}
           House
         {% else %}
           Away
@@ -122,7 +164,9 @@
                                 ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen'],
                                 ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen'],
                                 ['cover.master_br_vent_1', 'sensor.master_br_vent_1_last_seen'],
-                                ['cover.master_br_vent_2', 'sensor.master_br_vent_2_last_seen']
+                                ['cover.master_br_vent_2', 'sensor.master_br_vent_2_last_seen'],
+                                ['binary_sensor.cc2530_router_led', 'sensor.cc2530_router_last_seen'],
+                                ['switch.sonoff_router', 'sensor.sonoff_router_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -162,7 +206,9 @@
                                 'input_number.laundry_room_motion_detector',
                                 'input_number.master_bath_motion_detector',
                                 'input_number.master_br_vent_1',
-                                'input_number.master_br_vent_2'
+                                'input_number.master_br_vent_2',
+                                'input_number.cc2530_router',
+                                'input_number.sonoff_router'
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -246,3 +292,35 @@
           {% endfor %}
           
           {{ unavail_device_list.list }}
+    
+    # Downstairs motion device name.
+    - name: Downstairs Motion Device Name
+      unique_id: downstairs_motion_device_name
+      
+      state: >
+        {% set vars = namespace(name = '', time = now() - timedelta(days = 1)) %}
+        {% for device in state_attr('binary_sensor.downstairs_motion', 'devices') %}
+          {% set device_updated = states[device].last_updated %}
+          {% if device_updated > vars.time %}
+            {% set vars.time = device_updated %}
+            {% set vars.name = state_attr(device, 'friendly_name') %}
+          {% endif %}
+        {% endfor %}
+          
+        {{ vars.name }}
+    
+    # Upstairs motion device name.
+    - name: Upstairs Motion Device Name
+      unique_id: upstairs_motion_device_name
+      
+      state: >
+        {% set vars = namespace(name = '', time = now() - timedelta(days = 1)) %}
+        {% for device in state_attr('binary_sensor.upstairs_motion', 'devices') %}
+          {% set device_updated = states[device].last_updated %}
+          {% if device_updated > vars.time %}
+            {% set vars.time = device_updated %}
+            {% set vars.name = state_attr(device, 'friendly_name') %}
+          {% endif %}
+        {% endfor %}
+          
+        {{ vars.name }}

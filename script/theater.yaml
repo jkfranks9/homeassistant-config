@@ -94,7 +94,7 @@ activate_cinema:
         # Announce the projector warm-up delay.
         - service: notify.alexa_media
           data:
-            message: "I'm waiting a few minutes for the projector to warm up."
+            message: "I'm waiting a bit for the projector to warm up."
             target:
               - media_player.family_room_echo
               - media_player.theater_echo
@@ -102,7 +102,7 @@ activate_cinema:
               type: tts
       
         # Delay for a bit to let the projector turn on. I'm assuming if it's on it's warmed up.
-        - wait_template: "{{ is_state('media_player.epson_projector', 'on') }}"
+        - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
           timeout: '00:02:00'
     
         # Perform post-open tasks.

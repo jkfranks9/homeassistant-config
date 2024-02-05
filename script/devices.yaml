@@ -54,24 +54,27 @@ restore_normal_penthouse_bedroom:
 #     Computer Control     #
 #==========================#
 
-# Lock the PC
+# Lock the PC.
 lock_pc:
   alias: Lock PC
+  
   sequence:
-  - service: mqtt.publish
-    data:
-      topic: "iotlink/workgroup/legion-t530/commands/lock"
-      payload: ""
+    - service: button.press
+      target:
+        entity_id: button.legion_t530_lock
+    
+    - service: button.press
+      target:
+        entity_id: button.legion_t530_monitorsleep
 
-# Turn off the PC
+# Turn off the PC.
 turn_off_pc:
   alias: Turn Off PC
-  sequence:
   
-  - service: mqtt.publish
-    data:
-      topic: "iotlink/workgroup/legion-t530/commands/shutdown"
-      payload: ""
+  sequence:
+    - service: button.press
+      target:
+        entity_id: button.legion_t530_shutdown
 
 #=======================#
 #     Fire TV Stick     #

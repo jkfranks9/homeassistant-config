@@ -1,3 +1,8 @@
+# NOTE:
+#
+# Scripts starting with "alexa_" are intended to be used by Alexa routines. All such scripts are made
+# available to Alexa via an include_entity_globs entry in the alexa configuration file.
+
 #=======================================#
 #     Alexa Actionable Notification     #
 #=======================================#
@@ -72,20 +77,16 @@ activate_alexa_actionable_notification:
 alexa_ask_fan_setting:
   alias: Alexa Ask Fan Setting
   
-  sequence:   
+  sequence:
     
-    # We need to update the last called echo device, because this information is not pushed to us by Alexa.
-    # This will in turn update the last alexa sensor.
-    - service: alexa_media.update_last_called
-    
-    # Then we need to wait a bit.
-    - delay: 
-        milliseconds: "{{ state_attr('sensor.variables', 'variables').last_called_delay }}"
+    # Get the room containing the echo device that was used.
+    - service: script.get_echo_room
+      response_variable: result
     
     - variables:
         
-        # Extract the room from the updated last alexa sensor.
-        room: "{{ (states('sensor.last_alexa').split('.')[1]).split('_echo')[0] }}"
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
         
         # This defines the rooms with ceiling fans.
         fan_rooms: "{{ state_attr('sensor.variables', 'variables').fan_rooms }}"
@@ -115,6 +116,40 @@ alexa_ask_fan_setting:
             alexa_device: "{{ 'media_player.' ~ room ~ '_echo' }}"
             suppress_confirmation: false
 
+# Shortcuts to set the fan speed directly, instead of asking the user.
+# Again, intended to be called by Alexa routines. 
+alexa_set_fan_off:
+  alias: Alexa Set Fan Off
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        speed: 'off'
+
+alexa_set_fan_low:
+  alias: Alexa Set Fan Low
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        speed: 'low'
+
+alexa_set_fan_medium:
+  alias: Alexa Set Fan Medium
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        speed: 'medium'
+
+alexa_set_fan_high:
+  alias: Alexa Set Fan High
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        speed: 'high'
+
 #=====================#
 #     Room Lights     #
 #=====================#
@@ -124,7 +159,41 @@ alexa_ask_fan_setting:
 alexa_toggle_room_light:
   alias: Alexa Toggle Room Light
   
-  sequence:    
+  sequence:
+    
+    # Get the room containing the echo device that was used.
+    - service: script.get_echo_room
+      response_variable: result
+    
+    - variables:
+        
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
+        
+        # These define the rooms and the lights in those rooms.
+        light_rooms: "{{ state_attr('sensor.variables', 'variables').light_rooms }}"
+        light_rooms_lights: "{{ state_attr('sensor.variables', 'variables').light_rooms_lights }}"
+    
+    # Silently ignore any rooms we don't know about.
+    - if:
+        - "{{ room in light_rooms }}"
+      
+      then:
+        
+        # Toggle the light.
+        - service: light.toggle
+          target:
+            entity_id: "{{ light_rooms_lights[light_rooms.index(room)] }}"
+
+#===================#
+#     Utilities     #
+#===================#
+
+# Get the room in which the called echo device lives.
+get_echo_room:
+  alias: Get Echo Room
+  
+  sequence:
     
     # We need to update the last called echo device, because this information is not pushed to us by Alexa.
     # This will in turn update the last alexa sensor.
@@ -137,18 +206,53 @@ alexa_toggle_room_light:
     - variables:
         
         # Extract the room from the updated last alexa sensor.
-        room: "{{ (states('sensor.last_alexa').split('.')[1]).split('_echo')[0] }}"
+        room: "{{ {'room': (states('sensor.last_alexa').split('.')[1]).split('_echo')[0]} }}"
         
-        # These define the rooms and the lights in those rooms.
-        light_rooms: "{{ state_attr('sensor.variables', 'variables').light_rooms }}"
-        light_rooms_lights: "{{ state_attr('sensor.variables', 'variables').light_rooms_lights }}"
+    # Return the room.
+    - stop: "Returning room"
+      response_variable: room
+
+# Modify a fan that lives in a room with an echo device.
+# This is used by the Alexa Set Fan <speed> scripts directly below.
+modify_fan:
+  alias: Modify Fan
+  
+  fields:
+    speed:
+      name: Speed
+      description: Fan speed to be used (see fan_settings variable).
+      selector:
+        select:
+  
+  sequence:
+    
+    # Get the room containing the echo device that was used.
+    - service: script.get_echo_room
+      response_variable: result
+    
+    - variables:
+        
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
+        
+        # This defines the rooms with ceiling fans.
+        fan_rooms: "{{ state_attr('sensor.variables', 'variables').fan_rooms }}"
+        
+        # These are the input speed settings. They are used to index the numerical (percentage)
+        # settings below.
+        fan_settings: ['off', 'low', 'medium', 'high']
+        
+        # This is the fan speed for each fan setting.
+        fan_speeds: ['0', '33', '66', '99']
     
     # Silently ignore any rooms we don't know about.
     - if:
-        - "{{ room in light_rooms }}"
+        - "{{ room in fan_rooms }}"
       
       then:
-        # Toggle the light.
-        - service: light.toggle
-          target:
-            entity_id: "{{ light_rooms_lights[light_rooms.index(room)] }}"
+        
+        # Set the fan to the requested speed.
+        - service: script.set_fan_to_speed
+          data:
+            entity_id: "{{ 'fan.' ~ room ~ '_fan' }}"
+            speed: "{{ fan_speeds[fan_settings.index(speed)] }}"

@@ -9,23 +9,23 @@ cards:
   - type: 'custom:decluttering-card'
     template: temperature_data
     variables:
-      - entity: sensor.main_floor_temperature
-      - name: Main Floor
-
-  - type: 'custom:decluttering-card'
-    template: temperature_data
-    variables:
       - entity: sensor.office_temperature
       - name: Office
 
   - type: 'custom:decluttering-card'
     template: temperature_data
     variables:
-      - entity: sensor.porch_temperature
-      - name: Porch
+      - entity: sensor.garage_temperature
+      - name: Garage
 
   - type: 'custom:decluttering-card'
     template: temperature_data
     variables:
-      - entity: sensor.dryer_temperature
-      - name: Dryer
+      - entity: sensor.attic_temperature
+      - name: Attic
+
+  - type: 'custom:decluttering-card'
+    template: temperature_data
+    variables:
+      - entity: sensor.porch_temperature
+      - name: Porch

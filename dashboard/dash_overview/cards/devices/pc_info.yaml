@@ -7,30 +7,24 @@ title: PC Info
 show_header_toggle: false
 entities:
 
-  - entity: sensor.pc_boot_date_time
+  - entity: sensor.legion_t530_lastboot
     name: Last Boot Time
     icon: mdi:calendar
-  - entity: sensor.pc_uptime
-    name: Uptime
-    icon: mdi:clock-start
-  - entity: sensor.legion_t530_memory_total
-    name: Total Memory
-    icon: mdi:memory
   
   - type: custom:multiple-entity-row
-    entity: sensor.legion_t530_storage_c_total_storage
+    entity: sensor.pc_c_drive_total_gb
     name: C Drive
     icon: mdi:home-assistant
     state_header: Size
     entities:
-      - entity: sensor.legion_t530_storage_c_label
+      - entity: sensor.pc_c_drive_label
         name: Label
   
   - type: custom:multiple-entity-row
-    entity: sensor.legion_t530_storage_e_total_storage
+    entity: sensor.pc_e_drive_total_gb
     name: E Drive
     icon: mdi:home-assistant
     state_header: Size
     entities:
-      - entity: sensor.legion_t530_storage_e_label
+      - entity: sensor.pc_e_drive_label
         name: Label

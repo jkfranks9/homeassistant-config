@@ -298,3 +298,16 @@ test_extended_away_early_return:
     - delay: '01:40:00'
     
     - service: script.turn_off_extended_away_mode
+
+#==========================#
+#     Computer Control     #
+#==========================#
+
+# Lock the PC.
+test_lock_pc:
+  alias: Test Lock PC
+  
+  sequence:
+    - service: button.press
+      target:
+        entity_id: button.legion_t530_lock

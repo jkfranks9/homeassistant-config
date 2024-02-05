@@ -253,7 +253,8 @@
       value_template: >
         {% set skip_list = [
                             'initialize_turn_on_volume', 
-                            'log_automations',  
+                            'log_automations',
+                            'log_blue_charm_debug',
                             'log_dryer_trend_sensors', 
                             'log_notifications', 
                             'log_scripts',
