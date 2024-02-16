@@ -32,13 +32,10 @@ blueprint:
       selector:
         boolean:
   
-# Trigger daily at the specified time, or when HA starts (in case HA is rebooting when the trigger would have occurred).
+# Trigger daily at the specified time.
 trigger:
   - platform: time
     at: !input trigger_time
-  
-  - platform: homeassistant
-    event: start
 
 variables:
   input_date_entities: !input date_entities  
@@ -57,15 +54,8 @@ variables:
 condition:
   - condition: template
     value_template: "{{ actionable_entities | length > 0 }}"
-  
-  # Guard against HA start triggers.
-  - condition: time
-    after: !input trigger_time
 
 action:
-  - delay: 
-      seconds: "{{ range(2, 15) | random }}" 
-  
   - repeat:
       for_each: "{{ actionable_entities }}"
       

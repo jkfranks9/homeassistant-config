@@ -13,6 +13,7 @@ cards:
     cards:
       - !include /config/dashboard/dash_overview/cards/devices/pc_info.yaml
       - !include /config/dashboard/dash_overview/cards/devices/printer.yaml
+      - !include /config/dashboard/dash_overview/cards/devices/vacuum.yaml
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/devices/pc_resources.yaml
       - !include /config/dashboard/dash_overview/cards/devices/storage.yaml

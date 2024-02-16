@@ -83,60 +83,17 @@ variable:
     value: 9
     restore: false
 
-#==================#
-#     Presence     #
-#==================#
+#=========================#
+#     Device Trackers     #
+#=========================#
 
-# Proximity
-proximity:
-  
-  jon_home:
-    zone: home
-    ignored_zones:
-      - habitat
-      - khan_s
-      - m_m
-      - s_d
-      - ecu
-    devices:
-      - person.jon
-    unit_of_measurement: m
-  
-  mike_home:
-    zone: home
-    ignored_zones:
-      - habitat
-      - khan_s
-      - m_m
-      - s_d
-      - ecu
-    devices:
-      - person.mike
-    unit_of_measurement: m
-  
-  sarah_home:
-    zone: home
-    ignored_zones:
-      - habitat
-      - khan_s
-      - m_m
-      - s_d
-      - ecu
-    devices:
-      - person.sarah
-    unit_of_measurement: m
-  
-  david_home:
-    zone: home
-    ignored_zones:
-      - habitat
-      - khan_s
-      - m_m
-      - s_d
-      - ecu
-    devices:
-      - person.david
-    unit_of_measurement: m
+device_tracker:
+  - platform: arpscan_tracker
+    interval_seconds: 15
+    consider_home: 60
+    track_new_devices: true
+    include:
+      - 192.168.1.138
 
 #==============#
 #     MQTT     #
@@ -206,13 +163,6 @@ lutron_caseta:
   keyfile:  /ssl/lutron/caseta.key
   certfile: /ssl/lutron/caseta.crt
   ca_certs: /ssl/lutron/caseta-bridge.crt
-
-# Ecovacs DEEBOT
-ecovacs:
-  username: !secret ecovacs_user_id
-  password: !secret ecovacs_password
-  country: us
-  continent: na
 
 #=======================#
 #     Miscellaneous     #

@@ -236,9 +236,3 @@
       state: "{{ state_attr('device_tracker.jon_companion', 'speed') > 10 }}"
       delay_off:
         minutes: 2
-    
-    - name: Jon OwnTracks Driving
-      unique_id: jon_owntracks_driving
-      state: "{{ not is_state('device_tracker.jon_galaxy', 'unavailable') and state_attr('device_tracker.jon_galaxy', 'velocity') > 10 }}"
-      delay_off:
-        minutes: 2

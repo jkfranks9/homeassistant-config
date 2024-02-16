@@ -673,7 +673,7 @@ change_lighting_per_weather:
         
         # I only have a few smart bulbs, but want to provide the brightness for those sometimes. So rather than
         # defining another input field, I just use the brightness value if it's passed as data. Note that
-        # non-smart lights (for example switches) just ignore the brigtness value.
+        # non-smart lights (for example switches) just ignore the brightness value.
         brightness: "{{ brightness_pct if brightness_pct is defined else 100 }}"
     
     # Perform the appropriate actions based on the caller, sun rising state and weather.
@@ -732,6 +732,11 @@ change_lighting_per_weather:
                (sun_elevation < med_elevation | float(med_elevation) and
                 states('input_select.weather_condition') == 'hazy') or
                 sun_elevation < min_elevation | float(min_elevation) }}
+        
+        - service: system_log.write
+          data:
+            message: "{{ 'Turning on ' ~ state_attr(light_entity, 'friendly_name') }}"
+            level: info
         
         - service: light.turn_on
           target:

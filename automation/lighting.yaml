@@ -244,6 +244,30 @@
     - service: light.turn_off
       entity_id: light.office_lamp
 
+# Control the family room lamp based on ambient lux level.
+- alias: Control Family Room Lamp
+  id: control_family_room_lamp
+
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      lux_sensor: sensor.foyer_ambient_light
+      light_target: light.family_room_lamp
+      min_lux_level: 400
+      max_lux_level: 800
+
+# Control the hallway lamp based on ambient lux level.
+- alias: Control Hallway Lamp
+  id: control_hallway_lamp
+
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      lux_sensor: sensor.foyer_ambient_light
+      light_target: light.hallway_lamp
+      min_lux_level: 500
+      max_lux_level: 1000
+
 #============================#
 #     Extended Away Mode     #
 #============================#

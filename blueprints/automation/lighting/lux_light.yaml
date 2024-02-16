@@ -1,0 +1,77 @@
+# Control a light based on a lux level sensor.
+
+blueprint:
+  name: Lux-activated Light
+  description: Turn a light on or off depending on the lux level.
+  domain: automation
+  
+  input:
+    lux_sensor:
+      name: Lux Sensor Entity
+      description: The lux sensor that controls the light.
+      selector:
+        entity:
+          domain: sensor
+    
+    light_target:
+      name: Light Target
+      description: The target light to be controlled.
+      selector:
+        target:
+          entity:
+            domain: light
+    
+    min_lux_level:
+      name: Minimum Lux Level
+      description: The lux level threshold for turning on the light.
+      selector:
+        number:
+          min: 100
+          max: 1000
+          unit_of_measurement: lux
+    
+    max_lux_level:
+      name: Maximum Lux Level
+      description: The lux level threshold for turning off the light.
+      selector:
+        number:
+          min: 100
+          max: 1000
+          unit_of_measurement: lux
+
+# Trigger on falling below the minimum threshold, or rising above the maximum.
+trigger:
+  - platform: numeric_state
+    entity_id: !input lux_sensor
+    below: !input min_lux_level
+    id: below
+  
+  - platform: numeric_state
+    entity_id: !input lux_sensor
+    above: !input max_lux_level
+    id: above
+
+# Continue only if we're not in a nighttime situation and I'm home.
+condition:
+  - condition: state
+    entity_id: input_boolean.nighttime
+    state: 'off'
+  
+  - condition: state
+    entity_id: person.jon
+    state: 'home'
+
+action:  
+  
+  # Turn the light on or off based on which trigger hit.
+  - if:
+      - condition: trigger
+        id: below
+    
+    then:
+      - service: light.turn_on
+        entity_id: !input light_target
+    
+    else:  
+      - service: light.turn_off
+        entity_id: !input light_target

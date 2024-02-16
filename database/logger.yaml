@@ -128,6 +128,7 @@ logs:
 
   # Custom components
   custom_components.alexa_media:                       info
+  custom_components.epson_projector_link:              info
   custom_components.hacs:                              warning
   custom_components.mail_and_packages:                 warning
   custom_components.pyscript.file.populate_all_movies: info
@@ -159,14 +160,14 @@ filters:
   ##################################################################
   #
   # NOTE: These should be commented out when Christmas mode is on. 
-  #homeassistant.helpers.service:
-    #- "Referenced entities light.outdoor_christmas are missing or not currently available"
-    #- "Referenced entities light.christmas_village_1, light.christmas_village_2, light.christmas_village_3, light.family_room_christmas_tree, light.kitchen_christmas_tree, light.mantle_bookcase, light.stair_railing are missing or not currently available"
+  homeassistant.helpers.service:
+    - "Referenced entities light.outdoor_christmas are missing or not currently available"
+    - "Referenced entities light.christmas_village_1, light.christmas_village_2, light.christmas_village_3, light.family_room_christmas_tree, light.kitchen_christmas_tree, light.mantle_bookcase, light.stair_railing are missing or not currently available"
   
-  #homeassistant.components.switch.reproduce_state:
-  #  - "Unable to find entity switch.kitchen_christmas_tree"
-  #  - "Unable to find entity switch.mantle_bookcase"
-  #  - "Unable to find entity switch.stair_railing"
+  homeassistant.components.switch.reproduce_state:
+    - "Unable to find entity switch.kitchen_christmas_tree"
+    - "Unable to find entity switch.mantle_bookcase"
+    - "Unable to find entity switch.stair_railing"
   ##################################################################
   
   androidtv.adb_manager.adb_manager_async:

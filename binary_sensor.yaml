@@ -38,12 +38,6 @@
       to_state: 'on'
       prob_given_true: 0.9
       prob_given_false: 0.1
-      
-    - platform: state
-      entity_id: binary_sensor.jon_owntracks_driving
-      to_state: 'on'
-      prob_given_true: 0.9
-      prob_given_false: 0.1
 
     - platform: numeric_state
       entity_id: proximity.jon_home

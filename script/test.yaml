@@ -311,3 +311,302 @@ test_lock_pc:
     - service: button.press
       target:
         entity_id: button.legion_t530_lock
+
+#=======================#
+#     Notifications     #
+#=======================#
+
+# Clear medication notifications.
+test_clear_medication_eliquis:
+  alias: Test Clear Medication Eliquis
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: medication_reorder_eliquis
+
+test_clear_medication_gabapentin:
+  alias: Test Clear Medication Gabapentin
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: medication_reorder_gabapentin
+
+test_clear_medication_metoprolol:
+  alias: Test Clear Medication Metoprolol
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: medication_reorder_metoprolol
+
+test_clear_medication_rosuvastatin:
+  alias: Test Clear Medication Rosuvastatin
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: medication_reorder_rosuvastatin
+
+test_clear_medication_bloodbuilder:
+  alias: Test Clear Medication Bloodbuilder
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: medication_reorder_bloodbuilder
+
+test_clear_medication_methylb12:
+  alias: Test Clear Medication Methylb12
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: medication_reorder_methylb12
+
+# Clear medication notifications.
+test_clear_payment_amazon:
+  alias: Test Clear Payment Amazon
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: payment_due_amazon
+
+test_clear_payment_creditunion:
+  alias: Test Clear Payment Creditunion
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: payment_due_creditunion
+
+test_clear_payment_disney:
+  alias: Test Clear Payment Disney
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: payment_due_disney
+
+test_clear_payment_johndeere:
+  alias: Test Clear Payment Johndeere
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: payment_due_johndeere
+
+test_clear_payment_mortgage:
+  alias: Test Clear Payment Mortgage
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: payment_due_mortgage
+
+test_clear_payment_randolph:
+  alias: Test Clear Payment Randolph
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: payment_due_randolph
+
+test_clear_payment_wellsfargo:
+  alias: Test Clear Payment Wellsfargo
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: payment_due_wellsfargo
+
+# Clear CPAP notifications.
+test_clear_cpap_filter:
+  alias: Test Clear CPAP Filter
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: cpap_maintenance_filter
+
+test_clear_cpap_humidifier:
+  alias: Test Clear CPAP Humidifier
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: cpap_maintenance_humidifier
+
+test_clear_cpap_hose:
+  alias: Test Clear CPAP Hose
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: cpap_maintenance_hose
+
+test_clear_cpap_mask:
+  alias: Test Clear CPAP Mask
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: cpap_maintenance_mask
+
+# Clear HVAC notifications.
+test_clear_hvac_downstairs:
+  alias: Test Clear HVAC Downstairs
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: hvac_maintenance_downstairs
+
+test_clear_hvac_upstairs:
+  alias: Test Clear HVAC Upstairs
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: hvac_maintenance_upstairs
+
+# Clear Misc notifications.
+test_clear_misc_smokedetectors:
+  alias: Test Clear Misc Smokedetectors
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_smokedetectors
+
+test_clear_misc_9vbatteries:
+  alias: Test Clear Misc 9vbatteries
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_9vbatteries
+
+test_clear_misc_cleanfridge:
+  alias: Test Clear Misc Cleanfridge
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_cleanfridge
+
+test_clear_misc_cleanoven:
+  alias: Test Clear Misc Cleanoven
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_cleanoven
+
+test_clear_misc_cleanmicrowavefilter:
+  alias: Test Clear Misc Cleanmicrowavefilter
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_cleanmicrowavefilter
+
+test_clear_misc_cleandishwasher:
+  alias: Test Clear Misc Cleandishwasher
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_cleandishwasher
+
+test_clear_misc_cleanhvacregs:
+  alias: Test Clear Misc Cleanhvacregs
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_cleanhvacregs
+
+test_clear_misc_rechargeclipper:
+  alias: Test Clear Misc Rechargeclipper
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_rechargeclipper
+
+test_clear_misc_lubegaragedoors:
+  alias: Test Clear Misc Lubegaragedoors
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_lubegaragedoors
+
+test_clear_misc_britafilter:
+  alias: Test Clear Misc Britafilter
+  
+  sequence:
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: misc_maintenance_britafilter

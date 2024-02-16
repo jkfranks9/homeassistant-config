@@ -57,6 +57,8 @@
       entity_id: sensor.brother_printer_black_toner_remaining
       above: 10
   
+  condition: "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
+  
   action:
     - service: notify.mobile_app_jon_galaxy
       data:

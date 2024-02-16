@@ -31,6 +31,9 @@ substitutions:
   
   # Used by bme280 sensor
   prefix:                    office
+  
+  # Used by TSL2591 sensor
+  gain:                      medium
 
 # Pull in common configuration
 packages:

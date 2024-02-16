@@ -39,27 +39,14 @@ blueprint:
 variables:
   input_persistent: !input persistent
 
-# Trigger when the sensor value turns on, or when HA starts (in case HA is rebooting when the trigger would have occurred).
+# Trigger when the sensor value turns on.
 trigger:
   - platform: state
     entity_id: !input sensor_entity
     from: 'off'
     to: 'on'
-  
-  - platform: homeassistant
-    event: start
 
-# Guard against HA start triggers.
-condition:
-  - condition: state
-    entity_id: !input sensor_entity
-    state: 'on'
-
-# Send the notification after a random delay (to spread out automations done at HA start).
 action:
-  - delay: 
-      seconds: "{{ range(2, 15) | random }}"
-  
   - if:
     
       # Handle a persistent notification.

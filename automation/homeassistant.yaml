@@ -223,6 +223,7 @@
             entity_id:
               - sensor.next_canes_game
               - sensor.next_flyers_game
+          continue_on_error: true
     
     # Bump the F150 mileage. We use this to notify when the next service is due.
     - service: input_number.set_value

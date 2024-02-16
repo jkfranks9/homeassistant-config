@@ -1,0 +1,10 @@
+# Core configuration for an ESP32 IDF board
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    version: recommended
+
+# Enable logging
+logger:
+  level: $loglevel

@@ -68,10 +68,25 @@
     #   -- Ecovacs DEEBOT --   #
     #--------------------------#
     
-    - name: 'Ecovacs Battery'
+    - name: Ecovacs Battery
       unique_id: ecovacs_battery
       unit_of_measurement: '%'
       state: "{{ state_attr('vacuum.ecovacs_deebot', 'battery_level') }}"
+    
+    - name: Ecovacs Filter Life
+      unique_id: ecovacs_filter_life
+      unit_of_measurement: '%'
+      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_filter') | int(0) }}"
+    
+    - name: Ecovacs Main Brush Life
+      unique_id: ecovacs_main_brush_life
+      unit_of_measurement: '%'
+      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_main_brush') | int(0) }}"
+    
+    - name: Ecovacs Side Brush Life
+      unique_id: ecovacs_side_brush_life
+      unit_of_measurement: '%'
+      state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_side_brush') | int(0) }}"
 
     #----------------------#
     #   -- Last Alexa --   #

@@ -47,26 +47,13 @@ blueprint:
 variables:
   input_persistent: !input persistent
 
-# Trigger when the sensor value becomes too high, or when HA starts (in case HA was rebooting when the trigger would have occurred).
+# Trigger when the sensor value becomes too high.
 trigger:
   - platform: numeric_state
     entity_id: !input sensor_entity
     above: !input threshold
-  
-  - platform: homeassistant
-    event: start
 
-# Guard against HA start triggers.
-condition:
-  - condition: numeric_state
-    entity_id: !input sensor_entity
-    above: !input threshold
-
-# Send the notification after a random delay (to spread out automations done at HA start).
 action:
-  - delay: 
-      seconds: "{{ range(2, 15) | random }}"
-  
   - if:
     
       # Handle a persistent notification.

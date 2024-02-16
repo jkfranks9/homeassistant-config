@@ -2,7 +2,7 @@
 sensor:
   - platform: tsl2591
     integration_time: 600ms
-    gain: medium
+    gain: ${gain}
     update_interval: $window_interval
     power_save_mode: false
     visible:

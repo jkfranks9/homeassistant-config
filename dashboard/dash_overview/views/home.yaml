@@ -22,8 +22,9 @@ cards:
       - !include /config/dashboard/dash_overview/cards/home/fans_vents.yaml
       - type: conditional
         conditions:
-          - condition: screen
-            media_query: "(min-width: 1024px)"
+          - condition: user
+            users:
+              - f02fbce66df546fa90f8f3d03283b55e
         card:
           !include /config/dashboard/dash_overview/cards/home/presence.yaml
       - type: custom:layout-break

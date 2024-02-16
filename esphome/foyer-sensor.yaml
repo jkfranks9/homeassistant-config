@@ -1,0 +1,33 @@
+# Device specific information
+substitutions:
+  
+  # Used by boards
+  device_name:     foyer-sensor
+  loglevel:        DEBUG
+  
+  # Used by sensors and WiFi
+  friendly_name:   Foyer
+  
+  # Used by WiFi
+  update_interval: 600s
+  
+  # Used by sensors
+  window_interval: 60s
+  
+  # Used by TSL2591 sensor
+  gain:            high
+
+# Pull in common configuration
+packages:
+  esp32_base:     !include common/esp32_base.yaml
+  wifi:           !include common/wifi.yaml
+  tsl2591_sensor: !include common/tsl2591_sensor.yaml
+
+# Enable Home Assistant API
+api:
+
+# Enable I2C, needed for the TSL2591 sensor
+i2c:
+  sda: 21
+  scl: 22
+  scan: True
