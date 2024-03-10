@@ -147,32 +147,3 @@ bar_graph_card:
           font-weight: 400 !important;
           opacity: 1 !important;
         }
-
-#==========================#
-#     Temperature Card     #
-#==========================#
-
-temperature_data:
-  default:
-    - name: null
-    - attribute: ''
-  card:
-    type: 'custom:mini-graph-card'
-    name: '[[name]]'
-    icon: 'mdi:[[icon]]'
-    hours_to_show: 168
-    points_per_hour: 10
-    group_by: hour
-    line_width: 2
-    height: 220
-    decimals: 1
-    font_size: 75
-    show:
-      average: true
-      extrema: false
-    tap_action:
-      action: none
-      
-    entities:
-      - entity: '[[entity]]'
-        attribute: '[[attribute]]'

@@ -54,10 +54,6 @@ condition:
 
 action:
     
-  # Indicate a possible power glitch occurred.
-  - service: input_boolean.turn_on
-    entity_id: input_boolean.possible_power_glitch
-    
   # Wait a few seconds, then verify that the device is still not on. We don't need to worry about short transients.
   - delay: 5
   
@@ -72,7 +68,7 @@ action:
       message: '{{ input_device_name }} off, turning it back on.'
       channel: standard
       throttled: false
-      tag: ''
+      tag: '{{ input_device_name }}_message'
       timeout: 0
   
   # Turn the device back on.

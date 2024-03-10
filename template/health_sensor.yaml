@@ -60,64 +60,41 @@
     #----------------------------#
     #   -- Exercise History --   #
     #----------------------------#
+      
+    # These sensors use a number to contain a bitmask that represents the days of the week. The reusable template
+    # uses the bitwise_and operator to walk through the bits and count the days.
     
     - name: 'Weekly Treadmill Total'
       unique_id: weekly_treadmill_total
-      icon: mdi:walk
+      icon: mdi:run
+      
       state: >
-        {% set count = 0 %}
-        {% if states('input_boolean.treadmill_mon') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.treadmill_tue') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.treadmill_wed') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.treadmill_thu') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.treadmill_fri') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.treadmill_sat') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.treadmill_sun') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        
-        {{ count }}
+        {% from 'utilities.jinja' import count_number_bits_8 %}
+        {{ count_number_bits_8('input_number.treadmill_days') }}
     
     - name: 'Weekly Workout Total'
       unique_id: weekly_workout_total
       icon: mdi:weight-lifter
+      
       state: >
-        {% set count = 0 %}
-        {% if states('input_boolean.workout_mon') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.workout_tue') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.workout_wed') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.workout_thu') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.workout_fri') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.workout_sat') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        {% if states('input_boolean.workout_sun') == 'on' %}
-          {% set count = count + 1 %}
-        {% endif %}
-        
-        {{ count }}
+        {% from 'utilities.jinja' import count_number_bits_8 %}
+        {{ count_number_bits_8('input_number.workout_days') }}
+    
+    - name: 'Weekly Yard Work Total'
+      unique_id: weekly_yard_work_total
+      icon: mdi:shovel
+      
+      state: >
+        {% from 'utilities.jinja' import count_number_bits_8 %}
+        {{ count_number_bits_8('input_number.yard_work_days') }}
+    
+    - name: 'Weekly Steps Total'
+      unique_id: weekly_steps_total
+      icon: mdi:walk
+      
+      state: >
+        {% from 'utilities.jinja' import count_number_bits_8 %}
+        {{ count_number_bits_8('input_number.steps_days') }}
 
     #--------------------------#
     #   -- Workout Header --   #

@@ -18,6 +18,12 @@
       to: 'playing'
       for: 00:00:02
   
+  # Sanity check to prevent false triggers.
+  condition:
+    - condition: state
+      entity_id: input_boolean.theater_open
+      state: 'on'
+  
   action:  
     
     # Restore theater lighting.
@@ -35,7 +41,7 @@
       entity_id: sensor.harmony_hub
       to: 'PowerOff'
   
-  # Sanity check to prevent false triggers, which can happen if the network is twitchy.
+  # Sanity check to prevent false triggers.
   condition:
     - condition: state
       entity_id: input_boolean.theater_open
@@ -90,6 +96,9 @@
   
   action:
     
+    - variables:
+        delay_time: '00:02:30'
+    
     # We try to fix the problem a maximum of 2 times.
     - repeat:
         sequence:
@@ -109,7 +118,7 @@
         
           # Wait a bit for the projector to turn itself off.
           - wait_template: "{{ state_attr('media_player.epson_projector', 'off') }}"
-            timeout: '00:02:00'
+            timeout: "{{ delay_time }}"
         
           - service: notify.alexa_media
             data:
@@ -160,7 +169,12 @@
       
           # Delay for a bit to let the projector turn on. I'm assuming if it's on it's warmed up.
           - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
-            timeout: '00:02:00'
+            timeout: "{{ delay_time }}"
+          
+          - service: system_log.write
+            data:
+              message: "{{ 'projector state: ' ~ states('media_player.epson_projector') }}"
+              level: info
         
         until: "{{ repeat.index == 2 or states('media_player.epson_projector') in ['warmup', 'on'] }}"
 

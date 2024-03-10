@@ -55,24 +55,6 @@ toggle_button:
   tap_action:
     action: toggle
 
-#=========================#
-#     Delivery Button     #
-#=========================#
-
-delivery_button:
-  template: common
-  
-  show_label: true
-  show_state: false
-  layout: icon_name_state2nd
-  
-  tap_action:
-    action: none
-  
-  styles:
-    label:
-      - font-size: 70%
-
 #======================#
 #     Input Button     #
 #======================#
@@ -112,77 +94,6 @@ sensor_button:
       color: var(--paper-item-icon-color)
     
     - value: 0
-      color: var(--paper-item-icon-color)
-    
-    - operator: default
-      color: var(--paper-item-icon-active-color)
-
-#=======================#
-#     Person Button     #
-#=======================#
-
-person_button:
-  template: common
-  
-  state_display: |
-    [[[
-      if (entity.state == 'not_home')
-        return 'Away';
-      else if (entity.state == 'home')
-        return 'Home';
-    ]]]
-  
-  tap_action:
-    action: more-info
-  
-  state:
-    - value: 'not_home'
-      color: var(--paper-item-icon-color)
-    
-    - value: 'home'
-      color: var(--state-active-color)
-    
-    - operator: default
-      color: var(--paper-item-icon-active-color)
-
-#===============================#
-#     Virtual Person Button     #
-#===============================#
-
-# For testing purposes.
-virtual_person_button:
-  template: common
-  
-  state_display: |
-    [[[
-      if (entity.state == 'on')
-        return 'Home';
-      else
-        return 'Away';
-    ]]]
-  
-  tap_action:
-    action: more-info
-  
-  state:
-    - value: 'not_home'
-      color: var(--paper-item-icon-color)
-    
-    - value: 'home'
-      color: var(--paper-item-icon-active-color)
-
-#=======================#
-#     Beacon Button     #
-#=======================#
-
-beacon_button:
-  template: common
-  
-  tap_action:
-    action: more-info
-  
-  state:
-    - value: 'Away'
       color: var(--paper-item-icon-color)
     
     - operator: default
@@ -274,31 +185,6 @@ light_group_button:
     
     - value: 'off'
       icon: mdi:home-lightbulb-outline
-
-#=======================#
-#     Motion Button     #
-#=======================#
-
-motion_button:
-  template: common
-  
-  state_display: |
-    [[[
-      if (entity.state == 'on')
-        return 'On';
-      else if (entity.state == 'off')
-        return 'Off';
-    ]]]
-  
-  tap_action:
-    action: 'none'
-  
-  state:
-    - value: 'on'
-      icon: mdi:motion-sensor
-    
-    - value: 'off'
-      icon: mdi:motion-sensor-off
 
 #===========================#
 #     Satellite Buttons     #

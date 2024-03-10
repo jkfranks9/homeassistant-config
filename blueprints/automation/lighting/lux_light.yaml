@@ -38,40 +38,65 @@ blueprint:
           min: 100
           max: 1000
           unit_of_measurement: lux
+    
+    check_theater:
+      name: Check Theater
+      description: True if theater usage should be considered, false if not.
+      selector:
+        boolean:
 
-# Trigger on falling below the minimum threshold, or rising above the maximum.
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_lux_sensor: !input lux_sensor
+  input_min_lux_level: !input min_lux_level
+  input_check_theater: !input check_theater
+
+# Trigger on falling below the minimum threshold, rising above the maximum, or when nighttime mode
+# ends (meaning it's morning but it might still be dark).
 trigger:
   - platform: numeric_state
     entity_id: !input lux_sensor
     below: !input min_lux_level
-    id: below
+    for: '00:02:00'
+    id: turn_on_1
   
   - platform: numeric_state
     entity_id: !input lux_sensor
     above: !input max_lux_level
-    id: above
-
-# Continue only if we're not in a nighttime situation and I'm home.
-condition:
-  - condition: state
+    for: '00:02:00'
+    id: turn_off
+    
+  - platform: state
     entity_id: input_boolean.nighttime
-    state: 'off'
-  
-  - condition: state
-    entity_id: person.jon
-    state: 'home'
+    from: 'on'
+    to: 'off'
+    id: turn_on_2
 
 action:  
   
   # Turn the light on or off based on which trigger hit.
   - if:
-      - condition: trigger
-        id: below
+      - "{{ 'turn_on' in trigger.id }}"
     
+    # To turn on the light, we require several conditions to be met:
+    #
+    # 1) The nighttime toggle must be off (don't want lights on when I'm in bed).
+    # 2) I must be home.
+    # 3) If I just got out of bed the lux sensor must be below the minimum.
+    # 4) If requested, verify the theater is not in use when it's just me home (some lights are turned off in this case while others remain on).
     then:
-      - service: light.turn_on
-        entity_id: !input light_target
+      - if:
+          - "{{ is_state('input_boolean.nighttime', 'off') and
+                is_state('person.jon', 'home') and
+                iif(trigger.id == 'turn_on_2', states(input_lux_sensor) | float(0) < input_min_lux_level, true) and
+                iif(input_check_theater, is_state('binary_sensor.adults_home', 'on') or is_state('input_boolean.theater_open', 'off'), true)
+             }}"
+        
+        then:
+          - service: light.turn_on
+            entity_id: !input light_target
     
+    # Just turn off the light without any conditions.
     else:  
       - service: light.turn_off
         entity_id: !input light_target

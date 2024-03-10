@@ -88,6 +88,11 @@ initialize_global_variables:
       event_data:
         key: steps_calories_per_thousand
         value: 40.2
+    
+    - event: set_variable
+      event_data:
+        key: steps_daily_goal
+        value: 2500
 
 #===================#
 #     Utilities     #
@@ -472,3 +477,53 @@ gather_upcoming_reminders:
           {% endif %}
           
           {{ vars.items }}
+
+#=======================#
+#     Exercise Days     #
+#=======================#
+
+modify_current_exercise_day:
+  alias: Modify Current Exercise Day
+  
+  fields:
+    exercise_types:
+      description: List of exercise types.
+    
+    operation:
+      description: True to set the current day, false to reset it.
+      selector:
+        boolean:
+  
+  sequence:
+    
+    - variables:
+        
+        # The day of the week as a number (0 = Sunday, 6 = Saturday).
+        day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%w') | int(0) }}"
+    
+    # Modify the exercise flags for the current day.    
+    - repeat:
+        for_each: "{{ exercise_types }}"
+        
+        sequence:
+          - variables:
+              
+              # This is the bitmask for a given exercise type, where the least significant bit is Sunday.
+              days_entity: "{{ 'input_number.' ~ repeat.item ~ '_days' }}"
+          
+          # Setting the day is easy: just turn on the appropriate bit in the bitmask.
+          # For a reset we need a mask that contains all bits on except the one we are going to turn off.
+          - service: input_number.set_value
+            target:
+              entity_id: "{{ days_entity }}"
+            data:
+              value: >
+                {% if operation == true %}
+                  {% set current = states(days_entity) | int() %}
+                  {% set day_on = 2 ** day_of_week %}
+                  {{ current | bitwise_or(day_on) }}
+                {% else %}
+                  {% set current = states(days_entity) | int() %}
+                  {% set day_off = (127 - (2 ** day_of_week)) %}
+                  {{ current | bitwise_and(day_off) }}
+                {% endif %}

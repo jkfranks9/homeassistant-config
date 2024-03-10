@@ -1,6 +1,6 @@
 # BME280 temperature, humidity and pressure sensor
 sensor:
-  - platform: bme280
+  - platform: bme280_i2c
     address: 0x76
     update_interval: $window_interval
     temperature:

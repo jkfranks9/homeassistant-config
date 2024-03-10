@@ -27,9 +27,6 @@ cards:
       - entity: sensor.guest_br_window_sensor_linkquality
         name: Guest BR Window Sensor
       
-      - entity: sensor.dryer_vibration_sensor_linkquality
-        name: Dryer Vibration Sensor
-      
       - entity: sensor.office_human_sensor_linkquality
         name: Office Human Presence Sensor
       

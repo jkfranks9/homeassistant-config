@@ -94,7 +94,19 @@ activate_cinema:
         # Announce the projector warm-up delay.
         - service: notify.alexa_media
           data:
-            message: "I'm waiting a bit for the projector to warm up."
+            message: >
+              <speak>
+                <amazon:emotion name="excited" intensity="low">
+                {{ ["I'm waiting a bit for the projector to warm up.", 
+                    "You have a minute or so before the theater is ready.", 
+                    "I'll let you know when things are ready.",
+                    "Hopefully the projector won't explode. Stay tuned.",
+                    "Lights are on, just waiting on the projection equipment.",
+                    "Loading the film canister now.",
+                    "Theater is waking up."
+                   ] | random }}
+                </amazon:emotion>
+              </speak>
             target:
               - media_player.family_room_echo
               - media_player.theater_echo
@@ -769,13 +781,6 @@ change_downstairs_lighting:
         
       then:
           
-        # Turn on automations that might have been turned off.
-        - service: automation.turn_on
-          entity_id:
-            - automation.check_daytime_lights_sunset_minimum
-            - automation.check_daytime_lights_sunset_medium
-            - automation.check_daytime_lights_sunset_maximum
-          
         # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
         - if:
             - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
@@ -801,14 +806,6 @@ change_downstairs_lighting:
           entity_id: binary_sensor.adults_home
           state: 'off'
         
-        # First, turn off automations that might turn on some of these lights.
-        - service: automation.turn_off
-          entity_id:
-            - automation.check_daytime_lights_sunset_minimum
-            - automation.check_daytime_lights_sunset_medium
-            - automation.check_daytime_lights_sunset_maximum    
-        
-        # Now, turn them off.
         - service: light.turn_off
           data_template:
             entity_id: >

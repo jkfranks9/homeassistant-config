@@ -31,15 +31,12 @@
 !dashboard/dash_overview/cards/controls
 !dashboard/dash_overview/cards/devices
 !dashboard/dash_overview/cards/energy
-!dashboard/dash_overview/cards/environment
 !dashboard/dash_overview/cards/health
 !dashboard/dash_overview/cards/hobbies
 !dashboard/dash_overview/cards/home
 !dashboard/dash_overview/cards/levels
 !dashboard/dash_overview/cards/monitoring
-!dashboard/dash_overview/cards/testing
 !dashboard/dash_overview/cards/theater
-!dashboard/dash_overview/cards/total_energy
 !dashboard/dash_overview/views
 !dashboard/dash_reminders/
 !dashboard/dash_reminders/cards/
@@ -61,7 +58,6 @@
 !script
 !sensor
 !template
-!themes
 
 # Ensure these YAML files are ignored.
 google_calendars.yaml

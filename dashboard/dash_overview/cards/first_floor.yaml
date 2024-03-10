@@ -157,7 +157,7 @@ config:
         service: floorplan.class_set
         service_data: "${(entity.state === 'on') ? 'element-on' : 'element-off' }"
     
-    # Motion detectors and vibration sensors
+    # Motion detectors
     - entities:
         - binary_sensor.master_bath_motion_detector_occupancy
         - binary_sensor.studio_motion_detector_occupancy
@@ -165,7 +165,8 @@ config:
         - binary_sensor.downstairs_occupancy
         - binary_sensor.main_floor_occupancy
         - binary_sensor.office_human_sensor_presence
-        - binary_sensor.dryer_vibration_sensor_vibration
+        - binary_sensor.back_door_sensor_contact
+        - binary_sensor.guest_br_window_sensor_contact
       tap_action: more-info
       state_action:
         action: call-service
@@ -263,4 +264,4 @@ config:
       state_action:
         action: call-service
         service: floorplan.class_set
-        service_data: "${(entity.state === 'open') ? 'element-on' : 'element-off' }"
+        service_data: "${(entity.attributes.current_position === 0) ? 'element-off' : 'element-on' }"

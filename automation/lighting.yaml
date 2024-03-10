@@ -92,157 +92,22 @@
   action:
     - service: script.reset_bedtime_environment
 
-#===============================#
-#     Change Daytime Lights     #
-#===============================#
-
-# Turn the daytime lights on or off near sunrise or sunset. This is accomplished with a set of scripts,
-# and triggers when the sun elevation is somewhat near the horizon. The goals are:
-#
-# 1) Turn the lights on when the wakeup script is triggered and it's dark enough inside. Note that this 
-#    goal is triggered by the wakeup script, not these automations, but included in this description for
-#    completeness.
-# 2) Turn the lights off when it becomes light enough inside after sunrise.
-# 3) Turn the lights on when it becomes dark enough inside before sunset.
-#
-# NOTE: The elevations used here must match those in change_lighting_per_weather in script/time.yaml,
-#       and in the used blueprints.
-
-# Sunrise ...
-
-# Check at a minimum sun elevation.
-- alias: Check Daytime Lights Sunrise Minimum
-  id: 'check_daytime_lights_sunrise_minimum'
-  
-  trace:
-    stored_traces: 10
-
-  use_blueprint:
-    path: lighting/sunrise_light_weather.yaml
-    input:
-      elevation: sensor.min_elevation
-      light_entity: light.daytime_lights
-
-# Check at a medium sun elevation.
-- alias: Check Daytime Lights Sunrise Medium
-  id: 'check_daytime_lights_sunrise_medium'
-  
-  trace:
-    stored_traces: 10
-
-  use_blueprint:
-    path: lighting/sunrise_light_weather.yaml
-    input:
-      elevation: sensor.med_elevation
-      light_entity: light.daytime_lights
-
-# Check at a maximum sun elevation.
-- alias: Check Daytime Lights Sunrise Maximum
-  id: 'check_daytime_lights_sunrise_maximum'
-  
-  trace:
-    stored_traces: 10
-
-  use_blueprint:
-    path: lighting/sunrise_light_weather.yaml
-    input:
-      elevation: sensor.max_elevation
-      light_entity: light.daytime_lights
-
-# Sunset ...
-
-# Check at a maximum sun elevation.
-- alias: Check Daytime Lights Sunset Maximum
-  id: 'check_daytime_lights_sunset_maximum'
-  
-  trace:
-    stored_traces: 10
-
-  use_blueprint:
-    path: lighting/sunset_light_weather.yaml
-    input:
-      elevation: sensor.max_elevation
-      light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
-
-# Check at a medium sun elevation.
-- alias: Check Daytime Lights Sunset Medium
-  id: 'check_daytime_lights_sunset_medium'
-  
-  trace:
-    stored_traces: 10
-
-  use_blueprint:
-    path: lighting/sunset_light_weather.yaml
-    input:
-      elevation: sensor.med_elevation
-      light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
-
-# Check at a minimum sun elevation.
-- alias: Check Daytime Lights Sunset Minimum
-  id: 'check_daytime_lights_sunset_minimum'
-  
-  trace:
-    stored_traces: 10
-
-  use_blueprint:
-    path: lighting/sunset_light_weather.yaml
-    input:
-      elevation: sensor.min_elevation
-      light_entity: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
-
 #======================#
 #     Lux Sensors      #
 #======================#
 
-# Turn on office light based on ambient lux level.
-- alias: Turn On Office Light
-  id: 'turn_on_office_light'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.office_ambient_light
-      below: 150
-      for: '00:02:00'
-    - platform: state
-      entity_id: input_boolean.nighttime
-      from: 'on'
-      to: 'off'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: state
-      entity_id: input_boolean.nighttime
-      state: 'off'
-    - condition: numeric_state
-      entity_id: sensor.office_ambient_light
-      below: 150
-    - condition: state
-      entity_id: input_boolean.extended_away_mode
-      state: 'off'
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: light.turn_on
-      entity_id: light.office_lamp
+# Control the office lamp based on ambient lux level.
+- alias: Control Office Lamp
+  id: control_office_lamp
 
-# Turn off office light based on ambient lux level.
-- alias: Turn Off Office Light
-  id: 'turn_off_office_light'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.office_ambient_light
-      above: 300
-      for: '00:02:00'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.office_ambient_light
-      above: 300
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: light.turn_off
-      entity_id: light.office_lamp
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      lux_sensor: sensor.office_ambient_light
+      light_target: light.office_lamp
+      min_lux_level: 150
+      max_lux_level: 300
+      check_theater: false
 
 # Control the family room lamp based on ambient lux level.
 - alias: Control Family Room Lamp
@@ -253,8 +118,9 @@
     input:
       lux_sensor: sensor.foyer_ambient_light
       light_target: light.family_room_lamp
-      min_lux_level: 400
-      max_lux_level: 800
+      min_lux_level: 300
+      max_lux_level: 700
+      check_theater: true
 
 # Control the hallway lamp based on ambient lux level.
 - alias: Control Hallway Lamp
@@ -265,8 +131,9 @@
     input:
       lux_sensor: sensor.foyer_ambient_light
       light_target: light.hallway_lamp
-      min_lux_level: 500
-      max_lux_level: 1000
+      min_lux_level: 400
+      max_lux_level: 900
+      check_theater: true
 
 #============================#
 #     Extended Away Mode     #
@@ -443,9 +310,9 @@
   
   trigger:
     - platform: template
-      value_template: "{{ is_state('proximity.jon_home') < 13000 if is_number('proximity.jon_home') }}"
+      value_template: "{{ states('sensor.home_jon_distance') | int(0) < 13000 }}"
       
-  condition: "{{ is_state_attr('proximity.jon_home', 'dir_of_travel', 'towards') }}"
+  condition: "{{ is_state('sensor.home_jon_direction_of_travel', 'towards') }}"
   
   action:
     - service: script.turn_off_extended_away_mode
@@ -512,11 +379,9 @@
   
   trigger:
     
-    # Trigger near sunset. 
-    # Note that we're using the effective sun sensor, which allows us to do testing using the
-    # testing infrastructure. If we're not testing the sensor reflects the real sun.
+    # Trigger near sunset.
     - platform: template
-      value_template: "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
+      value_template: "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
     
     - platform: time
       at: '19:30:00'
@@ -529,7 +394,7 @@
       entity_id: binary_sensor.children_home
       state: 'on'
     
-    - "{{ state_attr('sensor.effective_sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
+    - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
     
     - condition: time
       after: '19:30:00'
@@ -633,20 +498,85 @@
 #=====================#
 #     Smart Bulbs     #
 #=====================#
-
-# Reset smart bulbs if a possible power glitch occurred. Note that catching such glitches is not guaranteed.
+    
+# We have power glitches occasionally, which cause all TP-Link smart bulbs to turn on. This sensor
+# attempts to catch such a glitch by detecting when all bulbs turn on within a short time. This 
+# should never happen normally. 
+#
+# Call the Reset Smart Bulbs script to reset all smart bulbs based on various conditions, so we don't turn 
+# them off if they're supposed to be on at the moment.
 - alias: Reset Smart Bulbs On Power Glitch
   id: 'reset_smart_bulbs_on_power_glitch'
+  
+  # Queue all potential triggers.
+  mode: queued
+  
+  # The 'for' option in the triggers should eliminate very quick multiple glitches. But of course this isn't perfect.
+  # Oh well.
   trigger:
     - platform: state
-      entity_id: input_boolean.possible_power_glitch
+      entity_id: light.office_lamp
+      from: 'off'
       to: 'on'
+      for: '00:00:03'
+      id: office
+    
+    - platform: state
+      entity_id: light.family_room_lamp
+      from: 'off'
+      to: 'on'
+      for: '00:00:03'
+      id: family
+    
+    - platform: state
+      entity_id: light.master_bedroom_lamp
+      from: 'off'
+      to: 'on'
+      for: '00:00:03'
+      id: bedroom
+  
+  variables:
+    
+    # Get the last changed time of all smart bulbs as a UNIX timestamp, for easy arithmetic.
+    office_last_changed: "{{ as_timestamp(as_datetime(states.light.office_lamp.last_changed.isoformat())) }}"
+    family_last_changed: "{{ as_timestamp(as_datetime(states.light.family_room_lamp.last_changed.isoformat())) }}"
+    bedroom_last_changed: "{{ as_timestamp(as_datetime(states.light.master_bedroom_lamp.last_changed.isoformat())) }}"
+    
+    # The number of seconds we consider 'recent'. Since this automation runs queued, this should be slightly greater than
+    # the sum of the 'for' options in the triggers.
+    recent_seconds: 10
   
   action:
-    - delay: '00:01:00'
-    - service: script.reset_smart_bulbs
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.possible_power_glitch
+    
+    # Take action based on the trigger id. We then check if the last changed of all the other bulbs is within the recent seconds,
+    # but not negative. Only one of these choices should ever be true. I hope.
+    - choose:
+      - conditions: "{{ trigger.id == 'office' }}"
+        
+        sequence:
+          - if:
+              - "{{ 0 < office_last_changed - family_last_changed < recent_seconds and 0 < office_last_changed - bedroom_last_changed < recent_seconds }}"
+            
+            then:
+              - service: script.reset_smart_bulbs
+      
+      - conditions: "{{ trigger.id == 'family' }}"
+        
+        sequence:
+          - if:
+              - "{{ 0 < family_last_changed - office_last_changed < recent_seconds and 0 < family_last_changed - bedroom_last_changed < recent_seconds }}"
+            
+            then:
+              - service: script.reset_smart_bulbs
+      
+      - conditions: "{{ trigger.id == 'bedroom' }}"
+        
+        sequence:
+          - if:
+              - "{{ 0 < bedroom_last_changed - office_last_changed < recent_seconds and 0 < bedroom_last_changed - family_last_changed < recent_seconds }}"
+            
+            then:
+              - service: script.reset_smart_bulbs
 
 #===================#
 #     Bath Time     #

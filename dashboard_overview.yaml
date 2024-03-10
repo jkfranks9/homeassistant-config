@@ -14,17 +14,13 @@ title: Overview
 views:
   - !include /config/dashboard/dash_overview/views/home.yaml
   - !include /config/dashboard/dash_overview/views/controls.yaml
-  - !include /config/dashboard/dash_overview/views/environment.yaml
   - !include /config/dashboard/dash_overview/views/energy.yaml
-  - !include /config/dashboard/dash_overview/views/total_energy.yaml
   - !include /config/dashboard/dash_overview/views/health.yaml
   - !include /config/dashboard/dash_overview/views/theater.yaml
   - !include /config/dashboard/dash_overview/views/devices.yaml
   - !include /config/dashboard/dash_overview/views/levels.yaml
   - !include /config/dashboard/dash_overview/views/monitoring.yaml
-  - !include /config/dashboard/dash_overview/views/zigbee_networkmap.yaml
   - !include /config/dashboard/dash_overview/views/hobbies.yaml
-  - !include /config/dashboard/dash_overview/views/testing.yaml
   
   # NOTE: The following two tabs are invisible, and are shown in the sidebar instead. The definitions
   # are needed to provide a URL for the sidebar items.

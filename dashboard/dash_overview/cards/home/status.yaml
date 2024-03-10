@@ -7,6 +7,117 @@ title: Status
 show_header_toggle: false
 entities:
   
+  - type: custom:multiple-entity-row
+    entity: person.jon
+    state_header: Jon
+    name: People
+    icon: mdi:human
+    state_color: true
+    entities:
+      - entity: person.mike
+        hide_if: 'not_home'
+        hide_unavailable: true
+      - entity: person.maryam
+        hide_if: 'not_home'
+        hide_unavailable: true
+      - entity: person.sarah
+        hide_if: 'not_home'
+        hide_unavailable: true
+      - entity: person.david
+        hide_if: 'not_home'
+        hide_unavailable: true
+      - entity: person.skylar
+        hide_if: 'not_home'
+        hide_unavailable: true
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: input_select.occupied_bedrooms
+    state_header: Occupied
+    name: Presence
+    icon: mdi:motion
+    state_color: true
+    entities:
+      - entity: binary_sensor.adults_home
+        name: Adults
+        tap_action:
+          action: none
+      - entity: binary_sensor.children_home
+        name: Children
+        tap_action:
+          action: none
+      - entity: input_boolean.child_alone
+        #icon: toggle-switch
+        name: Alone
+        toggle: true
+      - entity: sensor.blue_charm_presence
+        name: Beacon
+        tap_action: 
+          action: more-info
+  
+  #-------------------------------------------------
+  
+  - type: custom:multiple-entity-row
+    entity: binary_sensor.downstairs_motion
+    name: Motion
+    icon: mdi:motion-sensor
+    show_state: false
+    state_color: true
+    tap_action: 
+      action: none
+    entities:
+      - entity: sensor.downstairs_motion_device_name
+        name: Downstairs
+        hide_if: 'off'
+        tap_action: 
+          action: none
+      - entity: sensor.upstairs_motion_device_name
+        name: Upstairs
+        hide_if: 'off'
+        tap_action: 
+          action: none
+  
+  #-------------------------------------------------
+  
+  # Display all data if the sensor is available, otherwise just the unavailable state.
+  - type: conditional
+    conditions:
+      - entity: sensor.mail_usps_mail
+        state_not: unavailable
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.mail_usps_mail
+      name: Deliveries/Mail
+      icon: mdi:mailbox
+      unit: false
+      state_header: Mail
+      state_color: true
+      entities:
+        - entity: sensor.amazon_deliveries
+          name: Amazon
+          hide_if: '0 | 0'
+        - entity: sensor.usps_deliveries
+          name: USPS
+          hide_if: '0 | 0 | 0'
+        - entity: sensor.ups_deliveries
+          name: UPS
+          hide_if: '0 | 0 | 0'
+        - entity: sensor.fedex_deliveries
+          name: FedEx
+          hide_if: '0 | 0 | 0'
+  
+  - type: conditional
+    conditions:
+      - entity: sensor.mail_usps_mail
+        state: unavailable
+    row:
+      entity: sensor.mail_usps_mail
+      name: Deliveries/Mail
+      icon: mdi:mailbox
+  
+  #-------------------------------------------------
+  
   # Washer and dryer both off.
   - type: conditional
     conditions:
@@ -17,7 +128,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: input_boolean.dryer_running
-      name: Washer/Dryer
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Dryer
       entities:
@@ -34,7 +145,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: input_boolean.dryer_running
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Dryer
       entities:
@@ -58,7 +169,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: input_text.laundry_sensing
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Dryer
       entities:
@@ -79,7 +190,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Humidity
       entities:
@@ -102,7 +213,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Humidity
       styles:
@@ -127,7 +238,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Humidity
       entities:
@@ -148,7 +259,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: input_text.laundry_sensing
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Dryer
       entities:
@@ -171,7 +282,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Humidity
       entities:
@@ -196,7 +307,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Humidity
       styles:
@@ -223,7 +334,7 @@ entities:
     row:
       type: custom:multiple-entity-row
       entity: sensor.dryer_humidity
-      name: Washer/Dryer State
+      name: Laundry
       icon: mdi:washing-machine
       state_header: Humidity
       entities:
@@ -240,7 +351,7 @@ entities:
   
   - type: custom:multiple-entity-row
     entity: sensor.cyber1_load
-    name: Cyber Power
+    name: UPS
     state_header: Load
     entities:
       - entity: sensor.cyber1_battery_charge
@@ -252,34 +363,49 @@ entities:
   
   #-------------------------------------------------
   
-  - type: custom:multiple-entity-row
-    entity: sensor.unifi_counter
-    name: Unifi
-    icon: mdi:router-network
-    state_header: Total
-    unit: false
-    entities:
+  # Display all data if the sensor is available, otherwise just the unavailable state.
+  - type: conditional
+    conditions:
       - entity: sensor.unifi_counter
-        attribute: wired
-        name: Wired
+        state_not: unavailable
+    row:
+      type: custom:multiple-entity-row
+      entity: sensor.unifi_counter
+      name: Networks
+      icon: mdi:router-network
+      state_header: Total
+      unit: false
+      entities:
+        - entity: sensor.unifi_counter
+          attribute: wired
+          name: Wired
+        - entity: sensor.unifi_counter
+          attribute: White Rabbit Gardens
+          name: WRG
+        - entity: sensor.unifi_counter
+          attribute: White Rabbit IoT
+          name: IoT
+        - entity: sensor.unifi_counter
+          attribute: White Rabbit NoT
+          name: NoT
+        - entity: sensor.unifi_counter
+          attribute: Guest
+          name: Guest
+        - entity: sensor.unifi_counter
+          attribute: 'AP UDM'
+          name: UDM
+        - entity: sensor.unifi_counter
+          attribute: 'AP U6-Lite'
+          name: U6
+  
+  - type: conditional
+    conditions:
       - entity: sensor.unifi_counter
-        attribute: White Rabbit Gardens
-        name: WRG
-      - entity: sensor.unifi_counter
-        attribute: White Rabbit IoT
-        name: IoT
-      - entity: sensor.unifi_counter
-        attribute: White Rabbit NoT
-        name: NoT
-      - entity: sensor.unifi_counter
-        attribute: Guest
-        name: Guest
-      - entity: sensor.unifi_counter
-        attribute: 'AP UDM'
-        name: UDM
-      - entity: sensor.unifi_counter
-        attribute: 'AP U6-Lite'
-        name: U6
+        state: unavailable
+    row:
+      entity: sensor.unifi_counter
+      name: Unifi
+      icon: mdi:router-network
   
   #-------------------------------------------------
   
@@ -293,6 +419,10 @@ entities:
         name: Treadmill
       - entity: sensor.weekly_workout_total
         name: Workout
+      - entity: sensor.weekly_yard_work_total
+        name: Yard
+      - entity: sensor.weekly_steps_total
+        name: Steps
   
   #-------------------------------------------------
   

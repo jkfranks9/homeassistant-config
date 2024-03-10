@@ -166,27 +166,16 @@ toggle_vacuum_automation:
       
       then:
         
-        # Simulate the request if testing mode is on.
         - if:
-            - "{{ is_state('input_boolean.testing_mode', 'off') }}"
+            - "{{ operation == 'on' }}"
           
           then:
-            - if:
-                - "{{ operation == 'on' }}"
-              
-              then:
-                - service: automation.turn_on
-                  entity_id: automation.start_vacuum
-              
-              else:
-                - service: automation.turn_off
-                  entity_id: automation.start_vacuum
-      
+            - service: automation.turn_on
+              entity_id: automation.start_vacuum
+          
           else:
-            - service: script.log_testing_simulation
-              data:
-                category: vacuum
-                message: "{{ 'Vacuum name ' ~ vacuum_name ~ ' automation turned ' ~ operation }}"
+            - service: automation.turn_off
+              entity_id: automation.start_vacuum
 
 #=========================#
 #     Laundry History     #
@@ -253,24 +242,24 @@ update_laundry_history_time_ranges:
 # Mute bedroom echo devices until 9 AM the next morning (unmuted in Unmute Guest Bedroom Echos automation).
 mute_studio_echo:
   alias: Mute Studio Echo
-  use_blueprint:
-    path: devices/echo_do_not_disturb.yaml
-    input:
-      switch_entity: switch.studio_echo_do_not_disturb_switch
+  
+  sequence:
+    - service: switch.turn_on
+      entity_id: switch.studio_echo_do_not_disturb_switch
 
 mute_master_bedroom_echo:
   alias: Mute Master Bedroom Echo
-  use_blueprint:
-    path: devices/echo_do_not_disturb.yaml
-    input:
-      switch_entity: switch.master_bedroom_echo_do_not_disturb_switch
+  
+  sequence:
+    - service: switch.turn_on
+      entity_id: switch.master_bedroom_echo_do_not_disturb_switch
 
 mute_penthouse_echo:
   alias: Mute Penthouse Echo
-  use_blueprint:
-    path: devices/echo_do_not_disturb.yaml
-    input:
-      switch_entity: switch.penthouse_echo_do_not_disturb_switch
+  
+  sequence:
+    - service: switch.turn_on
+      entity_id: switch.penthouse_echo_do_not_disturb_switch
 
 #======================#
 #     Garage Doors     #

@@ -76,5 +76,5 @@ action:
           channel: standard
           throttled: true
           timer_entity: !input timer_entity
-          tag: ''
+          tag: !input tag
           timeout: 0

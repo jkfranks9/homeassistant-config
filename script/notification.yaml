@@ -44,6 +44,7 @@ mobile_notification_worker:
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
+                tag: "{{ tag }}"
         
       # Temporary channel; specify a timeout in seconds.
       - conditions: "{{ channel == 'temporary' }}"
@@ -56,6 +57,7 @@ mobile_notification_worker:
               data:
                 channel: "{{ channel }}"
                 timeout: "{{ timeout }}"
+                tag: "{{ tag }}"
         
       # Persistent channel; specify both sticky (notification not dismissed when tapped) and persistent (can't be swiped away).
       # The notification must be cleared by an automation/script when it makes sense.
@@ -140,7 +142,7 @@ send_notification:
       description: 'The timeout for mobile destination channel "temporary".'
     
     tag:
-      description: 'The tag for mobile destination channels "persistent" and "critical".'
+      description: 'The tag to use for replacing a notification.'
     
     media_player_entity:
       description: 'The target entity used for echo destinations.'

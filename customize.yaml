@@ -1,7 +1,0 @@
-#=======================#
-#     Customization     #
-#=======================#
-
-# For some reason, the PC total memory is in MB. Change it to GB.
-sensor.legion_t530_memory_total:
-  unit_of_measurement: 'GB'

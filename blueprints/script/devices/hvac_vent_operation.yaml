@@ -32,19 +32,8 @@ sequence:
       sequence:
         - variables:
             vent_name: "{{ state_attr(repeat.item, 'friendly_name') }}"
-    
-        # Simulate the request if testing mode is on.
-        - if:
-            - "{{ is_state('input_boolean.testing_mode', 'off') }}"
-          
-          then:
-            - service: mqtt.publish
-              data_template:
-                topic: "zigbee2mqtt/{{ vent_name }}/set"
-                payload_template: "{\"position\": {{ input_position }}}"
-      
-          else:
-            - service: script.log_testing_simulation
-              data:
-                category: vent
-                message: "{{ 'Vent name ' ~ vent_name ~ ' set to position ' ~ input_position ~ '.' }}"
+        
+        - service: mqtt.publish
+          data_template:
+            topic: "zigbee2mqtt/{{ vent_name }}/set"
+            payload_template: "{\"position\": {{ input_position }}}"

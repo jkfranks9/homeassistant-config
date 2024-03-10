@@ -7,9 +7,13 @@ title: PC Info
 show_header_toggle: false
 entities:
 
-  - entity: sensor.legion_t530_lastboot
+  - entity: sensor.pc_boot_date_time
     name: Last Boot Time
     icon: mdi:calendar
+  
+  - entity: sensor.pc_uptime
+    name: Uptime
+    icon: mdi:clock-start
   
   - type: custom:multiple-entity-row
     entity: sensor.pc_c_drive_total_gb

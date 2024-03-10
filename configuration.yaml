@@ -5,15 +5,10 @@
 # Default setup of Home Assistant (frontend, api, etc)
 default_config:
 
-# Front end and themes
+# Front end
 frontend:
-  #themes: !include_dir_merge_named themes
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
-
-# Customizations
-homeassistant:
-  customize: !include customize.yaml
 
 #========================#
 #     Included Files     #
@@ -134,18 +129,6 @@ mqtt:
       state_topic: "homeassistant/device_tracker/virtual_skylar"
       payload_home: "home"
       payload_not_home: "not_home"
-  
-  sensor:
-    
-    # For the Zigbee2mqtt Networkmap UI card.
-    - name: Zigbee2mqtt Networkmap
-      # if you change base_topic of Zigbee2mqtt, change state_topic accordingly
-      state_topic: zigbee2mqtt/bridge/response/networkmap
-      value_template: >-
-        {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
-      # again, if you change base_topic of Zigbee2mqtt, change json_attributes_topic accordingly
-      json_attributes_topic: zigbee2mqtt/bridge/response/networkmap
-      json_attributes_template: "{{ value_json.data.value | tojson }}"
 
 #==========================#
 #     Computer Control     #
@@ -188,10 +171,6 @@ notify:
   - name: laundry_events
     platform: file
     filename: debug_logs/laundry_events.log
-  
-  - name: testing_scenarios
-    platform: file
-    filename: debug_logs/testing_scenarios.log
 
   - name: gmail
     platform: smtp
@@ -219,7 +198,6 @@ shell_command:
   backup_log:                     'python /config/python/backup_logs.py /config/home-assistant.log'
   backup_auto_scripts_log:        'python /config/python/backup_logs.py /config/debug_logs/automations_scripts.log'
   backup_laundry_log:             'python /config/python/backup_logs.py /config/debug_logs/laundry_events.log'
-  backup_testing_log:             'python /config/python/backup_logs.py /config/debug_logs/testing_scenarios.log'
   concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
   concat_auto_scripts_log_files:  'python /config/python/concat_logs.py /config/debug_logs/automations_scripts'
   delete_junk_log_files:          'rm -f /config/home-assistant.log.1'

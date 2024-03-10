@@ -105,7 +105,7 @@
         channel: standard
         throttled: true
         timer_entity: timer.pool_chlorine_notification
-        tag: ''
+        tag: 'pool_chlorine'
         timeout: 0
 
 # F150 service is due.
@@ -198,7 +198,7 @@
         message: 'Vacuum did not run on time.'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'vacuum_lazy'
         timeout: 0
 
 # Vacuum probably stuck.
@@ -227,7 +227,7 @@
         message: 'Vacuum appears to be stuck (or not charging).'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'vacuum_stuck'
         timeout: 0
 
 # Vacuum needs maintenance.
@@ -252,7 +252,7 @@
         message: 'Vacuum needs maintenance.'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'vacuum_maintenance'
         timeout: 0
 
 #===============================#
@@ -421,6 +421,7 @@
       timer_entity: timer.back_door_sensor_battery_notification
       message: 'Back door sensor battery needs replacing.'
       persistent: false
+      tag: 'back_door_sensor_battery'
 
 # Guest BR window sensor battery is too low.
 - alias: Notify Guest BR Window Sensor Battery Low
@@ -434,19 +435,7 @@
       timer_entity: timer.guest_br_window_sensor_battery_notification
       message: 'Guest BR window sensor battery needs replacing.'
       persistent: false
-
-# Dryer vibration sensor battery is too low.
-- alias: Notify Dryer Vibration Sensor Battery Low
-  id: 'notify_dryer_vibration_sensor_battery_low'
-  
-  use_blueprint:
-    path: notification/maint_below_notify.yaml
-    input:
-      sensor_entity: sensor.dryer_vibration_sensor_battery
-      threshold: 15
-      timer_entity: timer.dryer_vibration_sensor_battery_notification
-      message: 'Dryer vibration sensor battery needs replacing.'
-      persistent: false
+      tag: 'guest_br_window_sensor_battery'
 
 # Porch battery powered sensor needs recharging.
 - alias: Notify Porch Sensor Battery Low
@@ -485,13 +474,20 @@
   trigger:
     
     # Check if the porch temperature has not been changed for a while, or the value differs significantly from the OpenWeatherMap value.
+    # Ensure the OpenWeatherMap value is valid ... if it's unknown or unavailable it should get set to 0 in the first assignment in the template below.
     - platform: template
       value_template: >
         {% set owm_temp = states('sensor.openweathermap_temperature') | int(0) %}
         {% set porch_temp = states('sensor.porch_temperature') | int(0) %}
-        {{ now() - states.sensor.porch_temperature.last_changed >= timedelta(hours = 1) or porch_temp < (owm_temp - 10) or porch_temp > (owm_temp + 10) }}
+        {% set diff = 10 | int(0) %}
+        {{ owm_temp > 0 and (now() - states.sensor.porch_temperature.last_changed >= timedelta(hours = 1) or porch_temp < (owm_temp - diff) or porch_temp > (owm_temp + diff)) }}
   
   action:
+    - service: system_log.write
+      data:
+        message: "{{ 'OWM temp ' ~ states('sensor.openweathermap_temperature') ~ ', porch temp ' ~ states('sensor.porch_temperature') ~ ', last changed ' ~ as_local(states.sensor.porch_temperature.last_changed) }}"
+        level: info
+    
     - service: script.send_notification
       data:
         destination:
@@ -532,6 +528,7 @@
       timer_entity: timer.master_br_vent_1_battery_notification
       message: 'Master BR vent 1 batteries need replacing.'
       persistent: false
+      tag: 'master_br_vent_1_battery'
 
 # Master BR Vent 2 batteries are too low.
 - alias: Notify Master BR Vent 2 Batteries Low
@@ -545,6 +542,7 @@
       timer_entity: timer.master_br_vent_2_battery_notification
       message: 'Master BR vent 2 batteries need replacing.'
       persistent: false
+      tag: 'master_br_vent_2_battery'
 
 #===============================#
 #     Health Notifications      #
@@ -559,17 +557,26 @@
     - platform: time
       at: '08:00:00'
   
-  # Continue if the treadmill or exercise were last used more than 3 days ago (72 hours).
+  # Continue if no exercise types were performed within the last 3 days (72 hours).
+  # NOTE: We assume an invalid last changed sensor means that type hasn't been performed.
   condition:
     - condition: template
       value_template: >
-        {% set t_changed = states('sensor.treadmill_last_changed') %}
-        {% set w_changed = states('sensor.workout_last_changed') %}
-        {% set t_delta = now() - strptime(t_changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
-        {% set w_delta = now() - strptime(w_changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
-        {% set t_hours = (((t_delta.days * 86400) + t_delta.seconds) / 3600) | round(0) %}
-        {% set w_hours = (((w_delta.days * 86400) + w_delta.seconds) / 3600) | round(0) %}
-        {{ t_hours > 72 and w_hours > 72 }}
+        {% set val = namespace(overdue = 0) %}
+        {% for type in ['treadmill', 'workout', 'yard_work', 'steps'] %}
+          {% set changed = states('sensor.' ~ type ~ '_last_changed') %}
+          {% if changed not in ['unknown', 'unavailable'] %}
+            {% set delta = now() - strptime(changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
+            {% set hours = (((delta.days * 86400) + delta.seconds) / 3600) | round(0) %}
+            {% if hours > 72 %}
+              {% set val.overdue = val.overdue + 1 %}
+            {% endif %}
+          {% else %}
+            {% set val.overdue = val.overdue + 1 %}
+          {% endif %}
+        {% endfor %}
+        
+        {{ val.overdue >= 4 }}
   
   action:    
     - service: script.send_notification
@@ -581,7 +588,7 @@
         channel: standard
         throttled: true
         timer_entity: timer.exercise_overdue_notification
-        tag: ''
+        tag: 'exercise_overdue'
         timeout: 0
 
 #=================================#
@@ -593,7 +600,7 @@
   use_blueprint:
     path: notification/proximity_notify.yaml
     input:
-      proximity_entity: proximity.jon_home
+      proximity_entity: sensor.home_jon_distance
       proximity_meters: 12000
       person_name: Jon
 
@@ -602,7 +609,7 @@
   use_blueprint:
     path: notification/proximity_notify.yaml
     input:
-      proximity_entity: proximity.mike_home
+      proximity_entity: sensor.home_mike_distance
       proximity_meters: 12000
       person_name: Mike
 
@@ -611,18 +618,9 @@
   use_blueprint:
     path: notification/proximity_notify.yaml
     input:
-      proximity_entity: proximity.sarah_home
+      proximity_entity: sensor.home_sarah_distance
       proximity_meters: 12000
       person_name: Sarah
-
-- alias: Notify David Arriving Soon
-  id: 'notify_david_arriving_soon'
-  use_blueprint:
-    path: notification/proximity_notify.yaml
-    input:
-      proximity_entity: proximity.david_home
-      proximity_meters: 12000
-      person_name: David
 
 #==========================#
 #     Software Updates     #
@@ -980,7 +978,7 @@
         channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
-        tag: ''
+        tag: 'calendar_appointment'
         timeout: 0
 
 # Notify about a home type of calendar event, identified using the tag "(home)" in the event title.
@@ -1011,7 +1009,7 @@
         channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
-        tag: ''
+        tag: 'calendar_home'
         timeout: 0
 
 # Notify about an astronomy type of calendar event, identified using the tag "(astro)" in the event title.
@@ -1146,7 +1144,7 @@
                 timeout: 1800
                 throttled: false
                 media_player_entity: media_player.everywhere
-                tag: ''
+                tag: 'calendar_astronomy_1'
           
           else:
             - service: script.send_notification
@@ -1160,7 +1158,7 @@
                 timeout: 1800
                 throttled: false
                 media_player_entity: media_player.everywhere
-                tag: ''
+                tag: 'calendar_astronomy_2'
 
 #==============================#
 #     Device Notifications     #
@@ -1185,7 +1183,7 @@
         channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
-        tag: ''
+        tag: 'washer_done'
         timeout: 0
 
 # Dryer cycle complete
@@ -1207,7 +1205,7 @@
         channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
-        tag: ''
+        tag: 'dryer_done'
         timeout: 0
 
 #================#
@@ -1243,7 +1241,7 @@
           {% endif %}
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'next_canes_game'
         timeout: 0
 
 #=============#
@@ -1284,7 +1282,7 @@
         timeout: 1800
         throttled: false
         media_player_entity: media_player.everywhere
-        tag: ''
+        tag: 'next_iss_pass'
 
 #=========================#
 #     Mail & Packages     #
@@ -1331,7 +1329,7 @@
         channel: standard
         throttled: false
         media_player_entity: media_player.everywhere
-        tag: ''
+        tag: "{{ trigger.id ~ '_package_delivered' }}"
         timeout: 0
 
 #===============================#
@@ -1381,7 +1379,7 @@
         message: 'Order annual credit reports.'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'credit_reports_due'
         timeout: 0
 
 # Budget tracking is due on Sundays.
@@ -1406,7 +1404,7 @@
         message: 'Budget tracking due.'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'budget_tracking_due'
         timeout: 0
 
 # Various monthly items are due the first of the month.
@@ -1428,7 +1426,7 @@
         message: 'Debt tracking due.'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'debt_tracking_due'
         timeout: 0
     
     - service: script.send_notification
@@ -1439,7 +1437,7 @@
         message: 'Transfer monthly amount from checking to savings.'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'transfer_monthly_amount'
         timeout: 0
 
 # Pool cleaning is normally due on Saturdays, but also Wednesdays during peak spring and fall, because of extra blooms and leaves.
@@ -1468,5 +1466,5 @@
         message: 'Pool cleaning due.'
         channel: standard
         throttled: false
-        tag: ''
+        tag: 'pool_cleaning_due'
         timeout: 0

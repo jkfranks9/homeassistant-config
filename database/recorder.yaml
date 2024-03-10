@@ -60,13 +60,11 @@ include:
 
   entities:
     
-    - binary_sensor.dryer_vibration_sensor_vibration
     - binary_sensor.office_human_sensor_presence
     - input_boolean.office_occupied
     - input_number.washer_fill_seconds
     - input_select.washer_load_size
     - input_select.washer_state
-    - proximity.jon_home
     - sensor.ahi_average
     - sensor.blue_charm_presence
     - sensor.cpap_ahi_events_per_hour
@@ -99,10 +97,12 @@ include:
     - input_number.*_calories
     - input_number.*_time
     - sensor.*_ambient_light
+    - sensor.*_av_energy
     - sensor.*_current_consumption
     - sensor.*_temperature
     - sensor.best_price_gas_*
     - sensor.em2_*_amps
     - sensor.em2_*_watts
+    - sensor.home_*_distance
     - sensor.total_*_calories
     - sensor.total_*_time

@@ -129,12 +129,6 @@
       state: "{{ states('person.skylar') == 'home' }}"
       device_class: presence
     
-    # Am I home alone?
-    - name: Home Alone
-      unique_id: home_alone
-      state: "{{ states('zone.home') | int(0) == 1 and state_attr('zone.home', 'persons') == ['person.jon'] }}"
-      device_class: presence
-    
     # Downstairs motion detection.
     - name: Downstairs Motion
       unique_id: downstairs_motion
@@ -190,39 +184,6 @@
       unique_id: penthouse_occupied
       state: >
         {{ states('input_select.occupied_bedrooms') in ['AdultUp', 'ChildUp', 'ChildDownPlus', 'ChildUpPlus', 'Both'] }}
-
-    #-----------------------#
-    #   -- Delivery UI --   #
-    #-----------------------#
-    
-    # These allow delivery buttons to be hidden when not needed.
-    - name: Hide Amazon Delivery
-      unique_id: hide_amazon_delivery
-      state: >
-        {{ (is_state('sensor.mail_amazon_packages', '0') and is_state('sensor.mail_amazon_packages_delivered', '0')) or 
-            states('sensor.mail_amazon_packages') in ['unknown', 'unavailable'] or 
-            states('sensor.mail_amazon_packages_delivered') in ['unknown', 'unavailable'] }}
-    
-    - name: Hide FedEx Delivery
-      unique_id: hide_fedex_delivery
-      state: >
-        {{ (is_state('sensor.mail_fedex_delivering', '0') and is_state('sensor.mail_fedex_delivered', '0')) or 
-            states('sensor.mail_fedex_delivering') in ['unknown', 'unavailable'] or 
-            states('sensor.mail_fedex_delivered') in ['unknown', 'unavailable'] }}
-    
-    - name: Hide UPS Delivery
-      unique_id: hide_ups_delivery
-      state: >
-        {{ (is_state('sensor.mail_ups_delivering', '0') and is_state('sensor.mail_ups_delivered', '0')) or 
-            states('sensor.mail_ups_delivering') in ['unknown', 'unavailable'] or 
-            states('sensor.mail_ups_delivered') in ['unknown', 'unavailable'] }}
-    
-    - name: Hide USPS Delivery
-      unique_id: hide_usps_delivery
-      state: >
-        {{ (is_state('sensor.mail_usps_delivering', '0') and is_state('sensor.mail_usps_delivered', '0')) or 
-            states('sensor.mail_usps_delivering') in ['unknown', 'unavailable'] or 
-            states('sensor.mail_usps_delivered') in ['unknown', 'unavailable'] }}
 
     #-------------------#
     #   -- Driving --   #

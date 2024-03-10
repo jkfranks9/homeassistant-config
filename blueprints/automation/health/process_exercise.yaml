@@ -70,15 +70,28 @@ action:
       - service: script.register_exercise_metrics
         data:
           exercise_type: "{{ input_exercise_type }}"
-  
-      - if:
-          - "{{ input_exercise_type == 'workout' }}"
-        then:
         
-          # Indicate that we exercised today.
-          - service: input_boolean.turn_on
-            target:
-              entity_id: "{{ 'input_boolean.workout_' ~ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
+      # Indicate that we exercised today.
+      - if:
+          - "{{ input_exercise_type != 'steps' }}"
+        
+        # Unconditionally turn on the current day for all types except steps.
+        then:      
+          - service: script.modify_current_exercise_day
+            data:
+              exercise_types: [ "{{ input_exercise_type }}" ]
+              operation: true
+        
+        # For steps, we only count days where we've reached the daily goal.
+        else:
+          - if:
+              - "{{ states(input_units_entity) | int(0) >= state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) }}"
+            
+            then:      
+              - service: script.modify_current_exercise_day
+                data:
+                  exercise_types: [ "{{ input_exercise_type }}" ]
+                  operation: true
     
     # Invalid exercise type, log it.
     else:

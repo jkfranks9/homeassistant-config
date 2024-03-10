@@ -12,7 +12,7 @@ blueprint:
       description: Proximity entity to be checked.
       selector:
         entity:
-          domain: proximity
+          domain: sensor
     
     proximity_meters:
       name: Proximity Meters
@@ -21,7 +21,6 @@ blueprint:
         number:
           min: 10000
           max: 30000
-          unit_of_measurement: kilometers
     
     person_name:
       name: Person Name
@@ -32,11 +31,13 @@ variables:
   input_proximity_entity: !input proximity_entity
   input_proximity_meters: !input proximity_meters
   input_person_name: !input person_name
+  
+  # Get the direction of travel from the sensor associated with the named person.
+  sensor_prefix: "{{ 'home_' ~ input_person_name | lower() ~ '_' }}"
+  direction: "{{ states('sensor.' ~ sensor_prefix ~ 'direction_of_travel') }}"
 
 # Due to the catch-22 with triggers and variables, just trigger on the proximity entity state changing. 
 # We test when the person crosses the input threshold in the condition, using their proximity value (in meters).
-# Note that the proximity randomly changes even when nothing at all is happening, so the condition should account
-# for that.
 trigger:
   - platform: state
     entity_id: !input proximity_entity
@@ -47,12 +48,13 @@ condition:
   # Continue only if the person has just crossed the input threshold.
   - condition: template
     value_template: >
-      {% set from_state = trigger.from_state.state | int %}
-      {% set to_state = trigger.to_state.state | int %}
-      {{ (to_state < input_proximity_meters) and (from_state >= input_proximity_meters) if is_number(to_state) }}
+      {% set from_state = trigger.from_state.state | int(0) %}
+      {% set to_state = trigger.to_state.state | int(0) %}
+      
+      {{ (to_state < input_proximity_meters) and (from_state >= input_proximity_meters) }}
   
   # And is traveling towards home.
-  - "{{ is_state_attr(input_proximity_entity, 'dir_of_travel', 'towards') }}"
+  - "{{ direction == 'towards' }}"
 
 # Write a log message, and announce using all Alexa media players.
 action:

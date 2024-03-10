@@ -52,61 +52,49 @@ variables:
   msg_operation: "{{ iif(input_operation == 'Open', 'Opening', 'Closing') }}"
 
 sequence:
+      
+  # Action is only required if the door is currently in the opposite state (contact on means closed).
+  - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
+  
+  # Prevent multiple quick actions, for example trying to open the door twice because I arrived home at the same time as a 
+  # family member. Such rapid actions leave the door partially open. We use a timer for this purpose.
+  - condition: "{{ states(lockout_timer) == 'idle' }}"
     
-  # Simulate the request if testing mode is on.
+  # Send an informational notification that the door is about to be operated, if requested.
   - if:
-      - "{{ is_state('input_boolean.testing_mode', 'off') }}"
+      - "{{ use_info_message == true }}"
       
     then:
-      
-      # Action is only required if the door is currently in the opposite state (contact on means closed).
-      - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
-      
-      # Prevent multiple quick actions, for example trying to open the door twice because I arrived home at the same time as a 
-      # family member. Such rapid actions leave the door partially open. We use a timer for this purpose.
-      - condition: "{{ states(lockout_timer) == 'idle' }}"
-        
-      # Send an informational notification that the door is about to be operated, if requested.
-      - if:
-          - "{{ use_info_message == true }}"
-          
-        then:
-          - service: script.send_notification
-            data:
-              destination:
-                - mobile
-              title: 'Attention:'
-              message: '{{ msg_operation }} garage door {{ input_name }}.'
-              channel: standard
-              throttled: false
-              tag: ''
-              timeout: 0
-        
-      # Operate the door.
-      - service: switch.turn_on
-        target:
-          entity_id: !input switch
-        
-      # Wait a bit before confirming.
-      - delay: '00:00:15'
-        
-      # Confirm that the door is in the proper state. If so, we're done.
-      - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
-        
-      # The operation did not succeed, so send another notification.
       - service: script.send_notification
         data:
           destination:
             - mobile
-          title: 'Action required:'
-          message: 'Garage door {{ input_name }} operation did not succeed.'
-          channel: critical
+          title: 'Attention:'
+          message: '{{ msg_operation }} garage door {{ input_name }}.'
+          channel: standard
           throttled: false
-          tag: '{{ input_name }}_operation_problem'
+          tag: '{{ input_name }}_garage_door_message'
           timeout: 0
-      
-    else:
-      - service: script.log_testing_simulation
-        data:
-          category: garage
-          message: "{{ 'Garage name ' ~ input_name ~ ' operation ' ~ input_operation ~ '.' }}"
+    
+  # Operate the door.
+  - service: switch.turn_on
+    target:
+      entity_id: !input switch
+    
+  # Wait a bit before confirming.
+  - delay: '00:00:15'
+    
+  # Confirm that the door is in the proper state. If so, we're done.
+  - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
+    
+  # The operation did not succeed, so send another notification.
+  - service: script.send_notification
+    data:
+      destination:
+        - mobile
+      title: 'Action required:'
+      message: 'Garage door {{ input_name }} operation did not succeed.'
+      channel: critical
+      throttled: false
+      tag: '{{ input_name }}_operation_problem'
+      timeout: 0

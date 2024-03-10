@@ -268,7 +268,7 @@
     
     # Turn on appropriate lights if it's dark-ish.
     - if:
-        - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
+        - "{{ states('sensor.foyer_ambient_light') | float(0) < 450 }}"
       
       then:        
         - service: light.turn_on
@@ -472,12 +472,10 @@
         
         # If sunset has already occurred, Close House won't be triggered to close the garage.
         # So start a timer to do that in a bit.
-        # Note that we're using the effective sun sensor, which allows us to do testing using the
-        # testing infrastructure. If we're not testing the sensor reflects the real sun.
         # Also, since it's dark, turn on some outdoor lights.
         - if:
             - condition: state
-              entity_id: sensor.effective_sun
+              entity_id: sun.sun
               state: 'below_horizon'
         
           then:
@@ -1037,10 +1035,11 @@
       target:
         entity_id: switch.treadmill
     
-    # Indicate we used the treadmill today.
-    - service: input_boolean.turn_on
-      target:
-        entity_id: "{{ 'input_boolean.treadmill_' ~ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
+    # Indicate we used the treadmill today.   
+    - service: script.modify_current_exercise_day
+      data:
+        exercise_types: ['treadmill']
+        operation: true
     
     # Calculate the amount of time spent walking. I always walk some multiple of 5 minutes with a 1 minute cooldown, so round
     # down to the nearest 5 minutes (there could be an extra minute or two during a workout pause). The cooldown period
@@ -1863,8 +1862,8 @@
       to: 'on'
   
   action:
-    - service: switch.turn_on
-      entity_id: switch.master_bedroom_echo_do_not_disturb_switch
+    - service: script.turn_on
+      entity_id: script.mute_master_bedroom_echo
 
 # Unmute master bedroom echo.
 - alias: Unmute Master Bedroom Echo

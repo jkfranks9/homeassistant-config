@@ -134,10 +134,10 @@ wakeup:
     - service: input_boolean.turn_off
       entity_id: input_boolean.sleeptime
     
-    # Turn on wakeup lights if needed.
+    # Turn on island light if needed. Other wakeup lights handled by lux sensor.
     - service: script.change_lighting_per_weather
       data:
-        light_entity: light.wakeup_lights
+        light_entity: light.island_light
         wakeup: true
     
     # Transition from bedroom to wakeup lights using a delay.
@@ -633,6 +633,12 @@ reset_bedtime_environment:
       data:
         thermostat_entity: climate.downstairs
         extended: false
+    
+    # Turn off the master suite lights. This is redundant if the Wakeup script was called, but is useful
+    # if the nighttime flag was turned off as a failsafe by the Reset Bedtime Environment automation.
+    - service: homeassistant.turn_off
+      target:
+        entity_id: light.master_suite_lights
 
 #================================================#
 #     Modify Lighting Per Weather Conditions     #
@@ -767,10 +773,7 @@ change_lighting_per_weather_simple:
     - service: script.evaluate_weather_condition  
         
     - variables:
-        
-        # Note that we're using the effective sun sensor, which allows us to do testing using the
-        # testing infrastructure. If we're not testing the sensor reflects the real sun.
-        sun_elevation: "{{ state_attr('sensor.effective_sun', 'elevation') }}"
+        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
         min_elevation: "{{ states('sensor.min_elevation') }}"
         med_elevation: "{{ states('sensor.med_elevation') }}"
         max_elevation: "{{ states('sensor.max_elevation') }}"
@@ -815,14 +818,17 @@ change_lighting_per_weather_simple:
 #=====================#
 
 # Reset (turn off) all smart bulbs after a power outage if the conditions are right.
+# This is called by the Reset Smart Bulbs On Power Glitch automation.
 reset_smart_bulbs:
   alias: Reset Smart Bulbs
   
   sequence:
     
-    - service: script.reset_smart_bulb_sky_conditions
+    - service: script.reset_smart_bulb_lux_sensor
       data:
         light_entity: light.family_room_lamp
+        lux_entity: sensor.foyer_ambient_light
+        lux_value: 700
     
     - service: script.reset_smart_bulb_nighttime
       data:

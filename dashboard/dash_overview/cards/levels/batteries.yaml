@@ -37,9 +37,6 @@ cards:
       - entity: sensor.guest_br_window_sensor_battery
         name: Guest BR Window Sensor
       
-      - entity: sensor.dryer_vibration_sensor_battery
-        name: Dryer Vibration Sensor
-      
       - entity: sensor.master_br_vent_1_battery
         name: Master BR Vent 1
      

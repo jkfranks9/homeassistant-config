@@ -29,3 +29,11 @@ entities:
   - entity: sensor.workout_last_changed
     name: Workout
     icon: mdi:calendar
+  
+  - entity: sensor.yard_work_last_changed
+    name: Yard Work
+    icon: mdi:calendar
+  
+  - entity: sensor.steps_last_changed
+    name: Steps
+    icon: mdi:calendar

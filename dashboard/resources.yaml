@@ -77,7 +77,3 @@
 # Stack In Card
 - url: /local/community/stack-in-card/stack-in-card.js
   type: module
-
-# Zigbee2MQTT NetworkMap Card
-- url: /local/community/zigbee2mqtt-networkmap/zigbee2mqtt-networkmap.js
-  type: module

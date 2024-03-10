@@ -24,6 +24,8 @@
           - "{{ 'treadmill_' ~ suffix }}"
           - "{{ 'washer_' ~ suffix }}"
           - "{{ 'workout_' ~ suffix }}"
+          - "{{ 'yard_work_' ~ suffix }}"
+          - "{{ 'steps_' ~ suffix }}"
     
     - repeat:
         count: "{{ items | length }}"
@@ -98,7 +100,7 @@
   
   action:
     - variables:
-        day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%a') | lower() }}"
+        day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%w') | int(0) }}"
         day_of_month: "{{ now().day }}"
     
     # Reset daily exercise values.
@@ -111,12 +113,14 @@
           - input_number.workout_daily_calories
           - input_number.yard_work_daily_time
           - input_number.yard_work_daily_calories
+          - input_number.steps_daily
+          - input_number.steps_daily_calories
       data:
         value: 0
     
     # If it's the start of a new week (Sunday), reset weekly exercise values.
     - if:
-        - "{{ day_of_week == 'sun' }}"
+        - "{{ day_of_week == 0 }}"
       
       then:
         - service: input_number.set_value
@@ -128,6 +132,7 @@
               - input_number.workout_weekly_calories
               - input_number.yard_work_weekly_time
               - input_number.yard_work_weekly_calories
+              - input_number.steps_weekly
               - input_number.steps_weekly_calories
           data:
             value: 0
@@ -146,6 +151,7 @@
               - input_number.workout_monthly_calories
               - input_number.yard_work_monthly_time
               - input_number.yard_work_monthly_calories
+              - input_number.steps_monthly
               - input_number.steps_monthly_calories
           data:
             value: 0
@@ -173,24 +179,11 @@
         - service: input_boolean.turn_off
           entity_id: input_boolean.backup_laundry_log
     
-    # Backup the testing scenarios log file if indicated.
-    - if:
-        - condition: state
-          entity_id: input_boolean.backup_testing_log
-          state: 'on'
-      
-      then:    
-        - service: shell_command.backup_testing_log
-        
-        - service: input_boolean.turn_off
-          entity_id: input_boolean.backup_testing_log
-    
     # Reset the exercise flags for the current day, so we won't count this day if no exercise is done.    
-    - service: input_boolean.turn_off
-      target:
-        entity_id: 
-          - "{{ 'input_boolean.treadmill_' ~ day_of_week }}" 
-          - "{{ 'input_boolean.workout_' ~ day_of_week }}"
+    - service: script.modify_current_exercise_day
+      data:
+        exercise_types: ['treadmill', 'workout', 'yard_work', 'steps']
+        operation: false
     
     # Turn on most automations that may have been turned off. This is normally not needed, but some can be left off
     # if certain automations or scripts do not finish normally.
@@ -198,9 +191,6 @@
     # Don't touch the few that are turned off most of the time, or for extended periods.
     - service: automation.turn_on
       entity_id:
-        - automation.check_daytime_lights_sunset_maximum
-        - automation.check_daytime_lights_sunset_medium
-        - automation.check_daytime_lights_sunset_minimum
         - automation.close_house
         - automation.notify_zigbee_device_unavailable
         - automation.open_house
@@ -447,6 +437,8 @@
   mode: parallel
   
   trigger:
+    
+    # Device triggers
     - platform: state
       entity_id: sensor.cyber1_status_data
       to: 'OB DISCHRG'
@@ -466,12 +458,6 @@
       id: garage_door_south
     
     - platform: state
-      entity_id: input_boolean.treadmill_triggered
-      from: 'off'
-      to: 'on'
-      id: treadmill
-    
-    - platform: state
       entity_id: input_select.washer_state
       from: 'Off'
       not_to:
@@ -480,10 +466,26 @@
         - 'unavailable'
       id: washer
     
+    # Exercise triggers
+    - platform: state
+      entity_id: input_boolean.treadmill_triggered
+      from: 'off'
+      to: 'on'
+      id: treadmill
+    
     - platform: numeric_state
       entity_id: input_number.workout_daily_time
       above: 0
       id: workout
+    
+    - platform: numeric_state
+      entity_id: input_number.yard_work_daily_time
+      above: 0
+      id: yard_work
+    
+    - platform: template
+      value_template: "{{ states('input_number.steps_daily') | int(0) >= state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) }}"
+      id: steps
   
   variables:
     valid: >
@@ -719,3 +721,34 @@
         title: ' '
         target: "{{ number ~ '@vtext.com' }}"
         message: "{{ 'Sorry, I am ' ~ activity ~ '. I will respond when available.' }}"
+
+#=========================#
+#     ESPHome Updates     #
+#=========================#
+
+# Assist an ESPHome update all operation by temporarily turning off deep sleep for a battery device so the new firmware
+# can be uploaded. This must be done in advance, because deep sleep can only be turned off at the device when it wakes
+# from the previous deep sleep. The deep sleep time is 10 minutes, so this automation is triggered when the update all 
+# operation is 2 devices before the battery device.
+#
+# See the ESPHome Update Sensor List and ESPHome Update Deep Sleep Trigger template sensors for more information.
+- alias: Assist ESPHome Update All
+  id: assist_esphome_update_all
+  
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.esphome_update_deep_sleep_trigger
+      below: 1
+  
+  condition: "{{ trigger.from_state and trigger.from_state.state != 'unavailable' }}"
+  
+  action:
+    - service: script.suspend_deep_sleep
+      data:
+        topic: 'porch-sensor/ota_mode'
+    
+    - delay: '00:05:00'
+    
+    - service: script.resume_deep_sleep
+      data:
+        topic: 'porch-sensor/ota_mode'

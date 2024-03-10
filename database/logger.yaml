@@ -41,7 +41,6 @@ logs:
   homeassistant.components.automation.process_kodi_video_results:             warning
   homeassistant.components.automation.publish_mqtt_automated_states:          warning
   homeassistant.components.automation.remove_saved_notifications_on_dismiss:  warning
-  homeassistant.components.automation.reset_virtual_variables:                warning
   homeassistant.components.automation.restore_riemann_integration:            warning
   homeassistant.components.automation.resume_cinema:                          warning
   homeassistant.components.automation.run_studio_motion_based_light:          warning
@@ -55,7 +54,6 @@ logs:
   homeassistant.components.automation.set_minimum_garage_temperature:         warning
   homeassistant.components.automation.set_minimum_outdoor_temperature:        warning
   homeassistant.components.automation.set_washer_operation:                   warning
-  homeassistant.components.automation.toggle_testing_mode:                    warning
   homeassistant.components.automation.toggle_virtual_device_tracker:          warning
   homeassistant.components.automation.turn_on_office_occupied:                warning
   homeassistant.components.automation.update_openuv:                          warning
@@ -72,12 +70,10 @@ logs:
   homeassistant.components.script.control_fan_for_temperature:        warning
   homeassistant.components.script.evaluate_weather_condition:         warning
   homeassistant.components.script.log_laundry_event:                  warning
-  homeassistant.components.script.log_testing_simulation:             warning
   homeassistant.components.script.mobile_notification_worker:         warning
   homeassistant.components.script.open_hvac_vents:                    warning
   homeassistant.components.script.popup_light_group:                  warning
   homeassistant.components.script.publish_mqtt_automated_states:      warning
-  homeassistant.components.script.reset_virtual_variables:            warning
   homeassistant.components.script.restore_lighting_on_resume:         warning
   homeassistant.components.script.resume_cinema:                      warning
   homeassistant.components.script.resume_worker:                      warning
