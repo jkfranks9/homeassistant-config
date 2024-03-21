@@ -115,7 +115,7 @@ activate_cinema:
       
         # Delay for a bit to let the projector turn on. I'm assuming if it's on it's warmed up.
         - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
-          timeout: '00:02:00'
+          timeout: '00:03:00'
     
         # Perform post-open tasks.
         - service: script.turn_on

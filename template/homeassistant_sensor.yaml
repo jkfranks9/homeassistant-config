@@ -488,22 +488,22 @@
     - name: 'PC Boot Date Time'
       unique_id: pc_boot_date_time
       state: >
-        {% if states('sensor.legion_t530_lastboot') not in ['unknown', 'unavailable'] %}
+        {% if states('input_datetime.pc_lastboot') not in ['unknown', 'unavailable'] %}
           {% from 'friendly_strings.jinja' import format_time %}
-          {{ format_time('sensor.legion_t530_lastboot') }}
+          {{ format_time('input_datetime.pc_lastboot') }}
         {% else %}
-          {{ states('sensor.legion_t530_lastboot') }}
+          {{ states('input_datetime.pc_lastboot') }}
         {% endif %}
 
     # PC up time
     - name: 'PC Uptime'
       unique_id: pc_uptime
       state: >
-        {% if states('sensor.legion_t530_lastboot') not in ['unknown', 'unavailable'] %}
+        {% if states('input_datetime.pc_lastboot') not in ['unknown', 'unavailable'] %}
           {% from 'friendly_strings.jinja' import format_duration %}
-          {{ format_duration(as_timestamp(states('sensor.legion_t530_lastboot'), now())) }}
+          {{ format_duration(as_timestamp(states('input_datetime.pc_lastboot'), now())) }}
         {% else %}
-          {{ states('sensor.legion_t530_lastboot') }}
+          {{ states('input_datetime.pc_lastboot') }}
         {% endif %}
 
     #----------------#

@@ -92,7 +92,7 @@ sequence:
     data:
       destination:
         - mobile
-      title: 'Action required:'
+      title: 'Warning:'
       message: 'Garage door {{ input_name }} operation did not succeed.'
       channel: critical
       throttled: false

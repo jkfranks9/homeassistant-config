@@ -1,0 +1,98 @@
+# Notify based on a template.
+
+blueprint:
+  name: Template Notification
+  description: Notify based on a template.
+  domain: automation
+  
+  input:
+    template:
+      name: Template
+      description: Template to be checked.
+      selector:
+        template:
+    
+    timer_entity:
+      name: Timer Entity
+      description: (Optional) Timer entity associated with the notification, used for throttling. If not specified then no throttling is done.
+      default: {}
+      selector:
+        entity:
+          domain: timer
+    
+    title:
+      name: Title
+      description: (Optional) Title for the notification.
+      default: action
+      selector:
+        select:
+          options:
+            - action
+            - attention
+            - warning
+    
+    message:
+      name: Notification Message
+      description: Message to be issued.
+    
+    channel:
+      name: Channel
+      description: The notification channel.
+    
+    timeout:
+      name: Timeout
+      description: (Optional) Timeout in seconds when the notification should be removed, if the channel is temporary.
+      default: 0
+    
+    tag:
+      name: Notification Tag
+      description: The tag for the notification.
+
+# Allow for multiple simultaneous changes. Might be unnecessary, but it doesn't hurt.
+mode: queued
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_timer_entity: !input timer_entity
+  input_title: !input title
+  input_message: !input message
+  input_channel: !input channel
+  input_timeout: !input timeout
+  input_tag: !input tag
+  
+  title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"
+
+trigger:
+  
+  # Trigger on the template.
+  - platform: template
+    value_template: !input template
+
+action:
+  - variables:
+      throttle: "{{ iif(input_timer_entity, true, false) }}"
+      tag_registry_value: >
+        {% set ns = namespace(val = {'tag': input_tag, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
+        {% if input_timer_entity | length > 0 %}
+          {% set timer = {'timer_entity': input_timer_entity} %}
+          {{ dict(ns.val, **timer) }}
+        {% else %}
+          {{ ns.val }}
+        {% endif %}
+  
+  # Send the notification.
+  - service: script.send_notification
+    data:
+      destination:
+        - mobile
+      title: "{{ title_text }}"
+      message: !input message
+      channel: !input channel
+      timeout: !input timeout
+      throttled: "{{ throttle }}"
+      timer_entity: !input timer_entity
+      tag: !input tag
+      
+  # Register the tag.
+  - service: script.register_mobile_notification
+    data: "{{ tag_registry_value }}"

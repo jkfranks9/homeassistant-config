@@ -1,0 +1,181 @@
+# Notify for device attribute being high enough to require maintenance, such as replacing a device filter.
+
+blueprint:
+  name: Numeric High Notification
+  description: Notify when device attribute crosses a high threshold.
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Sensor Entity
+      description: Sensor entity to be checked.
+      selector:
+        entity:
+          domain: sensor
+          
+    trigger_threshold:
+      name: Trigger Threshold Value
+      description: Sensor threshold value to trigger the notification.
+      selector:
+        number:
+          min: 0
+          max: 3000
+          
+    clear_threshold:
+      name: Clear Threshold Value
+      description: (Optional) Sensor threshold value to clear the notification.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3000
+    
+    timer_entity:
+      name: Timer Entity
+      description: (Optional) Timer entity associated with the notification, used for throttling. If not specified then no throttling is done.
+      default: {}
+      selector:
+        entity:
+          domain: timer
+    
+    enable_clear_trigger:
+      name: Enable Clear Trigger
+      description: (Optional) Whether or not the trigger to clear the notification is enabled. Use false if no automated clear event is expected.
+      default: true
+      selector:
+        boolean:
+    
+    enable_echo_destination:
+      name: Enable Echo Destination
+      description: (Optional) Whether or not to send the notification to echo devices.
+      default: false
+      selector:
+        boolean:
+    
+    extract_tag_from_entity:
+      name: Extract Tag From Entity
+      description: (Optional) Extract the tag from the triggered entity. If this is true, the tag input is optional.
+      default: false
+      selector:
+        boolean:
+    
+    title:
+      name: Title
+      description: (Optional) Title for the notification.
+      default: action
+      selector:
+        select:
+          options:
+            - action
+            - attention
+            - warning
+    
+    message:
+      name: Notification Message
+      description: Message to be issued.
+    
+    channel:
+      name: Channel
+      description: The notification channel.
+    
+    timeout:
+      name: Timeout
+      description: (Optional) Timeout in seconds when the notification should be removed, if the channel is temporary.
+      default: 0
+    
+    tag:
+      name: Notification Tag
+      description: (Optional) The tag for the notification. Required unless extract_tag_from_entity is true.
+      default: ''
+
+# Allow for multiple simultaneous changes. Might be unnecessary, but it doesn't hurt.
+mode: queued
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_timer_entity: !input timer_entity
+  input_enable_echo_destination: !input enable_echo_destination
+  input_extract_tag_from_entity: !input extract_tag_from_entity
+  input_title: !input title
+  input_message: !input message
+  input_channel: !input channel
+  input_timeout: !input timeout
+  input_tag: !input tag
+  
+  title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"
+
+trigger:
+  
+  # Trigger when the sensor value rises above the trigger threshold.
+  - platform: numeric_state
+    entity_id: !input sensor_entity
+    above: !input trigger_threshold
+    id: notify
+  
+  # Trigger when the sensor value drops below the clear threshold.
+  - platform: numeric_state
+    entity_id: !input sensor_entity
+    below: !input clear_threshold
+    enabled: !input enable_clear_trigger
+    id: clear
+
+# Weed out junk.
+condition: "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
+
+action:
+  - variables:
+      tag: >
+        {% if input_extract_tag_from_entity %}
+          {{ state_attr(trigger.from_state.entity_id, 'friendly_name') | replace('Mail ', '') | replace(' Packages Delivered', '') | lower ~ '_package_delivered' }}
+        {% else %}
+          {{ input_tag }}
+        {% endif %}
+  
+  # Notification trigger.
+  - if:
+      - "{{ trigger.id == 'notify' }}"
+    
+    then:    
+      - variables:
+          destination: "{{ iif(input_enable_echo_destination, ['mobile', 'echo'], ['mobile']) }}"
+          throttle: "{{ iif(input_timer_entity, true, false) }}"
+          tag_registry_value: >
+            {% set ns = namespace(val = {'tag': tag, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
+            {% if input_timer_entity | length > 0 %}
+              {% set timer = {'timer_entity': input_timer_entity} %}
+              {{ dict(ns.val, **timer) }}
+            {% else %}
+              {{ ns.val }}
+            {% endif %}
+          notification_data: >
+            {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout, 'throttled': throttle, 'timer_entity': input_timer_entity} %}
+            {% if input_enable_echo_destination %}
+              {% set additional = {'media_player_entity': 'media_player.everywhere', 'tag': tag} %}
+            {% else %}
+              {% set additional = {'tag': tag} %}
+            {% endif %}
+            
+            {{ dict(vars, **additional) }}
+          
+      # Send the notification.
+      - service: script.send_notification
+        data: "{{ notification_data }}"
+          
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data: "{{ tag_registry_value }}"
+    
+    # Clear trigger.
+    else:
+      
+      # Clear the notification.
+      - service: notify.mobile_app_jon_galaxy
+        data:
+          message: 'clear_notification'
+          data:
+            tag: "{{ tag }}"
+    
+      # Unregister the tag.
+      - service: script.unregister_mobile_notification
+        data:
+          tag: "{{ tag }}"

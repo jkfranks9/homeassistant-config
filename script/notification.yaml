@@ -234,3 +234,157 @@ send_notification:
                 data:
                   message: "Invalid destination '{{ destination }}' specified"
                   level: error
+
+#===================================#
+#     Notification Tag Registry     #
+#===================================#
+
+# We keep a registry of mobile notifications, with the tag as the key and the notification parameters as the data.
+# This allows us to restore notifications on the mobile device if it's rebooted, or if the companion app is updated
+# (not sure if this is required). 
+
+# A tag is registered when the notification is issued.
+register_mobile_notification:
+  alias: Register Mobile Notification
+  
+  fields:
+    tag:
+      description: The tag value.
+    
+    title:
+      description: The title of the message.
+    
+    message:
+      description: The message to be issued.
+    
+    channel:
+      description: The channel to which the notification is issued.
+      selector:
+        select:
+          options:
+            - standard
+            - temporary
+            - persistent
+            - critical
+    
+    timeout:
+      description: '(Optional) The timeout for channel "temporary".'
+    
+    timer_entity:
+      description: (Optional) The controlling timer entity used for throttled notifications.
+      selector:
+        entity:
+          domain: timer
+  
+  sequence:
+    
+    # Create the value from the specified inputs.
+    - variables:
+        value: >
+          {% set ns = namespace(value = [title, message, channel, timeout]) %}
+          {% if timer_entity is defined %}
+            {% set ns.value = ns.value + [timer_entity] %}
+          {% endif %}
+          
+          {{ ns.value }}
+    
+    # Add the tag to the registry.
+    - event: register_mobile_tag
+      event_data:
+        key: "{{ tag }}"
+        value: "{{ value }}"
+    
+    # We also keep an input select with all the tags. This is for the UI, so we can manually remove a tag if we're
+    # unable to do so automatically, or if the notification is manually removed on my phone. Add the tag to this as well.
+    - service: input_select.set_options
+      data:
+        entity_id: input_select.mobile_tags
+        options: >
+          {% set ns = namespace(opts = []) %}
+          {% for opt in state_attr('input_select.mobile_tags', 'options') %}
+            {% if opt != 'dummy' and opt != tag %}
+              {% set ns.opts = ns.opts + [opt] %}
+            {% endif %}
+            {% if loop.last %}
+              {% set ns.opts = ns.opts + [tag] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ns.opts | sort}}
+    
+    ####################### Special cases to automatically unregister notifications #######################
+    
+    # For a temporary channel notification, we know when the notification will be automatically removed from the device.
+    # So set a timer to also unregister the tag, handled by the Unregister Calendar Tag automation.
+    # Note to self: the name of the timer must match the tag in order for this to work.
+    - if:
+        - "{{ channel == 'temporary' }}"
+      
+      then:
+        - service: timer.start
+          data:
+            entity_id: "{{ 'timer.' ~ tag }}"
+            duration: "{{ timeout }}"
+    
+    # If the vacuum gets stuck or encounters an error, it cannot go home to recharge. So when the vacuum is back on
+    # the recharging station it means I fixed it and placed it there. As a result, we can then automatically unregister 
+    # the tag(s). Note that we could have both problems occur: some error detected during the night, and a low battery 
+    # in the morning, which we interpret as being stuck. So what we do here is accumulate one or both problems in an
+    # input number for the Unregister Vacuum Problem Notifications automation to use to know which tag(s) to unregister. 
+    # Note that we treat the number as a bitmask: the lowest order bit for stuck and the next lowest for error.
+    - variables:
+        problem: "{{ iif(tag == 'vacuum_stuck', 1, iif(tag == 'vacuum_maintenance', 2, 0)) }}"
+    
+    - if:
+        - "{{ problem > 0 }}"
+      
+      then:
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.vacuum_problems
+          data:
+            value: "{{ states('input_number.vacuum_problems') + problem }}"
+
+# A tag is unregistered when the notification is cleared by an automation, or if it's cleared manually on the device
+# (we automate on the notification cleared sensor, which returns us the tag value).
+unregister_mobile_notification:
+  alias: Unregister Mobile Notification
+  
+  fields:
+    tag:
+      description: The tag value.
+  
+  sequence:
+    
+    # Remove the tag from the registry.
+    - event: unregister_mobile_tag
+      event_data:
+        key: "{{ tag }}"
+    
+    # Remove the tag from the input select.
+    - service: input_select.set_options
+      data:
+        entity_id: input_select.mobile_tags
+        options: >
+          {% set ns = namespace(opts = []) %}
+          {% for opt in state_attr('input_select.mobile_tags', 'options') %}
+            {% if opt != tag %}
+              {% set ns.opts = ns.opts + [opt] %}
+            {% endif %}
+          {% endfor %}
+          {% if ns.opts | length == 0 %}
+            {% set ns.opts = ns.opts + ['dummy'] %}
+          {% endif %}
+          
+          {{ns.opts | sort}}
+
+# The UI allows us to unregister a tag that can't be removed automatically, by picking the tag from the input select
+# that contains all the tags. The picked tag becomes the state of the input select. So the UI calls this script to
+# do the unregister.
+unregister_mobile_notification_from_select:
+  alias: Unregister Mobile Notification From Select
+  
+  sequence:
+    - service: script.unregister_mobile_notification
+      data:
+        tag: "{{ states('input_select.mobile_tags') }}"

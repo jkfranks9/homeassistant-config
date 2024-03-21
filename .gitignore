@@ -64,3 +64,5 @@ google_calendars.yaml
 ip_bans.yaml
 known_devices.yaml
 secrets.yaml
+automation/test.yaml
+script/test.yaml

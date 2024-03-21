@@ -66,7 +66,7 @@ action:
         - mobile
       title: 'Warning:'
       message: '{{ input_device_name }} off, turning it back on.'
-      channel: standard
+      channel: critical
       throttled: false
       tag: '{{ input_device_name }}_message'
       timeout: 0
@@ -82,12 +82,12 @@ action:
   # Confirm that the device is on. If so, we're done.
   - condition: "{{ not is_state(input_device_entity, 'on') }}"
     
-  # The device did not turn on, so send a critical notification.
+  # The device did not turn on, so send another notification.
   - service: script.send_notification
     data:
       destination:
         - mobile
-      title: 'Action required:'
+      title: 'Warning:'
       message: '{{ input_device_name }} did not turn on.'
       channel: critical
       throttled: false

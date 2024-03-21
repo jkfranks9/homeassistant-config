@@ -18,9 +18,29 @@ blueprint:
           multiple: true
           domain: input_datetime
     
+    title:
+      name: Title
+      description: (Optional) Title for the notification.
+      default: action
+      selector:
+        select:
+          options:
+            - action
+            - attention
+            - warning
+    
     message_prefix:
       name: Message Prefix
       description: Message prefix; the suffix is formed dynamically.
+    
+    channel:
+      name: Channel
+      description: The notification channel.
+    
+    timeout:
+      name: Timeout
+      description: (Optional) Timeout in seconds when the notification should be removed, if the channel is temporary.
+      default: 0
 
     tag_prefix:
       name: Tag Prefix
@@ -31,14 +51,32 @@ blueprint:
       description: True if the entity category should be uppercased (for example 'HVAC').
       selector:
         boolean:
+
+# Allow for multiple simultaneous changes. Might be unnecessary, but it doesn't hurt.
+mode: queued
   
-# Trigger daily at the specified time.
 trigger:
+  
+  # Trigger daily at the specified time.
   - platform: time
     at: !input trigger_time
+    id: notify
+  
+  # Trigger when the state of any of the date entities change. This should normally happen only when changed via the UI.
+  # I'm assuming that only one of these at a time can change.
+  - platform: state
+    entity_id: !input date_entities
+    to:
+    id: clear
 
 variables:
-  input_date_entities: !input date_entities  
+  input_date_entities: !input date_entities 
+  input_title: !input title
+  input_message_prefix: !input message_prefix  
+  input_tag_prefix: !input tag_prefix
+  input_category_uppercase: !input category_uppercase
+  
+  title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"  
   actionable_entities: >
     {% set actionable_list = namespace(list = []) %}
     {% for entity in input_date_entities %}
@@ -46,40 +84,72 @@ variables:
         {% set actionable_list.list = actionable_list.list + [entity] %}
       {% endif %}
     {% endfor %}    
-    {{ actionable_list.list }}  
-  input_message_prefix: !input message_prefix  
-  input_tag_prefix: !input tag_prefix
-  input_category_uppercase: !input category_uppercase
+    {{ actionable_list.list }}
   
 condition:
+  
+  # Continue if we have anything to do.
   - condition: template
-    value_template: "{{ actionable_entities | length > 0 }}"
+    value_template: "{{ actionable_entities | length > 0 or trigger.id == 'clear'}}"
 
 action:
-  - repeat:
-      for_each: "{{ actionable_entities }}"
+  
+  # Notification trigger.
+  - if:
+      - "{{ trigger.id == 'notify' }}"
+    
+    then:
+      - repeat:
+          for_each: "{{ actionable_entities }}"
+          
+          sequence:
+            - variables:
+                entity_category: "{{ (repeat.item).split('_')[-2] }}"
+                friendly_category: >
+                  {% if input_category_uppercase == true %}
+                    {{ entity_category | upper }}
+                  {% else %}
+                    {{ entity_category | capitalize }}
+                  {% endif %}
+                entity_suffix: "{{ (repeat.item).split('_')[-1] }}"
+                friendly_name: "{{ state_attr(repeat.item, 'friendly_name') }}"
+                friendly_short_name: "{{ friendly_name.split('Reminder ' ~ friendly_category ~ ' ')[-1] }}"
+            
+            - service: script.send_notification
+              data:
+                destination:
+                  - mobile
+                title: "{{ title_text }}"
+                message: "{{ input_message_prefix ~ ' (' ~ friendly_short_name ~ ').' }}"
+                channel: !input channel
+                timeout: !input timeout
+                throttled: true
+                timer_entity: "{{ 'timer.reminder_' ~ entity_category ~ '_' ~ entity_suffix }}"
+                tag: "{{ input_tag_prefix ~ entity_suffix }}"
+          
+            # Register the tag.
+            - service: script.register_mobile_notification
+              data:
+                tag: "{{ input_tag_prefix ~ entity_suffix }}"
+                title: "{{ title_text }}"
+                message: "{{ input_message_prefix ~ ' (' ~ friendly_short_name ~ ').' }}"
+                channel: !input channel
+                timeout: !input timeout
+                timer_entity: "{{ 'timer.reminder_' ~ entity_category ~ '_' ~ entity_suffix }}"
+    
+    # Clear trigger.
+    else:      
+      - variables:
+          entity_suffix: "{{ (trigger.entity_id).split('_')[-1] }}"
       
-      sequence:
-        - variables:
-            entity_category: "{{ (repeat.item).split('_')[-2] }}"
-            friendly_category: >
-              {% if input_category_uppercase == true %}
-                {{ entity_category | upper }}
-              {% else %}
-                {{ entity_category | capitalize }}
-              {% endif %}
-            entity_suffix: "{{ (repeat.item).split('_')[-1] }}"
-            friendly_name: "{{ state_attr(repeat.item, 'friendly_name') }}"
-            friendly_short_name: "{{ friendly_name.split('Reminder ' ~ friendly_category ~ ' ')[-1] }}"
-        
-        - service: script.send_notification
+      # Clear the notification.
+      - service: notify.mobile_app_jon_galaxy
+        data:
+          message: 'clear_notification'
           data:
-            destination:
-              - mobile
-            title: 'Action required:'
-            message: "{{ input_message_prefix ~ ' (' ~ friendly_short_name ~ ').' }}"
-            channel: persistent
-            throttled: true
-            timer_entity: "{{ 'timer.reminder_' ~ entity_category ~ '_' ~ entity_suffix }}"
             tag: "{{ input_tag_prefix ~ entity_suffix }}"
-            timeout: 0
+    
+      # Unregister the tag.
+      - service: script.unregister_mobile_notification
+        data:
+          tag: "{{ input_tag_prefix ~ entity_suffix }}"

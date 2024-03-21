@@ -1,0 +1,109 @@
+# Notify for an event received.
+
+blueprint:
+  name: Event Notification
+  description: Notify for an event received.
+  domain: automation
+  
+  input:
+    event_type:
+      name: Event Type
+      description: The type of the event.
+          
+    event_data:
+      name: Event Data
+      description: Dictionary of data for the event.
+      selector:
+        object:
+    
+    conditions:
+      name: Conditions
+      description: (Optional) Conditions that must be true to execute.
+      default: "{{ 1 == 1 }}"
+      selector:
+        condition:
+    
+    enable_echo_destination:
+      name: Enable Echo Destination
+      description: (Optional) Whether or not to send the notification to echo devices.
+      default: false
+      selector:
+        boolean:
+    
+    title:
+      name: Title
+      description: (Optional) Title for the notification.
+      default: action
+      selector:
+        select:
+          options:
+            - action
+            - attention
+            - warning
+    
+    message:
+      name: Notification Message
+      description: Message to be issued.
+    
+    channel:
+      name: Channel
+      description: The notification channel.
+    
+    timeout:
+      name: Timeout
+      description: (Optional) Timeout in seconds when the notification should be removed, if the channel is temporary.
+      default: 0
+    
+    tag:
+      name: Notification Tag
+      description: The tag for the notification.
+
+# Allow for multiple simultaneous changes. Might be unnecessary, but it doesn't hurt.
+mode: queued
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_enable_echo_destination: !input enable_echo_destination
+  input_title: !input title
+  input_message: !input message
+  input_channel: !input channel
+  input_timeout: !input timeout
+  input_tag: !input tag
+  
+  title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"
+
+trigger:
+  - platform: event
+    event_type: !input event_type
+    event_data: !input event_data
+
+action:
+  
+  # Ensure the input conditions are met.
+  - if: !input conditions
+    
+    then:
+      - variables:
+          destination: "{{ iif(input_enable_echo_destination, ['mobile', 'echo'], ['mobile']) }}"
+          notification_data: >
+            {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout, 'throttled': false} %}
+            {% if input_enable_echo_destination %}
+              {% set additional = {'media_player_entity': 'media_player.everywhere', 'tag': input_tag} %}
+            {% else %}
+              {% set additional = {'tag': input_tag} %}
+            {% endif %}
+            
+            {{ dict(vars, **additional) }}
+          
+      # Send the notification.
+      - service: script.send_notification
+        data: "{{ notification_data }}"
+          
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data:
+          tag: !input tag
+          title: "{{ title_text }}"
+          message: !input message
+          channel: !input channel
+          timeout: !input timeout

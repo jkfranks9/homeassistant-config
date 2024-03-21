@@ -1,0 +1,30 @@
+#==============================#
+#     Notification Sensors     #
+#==============================#
+
+#--------------------------------------------#
+#   -- Mobile Notification Tag Registry --   #
+#--------------------------------------------#
+
+# We keep a registry of mobile notifications, with the tag as the key and the notification parameters as the data.
+- trigger:
+    - platform: event
+      event_type: register_mobile_tag
+  
+    - platform: event
+      event_type: unregister_mobile_tag
+  
+  sensor:
+    - name: Mobile Tag Registry
+      unique_id: mobile_tag_registry
+      state: Tags
+      
+      attributes:
+        tags: >
+          {% set current = this.attributes.get('tags', {}) %}
+          {% if trigger.event.event_type == 'register_mobile_tag' %}
+            {% set new = {trigger.event.data.key: trigger.event.data.value} %}
+            {{ dict(current, **new) }}
+          {% elif trigger.event.event_type == 'unregister_mobile_tag' %}
+            {{ dict(current.items() | rejectattr('0', 'eq', trigger.event.data.key)) }}
+          {% endif %}

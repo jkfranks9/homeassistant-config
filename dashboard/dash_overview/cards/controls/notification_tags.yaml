@@ -1,0 +1,31 @@
+#================================#
+#     Notification Tags Card     #
+#================================#
+
+type: custom:stack-in-card
+title: Notification Tags
+mode: vertical
+cards:
+  
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 2
+          square: false
+          cards:
+            
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_select.mobile_tags
+              name: Tags
+            
+            - type: button
+              name: Unregister
+              show_state: false
+              tap_action:
+                action: call-service
+                service: script.unregister_mobile_notification_from_select

@@ -7,64 +7,30 @@
   id: 'notify_projector_lamp_aging'
   
   use_blueprint:
-    path: notification/maint_above_notify.yaml
+    path: notification/numeric_above_notify.yaml
     input:
       sensor_entity: sensor.epson_lamp_hours
-      threshold: 1999
+      trigger_threshold: 1999
+      clear_threshold: 1999
       timer_entity: timer.projector_lamp_notification
       message: 'Epson projector lamp might need replacing soon.'
-      persistent: true
+      channel: persistent
       tag: 'projector_lamp'
-
-# Clear persistent notification.
-- alias: Clear Projector Lamp Notification
-  id: 'clear_projector_lamp_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.epson_lamp_hours
-      below: 1999
-  
-  condition: "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'projector_lamp'
 
 # Printer toner is getting low.
 - alias: Notify Printer Toner Low
   id: 'notify_printer_toner_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.brother_printer_black_toner_remaining
-      threshold: 10
+      trigger_threshold: 10
+      clear_threshold: 10
       timer_entity: timer.printer_toner_notification
       message: 'Printer toner might need replacing soon.'
-      persistent: true
+      channel: persistent
       tag: 'printer_toner'
-
-# Clear persistent notification.
-- alias: Clear Printer Toner Notification
-  id: 'clear_printer_toner_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.brother_printer_black_toner_remaining
-      above: 10
-  
-  condition: "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'printer_toner'
 
 # Pool needs chlorine tabs.
 - alias: Notify Pool Needs Chlorine
@@ -74,12 +40,11 @@
   # generator stops producing chlorine, so we need to add tabs.
   #
   # Note that the template below is tricky. The idea is to skip the first day of the forecast, because that's today.
-  # Then bump the count if both temps are below the minimum for the next 3 days. However, due to Jinja scoping rules, 
-  # a simple scalar value for the count doesn't work. So we start with an empty array, then add items to the array 
-  # for each day that has low temps. Finally, compare the number of items in the array. Kludge alert!
-  trigger:
-    - platform: template
-      value_template: >
+  # Then bump the count if both temps are below the minimum for the next 3 days.
+  use_blueprint:
+    path: notification/template_notify.yaml
+    input:
+      template: >
         {% set forecast = state_attr('weather.openweathermap', 'forecast') %}
         {% set num_cold_days = namespace(count = []) %}
         {% if forecast != None %}
@@ -94,79 +59,39 @@
         {% endif %}
         
         {{ (num_cold_days.count) | length == 3 }}
-  
-  action:    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Pool might need chlorine tablets.'
-        channel: standard
-        throttled: true
-        timer_entity: timer.pool_chlorine_notification
-        tag: 'pool_chlorine'
-        timeout: 0
+      
+      timer_entity: timer.pool_chlorine_notification
+      message: 'Pool might need chlorine tablets.'
+      channel: standard
+      tag: 'pool_chlorine'
 
 # F150 service is due.
 - alias: Notify F150 Service Due
   id: 'notify_f150_service_due'
   
   use_blueprint:
-    path: notification/maint_above_notify.yaml
+    path: notification/leapfrog_notify.yaml
     input:
-      sensor_entity: input_number.f150_mileage
-      threshold: input_number.f150_service_due
+      current_value_entity: input_number.f150_mileage
+      due_value_entity: input_number.f150_service_due
       timer_entity: timer.f150_service_notification
       message: 'F150 service is due.'
-      persistent: true
+      channel: persistent
       tag: 'f150_service'
-
-# Clear persistent notification.
-- alias: Clear F150 Service Notification
-  id: 'clear_f150_service_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: input_number.f150_service_due
-      above: input_number.f150_mileage
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'f150_service'
 
 # Treadmill lubrication is due.
 - alias: Notify Treadmill Lube Due
   id: 'notify_treadmill_lube_due'
   
   use_blueprint:
-    path: notification/maint_above_notify.yaml
+    path: notification/leapfrog_notify.yaml
     input:
-      sensor_entity: sensor.treadmill_current_hours
-      threshold: input_number.treadmill_lube_due
+      current_value_entity: sensor.treadmill_current_hours
+      due_value_entity: input_number.treadmill_lube_due
       timer_entity: timer.treadmill_lube_notification
       message: 'Treadmill lubrication is due.'
-      persistent: true
+      channel: persistent
       tag: 'treadmill_lube'
-
-# Clear persistent notification.
-- alias: Clear Treadmill Lube Notification
-  id: 'clear_treadmill_lube_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: input_number.treadmill_lube_due
-      above: sensor.treadmill_current_hours
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'treadmill_lube'
 
 #==========================================#
 #     Abnormal Condition Notifications     #
@@ -176,84 +101,54 @@
 - alias: Notify Vacuum Lazy
   id: 'notify_vacuum_lazy'
   
-  trigger:
-    - platform: time
-      at: '07:00:00'
-  
-  condition:
-    - condition: time
-      weekday:
-        - mon
-  
-  action:
-    - condition: state
-      entity_id: input_boolean.vacuum_kicked_off
-      state: 'off'
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Vacuum did not run on time.'
-        channel: standard
-        throttled: false
-        tag: 'vacuum_lazy'
-        timeout: 0
+  use_blueprint:
+    path: notification/time_notify.yaml
+    input:
+      time_of_day: '07:00:00'
+      conditions:
+        - condition: time
+          weekday:
+            - mon        
+        - condition: state
+          entity_id: input_boolean.vacuum_kicked_off
+          state: 'off'
+      title: attention
+      message: 'Vacuum did not run on time.'
+      channel: standard
+      tag: 'vacuum_lazy'
 
 # Vacuum probably stuck.
 - alias: Notify Vacuum Stuck
   id: 'notify_vacuum_stuck'
   
-  trigger:
-    - platform: time
-      at: '07:01:00'
-  
-  condition:
-    - condition: time
-      weekday:
-        - mon
-  
-  action:
-    - condition: numeric_state
-      entity_id: sensor.ecovacs_battery
-      below: 90
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Vacuum appears to be stuck (or not charging).'
-        channel: standard
-        throttled: false
-        tag: 'vacuum_stuck'
-        timeout: 0
+  use_blueprint:
+    path: notification/time_notify.yaml
+    input:
+      time_of_day: '07:01:00'
+      conditions:
+        - condition: time
+          weekday:
+            - mon        
+        - condition: numeric_state
+          entity_id: sensor.ecovacs_battery
+          below: 90
+      message: 'Vacuum appears to be stuck (or not charging).'
+      channel: standard
+      tag: 'vacuum_stuck'
 
 # Vacuum needs maintenance.
 - alias: Notify Vacuum Needs Maintenance
   id: 'notify_vacuum_needs_maintenance'
   
-  trigger:
-    - platform: event
+  use_blueprint:
+    path: notification/event_notify.yaml
+    input:
       event_type: system_log_event
-      event_data:
-        name: 'sleekxmppfs.basexmpp'
-        level: 'ERROR'
-  
-  condition: "{{ 'error' in trigger.event.data.message }}"
-  
-  action:    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Vacuum needs maintenance.'
-        channel: standard
-        throttled: false
-        tag: 'vacuum_maintenance'
-        timeout: 0
+      event_data: {'name': 'sleekxmppfs.basexmpp', 'level': 'ERROR'}
+      conditions: "{{ 'error' in trigger.event.data.message[0] }}"
+      message: 'Vacuum needs maintenance.'
+      channel: standard
+      tag: 'vacuum_maintenance'
 
 #===============================#
 #     Battery Notifications     #
@@ -264,163 +159,89 @@
   id: 'notify_phone_battery_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.jon_galaxy_battery_level
-      threshold: 15
+      trigger_threshold: 15
+      clear_threshold: 50
       timer_entity: timer.phone_battery_notification
       message: 'Phone needs recharging.'
-      persistent: true
+      channel: persistent
       tag: 'phone_battery'
-
-# Clear persistent notification.
-- alias: Clear Phone Battery Notification
-  id: 'clear_phone_battery_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.jon_galaxy_battery_level
-      above: 50
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'phone_battery'
 
 # Tablet battery is too low.
 - alias: Notify Tablet Battery Low
   id: 'notify_tablet_battery_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.lenovo_tablet_battery_level
-      threshold: 15
+      trigger_threshold: 15
+      clear_threshold: 50
       timer_entity: timer.tablet_battery_notification
       message: 'Tablet needs recharging.'
-      persistent: true
+      channel: persistent
       tag: 'tablet_battery'
-
-# Clear persistent notification.
-- alias: Clear Tablet Battery Notification
-  id: 'clear_tablet_battery_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.lenovo_tablet_battery_level
-      above: 50
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'tablet_battery'
 
 # Studio motion detector battery is too low.
 - alias: Notify Studio Motion Battery Low
   id: 'notify_studio_motion_battery_low'
   
   use_blueprint:
-    path: notification/maint_binary_notify.yaml
+    path: notification/state_notify.yaml
     input:
-      sensor_entity: binary_sensor.studio_motion_detector_battery_low
+      entity: binary_sensor.studio_motion_detector_battery_low
+      from_state: 'off'
+      to_state: 'on'
       timer_entity: timer.studio_motion_detector_battery_notification
       message: 'Studio motion detector battery needs replacing.'
-      persistent: true
+      channel: persistent
       tag: 'studio_motion_battery'
-
-# Clear persistent notification.
-- alias: Clear Studio Motion Battery Notification
-  id: 'clear_studio_motion_battery_notification'
-  
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.studio_motion_detector_battery_low
-      from: 'on'
-      to: 'off'
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'studio_motion_battery'
 
 # Laundry room motion detector battery is too low.
 - alias: Notify Laundry Room Motion Battery Low
   id: 'notify_laundry_room_motion_battery_low'
   
   use_blueprint:
-    path: notification/maint_binary_notify.yaml
+    path: notification/state_notify.yaml
     input:
-      sensor_entity: binary_sensor.laundry_room_motion_detector_battery_low
+      entity: binary_sensor.laundry_room_motion_detector_battery_low
+      from_state: 'off'
+      to_state: 'on'
       timer_entity: timer.laundry_room_motion_detector_battery_notification
       message: 'Laundry room motion detector battery needs replacing.'
-      persistent: true
+      channel: persistent
       tag: 'laundry_room_motion_battery'
-
-# Clear persistent notification.
-- alias: Clear Laundry Room Motion Battery Notification
-  id: 'clear_laundry_room_motion_battery_notification'
-  
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.laundry_room_motion_detector_battery_low
-      from: 'on'
-      to: 'off'
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'laundry_room_motion_battery'
 
 # Master bath motion detector battery is too low.
 - alias: Notify Master Bath Motion Battery Low
   id: 'notify_master_bath_motion_battery_low'
   
   use_blueprint:
-    path: notification/maint_binary_notify.yaml
+    path: notification/state_notify.yaml
     input:
-      sensor_entity: binary_sensor.master_bath_motion_detector_battery_low
+      entity: binary_sensor.master_bath_motion_detector_battery_low
+      from_state: 'off'
+      to_state: 'on'
       timer_entity: timer.master_bath_motion_detector_battery_notification
       message: 'Master bath motion detector battery needs replacing.'
-      persistent: true
+      channel: persistent
       tag: 'master_bath_motion_battery'
-
-# Clear persistent notification.
-- alias: Clear Master Bath Motion Battery Notification
-  id: 'clear_master_bath_motion_battery_notification'
-  
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.master_bath_motion_detector_battery_low
-      from: 'on'
-      to: 'off'
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'master_bath_motion_battery'
 
 # Back door sensor battery is too low.
 - alias: Notify Back Door Sensor Battery Low
   id: 'notify_back_door_sensor_battery_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.back_door_sensor_battery
-      threshold: 15
+      trigger_threshold: 15
+      clear_threshold: 50
       timer_entity: timer.back_door_sensor_battery_notification
       message: 'Back door sensor battery needs replacing.'
-      persistent: false
+      channel: persistent
       tag: 'back_door_sensor_battery'
 
 # Guest BR window sensor battery is too low.
@@ -428,13 +249,14 @@
   id: 'notify_guest_br_window_sensor_battery_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.guest_br_window_sensor_battery
-      threshold: 15
+      trigger_threshold: 15
+      clear_threshold: 50
       timer_entity: timer.guest_br_window_sensor_battery_notification
       message: 'Guest BR window sensor battery needs replacing.'
-      persistent: false
+      channel: persistent
       tag: 'guest_br_window_sensor_battery'
 
 # Porch battery powered sensor needs recharging.
@@ -442,92 +264,29 @@
   id: 'notify_porch_sensor_battery_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.porch_battery_level
-      threshold: 20.0
+      trigger_threshold: 20
+      clear_threshold: 95
       timer_entity: timer.porch_battery_low_notification
       message: 'Porch sensor battery needs recharging.'
-      persistent: true
+      channel: persistent
       tag: 'porch_battery_low'
-
-# Clear persistent notification.
-- alias: Clear Porch Sensor Low Notification
-  id: 'clear_porch_sensor_low_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.porch_battery_level
-      above: 95
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'porch_battery_low'
-
-# Porch sensor battery is probably dead.
-- alias: Notify Porch Sensor Battery Dead
-  id: notify_porch_sensor_battery_dead
-  
-  trigger:
-    
-    # Check if the porch temperature has not been changed for a while, or the value differs significantly from the OpenWeatherMap value.
-    # Ensure the OpenWeatherMap value is valid ... if it's unknown or unavailable it should get set to 0 in the first assignment in the template below.
-    - platform: template
-      value_template: >
-        {% set owm_temp = states('sensor.openweathermap_temperature') | int(0) %}
-        {% set porch_temp = states('sensor.porch_temperature') | int(0) %}
-        {% set diff = 10 | int(0) %}
-        {{ owm_temp > 0 and (now() - states.sensor.porch_temperature.last_changed >= timedelta(hours = 1) or porch_temp < (owm_temp - diff) or porch_temp > (owm_temp + diff)) }}
-  
-  action:
-    - service: system_log.write
-      data:
-        message: "{{ 'OWM temp ' ~ states('sensor.openweathermap_temperature') ~ ', porch temp ' ~ states('sensor.porch_temperature') ~ ', last changed ' ~ as_local(states.sensor.porch_temperature.last_changed) }}"
-        level: info
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Porch sensor battery appears to be dead.'
-        channel: persistent
-        throttled: true
-        timer_entity: timer.porch_battery_dead_notification
-        tag: 'porch_battery_dead'
-        timeout: 0
-
-# Clear persistent notification.
-- alias: Clear Porch Sensor Dead Notification
-  id: 'clear_porch_sensor_dead_notification'
-  
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.porch_battery_level
-      above: 95
-  
-  action:
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'porch_battery_dead'
 
 # Master BR Vent 1 batteries are too low.
 - alias: Notify Master BR Vent 1 Batteries Low
   id: 'notify_master_br_vent_1_batteries_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.master_br_vent_1_battery
-      threshold: 26
+      trigger_threshold: 26
+      clear_threshold: 74
       timer_entity: timer.master_br_vent_1_battery_notification
       message: 'Master BR vent 1 batteries need replacing.'
-      persistent: false
+      channel: persistent
       tag: 'master_br_vent_1_battery'
 
 # Master BR Vent 2 batteries are too low.
@@ -535,13 +294,14 @@
   id: 'notify_master_br_vent_2_batteries_low'
   
   use_blueprint:
-    path: notification/maint_below_notify.yaml
+    path: notification/numeric_below_notify.yaml
     input:
       sensor_entity: sensor.master_br_vent_2_battery
-      threshold: 26
+      trigger_threshold: 26
+      clear_threshold: 74
       timer_entity: timer.master_br_vent_2_battery_notification
       message: 'Master BR vent 2 batteries need replacing.'
-      persistent: false
+      channel: persistent
       tag: 'master_br_vent_2_battery'
 
 #===============================#
@@ -552,44 +312,16 @@
 - alias: Notify Exercise Due
   id: 'notify_exercise_due'
   
-  # Trigger every day in the morning.
-  trigger:
-    - platform: time
-      at: '08:00:00'
-  
-  # Continue if no exercise types were performed within the last 3 days (72 hours).
-  # NOTE: We assume an invalid last changed sensor means that type hasn't been performed.
-  condition:
-    - condition: template
-      value_template: >
-        {% set val = namespace(overdue = 0) %}
-        {% for type in ['treadmill', 'workout', 'yard_work', 'steps'] %}
-          {% set changed = states('sensor.' ~ type ~ '_last_changed') %}
-          {% if changed not in ['unknown', 'unavailable'] %}
-            {% set delta = now() - strptime(changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
-            {% set hours = (((delta.days * 86400) + delta.seconds) / 3600) | round(0) %}
-            {% if hours > 72 %}
-              {% set val.overdue = val.overdue + 1 %}
-            {% endif %}
-          {% else %}
-            {% set val.overdue = val.overdue + 1 %}
-          {% endif %}
-        {% endfor %}
-        
-        {{ val.overdue >= 4 }}
-  
-  action:    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Attention:'
-        message: 'Exercise is overdue.'
-        channel: standard
-        throttled: true
-        timer_entity: timer.exercise_overdue_notification
-        tag: 'exercise_overdue'
-        timeout: 0
+  use_blueprint:
+    path: notification/numeric_above_notify.yaml
+    input:
+      sensor_entity: sensor.exercise_overdue
+      trigger_threshold: 3
+      clear_threshold: 4
+      title: attention
+      message: 'Exercise is overdue.'
+      channel: standard
+      tag: 'exercise_overdue'
 
 #=================================#
 #     Proximity Notifications     #
@@ -670,24 +402,10 @@
                       'input_datetime.reminder_cpap_hose', 
                       'input_datetime.reminder_cpap_mask'
                      ]
-      message_prefix: CPAP maintenance due      
+      message_prefix: CPAP maintenance due
+      channel: persistent
       tag_prefix: cpap_maintenance_
       category_uppercase: true
-
-# Clear persistent notification.
-- alias: Clear CPAP Reminder Notification
-  id: 'clear_cpap_reminder_notification'
-  
-  use_blueprint:
-    path: notification/reminder_notify_clear.yaml
-    input:
-      date_entities: [
-                      'input_datetime.reminder_cpap_filter', 
-                      'input_datetime.reminder_cpap_humidifier', 
-                      'input_datetime.reminder_cpap_hose', 
-                      'input_datetime.reminder_cpap_mask'
-                     ]
-      tag_prefix: cpap_maintenance_
 
 # HVAC maintenance
 - alias: Notify HVAC Reminder
@@ -701,22 +419,10 @@
                       'input_datetime.reminder_hvac_downstairs', 
                       'input_datetime.reminder_hvac_upstairs'
                      ]
-      message_prefix: HVAC maintenance due      
+      message_prefix: HVAC maintenance due
+      channel: persistent
       tag_prefix: hvac_maintenance_
       category_uppercase: true
-
-# Clear persistent notification.
-- alias: Clear HVAC Reminder Notification
-  id: 'clear_hvac_reminder_notification'
-  
-  use_blueprint:
-    path: notification/reminder_notify_clear.yaml
-    input:
-      date_entities: [
-                      'input_datetime.reminder_hvac_downstairs', 
-                      'input_datetime.reminder_hvac_upstairs'
-                     ]
-      tag_prefix: hvac_maintenance_
 
 # Miscellaneous maintenance
 - alias: Notify Miscellaneous Reminder
@@ -738,30 +444,10 @@
                       'input_datetime.reminder_misc_lubegaragedoors',
                       'input_datetime.reminder_misc_britafilter'
                      ]
-      message_prefix: Misc maintenance due      
+      message_prefix: Misc maintenance due
+      channel: persistent
       tag_prefix: misc_maintenance_
       category_uppercase: false
-
-# Clear persistent notification.
-- alias: Clear Miscellaneous Reminder Notification
-  id: 'clear_miscellaneous_reminder_notification'
-  
-  use_blueprint:
-    path: notification/reminder_notify_clear.yaml
-    input:
-      date_entities: [
-                      'input_datetime.reminder_misc_smokedetectors', 
-                      'input_datetime.reminder_misc_9vbatteries',
-                      'input_datetime.reminder_misc_cleanfridge',
-                      'input_datetime.reminder_misc_cleanoven',
-                      'input_datetime.reminder_misc_cleanmicrowavefilter',
-                      'input_datetime.reminder_misc_cleandishwasher',
-                      'input_datetime.reminder_misc_cleanhvacregs',
-                      'input_datetime.reminder_misc_rechargeclipper',
-                      'input_datetime.reminder_misc_lubegaragedoors',
-                      'input_datetime.reminder_misc_britafilter'
-                     ]
-      tag_prefix: misc_maintenance_
 
 #==========================#
 #     Office Reminders     #
@@ -785,26 +471,9 @@
                       'input_datetime.reminder_payment_wellsfargo'
                      ]
       message_prefix: Payment due
+      channel: persistent
       tag_prefix: payment_due_
       category_uppercase: false
-
-# Clear persistent notification.
-- alias: Clear Payment Reminder Notification
-  id: 'clear_payment_reminder_notification'
-  
-  use_blueprint:
-    path: notification/reminder_notify_clear.yaml
-    input:
-      date_entities: [
-                      'input_datetime.reminder_payment_amazon', 
-                      'input_datetime.reminder_payment_creditunion', 
-                      'input_datetime.reminder_payment_disney',
-                      'input_datetime.reminder_payment_johndeere',
-                      'input_datetime.reminder_payment_mortgage', 
-                      'input_datetime.reminder_payment_randolph', 
-                      'input_datetime.reminder_payment_wellsfargo'
-                     ]
-      tag_prefix: payment_due_
 
 # Medication reorder
 - alias: Notify Medication Reorder Reminder
@@ -823,25 +492,9 @@
                       'input_datetime.reminder_medication_methylb12'
                      ]
       message_prefix: Medication due for reorder
+      channel: persistent
       tag_prefix: medication_reorder_
       category_uppercase: false
-
-# Clear persistent notification.
-- alias: Clear Medication Reminder Notification
-  id: 'clear_medication_reminder_notification'
-  
-  use_blueprint:
-    path: notification/reminder_notify_clear.yaml
-    input:
-      date_entities: [
-                      'input_datetime.reminder_medication_eliquis', 
-                      'input_datetime.reminder_medication_gabapentin', 
-                      'input_datetime.reminder_medication_metoprolol', 
-                      'input_datetime.reminder_medication_rosuvastatin', 
-                      'input_datetime.reminder_medication_bloodbuilder', 
-                      'input_datetime.reminder_medication_methylb12'
-                     ]
-      tag_prefix: medication_reorder_
 
 #======================================#
 #     Weekly Cleaning Notification     #
@@ -951,66 +604,44 @@
 #================================#
 
 # Notify about an appointment type of calendar event, identified using the tag "(appt)" in the event title.
-# I want to see these 4 hours before the event, to allow ample driving time, etc.
+# I want to see these 4 hours before the event, to allow ample driving time, etc. They expire 30 minutes after
+# the event.
 - alias: Notify Calendar Appointment
   id: 'notify_calendar_appointment'
-  mode: queued
   
-  trigger:
-    - platform: calendar
-      event: start
-      entity_id: calendar.calendar
+  use_blueprint:
+    path: notification/calendar_notify.yaml
+    input:
       offset: -04:00:00
-  
-  condition: "{{ '(appt)' in trigger.calendar_event.summary }}"
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-          - echo
-        title: 'Attention:'
-        message: >
-          {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
-          {% set time = timeobj.strftime('%H:%M') %}
-          {{ trigger.calendar_event.summary | replace(' (appt)', '') }} at {{ time }}
-        channel: standard
-        throttled: false
-        media_player_entity: media_player.everywhere
-        tag: 'calendar_appointment'
-        timeout: 0
+      calendar_tag: appt
+      title: attention
+      message: >
+        {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
+        {% set time = timeobj.strftime('%H:%M') %}
+        {{ trigger.calendar_event.summary | replace(' (appt)', '') }} at {{ time }}
+      channel: temporary
+      timeout: 16200
+      tag: 'calendar_appointment'
 
 # Notify about a home type of calendar event, identified using the tag "(home)" in the event title.
 # These are things like a worker coming to the house, or a live stream to be joined. 15 minutes before the event is good.
+# They expire 30 minutes after the event.
 - alias: Notify Calendar Home Event
   id: 'notify_calendar_home_event'
-  mode: queued
   
-  trigger:
-    - platform: calendar
-      event: start
-      entity_id: calendar.calendar
+  use_blueprint:
+    path: notification/calendar_notify.yaml
+    input:
       offset: -00:15:00
-  
-  condition: "{{ '(home)' in trigger.calendar_event.summary }}"
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-          - echo
-        title: 'Attention:'
-        message: >
-          {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
-          {% set time = timeobj.strftime('%H:%M') %}
-          {{ trigger.calendar_event.summary | replace(' (home)', '') }} at {{ time }}
-        channel: standard
-        throttled: false
-        media_player_entity: media_player.everywhere
-        tag: 'calendar_home'
-        timeout: 0
+      calendar_tag: home
+      title: attention
+      message: >
+        {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
+        {% set time = timeobj.strftime('%H:%M') %}
+        {{ trigger.calendar_event.summary | replace(' (home)', '') }} at {{ time }}
+      channel: temporary
+      timeout: 2700
+      tag: 'calendar_home'
 
 # Notify about an astronomy type of calendar event, identified using the tag "(astro)" in the event title.
 # Processing of these is more complex than the simple appointment and home events above:
@@ -1020,9 +651,10 @@
 # - For an event outside the hours of 10 PM to 7 AM, I want a notification 15 minutes prior to the event
 # - For an event between 10 PM and 7 AM I want the notification at 10 PM, so I can decide to either stay up or set an alarm
 # - Timers need to be set for when the notification should be issued, and the text of the message needs to be saved (up to 2 timers/texts for 2 separate events)
-# - The timer expirations are thus additional triggers
-- alias: Notify Calendar Astronomy Event
-  id: 'notify_calendar_astronomy_event'
+#
+# This automation saves the text and starts the appropriate timer.
+- alias: Prepare Calendar Astronomy Event Notification
+  id: 'prepare_calendar_astronomy_event_notification'
   mode: queued
   
   trigger:
@@ -1030,135 +662,66 @@
       event: start
       entity_id: calendar.calendar
       offset: -14:00:00
-      id: event
-    
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.calendar_astronomy_notification_1
-      id: timer1
-    
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.calendar_astronomy_notification_2
-      id: timer2
   
   condition: "{{ (trigger.id == 'event' and '(astro)' in trigger.calendar_event.summary) or 'timer' in trigger.id }}"
   
   action:
-    - if:
-      
-        # For the calendar event trigger, save the message text and set a timer to send the notification later.
-        - "{{ trigger.id == 'event' }}"
+    - variables:
+        event_time_string: "{{ as_datetime(as_timestamp(trigger.calendar_event.start, now()) | timestamp_local(now())).strftime('%H:%M') }}"
+        event_hour: "{{ event_time_string.split(':')[0] }}"
+        text: "{{ trigger.calendar_event.summary | replace(' (astro)', '') }} at {{ event_time_string }}"
+        suffix: "{{ iif(states('timer.calendar_astronomy_notification_1') == 'idle', '_1', '_2') }}"
+        text_entity: "{{ 'input_text.calendar_astronomy_notification_message' ~ suffix }}"
+        timer_entity: "{{ 'timer.calendar_astronomy_notification' ~ suffix }}"
         
-      then:
-        - variables:
-            event_time_string: "{{ as_datetime(as_timestamp(trigger.calendar_event.start, now()) | timestamp_local(now())).strftime('%H:%M') }}"
-            event_hour: "{{ event_time_string.split(':')[0] }}"
-            text: "{{ trigger.calendar_event.summary | replace(' (astro)', '') }} at {{ event_time_string }}"
-        - if:
-          
-            # Handle an event time outside the hours of 10 PM to 7 AM (meaning 5:00 PM to 9:59 PM).
-            - "{{ event_hour | int(0) >= 17 and event_hour | int(0) < 22 }}"
-          
-          then:
-                
-            - if:
-                - condition: state
-                  entity_id: timer.calendar_astronomy_notification_1
-                  state: 'idle'
-              
-              then:
-                - service: input_text.set_value
-                  target:
-                    entity_id: input_text.calendar_astronomy_notification_message_1
-                  data:
-                    value: "{{ text }}"
-                    
-                - service: timer.start
-                  data:
-                    entity_id: timer.calendar_astronomy_notification_1
-                    duration: '13:45:00'
-              
-              else:
-                - service: input_text.set_value
-                  target:
-                    entity_id: input_text.calendar_astronomy_notification_message_2
-                  data:
-                    value: "{{ text }}"
-                    
-                - service: timer.start
-                  data:
-                    entity_id: timer.calendar_astronomy_notification_2
-                    duration: '13:45:00'
-          
-          # Handle an event time between 10 PM and 7 AM.
-          else:
-            - variables:
-                seconds: "{{ as_timestamp(now().replace(hour = 22, minute = 0, second = 0, microsecond = 0)) - as_timestamp(now().replace(microsecond = 0)) }}"
-            
-            - if:
-                - condition: state
-                  entity_id: timer.calendar_astronomy_notification_1
-                  state: 'idle'
-              
-              then:
-                - service: input_text.set_value
-                  target:
-                    entity_id: input_text.calendar_astronomy_notification_message_1
-                  data:
-                    value: "{{ text }}"
-                    
-                - service: timer.start
-                  data:
-                    entity_id: timer.calendar_astronomy_notification_1
-                    duration: "{{ seconds }}"
-              
-              else:
-                - service: input_text.set_value
-                  target:
-                    entity_id: input_text.calendar_astronomy_notification_message_2
-                  data:
-                    value: "{{ text }}"
-                  
-                - service: timer.start
-                  data:
-                    entity_id: timer.calendar_astronomy_notification_2
-                    duration: "{{ seconds }}"
+        # For an event time outside the hours of 10 PM to 7 AM (meaning 5:00 PM to 9:59 PM), we want a timer 15 minutes before the event
+        # (meaning 15 minutes less than the offset in the trigger). For an event between 10 PM and 7 AM, we want the timer at 10 PM.
+        seconds: >
+          {{ iif(event_hour | int(0) >= 17 and event_hour | int(0) < 22, 
+                (13 * 3600) + (45 * 60), 
+                as_timestamp(now().replace(hour = 22, minute = 0, second = 0, microsecond = 0)) - as_timestamp(now().replace(microsecond = 0))) }}
+    
+    - service: input_text.set_value
+      target:
+        entity_id: "{{ text_entity }}"
+      data:
+        value: "{{ text }}"
         
-      # For the timer expiration trigger, send the notification.
-      else:
-        - if:
-            - "{{ trigger.id == 'timer1' }}"
-          
-          then:
-            - service: script.send_notification
-              data:
-                destination:
-                  - mobile
-                  - echo
-                title: 'Attention:'
-                message: "{{ states('input_text.calendar_astronomy_notification_message_1') }}"
-                channel: temporary
-                timeout: 1800
-                throttled: false
-                media_player_entity: media_player.everywhere
-                tag: 'calendar_astronomy_1'
-          
-          else:
-            - service: script.send_notification
-              data:
-                destination:
-                  - mobile
-                  - echo
-                title: 'Attention:'
-                message: "{{ states('input_text.calendar_astronomy_notification_message_2') }}"
-                channel: temporary
-                timeout: 1800
-                throttled: false
-                media_player_entity: media_player.everywhere
-                tag: 'calendar_astronomy_2'
+    - service: timer.start
+      data:
+        entity_id: "{{ timer_entity }}"
+        duration: "{{ seconds }}"
+
+# These 2 automations handle the timer expiration and send the notification.
+- alias: Notify Calendar Astronomy Event 1
+  id: 'notify_calendar_astronomy_event_1'
+  
+  use_blueprint:
+    path: notification/event_notify.yaml
+    input:
+      event_type: timer.finished
+      event_data: {'entity_id': 'timer.calendar_astronomy_notification_1'}
+      enable_echo_destination: true
+      title: attention
+      message: "{{ states('input_text.calendar_astronomy_notification_message_1') }}"
+      channel: temporary
+      timeout: 1800
+      tag: 'calendar_astronomy_1'
+
+- alias: Notify Calendar Astronomy Event 2
+  id: 'notify_calendar_astronomy_event_2'
+  
+  use_blueprint:
+    path: notification/event_notify.yaml
+    input:
+      event_type: timer.finished
+      event_data: {'entity_id': 'timer.calendar_astronomy_notification_2'}
+      enable_echo_destination: true
+      title: attention
+      message: "{{ states('input_text.calendar_astronomy_notification_message_2') }}"
+      channel: temporary
+      timeout: 1800
+      tag: 'calendar_astronomy_2'
 
 #==============================#
 #     Device Notifications     #
@@ -1167,46 +730,36 @@
 # Washer cycle complete
 - alias: Notify Washer Done
   id: 'notify_washer_done'
-  trigger:
-    - platform: state
-      entity_id: input_select.washer_state
-      from: Rinse Drain
-      to: 'Off'
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-          - echo
-        title: 'Action required:'
-        message: 'Washer has finished.'
-        channel: standard
-        throttled: false
-        media_player_entity: media_player.everywhere
-        tag: 'washer_done'
-        timeout: 0
+  
+  use_blueprint:
+    path: notification/state_notify.yaml
+    input:
+      entity: input_select.washer_state
+      from_state: Rinse Drain
+      to_state: 'Off'
+      enable_clear_trigger: false
+      enable_echo_destination: true
+      title: attention
+      message: 'Washer has finished.'
+      channel: standard
+      tag: 'washer_done'
 
 # Dryer cycle complete
 - alias: Notify Dryer Done
   id: 'notify_dryer_done'
-  trigger:
-    - platform: state
-      entity_id: input_boolean.dryer_running
-      from: 'on'
-      to: 'off'
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-          - echo
-        title: 'Action required:'
-        message: 'Dryer has probably finished.'
-        channel: standard
-        throttled: false
-        media_player_entity: media_player.everywhere
-        tag: 'dryer_done'
-        timeout: 0
+  
+  use_blueprint:
+    path: notification/state_notify.yaml
+    input:
+      entity: input_boolean.dryer_running
+      from_state: 'on'
+      to_state: 'off'
+      enable_clear_trigger: false
+      enable_echo_destination: true
+      title: attention
+      message: 'Dryer has probably finished.'
+      channel: standard
+      tag: 'dryer_done'
 
 #================#
 #     Hockey     #
@@ -1216,33 +769,26 @@
 - alias: Notify Next Canes Game
   id: 'notify_next_canes_game'
   
-  trigger:
-    - platform: template
-      value_template: >
+  use_blueprint:
+    path: notification/template_notify.yaml
+    input:
+      template: >
         {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
           {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), now()) %}
           {% set now =  as_timestamp(now()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600) | round(0)) < 12, false) }}
         {% else %}
           false
-        {% endif %}
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Attention:'
-        message: >
+        {% endif %}      
+      title: attention
+      message: >
           {% if states('sensor.canes_game_status') == 'Home' %}
             {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }}
           {% else %}
             Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }}
           {% endif %}
-        channel: standard
-        throttled: false
-        tag: 'next_canes_game'
-        timeout: 0
+      channel: standard
+      tag: 'next_canes_game'
 
 #=============#
 #     ISS     #
@@ -1252,37 +798,29 @@
 - alias: Notify Next ISS Pass
   id: 'notify_next_iss_pass'
   
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.international_space_station_iss_10_minute_pass_warning
-      from: 'off'
-      to: 'on'
-  
-  condition:
-    - condition: template
-      value_template: >
-        {{ states('sensor.international_space_station_iss_pass_0') | int(0) >= 300 and 
-           state_attr('sensor.international_space_station_iss_pass_0', 'max_elevation') | int(0) >= 35 }}
-    
-    - condition: state
-      entity_id: input_boolean.nighttime
-      state: 'off'
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-          - echo
-        title: 'Attention:'
-        message: >
-          {% set pass = states.sensor.international_space_station_iss_pass_0.entity_id %}
-          ISS in 10 minutes: start {{ state_attr(pass, 'start_compass') }}, end {{ state_attr(pass, 'end_compass') }}, max {{ state_attr(pass, 'max_elevation') | float(0) | round(0) }}
-        channel: temporary
-        timeout: 1800
-        throttled: false
-        media_player_entity: media_player.everywhere
-        tag: 'next_iss_pass'
+  use_blueprint:
+    path: notification/state_notify.yaml
+    input:
+      entity: binary_sensor.international_space_station_iss_10_minute_pass_warning
+      from_state: 'off'
+      to_state: 'on'
+      conditions:
+        - condition: template
+          value_template: >
+            {{ states('sensor.international_space_station_iss_pass_0') | int(0) >= 300 and 
+               state_attr('sensor.international_space_station_iss_pass_0', 'max_elevation') | int(0) >= 35 }}        
+        - condition: state
+          entity_id: input_boolean.nighttime
+          state: 'off'
+      enable_clear_trigger: false
+      enable_echo_destination: true
+      title: attention
+      message: >
+        {% set pass = states.sensor.international_space_station_iss_pass_0.entity_id %}
+        ISS in 10 minutes: start {{ state_attr(pass, 'start_compass') }}, end {{ state_attr(pass, 'end_compass') }}, max {{ state_attr(pass, 'max_elevation') | float(0) | round(0) }}
+      channel: temporary
+      timeout: 2400
+      tag: 'next_iss_pass'
 
 #=========================#
 #     Mail & Packages     #
@@ -1292,45 +830,19 @@
 - alias: Notify Packages Delivered
   id: 'notify_packages_delivered'
   
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.mail_amazon_packages_delivered
-      above: 0
-      id: Amazon
-    - platform: numeric_state
-      entity_id: sensor.mail_fedex_delivered
-      above: 0
-      id: FedEx
-    - platform: numeric_state
-      entity_id: sensor.mail_ups_delivered
-      above: 0
-      id: UPS
-    - platform: numeric_state
-      entity_id: sensor.mail_usps_delivered
-      above: 0
-      id: USPS
-  
-  condition:
-    
-    # Ignore any change to or from unavailable state.
-    - condition: template
-      value_template: "{{ trigger.from_state.state != 'unavailable' and trigger.to_state.state != 'unavailable' }}"
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-          - echo
-        title: 'Attention:'
-        message: >
-          {% set num = states(trigger.entity_id) | int(0) %}
-          {{ num }} {{ trigger.id }} {{ iif(num == 1, 'package', 'packages') }} delivered.          
-        channel: standard
-        throttled: false
-        media_player_entity: media_player.everywhere
-        tag: "{{ trigger.id ~ '_package_delivered' }}"
-        timeout: 0
+  use_blueprint:
+    path: notification/numeric_above_notify.yaml
+    input:
+      sensor_entity: [sensor.mail_amazon_packages_delivered, sensor.mail_fedex_delivered, sensor.mail_ups_delivered, sensor.mail_usps_delivered]
+      trigger_threshold: 0
+      enable_clear_threshold: false
+      enable_echo_destination: true
+      extract_tag_from_entity: true
+      title: attention
+      message: >
+        {% set num = states(trigger.entity_id) | int(0) %}
+        {{ num }} {{ trigger.entity_id | replace('sensor.mail_', '') | replace('_packages_delivered', '') }} {{ iif(num == 1, 'package', 'packages') }} delivered.
+      channel: standard
 
 #===============================#
 #     Device Unavailability     #
@@ -1364,107 +876,261 @@
 - alias: Notify Credit Reports Due
   id: 'notify_credit_reports_due'
   
-  trigger:
-    - platform: state
-      entity_id: sensor.credit_reports_due
-      from: 'False'
-      to: 'True'
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Order annual credit reports.'
-        channel: standard
-        throttled: false
-        tag: 'credit_reports_due'
-        timeout: 0
+  use_blueprint:
+    path: notification/state_notify.yaml
+    input:
+      entity: sensor.credit_reports_due
+      from_state: 'False'
+      to_state: 'True'
+      enable_clear_trigger: false
+      message: 'Order annual credit reports.'
+      channel: standard
+      tag: 'credit_reports_due'
 
 # Budget tracking is due on Sundays.
 - alias: Notify Budget Tracking Due
   id: 'notify_budget_tracking_due'
   
-  trigger:
-    - platform: time
-      at: '07:00:00'
-  
-  condition:
-    - condition: time
-      weekday:
-        - sun
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Budget tracking due.'
-        channel: standard
-        throttled: false
-        tag: 'budget_tracking_due'
-        timeout: 0
+  use_blueprint:
+    path: notification/time_notify.yaml
+    input:
+      time_of_day: '08:00:00'
+      conditions:
+        - condition: time
+          weekday:
+            - sun
+      message: 'Budget tracking due.'
+      channel: standard
+      tag: 'budget_tracking_due'
 
-# Various monthly items are due the first of the month.
-- alias: Notify Monthly Items Due
-  id: 'notify_monthly_items_due'
+# Debt tracking is due the first of the month.
+- alias: Notify Debt Tracking Due
+  id: 'notify_debt_tracking_due'
   
-  trigger:
-    - platform: state
-      entity_id: sensor.first_of_month
-      from: 'False'
-      to: 'True'
+  use_blueprint:
+    path: notification/state_notify.yaml
+    input:
+      entity: sensor.first_of_month
+      from_state: 'False'
+      to_state: 'True'
+      enable_clear_trigger: false
+      message: 'Debt tracking due.'
+      channel: standard
+      tag: 'debt_tracking_due'
+
+# Monthly transfer is due the first of the month.
+- alias: Notify Monthly Transfer Due
+  id: 'notify_monthly_transfer_due'
   
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Debt tracking due.'
-        channel: standard
-        throttled: false
-        tag: 'debt_tracking_due'
-        timeout: 0
-    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Transfer monthly amount from checking to savings.'
-        channel: standard
-        throttled: false
-        tag: 'transfer_monthly_amount'
-        timeout: 0
+  use_blueprint:
+    path: notification/state_notify.yaml
+    input:
+      entity: sensor.first_of_month
+      from_state: 'False'
+      to_state: 'True'
+      enable_clear_trigger: false
+      message: 'Transfer monthly amount from checking to savings.'
+      channel: standard
+      tag: 'transfer_monthly_amount'
 
 # Pool cleaning is normally due on Saturdays, but also Wednesdays during peak spring and fall, because of extra blooms and leaves.
 - alias: Notify Pool Cleaning Due
   id: 'notify_pool_cleaning_due'
   
-  trigger:
-    - platform: time
-      at: '07:00:00'
+  use_blueprint:
+    path: notification/time_notify.yaml
+    input:
+      time_of_day: '07:00:00'
+      conditions:
+        - or:
+          - condition: time
+            weekday:
+              - sat          
+          - condition: template
+            value_template: "{{ now().month in [3, 4, 10, 11] and now().isoweekday() in [2, 4] }}"
+      message: 'Pool cleaning due.'
+      channel: standard
+      tag: 'pool_cleaning_due'
+
+#=====================================#
+#     Notification Tag Management     #
+#=====================================#
+
+# When my phone is rebooted, or the companion app gets updated (not entirely sure about this), existing notifications are gone.
+# This is a problem for HA notifications because some of them might not get triggered for a long time, or perhaps ever again.
+# So we keep a registry of tags, and the associated notification data, so we can reissue all notifications that were on the
+# device before they went away.
+#
+# There are 2 aspects to this.
+#
+# 1) A registry consisting of a dictionary where the keys are the tags and the values are the notification data 
+#    (Mobile Tag Registry sensor).
+# 2) An input select of just the tags (Mobile Tags). We use this on the UI, to allow tags to be selected for removal from these
+#    structures, for those notifications that can't be automatically removed; and to get all the keys that we need to walk
+#    through the registry to reissue the notifications.
+
+# This is where we reissue the notifications.
+- alias: Reissue Mobile Notifications
+  id: reissue_mobile_notifications
   
-  condition:
-    - or:
-      - condition: time
-        weekday:
-          - sat
-      
-      - condition: template
-        value_template: "{{ now().month in [3, 4, 10, 11] and now().isoweekday() in [2, 4] }}"
+  trigger:
+    - platform: state
+      entity_id: sensor.jon_galaxy_current_version
+      to:
+    
+    - platform: state
+      entity_id: sensor.jon_galaxy_last_reboot
+      to:
   
   action:
-    - service: script.send_notification
+    
+    # Wait a bit, to give the phone time to reinitialize.
+    - delay: '00:01:00'
+    
+    # Walk through all tags.
+    - repeat:
+        for_each: "{{ state_attr('input_select.mobile_tags', 'options') }}"
+        
+        sequence:
+          - variables:
+              tag_entry: "{{ state_attr('sensor.mobile_tag_registry', 'tags').get(repeat.item) }}"
+              
+              # Build the notification data. We always have the first 4 items, but the timer entity only exists for throttled notifications.
+              notification_data: >
+                {% set vars = {'destination': ['mobile'], 'title': tag_entry[0], 'message': tag_entry[1], 'channel': tag_entry[2], 'timeout': tag_entry[3]} %}
+                {% if tag_entry | length > 4 %}
+                  {% set additional = {'throttled': true, 'timer_entity': tag_entry[4], 'tag': repeat.item} %}
+                {% else %}
+                  {% set additional = {'throttled': false, 'tag': repeat.item} %}
+                {% endif %}
+                
+                {{ dict(vars, **additional) }}
+          
+          # Reissue the notification.
+          - service: script.send_notification
+            data: "{{ notification_data }}"
+
+#===============================================#
+#     Automatic Notification Unregistration     #
+#===============================================#
+
+# These automations assist with automatically unregistering notifications, based on notification-specific conditions.
+
+# For a temporary channel notification, we know when the notification will be automatically removed from the device.
+# The Register Mobile Notification sets a timer to unregister the tag, handled here.
+# Note to self: the name of the timer must match the tag in order for this to work.
+- alias: Unregister Calendar Tag
+  id: unregister_calendar_tag
+  
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id:
+          - timer.calendar_appointment
+          - timer.calendar_home
+          - timer.calendar_astronomy_1
+          - timer.calendar_astronomy_2
+          - timer.next_iss_pass
+    
+  action:
+    - variables:
+        tag: "{{ trigger.event.data.entity_id | replace('timer.', '') }}"
+    
+    - service: script.unregister_mobile_notification
       data:
-        destination:
-          - mobile
-        title: 'Action required:'
-        message: 'Pool cleaning due.'
-        channel: standard
-        throttled: false
-        tag: 'pool_cleaning_due'
-        timeout: 0
+        tag: "{{ tag }}"
+
+# Handle vacuum problems (stuck or error).
+# See the Register Mobile Notification script for more details.
+- alias: Unregister Vacuum Problem Notifications
+  id: unregister_vacuum_problem_notifications
+  
+  trigger:
+    - platform: state
+      entity_id: vacuum.ecovacs_deebot
+      not_from: docked
+      to: docked
+  
+  condition:
+    - condition: numeric_state
+      entity_id: input_number.vacuum_problems
+      above: 0
+  
+  action:
+    - variables:
+        problems: "{{ states('input_number.vacuum_problems') }}"
+          
+    # Clear the vacuum stuck notification if it occurred.
+    - if:
+        - "{{ problems | int(0) is odd }}"
+      
+      then:
+    
+        # Clear the notification.
+        - service: notify.mobile_app_jon_galaxy
+          data:
+            message: 'clear_notification'
+            data:
+              tag: vacuum_stuck
+    
+        # Unregister the tag.
+        - service: script.unregister_mobile_notification
+          data:
+            tag: vacuum_stuck
+          
+    # Clear the vacuum error notification if it occurred.
+    - if:
+        - "{{ problems | int(0) >= 2 }}"
+      
+      then:
+    
+        # Clear the notification.
+        - service: notify.mobile_app_jon_galaxy
+          data:
+            message: 'clear_notification'
+            data:
+              tag: vacuum_maintenance
+    
+        # Unregister the tag.
+        - service: script.unregister_mobile_notification
+          data:
+            tag: vacuum_maintenance
+    
+    # Clear the saved vacuum problems.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.vacuum_problems
+      data:
+        value: 0
+
+# For some notifications, I don't need them anymore once I've gone to sleep.
+- alias: Unregister Single Day Notifications
+  id: unregister_single_day_notifications
+  
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sleeptime
+      from: 'off'
+      to: 'on'
+  
+  action:
+    - repeat:
+        for_each: "{{ state_attr('input_select.mobile_tags', 'options') }}"
+        sequence:
+          - if:
+              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next canes game'] }}"
+            
+            then:
+    
+              # Clear the notification.
+              - service: notify.mobile_app_jon_galaxy
+                data:
+                  message: 'clear_notification'
+                  data:
+                    tag: "{{ repeat.item }}"
+        
+              # Unregister the tag.
+              - service: script.unregister_mobile_notification
+                data:
+                  tag: "{{ repeat.item }}"

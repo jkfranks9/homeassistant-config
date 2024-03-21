@@ -1,0 +1,148 @@
+# Notify for device attribute being low enough to require maintenance, such as replacing a device filter.
+
+blueprint:
+  name: Numeric Low Notification
+  description: Notify when device attribute crosses a low threshold.
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Sensor Entity
+      description: Sensor entity to be checked.
+      selector:
+        entity:
+          domain: sensor
+          
+    trigger_threshold:
+      name: Trigger Threshold Value
+      description: Sensor threshold value to trigger the notification.
+      selector:
+        number:
+          min: 0
+          max: 3000
+          
+    clear_threshold:
+      name: Clear Threshold Value
+      description: Sensor threshold value to clear the notification.
+      selector:
+        number:
+          min: 0
+          max: 3000
+    
+    timer_entity:
+      name: Timer Entity
+      description: (Optional) Timer entity associated with the notification, used for throttling. If not specified then no throttling is done.
+      default: {}
+      selector:
+        entity:
+          domain: timer
+    
+    title:
+      name: Title
+      description: (Optional) Title for the notification.
+      default: action
+      selector:
+        select:
+          options:
+            - action
+            - attention
+            - warning
+    
+    message:
+      name: Notification Message
+      description: Message to be issued.
+    
+    channel:
+      name: Channel
+      description: The notification channel.
+    
+    timeout:
+      name: Timeout
+      description: (Optional) Timeout in seconds when the notification should be removed, if the channel is temporary.
+      default: 0
+    
+    tag:
+      name: Notification Tag
+      description: The tag for the notification.
+
+# Allow for multiple simultaneous changes. Might be unnecessary, but it doesn't hurt.
+mode: queued
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_timer_entity: !input timer_entity
+  input_title: !input title
+  input_message: !input message
+  input_channel: !input channel
+  input_timeout: !input timeout
+  input_tag: !input tag
+  
+  title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"
+
+trigger:
+  
+  # Trigger when the sensor value drops below the trigger threshold.
+  - platform: numeric_state
+    entity_id: !input sensor_entity
+    below: !input trigger_threshold
+    id: notify
+  
+  # Trigger when the sensor value rises above the clear threshold.
+  - platform: numeric_state
+    entity_id: !input sensor_entity
+    above: !input clear_threshold
+    id: clear
+
+# Weed out junk.
+condition: "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
+
+action:
+  
+  # Notification trigger.
+  - if:
+      - "{{ trigger.id == 'notify' }}"
+    
+    then:
+    
+      - variables:
+          throttle: "{{ iif(input_timer_entity, true, false) }}"
+          tag_registry_value: >
+            {% set ns = namespace(val = {'tag': input_tag, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
+            {% if input_timer_entity | length > 0 %}
+              {% set timer = {'timer_entity': input_timer_entity} %}
+              {{ dict(ns.val, **timer) }}
+            {% else %}
+              {{ ns.val }}
+            {% endif %}
+          
+      # Send the notification.
+      - service: script.send_notification
+        data:
+          destination:
+            - mobile
+          title: "{{ title_text }}"
+          message: !input message
+          channel: !input channel
+          timeout: !input timeout
+          throttled: "{{ throttle }}"
+          timer_entity: !input timer_entity
+          tag: !input tag
+          
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data: "{{ tag_registry_value }}"
+    
+    # Clear trigger.
+    else:
+      
+      # Clear the notification.
+      - service: notify.mobile_app_jon_galaxy
+        data:
+          message: 'clear_notification'
+          data:
+            tag: !input tag
+    
+      # Unregister the tag.
+      - service: script.unregister_mobile_notification
+        data:
+          tag: !input tag

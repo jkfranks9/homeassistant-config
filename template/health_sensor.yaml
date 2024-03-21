@@ -96,6 +96,31 @@
         {% from 'utilities.jinja' import count_number_bits_8 %}
         {{ count_number_bits_8('input_number.steps_days') }}
 
+    #----------------------------#
+    #   -- Exercise Overdue --   #
+    #----------------------------#
+    
+    # This is the number and list of overdue exercise types.
+    - name: Exercise Overdue
+      unique_id: exercise_overdue
+      state: "{{ this.attributes.overdue | length }}"
+      
+      attributes:
+        overdue: >
+          {% set val = namespace(overdue = []) %}
+          {% for type in ['treadmill', 'workout', 'yard_work', 'steps'] %}
+            {% set changed = states('sensor.' ~ type ~ '_last_changed') %}
+            {% if changed not in ['unknown', 'unavailable'] %}
+              {% set delta = now() - strptime(changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
+              {% set hours = (((delta.days * 86400) + delta.seconds) / 3600) | round(0) %}
+              {% if hours > 72 %}
+                {% set val.overdue = val.overdue + [type] %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}        
+          
+          {{ val.overdue }}
+
     #--------------------------#
     #   -- Workout Header --   #
     #--------------------------#

@@ -18,6 +18,7 @@ cards:
       - type: custom:layout-break
       - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
       - !include /config/dashboard/dash_overview/cards/controls/reminder_lookahead.yaml
+      - !include /config/dashboard/dash_overview/cards/controls/notification_tags.yaml
       - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml
       - type: custom:layout-break
       

@@ -155,7 +155,7 @@
           - mobile
         title: 'Attention:'
         message: 'Power is restored, turning on the PC.'
-        channel: critical
+        channel: standard
         throttled: false
         tag: 'power_restored'
         timeout: 0
@@ -1415,6 +1415,9 @@
 - alias: Set Washer Operation
   id: 'set_washer_operation'
   
+  trace:
+    stored_traces: 20
+  
   trigger:
     - platform: state 
       entity_id: sensor.washer_power_state
@@ -1921,6 +1924,30 @@
   
   action:
     - service: script.close_hvac_vents
+
+#========================#
+#     Legion T530 PC     #
+#========================#
+
+# HASS.Agent appears to only update sensors when they change. Since that happens infrequently for the last boot,
+# the HASS.Agent sensor becomes unknown after some time (I'm guessing a bit here as to why this happens).
+# So this automation saves the last boot time if it changes, and we use the saved value everywhere instead of
+# the one from HASS.Agent.
+- alias: Update PC Lastboot
+  id: update_pc_lastboot
+  
+  trigger:
+    - platform: state
+      entity_id: sensor.legion_t530_lastboot
+      to:
+  
+  action:
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.pc_lastboot
+      data:
+        timestamp: "{{ as_timestamp(states('sensor.legion_t530_lastboot')) }}"
+      
 
 #=======================#
 #     Network Debug     #
