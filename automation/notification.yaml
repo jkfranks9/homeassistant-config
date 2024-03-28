@@ -1017,21 +1017,33 @@
 # These automations assist with automatically unregistering notifications, based on notification-specific conditions.
 
 # For a temporary channel notification, we know when the notification will be automatically removed from the device.
-# The Register Mobile Notification sets a timer to unregister the tag, handled here.
+# The Register Mobile Notification script sets a timer to unregister the tag, handled here.
 # Note to self: the name of the timer must match the tag in order for this to work.
 - alias: Unregister Calendar Tag
-  id: unregister_calendar_tag
+  id: unregister_calendar_tag  
+  mode: queued
   
   trigger:
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id:
-          - timer.calendar_appointment
-          - timer.calendar_home
-          - timer.calendar_astronomy_1
-          - timer.calendar_astronomy_2
-          - timer.next_iss_pass
+        entity_id: timer.calendar_appointment
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.calendar_home
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.calendar_astronomy_1
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.calendar_astronomy_2
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.next_iss_pass
     
   action:
     - variables:
@@ -1119,7 +1131,7 @@
         for_each: "{{ state_attr('input_select.mobile_tags', 'options') }}"
         sequence:
           - if:
-              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next canes game'] }}"
+              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next_canes_game'] }}"
             
             then:
     

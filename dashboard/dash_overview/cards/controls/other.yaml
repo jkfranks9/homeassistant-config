@@ -36,5 +36,7 @@ cards:
             
             - type: 'custom:button-card'
               template: input_button
+              show_icon: true
+              icon: mdi:weight-lifter
               entity: input_number.variables_workout_time
               name: Ex Time

@@ -53,7 +53,6 @@
 
 !group
 !pyscript
-!pyscript_modules
 !python
 !script
 !sensor

@@ -75,6 +75,15 @@
         throttled: false
         tag: 'power_out'
         timeout: 0
+          
+    # Register the tag.
+    - service: script.register_mobile_notification
+      data:
+        tag: 'power_out'
+        title: 'Warning:'
+        message: 'Power is out, shutting down PC.'
+        channel: critical
+        timeout: 0
     
     # The recorder database lives on the PC, so disable it before we shutdown.
     - service: recorder.disable
@@ -123,8 +132,30 @@
         throttled: false
         tag: 'ups_battery'
         timeout: 0
+          
+    # Register the tag.
+    - service: script.register_mobile_notification
+      data:
+        tag: 'ups_battery'
+        title: 'Warning:'
+        message: 'UPS battery is critical, shutting down RPi.'
+        channel: critical
+        timeout: 0
+      
+    # Remove the first power outage notification.
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: 'power_out'
+
+    # Unregister the tag.
+    - service: script.unregister_mobile_notification
+      data:
+        tag: 'power_out'
     
     # Goodbye.
+    - delay: 1
     - service: hassio.host_shutdown
 
 # Turn the PC back on if power is restored.
@@ -158,6 +189,15 @@
         channel: standard
         throttled: false
         tag: 'power_restored'
+        timeout: 0
+          
+    # Register the tag.
+    - service: script.register_mobile_notification
+      data:
+        tag: 'power_restored'
+        title: 'Attention:'
+        message: 'Power is restored, turning on the PC.'
+        channel: standard
         timeout: 0
     
     # Send a magic packet to power on the PC.

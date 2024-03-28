@@ -296,10 +296,8 @@ register_mobile_notification:
     
     # We also keep an input select with all the tags. This is for the UI, so we can manually remove a tag if we're
     # unable to do so automatically, or if the notification is manually removed on my phone. Add the tag to this as well.
-    - service: input_select.set_options
-      data:
-        entity_id: input_select.mobile_tags
-        options: >
+    - variables:
+        tag_list: >
           {% set ns = namespace(opts = []) %}
           {% for opt in state_attr('input_select.mobile_tags', 'options') %}
             {% if opt != 'dummy' and opt != tag %}
@@ -310,7 +308,13 @@ register_mobile_notification:
             {% endif %}
           {% endfor %}
           
-          {{ns.opts | sort}}
+          {{ ns.opts | sort }}
+    
+    - service: pyscript.save_input_select_options
+      data:
+        entity: input_select.mobile_tags
+        list: "{{ tag_list }}"
+        file: '/config/mobile_tags_backup'
     
     ####################### Special cases to automatically unregister notifications #######################
     
@@ -343,7 +347,7 @@ register_mobile_notification:
           target:
             entity_id: input_number.vacuum_problems
           data:
-            value: "{{ states('input_number.vacuum_problems') + problem }}"
+            value: "{{ states('input_number.vacuum_problems') | int(0) + problem }}"
 
 # A tag is unregistered when the notification is cleared by an automation, or if it's cleared manually on the device
 # (we automate on the notification cleared sensor, which returns us the tag value).
@@ -362,10 +366,8 @@ unregister_mobile_notification:
         key: "{{ tag }}"
     
     # Remove the tag from the input select.
-    - service: input_select.set_options
-      data:
-        entity_id: input_select.mobile_tags
-        options: >
+    - variables:
+        tag_list: >
           {% set ns = namespace(opts = []) %}
           {% for opt in state_attr('input_select.mobile_tags', 'options') %}
             {% if opt != tag %}
@@ -376,7 +378,13 @@ unregister_mobile_notification:
             {% set ns.opts = ns.opts + ['dummy'] %}
           {% endif %}
           
-          {{ns.opts | sort}}
+          {{ ns.opts | sort }}
+    
+    - service: pyscript.save_input_select_options
+      data:
+        entity: input_select.mobile_tags
+        list: "{{ tag_list }}"
+        file: '/config/mobile_tags_backup'
 
 # The UI allows us to unregister a tag that can't be removed automatically, by picking the tag from the input select
 # that contains all the tags. The picked tag becomes the state of the input select. So the UI calls this script to

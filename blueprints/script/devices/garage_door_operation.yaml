@@ -49,7 +49,9 @@ variables:
   input_contact: !input contact
   
   lockout_timer: "{{ 'timer.garage_door_' ~ input_name ~ '_lockout' }}"  
-  msg_operation: "{{ iif(input_operation == 'Open', 'Opening', 'Closing') }}"
+  msg_operation: "{{ iif(input_operation == 'Open', 'Opening', 'Closing') }}"  
+  message_tag: "{{ input_name | lower }}_garage_door_message"
+  error_tag: "{{ input_name | lower }}_operation_problem"
 
 sequence:
       
@@ -73,7 +75,16 @@ sequence:
           message: '{{ msg_operation }} garage door {{ input_name }}.'
           channel: standard
           throttled: false
-          tag: '{{ input_name }}_garage_door_message'
+          tag: "{{ message_tag }}"
+          timeout: 0
+          
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data:
+          tag: "{{ message_tag }}"
+          title: 'Attention:'
+          message: '{{ msg_operation }} garage door {{ input_name }}.'
+          channel: standard
           timeout: 0
     
   # Operate the door.
@@ -84,17 +95,50 @@ sequence:
   # Wait a bit before confirming.
   - delay: '00:00:15'
     
-  # Confirm that the door is in the proper state. If so, we're done.
-  - condition: "{{ iif(input_operation == 'Open', is_state(input_contact, 'on'), is_state(input_contact, 'off')) }}"
+  # If the door is in the proper state, delay a bit before removing the first notification (if needed).
+  - if: 
+      - "{{ iif(input_operation == 'Open', is_state(input_contact, 'off'), is_state(input_contact, 'on')) }}"
     
-  # The operation did not succeed, so send another notification.
-  - service: script.send_notification
-    data:
-      destination:
-        - mobile
-      title: 'Warning:'
-      message: 'Garage door {{ input_name }} operation did not succeed.'
-      channel: critical
-      throttled: false
-      tag: '{{ input_name }}_operation_problem'
-      timeout: 0
+    then:
+      - delay: "{{ iif(use_info_message == true, '00:15:00', 0) }}"
+    
+    # The operation did not succeed, so send a more important one.
+    else:
+      
+      # Send the new notification.
+      - service: script.send_notification
+        data:
+          destination:
+            - mobile
+          title: 'Warning:'
+          message: 'Garage door {{ input_name }} operation did not succeed.'
+          channel: critical
+          throttled: false
+          tag: "{{ error_tag }}"
+          timeout: 0
+          
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data:
+          tag: "{{ error_tag }}"
+          title: 'Warning:'
+          message: 'Garage door {{ input_name }} operation did not succeed.'
+          channel: critical
+          timeout: 0
+  
+  - if:
+      - "{{ use_info_message == true }}"
+      
+    then:
+      
+      # Remove the first notification.
+      - service: notify.mobile_app_jon_galaxy
+        data:
+          message: 'clear_notification'
+          data:
+            tag: "{{ message_tag }}"
+
+      # Unregister the tag.
+      - service: script.unregister_mobile_notification
+        data:
+          tag: "{{ message_tag }}"

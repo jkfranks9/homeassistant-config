@@ -20,11 +20,27 @@ cards:
             
             - type: 'custom:button-card'
               template: input_button
+              show_state: false
               entity: input_select.mobile_tags
-              name: Tags
+              name: >
+                [[[ 
+                  var len = states['input_select.mobile_tags'].attributes.options.length;
+                  if (len == 1 && states['input_select.mobile_tags'].state == 'dummy') {
+                    return "None";
+                  }
+                  else if (len == 1) {
+                    return len + " Tag"; 
+                  }
+                  else {
+                    return len + " Tags"; 
+                  }
+                ]]]
             
             - type: button
-              name: Unregister
+              name: >
+                [[[
+                  return "Unreg '" + states['input_select.mobile_tags'].state + "'";
+                ]]]
               show_state: false
               tap_action:
                 action: call-service

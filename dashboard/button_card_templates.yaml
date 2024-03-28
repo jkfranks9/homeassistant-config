@@ -63,6 +63,8 @@ toggle_button:
 input_button:
   template: common
   
+  show_icon: false
+  
   tap_action:
     action: more-info
   

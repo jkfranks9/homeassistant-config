@@ -51,9 +51,10 @@
         entity_id: input_boolean.kodi_movie_list_restoration
     
     # Call a pyscript module to restore the movie list.
-    - service: pyscript.restore_all_movies
+    - service: pyscript.restore_input_select_options
       data:
         entity: input_select.kodi_movies
+        file: '/config/all_movies_backup'
     
     # Wait until the list is restored (state not equal to the static yaml value).
     - wait_template: "{{ not is_state('input_select.kodi_movies', 'Select') }}"
@@ -69,6 +70,12 @@
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
+    
+    # Restore the saved mobile notification tags.
+    - service: pyscript.restore_input_select_options
+      data:
+        entity: input_select.mobile_tags
+        file: '/config/mobile_tags_backup'
 
 #=========================#
 #     Shutdown Chores     #
@@ -330,6 +337,22 @@
       data_template:
         message: >
          {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: (S) {{ trigger.event.data.name }}
+
+#============================#
+#     Backup To PC Share     #
+#============================#
+
+# Take a log snapshot every few minutes. Hopefully this will help narrow down the occasional HA meltdowns
+# I've seen. When this happens I lose logs so can't see what was going on.
+- alias: Backup Log To PC
+  id: backup_log_to_pc
+  
+  trigger:
+    - platform: time_pattern
+      minutes: '/5'
+  
+  action:
+    - service: shell_command.backup_log_to_pc
 
 #==================================#
 #     Persistent Notifications     #

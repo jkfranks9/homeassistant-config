@@ -51,6 +51,9 @@ trigger:
     entity_id: !input sensor_entity
     to:
 
+# Weed out junk.
+condition: "{{ trigger.from_state.state not in ['unavailable', 'unknown'] and trigger.to_state.state not in ['unavailable', 'unknown'] }}"
+
 action:
     
   - choose:

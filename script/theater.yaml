@@ -986,6 +986,8 @@ get_all_kodi_movies:
     
     # Activate Kodi on the Shield TV.
     - service: script.activate_kodi
+    
+    - delay: '00:00:10'
   
     # Send the GetMovies command to Kodi. The Handle Kodi Movies Result script calls Process All Kodi Movies Result
     # below with the command result.
@@ -1004,11 +1006,22 @@ process_all_kodi_movies_result:
   
   sequence:
     
+    - variables:
+        movie_list: >
+          {% set movies = result.get('movies') %}
+          {% set ns = namespace(list = []) %}
+          {% for movie in movies %}
+            {% set ns.list = ns.list + [movie.get('label')] %}
+          {% endfor %}
+          
+          {{ ns.list | sort }}
+    
     # Call the python script to populate the input select.
-    - service: pyscript.populate_all_movies
+    - service: pyscript.save_input_select_options
       data:
         entity: input_select.kodi_movies
-        result: "{{ result }}"
+        list: "{{ movie_list }}"
+        file: '/config/all_movies_backup'
   
     # Exit the Kodi application.
     - service: remote.send_command

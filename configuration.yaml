@@ -202,3 +202,4 @@ shell_command:
   concat_auto_scripts_log_files:  'python /config/python/concat_logs.py /config/debug_logs/automations_scripts'
   delete_junk_log_files:          'rm -f /config/home-assistant.log.1'
   reboot_nut_service:             bash /config/reboot_nut_server.sh
+  backup_log_to_pc:               'cp -r /config/home-assistant.log /share/LegionPC'
