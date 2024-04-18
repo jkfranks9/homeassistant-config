@@ -130,15 +130,8 @@ sequence:
       - "{{ use_info_message == true }}"
       
     then:
-      
-      # Remove the first notification.
-      - service: notify.mobile_app_jon_galaxy
-        data:
-          message: 'clear_notification'
-          data:
-            tag: "{{ message_tag }}"
 
-      # Unregister the tag.
-      - service: script.unregister_mobile_notification
+      # Remove the first notification and unregister the tag.
+      - service: script.remove_mobile_notification
         data:
           tag: "{{ message_tag }}"

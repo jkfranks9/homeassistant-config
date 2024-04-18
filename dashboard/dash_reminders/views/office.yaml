@@ -5,13 +5,9 @@
 title: Office
 path: office
 icon: mdi:desk
-panel: true
 visible:
   - user: f02fbce66df546fa90f8f3d03283b55e
+
 cards:
-  - type: custom:layout-card
-    layout_type: custom:vertical-layout
-    cards:
-      - !include /config/dashboard/dash_reminders/cards/office/payments.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_reminders/cards/office/medications.yaml
+  - !include /config/dashboard/dash_reminders/cards/office/payments.yaml
+  - !include /config/dashboard/dash_reminders/cards/office/medications.yaml

@@ -841,7 +841,7 @@
       title: attention
       message: >
         {% set num = states(trigger.entity_id) | int(0) %}
-        {{ num }} {{ trigger.entity_id | replace('sensor.mail_', '') | replace('_packages_delivered', '') }} {{ iif(num == 1, 'package', 'packages') }} delivered.
+        {{ num }} {{ state_attr(trigger.entity_id, 'friendly_name').split(' ')[1] }} {{ iif(num == 1, 'package', 'packages') }} delivered.
       channel: standard
 
 #===============================#
@@ -961,13 +961,7 @@
 # So we keep a registry of tags, and the associated notification data, so we can reissue all notifications that were on the
 # device before they went away.
 #
-# There are 2 aspects to this.
-#
-# 1) A registry consisting of a dictionary where the keys are the tags and the values are the notification data 
-#    (Mobile Tag Registry sensor).
-# 2) An input select of just the tags (Mobile Tags). We use this on the UI, to allow tags to be selected for removal from these
-#    structures, for those notifications that can't be automatically removed; and to get all the keys that we need to walk
-#    through the registry to reissue the notifications.
+# The registry consists of a dictionary where the keys are the tags and the values are the notification data (title, message, etc).
 
 # This is where we reissue the notifications.
 - alias: Reissue Mobile Notifications
@@ -989,7 +983,7 @@
     
     # Walk through all tags.
     - repeat:
-        for_each: "{{ state_attr('input_select.mobile_tags', 'options') }}"
+        for_each: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         
         sequence:
           - variables:
@@ -1049,7 +1043,8 @@
     - variables:
         tag: "{{ trigger.event.data.entity_id | replace('timer.', '') }}"
     
-    - service: script.unregister_mobile_notification
+    # Remove the notification and unregister the tag.
+    - service: script.remove_mobile_notification
       data:
         tag: "{{ tag }}"
 
@@ -1079,15 +1074,8 @@
       
       then:
     
-        # Clear the notification.
-        - service: notify.mobile_app_jon_galaxy
-          data:
-            message: 'clear_notification'
-            data:
-              tag: vacuum_stuck
-    
-        # Unregister the tag.
-        - service: script.unregister_mobile_notification
+        # Remove the notification and unregister the tag.
+        - service: script.remove_mobile_notification
           data:
             tag: vacuum_stuck
           
@@ -1097,15 +1085,8 @@
       
       then:
     
-        # Clear the notification.
-        - service: notify.mobile_app_jon_galaxy
-          data:
-            message: 'clear_notification'
-            data:
-              tag: vacuum_maintenance
-    
-        # Unregister the tag.
-        - service: script.unregister_mobile_notification
+        # Remove the notification and unregister the tag.
+        - service: script.remove_mobile_notification
           data:
             tag: vacuum_maintenance
     
@@ -1128,21 +1109,14 @@
   
   action:
     - repeat:
-        for_each: "{{ state_attr('input_select.mobile_tags', 'options') }}"
+        for_each: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         sequence:
           - if:
               - "{{ repeat.item in ['washer_done', 'dryer_done', 'next_canes_game'] }}"
             
             then:
-    
-              # Clear the notification.
-              - service: notify.mobile_app_jon_galaxy
-                data:
-                  message: 'clear_notification'
-                  data:
-                    tag: "{{ repeat.item }}"
         
-              # Unregister the tag.
-              - service: script.unregister_mobile_notification
+              # Remove the notification and unregister the tag.
+              - service: script.remove_mobile_notification
                 data:
                   tag: "{{ repeat.item }}"

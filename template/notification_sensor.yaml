@@ -28,3 +28,13 @@
           {% elif trigger.event.event_type == 'unregister_mobile_tag' %}
             {{ dict(current.items() | rejectattr('0', 'eq', trigger.event.data.key)) }}
           {% endif %}
+
+# This sensor just contains the keys for the mobile tag registry. This is used for manual unregistration of tags
+# from the UI, and for ease of walking through the registry.
+- sensor:
+    - name: Mobile Tag Registry Keys
+      unique_id: mobile_tag_registry_keys
+      state: "{{ this.attributes.tags | length }}"
+      
+      attributes:
+        tags: "{{ state_attr('sensor.mobile_tag_registry', 'tags').keys() | list }}"

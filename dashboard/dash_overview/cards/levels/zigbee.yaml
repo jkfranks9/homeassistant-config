@@ -7,9 +7,7 @@ title: Zigbee Signal Levels
 mode: vertical
 cards:
   
-  - type: custom:battery-state-card
-    icon: mdi:signal
-    unit: lqi
+  - type: entities
     entities:
       
       - entity: sensor.studio_motion_detector_linkquality

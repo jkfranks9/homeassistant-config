@@ -7,7 +7,7 @@ title: Battery Levels
 mode: vertical
 
 cards:
-  - type: custom:battery-state-card
+  - type: entities
     entities:
       
       - entity: sensor.jon_galaxy_battery_level

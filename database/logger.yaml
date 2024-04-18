@@ -144,9 +144,6 @@ filters:
 
   homeassistant.components.media_player:
     - "Updating .* took longer than the scheduled update interval .*"
-
-  homeassistant.components.openuv:
-    - "Skipping update due to missing data: from_time"
   
   homeassistant.components.recorder.db_schema:
     - "Event data for system_log_event exceed maximum size of 32768 bytes"
@@ -176,7 +173,6 @@ filters:
   homeassistant.components.websocket_api.http.connection:
     - "Disconnected: Did not receive auth message within 10 seconds"
     - ".* Connection closed by client"
-    - ".* Received unknown command: browser_mod/update"
     - ".* Received unknown command: mobile_app/push_notification_channel"
   
   homeassistant.config_entries:

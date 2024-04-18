@@ -45,14 +45,6 @@ bedtime:
     # Establish the proper bedtime environment (lights, thermostats, echo devices, smart vents, vacuum).
     - service: script.establish_bedtime_environment
     
-    # Turn off Christmas lights if needed.
-    - if:
-        - "{{ is_state('input_boolean.christmas_mode', 'on') }}"
-      
-      then:
-        - service: light.turn_off
-          entity_id: light.all_christmas_lights
-    
     # Turn off all fans.
     - scene: scene.fans_off
   
@@ -823,13 +815,6 @@ reset_smart_bulbs:
   alias: Reset Smart Bulbs
   
   sequence:
-    
-    - service: script.reset_smart_bulb_lux_sensor
-      data:
-        light_entity: light.family_room_lamp
-        lux_entity: sensor.foyer_ambient_light
-        lux_value: 700
-    
     - service: script.reset_smart_bulb_nighttime
       data:
         light_entity: light.master_bedroom_lamp
@@ -939,55 +924,6 @@ reset_smart_bulb_lux_sensor:
           data:
             light_entity: "{{ light_entity }}"
 
-#============================#
-#     Family Room Normal     #
-#============================#
-
-# Normal family room light attributes. This can be used to ensure the correct lighting.
-turn_on_family_room_normal:
-  alias: Turn On Family Room Normal
-  
-  sequence:
-    
-    - service: light.turn_on
-      target:
-        entity_id: light.family_room_lamp
-      data:
-        kelvin: 3125
-        brightness_pct: 50
-
-#==================================#
-#     Family Room Lamp Rainbow     #
-#==================================#
-
-# Ridiculous demo that I'm keeping because my granddaughter might like it :)
-start_rainbow:
-  alias: Start Rainbow
-  
-  sequence:
-    - alias: Repeat Rainbow
-      
-      repeat:
-        while: "{{ repeat.index <= 30 }}"
-        
-        sequence:
-          
-          - service: input_select.select_next
-            entity_id: input_select.rainbow_colors
-          
-          - service: light.turn_on
-            entity_id: light.family_room_lamp
-            data_template:
-              brightness_pct: 100
-              color_name: "{{ states('input_select.rainbow_colors') }}"
-          
-          - delay: '00:00:02'
-    
-    - service: script.turn_on_family_room_normal
-    
-    - service: light.turn_off
-      entity_id: light.family_room_lamp
-
 #==========================#
 #     Christmas Lights     #
 #==========================#
@@ -1023,24 +959,6 @@ turn_off_christmas_lights:
     
     - service: light.turn_off
       entity_id: light.all_christmas_lights
-
-#===========================#
-#     Light Group Popup     #
-#===========================#
-
-popup_light_group:
-  alias: Popup Light Group
-  
-  sequence:
-    
-    - service: browser_mod.popup
-      data_template:
-        browser_id: "{{ browser_id }}"
-        title: "{{ state_attr(light_group, 'friendly_name') }}"
-        content:
-          type: entities
-          show_header_toggle: true
-          entities: "{{ expand(light_group) | map(attribute = 'entity_id') | list }}"
 
 #===================#
 #     Bath Time     #

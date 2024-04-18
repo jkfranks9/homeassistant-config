@@ -70,12 +70,6 @@
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
-    
-    # Restore the saved mobile notification tags.
-    - service: pyscript.restore_input_select_options
-      data:
-        entity: input_select.mobile_tags
-        file: '/config/mobile_tags_backup'
 
 #=========================#
 #     Shutdown Chores     #
@@ -250,6 +244,7 @@
     - condition: template
       value_template: >
         {% set skip_list = [
+                            'backup_log_to_pc',
                             'initialize_turn_on_volume', 
                             'log_automations',
                             'log_blue_charm_debug',
@@ -268,8 +263,7 @@
                             'set_minimum_attic_temperature', 
                             'set_minimum_garage_temperature', 
                             'set_minimum_outdoor_temperature',
-                            'set_washer_operation',
-                            'update_openuv'
+                            'set_washer_operation'
                            ] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list and
@@ -311,7 +305,6 @@
                             'evaluate_weather_condition', 
                             'log_laundry_event',
                             'mobile_notification_worker',
-                            'popup_light_group',
                             'restore_lighting_on_resume',
                             'resume_cinema',
                             'resume_worker', 
@@ -770,7 +763,7 @@
       data:
         topic: 'porch-sensor/ota_mode'
     
-    - delay: '00:05:00'
+    - delay: '00:07:00'
     
     - service: script.resume_deep_sleep
       data:

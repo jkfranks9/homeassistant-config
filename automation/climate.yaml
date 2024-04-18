@@ -132,24 +132,6 @@
       result_entity: input_number.max_outdoor_temp
       type: Max
 
-#=================#
-#     Open UV     #
-#=================#
-
-# Update OpenUV once per hour during daylight.
-- alias: Update OpenUV
-  id: 'update_openuv'
-  trigger:
-    - platform: time_pattern
-      minutes: 19
-  condition:
-    - condition: state
-      entity_id: sun.sun
-      state: above_horizon
-  action:
-    - service: homeassistant.update_entity
-      entity_id: sensor.current_uv_index
-
 #========================#
 #     Door & Windows     #
 #========================#

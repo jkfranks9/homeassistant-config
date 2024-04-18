@@ -4,16 +4,11 @@
 
 title: Monitoring
 icon: mdi:chart-line
-panel: true
 visible:
   - user: f02fbce66df546fa90f8f3d03283b55e
+
 cards:
-  - type: custom:layout-card
-    layout_type: custom:vertical-layout
-    cards:
-      - !include /config/dashboard/dash_overview/cards/monitoring/system.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/monitoring/homeassistant.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/monitoring/backups.yaml
-      - !include /config/dashboard/dash_overview/cards/monitoring/last_changed.yaml
+  - !include /config/dashboard/dash_overview/cards/monitoring/system.yaml
+  - !include /config/dashboard/dash_overview/cards/monitoring/homeassistant.yaml
+  - !include /config/dashboard/dash_overview/cards/monitoring/backups.yaml
+  - !include /config/dashboard/dash_overview/cards/monitoring/last_changed.yaml

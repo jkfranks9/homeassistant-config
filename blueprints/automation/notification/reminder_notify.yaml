@@ -141,15 +141,8 @@ action:
     else:      
       - variables:
           entity_suffix: "{{ (trigger.entity_id).split('_')[-1] }}"
-      
-      # Clear the notification.
-      - service: notify.mobile_app_jon_galaxy
-        data:
-          message: 'clear_notification'
-          data:
-            tag: "{{ input_tag_prefix ~ entity_suffix }}"
     
-      # Unregister the tag.
-      - service: script.unregister_mobile_notification
+      # Remove the notification and unregister the tag.
+      - service: script.remove_mobile_notification
         data:
           tag: "{{ input_tag_prefix ~ entity_suffix }}"

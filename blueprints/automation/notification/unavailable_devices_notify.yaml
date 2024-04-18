@@ -14,21 +14,19 @@ blueprint:
           domain: sensor
     
     # The next two inputs define an additional condition to use. This is needed for zigbee only (so far).
-    # The default is a somewhat bogus browser mod entity that should always be off, thus ensuring the 
+    # The default is a (broken) motion detector tamper switch that should always be on, thus ensuring the 
     # condition passes.
-    #
-    # NOTE: If I ever decide to nuke browser mod, this will need to be changed.
     additional_condition_entity:
       name: Additional Condition Entity
       description: (Optional) An additional entity to be used as a condition.
-      default: binary_sensor.legion_browser_fullykiosk
+      default: binary_sensor.laundry_room_motion_detector_tamper
       selector:
         entity:
     
     additional_condition_state:
       name: Additional Condition State
       description: (Optional) An additional entity state to be used as a condition.
-      default: 'off'
+      default: 'on'
 
 mode: queued
   

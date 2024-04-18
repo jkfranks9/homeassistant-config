@@ -4,7 +4,6 @@
 # Whitelist files/folders with !, these will not be ignored.
 !*.yaml
 !.gitignore
-!*.md
 !*.py
 !*.jinja
 
@@ -26,6 +25,9 @@
 !custom_templates/
 
 !dashboard/
+!dashboard/button_card_templates/
+!dashboard/button_card_templates/creative-button-card-templates
+!dashboard/button_card_templates/creative-button-card-templates/addons
 !dashboard/dash_overview/
 !dashboard/dash_overview/cards/
 !dashboard/dash_overview/cards/controls

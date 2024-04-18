@@ -49,7 +49,6 @@ smart_home:
       - script.sleeptime
       - script.start_bluray
       - script.start_laserdisc
-      - script.start_rainbow
       - script.start_streaming
       - script.start_turntable
       - script.toggle_master_lights

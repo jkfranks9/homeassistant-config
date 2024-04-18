@@ -5,13 +5,13 @@
 # Bar Card
 - url: /local/community/bar-card/bar-card.js
   type: module
-
-# Battery State Card
-- url: /local/community/battery-state-card/battery-state-card.js
-  type: module
   
 # Button Card
 - url: /local/community/button-card/button-card.js
+  type: module
+  
+# Clock Weather Card
+- url: /local/community/clock-weather-card/clock-weather-card.js
   type: module
   
 # Config Template Card
@@ -26,10 +26,6 @@
 - url: /local/community/gauge-card/gauge-card.js
   type: module
 
-# HA Card Weather Conditions
-- url: /local/community/ha-card-weather-conditions/ha-card-weather-conditions.js
-  type: module
-
 # HA Floorplan
 - url: /local/community/ha-floorplan/floorplan.js
   type: module
@@ -38,24 +34,12 @@
 #- url: /local/community/lovelace-card-mod/card-mod.js
 #  type: module
 
-# Lovelace Card Tools
-- url: /local/community/lovelace-card-tools/card-tools.js
-  type: module
-
 # Lovelace Fold Entity Row
 - url: /local/community/lovelace-fold-entity-row/fold-entity-row.js
   type: module
 
 # Lovelace Horizon Card
 - url: /local/community/lovelace-horizon-card/lovelace-horizon-card.js
-  type: module
-
-# Lovelace Layout Card
-- url: /local/community/lovelace-layout-card/layout-card.js
-  type: module
-
-# Lovelace Multiline Text Input Card
-- url: /local/community/lovelace-multiline-text-input-card/lovelace-multiline-text-input-card.js
   type: module
 
 # Lovelace Multiple Entity Row

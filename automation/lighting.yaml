@@ -522,13 +522,6 @@
       id: office
     
     - platform: state
-      entity_id: light.family_room_lamp
-      from: 'off'
-      to: 'on'
-      for: '00:00:03'
-      id: family
-    
-    - platform: state
       entity_id: light.master_bedroom_lamp
       from: 'off'
       to: 'on'
@@ -539,12 +532,11 @@
     
     # Get the last changed time of all smart bulbs as a UNIX timestamp, for easy arithmetic.
     office_last_changed: "{{ as_timestamp(as_datetime(states.light.office_lamp.last_changed.isoformat())) }}"
-    family_last_changed: "{{ as_timestamp(as_datetime(states.light.family_room_lamp.last_changed.isoformat())) }}"
     bedroom_last_changed: "{{ as_timestamp(as_datetime(states.light.master_bedroom_lamp.last_changed.isoformat())) }}"
     
     # The number of seconds we consider 'recent'. Since this automation runs queued, this should be slightly greater than
     # the sum of the 'for' options in the triggers.
-    recent_seconds: 10
+    recent_seconds: 7
   
   action:
     
@@ -555,16 +547,7 @@
         
         sequence:
           - if:
-              - "{{ 0 < office_last_changed - family_last_changed < recent_seconds and 0 < office_last_changed - bedroom_last_changed < recent_seconds }}"
-            
-            then:
-              - service: script.reset_smart_bulbs
-      
-      - conditions: "{{ trigger.id == 'family' }}"
-        
-        sequence:
-          - if:
-              - "{{ 0 < family_last_changed - office_last_changed < recent_seconds and 0 < family_last_changed - bedroom_last_changed < recent_seconds }}"
+              - "{{ 0 < office_last_changed - bedroom_last_changed < recent_seconds }}"
             
             then:
               - service: script.reset_smart_bulbs
@@ -573,7 +556,7 @@
         
         sequence:
           - if:
-              - "{{ 0 < bedroom_last_changed - office_last_changed < recent_seconds and 0 < bedroom_last_changed - family_last_changed < recent_seconds }}"
+              - "{{ 0 < bedroom_last_changed - office_last_changed < recent_seconds }}"
             
             then:
               - service: script.reset_smart_bulbs

@@ -4,15 +4,10 @@
 
 title: Levels
 icon: mdi:percent
-panel: true
 visible:
   - user: f02fbce66df546fa90f8f3d03283b55e
+
 cards:
-  - type: custom:layout-card
-    layout_type: custom:vertical-layout
-    cards:
-      - !include /config/dashboard/dash_overview/cards/levels/batteries.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/levels/wifi.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/levels/zigbee.yaml
+  - !include /config/dashboard/dash_overview/cards/levels/batteries.yaml
+  - !include /config/dashboard/dash_overview/cards/levels/wifi.yaml
+  - !include /config/dashboard/dash_overview/cards/levels/zigbee.yaml

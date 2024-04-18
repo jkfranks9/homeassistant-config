@@ -235,6 +235,30 @@ send_notification:
                   message: "Invalid destination '{{ destination }}' specified"
                   level: error
 
+# Remove a notification from a mobile device.
+remove_mobile_notification:
+  alias: Remove Mobile Notification
+  mode: queued
+  max: 10
+  
+  fields:
+    tag:
+      description: The tag value.
+  
+  sequence:
+      
+    # Clear the notification. In some cases it may have been cleared by the user, but it doesn't hurt to try again.
+    - service: notify.mobile_app_jon_galaxy
+      data:
+        message: 'clear_notification'
+        data:
+          tag: "{{ tag }}"
+    
+    # Unregister the tag.
+    - service: script.unregister_mobile_notification
+      data:
+        tag: "{{ tag }}"
+
 #===================================#
 #     Notification Tag Registry     #
 #===================================#
@@ -294,28 +318,6 @@ register_mobile_notification:
         key: "{{ tag }}"
         value: "{{ value }}"
     
-    # We also keep an input select with all the tags. This is for the UI, so we can manually remove a tag if we're
-    # unable to do so automatically, or if the notification is manually removed on my phone. Add the tag to this as well.
-    - variables:
-        tag_list: >
-          {% set ns = namespace(opts = []) %}
-          {% for opt in state_attr('input_select.mobile_tags', 'options') %}
-            {% if opt != 'dummy' and opt != tag %}
-              {% set ns.opts = ns.opts + [opt] %}
-            {% endif %}
-            {% if loop.last %}
-              {% set ns.opts = ns.opts + [tag] %}
-            {% endif %}
-          {% endfor %}
-          
-          {{ ns.opts | sort }}
-    
-    - service: pyscript.save_input_select_options
-      data:
-        entity: input_select.mobile_tags
-        list: "{{ tag_list }}"
-        file: '/config/mobile_tags_backup'
-    
     ####################### Special cases to automatically unregister notifications #######################
     
     # For a temporary channel notification, we know when the notification will be automatically removed from the device.
@@ -349,8 +351,7 @@ register_mobile_notification:
           data:
             value: "{{ states('input_number.vacuum_problems') | int(0) + problem }}"
 
-# A tag is unregistered when the notification is cleared by an automation, or if it's cleared manually on the device
-# (we automate on the notification cleared sensor, which returns us the tag value).
+# A tag is unregistered when the notification is cleared by an automation.
 unregister_mobile_notification:
   alias: Unregister Mobile Notification
   
@@ -364,35 +365,13 @@ unregister_mobile_notification:
     - event: unregister_mobile_tag
       event_data:
         key: "{{ tag }}"
-    
-    # Remove the tag from the input select.
-    - variables:
-        tag_list: >
-          {% set ns = namespace(opts = []) %}
-          {% for opt in state_attr('input_select.mobile_tags', 'options') %}
-            {% if opt != tag %}
-              {% set ns.opts = ns.opts + [opt] %}
-            {% endif %}
-          {% endfor %}
-          {% if ns.opts | length == 0 %}
-            {% set ns.opts = ns.opts + ['dummy'] %}
-          {% endif %}
-          
-          {{ ns.opts | sort }}
-    
-    - service: pyscript.save_input_select_options
-      data:
-        entity: input_select.mobile_tags
-        list: "{{ tag_list }}"
-        file: '/config/mobile_tags_backup'
 
-# The UI allows us to unregister a tag that can't be removed automatically, by picking the tag from the input select
-# that contains all the tags. The picked tag becomes the state of the input select. So the UI calls this script to
-# do the unregister.
-unregister_mobile_notification_from_select:
-  alias: Unregister Mobile Notification From Select
+# The UI allows us to unregister a tag that can't be removed automatically, by picking the index of the tag from the
+# Mobile Tag Registry Keys sensor.
+remove_mobile_notification_from_index:
+  alias: Remove Mobile Notification From Index
   
   sequence:
-    - service: script.unregister_mobile_notification
+    - service: script.remove_mobile_notification
       data:
-        tag: "{{ states('input_select.mobile_tags') }}"
+        tag: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags')[states('input_number.mobile_tags_key') | int(0)] }}"

@@ -14,18 +14,18 @@ cards:
       buttons:
         card:
           type: grid
-          columns: 2
+          columns: 3
           square: false
           cards:
             
             - type: 'custom:button-card'
               template: input_button
               show_state: false
-              entity: input_select.mobile_tags
+              entity: sensor.mobile_tag_registry_keys
               name: >
                 [[[ 
-                  var len = states['input_select.mobile_tags'].attributes.options.length;
-                  if (len == 1 && states['input_select.mobile_tags'].state == 'dummy') {
+                  var len = states['sensor.mobile_tag_registry_keys'].state;
+                  if (len == 0) {
                     return "None";
                   }
                   else if (len == 1) {
@@ -36,12 +36,17 @@ cards:
                   }
                 ]]]
             
+            - type: 'custom:button-card'
+              template: input_button
+              entity: input_number.mobile_tags_key
+              name: 'Key #'
+            
             - type: button
               name: >
                 [[[
-                  return "Unreg '" + states['input_select.mobile_tags'].state + "'";
+                  return "Unregister " + Math.trunc(states['input_number.mobile_tags_key'].state);
                 ]]]
               show_state: false
               tap_action:
                 action: call-service
-                service: script.unregister_mobile_notification_from_select
+                service: script.remove_mobile_notification_from_index

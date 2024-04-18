@@ -142,15 +142,8 @@
         channel: critical
         timeout: 0
       
-    # Remove the first power outage notification.
-    - service: notify.mobile_app_jon_galaxy
-      data:
-        message: 'clear_notification'
-        data:
-          tag: 'power_out'
-
-    # Unregister the tag.
-    - service: script.unregister_mobile_notification
+    # Remove the first power outage notification and unregister the tag.
+    - service: script.remove_mobile_notification
       data:
         tag: 'power_out'
     

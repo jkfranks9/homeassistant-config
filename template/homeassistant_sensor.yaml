@@ -615,7 +615,7 @@
     # When ESPHome is updated I usually use the update all button to update all devices. However, if a device is battery
     # powered it lives in deep sleep most of the time, which means the window to upload the new firmware to the device is very small. 
     # The updates are handled alphabetically, so when we're getting fairly close to (at this time) my only battery device 
-    # (2 devices prior to it) I want to disable deep sleep so the updated firmware can be uploaded. The Track ESPHome Update All automation 
+    # (2 devices prior to it) I want to disable deep sleep so the updated firmware can be uploaded. The Assist ESPHome Update All automation 
     # uses these sensors to detect when it's time to turn off deep sleep.
     
     # This sensor contains the list and count of devices that are 2 before the battery device.

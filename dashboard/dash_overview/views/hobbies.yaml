@@ -4,35 +4,24 @@
 
 title: Hobbies
 icon: mdi:satellite-variant
-panel: true
+
 cards:
-  - type: custom:layout-card
-    layout_type: custom:vertical-layout
-    cards:
-      - type: conditional
-        conditions:
-          - condition: screen
-            media_query: "(min-width: 1024px)"
-        card:
-          !include /config/dashboard/dash_overview/cards/hobbies/satellite_map.yaml
-      - type: custom:layout-break
-      - !include /config/dashboard/dash_overview/cards/hobbies/satellites.yaml
-      - type: conditional
-        conditions:
-          - condition: screen
-            media_query: "(min-width: 1024px)"
-        card:
-          !include /config/dashboard/dash_overview/cards/hobbies/starlink.yaml
-      - type: custom:layout-break
-      - type: conditional
-        conditions:
-          - condition: screen
-            media_query: "(min-width: 1024px)"
-        card:
-          !include /config/dashboard/dash_overview/cards/hobbies/horizon.yaml
-      - type: conditional
-        conditions:
-          - entity: input_boolean.hockey_season
-            state: 'on'
-        card:
-          !include /config/dashboard/dash_overview/cards/hobbies/hockey.yaml
+  - type: conditional
+    conditions:
+      - condition: screen
+        media_query: "(min-width: 1024px)"
+    card:
+      !include /config/dashboard/dash_overview/cards/hobbies/satellite_map.yaml
+  - !include /config/dashboard/dash_overview/cards/hobbies/satellites.yaml
+  - type: conditional
+    conditions:
+      - condition: screen
+        media_query: "(min-width: 1024px)"
+    card:
+      !include /config/dashboard/dash_overview/cards/hobbies/starlink.yaml
+  - type: conditional
+    conditions:
+      - entity: input_boolean.hockey_season
+        state: 'on'
+    card:
+      !include /config/dashboard/dash_overview/cards/hobbies/hockey.yaml

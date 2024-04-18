@@ -160,34 +160,6 @@ door_window_button:
       icon: '[[[ return variables.var_icon_prefix + "-closed" ]]]'
       color: var(--paper-item-icon-color)
 
-#============================#
-#     Light Group Button     #
-#============================#
-
-light_group_button:
-  template: common
-  
-  variables:
-    entities_title: ''
-    entities_group: ''
-  
-  show_state: false
-  
-  tap_action:
-    action: fire-dom-event
-    browser_mod:
-      service: script.popup_light_group
-      data:
-        browser_id: THIS
-        light_group: '[[[ return variables.entities_group ]]]'
-  
-  state:
-    - value: 'on'
-      icon: mdi:home-lightbulb
-    
-    - value: 'off'
-      icon: mdi:home-lightbulb-outline
-
 #===========================#
 #     Satellite Buttons     #
 #===========================#
