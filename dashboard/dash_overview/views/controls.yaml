@@ -11,7 +11,6 @@ cards:
   - !include /config/dashboard/dash_overview/cards/controls/treadmill.yaml
   - !include /config/dashboard/dash_overview/cards/controls/variables.yaml
   - !include /config/dashboard/dash_overview/cards/controls/other.yaml
-  - !include /config/dashboard/dash_overview/cards/controls/bedrooms.yaml
   - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
   - !include /config/dashboard/dash_overview/cards/controls/reminder_lookahead.yaml
   - !include /config/dashboard/dash_overview/cards/controls/notification_tags.yaml

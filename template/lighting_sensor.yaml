@@ -1,0 +1,31 @@
+#==========================#
+#     Lighting Sensors     #
+#==========================#
+
+# Because of Christmas lights, some light groups are actually old-style groups that are dynamically built by the
+# Build Dynamic Light Groups automation (when the Christmas Mode toggle changes). For the front end, we need lists
+# of symbols to display in the light group buttons that correspond to the lights in the group. This sensor responds
+# to changes in the dynamic light groups, and creates the correct list of symbols for each dynamic group.
+#
+# NOTE: The order of symbols here and light entities built by the automation must be kept in sync.
+- sensor:
+    - name: Dynamic Light Group Symbols
+      unique_id: dynamic_light_group_symbols
+      state: Symbols
+      
+      attributes:
+        family_room_symbols: >
+          {% from 'dynamic_groups.jinja' import build_dynamic_symbol_list %}
+          {{ build_dynamic_symbol_list('group.family_room_lights', ['L', 'S', 'F'], 'family_room') }}
+        
+        kitchen_symbols: >
+          {% from 'dynamic_groups.jinja' import build_dynamic_symbol_list %}
+          {{ build_dynamic_symbol_list('group.kitchen_lights', ['I', 'S', 'K'], 'kitchen') }}
+        
+        downstairs_common_symbols: >
+          {% from 'dynamic_groups.jinja' import build_dynamic_symbol_list %}
+          {{ build_dynamic_symbol_list('group.downstairs_common_lights', ['1', '2', 'F', 'L'], 'downstairs_common') }}
+        
+        outdoor_symbols: >
+          {% from 'dynamic_groups.jinja' import build_dynamic_symbol_list %}
+          {{ build_dynamic_symbol_list('group.outdoor_lights', ['P', 'F', 'D', 'B', 'Y'], 'outdoor') }}

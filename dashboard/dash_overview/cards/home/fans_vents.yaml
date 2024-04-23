@@ -7,59 +7,61 @@ title: Fans & Vents
 mode: vertical
 cards:
   
-  - type: 'custom:button-card'
-    template: container
-    
-    custom_fields:
-      buttons:
-        card:
-          type: grid
-          columns: 3
-          square: false
-          cards:
-  
-            - type: 'custom:button-card'
-              template: ceiling_fan_button
-              entity: fan.family_room_fan
-              name: Family
-              variables:
-                light_entity: light.family_room_fan
-          
-            - type: 'custom:button-card'
-              template: ceiling_fan_button
-              entity: fan.office_fan
-              name: Office
-              variables:
-                light_entity: light.office_fan
-          
-            - type: 'custom:button-card'
-              template: ceiling_fan_button
-              entity: fan.theater_fan
-              name: Theater
-              variables:
-                light_entity: light.theater_fan
-
-            - type: 'custom:button-card'
-              template: bath_fan_button
-              entity: switch.studio_fan
-              name: Studio
+  - type: grid
+    columns: 3
+    square: false
+    cards:
+      - type: tile
+        entity: fan.family_room_fan
+        name: Family
+        icon: mdi:ceiling-fan
+        hide_state: true
+        features:
+          - type: "fan-speed"
       
-            - type: 'custom:button-card'
-              template: bath_fan_button
-              entity: switch.master_bath_fan
-              name: Master
+      - type: tile
+        entity: fan.office_fan
+        name: Office
+        icon: mdi:ceiling-fan
+        hide_state: true
+        features:
+          - type: "fan-speed"
       
-            - type: 'custom:button-card'
-              template: bath_fan_button
-              entity: switch.penthouse_fan
-              name: Penthouse
-  
-            - type: custom:button-card
-              template: hvac_vent_button
-              entity: cover.master_br_vent_1
-              name: Master BR 1
-              
-            - type: custom:button-card
-              template: hvac_vent_button
-              entity: cover.master_br_vent_2
-              name: Master BR 2
+      - type: tile
+        entity: fan.theater_fan
+        name: Theater
+        icon: mdi:ceiling-fan
+        hide_state: true
+        features:
+          - type: "fan-speed"
+      
+      - type: tile
+        entity: switch.studio_fan
+        name: Studio
+        icon: mdi:fan
+      
+      - type: tile
+        entity: switch.master_bath_fan
+        name: Master
+        icon: mdi:fan
+      
+      - type: tile
+        entity: switch.penthouse_fan
+        name: Penthouse
+        icon: mdi:fan
+      
+      - type: tile
+        entity: cover.master_br_vent_1
+        name: BR 1
+        icon: mdi:hvac
+        state_content: current_position
+        features:
+          - type: "cover-open-close"
+      
+      - type: tile
+        entity: cover.master_br_vent_2
+        name: BR 2
+        icon: mdi:hvac
+        state_content: current_position
+        features:
+          - type: "cover-open-close"

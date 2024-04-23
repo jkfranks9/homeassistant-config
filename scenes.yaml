@@ -5,10 +5,16 @@
 - id: 'lights_out'
   name: Lights Out
   entities:
-    light.downstairs_lights:              'off'
+    group.downstairs_common_lights:       'off'
+    light.studio_lights:                  'off'
+    group.family_room_lights:             'off'
+    group.kitchen_lights:                 'off'
+    light.office_lights:                  'off'
+    light.master_suite_lights:            'off'
+    light.all_christmas_lights:           'off'
     light.upstairs_lights:                'off'
     light.storage_lights:                 'off'
-    light.outdoor_lights:                 'off'
+    group.outdoor_lights:                 'off'
     input_boolean.ceiling_fan_lights_off: 'on'
 
 #===============================#
@@ -20,16 +26,15 @@
   name: Non Master Lights Out
   entities:
     light.master_bath_light:              'off'
-    light.downstairs_common_lights:       'off'
+    group.downstairs_common_lights:       'off'
     light.studio_lights:                  'off'
-    light.family_room_lights:             'off'
-    light.kitchen_lights:                 'off'
+    group.family_room_lights:             'off'
+    group.kitchen_lights:                 'off'
     light.office_lights:                  'off'
-    light.laundry_room_lights:            'off'
     light.all_christmas_lights:           'off'
     light.upstairs_lights:                'off'
     light.storage_lights:                 'off'
-    light.outdoor_lights:                 'off'
+    group.outdoor_lights:                 'off'
     input_boolean.ceiling_fan_lights_off: 'on'
 
 #================================#
@@ -47,13 +52,12 @@
     light.master_bath_light:              'off'
     light.stairway_light:                 'off'
     light.utility_light:                  'off'
-    light.downstairs_common_lights:       'off'
-    light.kitchen_lights:                 'off'
+    group.downstairs_common_lights:       'off'
+    group.kitchen_lights:                 'off'
     light.office_lights:                  'off'
-    light.laundry_room_lights:            'off'
     light.all_christmas_lights:           'off'
     light.storage_lights:                 'off'
-    light.outdoor_lights:                 'off'
+    group.outdoor_lights:                 'off'
     input_boolean.ceiling_fan_lights_off: 'on'
 
 #==================================#

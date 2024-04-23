@@ -415,6 +415,8 @@ entities:
     icon: mdi:weight-lifter
     state_header: Group
     entities:
+      - entity: sensor.exercise_overdue_types
+        name: Overdue
       - entity: sensor.weekly_treadmill_total
         name: Treadmill
       - entity: sensor.weekly_workout_total

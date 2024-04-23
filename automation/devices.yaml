@@ -401,12 +401,17 @@
       # Must be sunset.
       else:
         
-        # Turn off certain light domains.
-        - service: scene.apply
-          data:
-            entities:
-              light.storage_lights: 'off'
-              light.outdoor_lights: 'off'
+        # Turn off certain light domains. However, make sure not to turn off outdoor christmas lights at sunset.
+        - variables:
+            targets: >
+              {% set storage_lights = expand('light.storage_lights') | map(attribute='entity_id') | list %}
+              {% set outdoor_lights = expand('group.outdoor_lights') | rejectattr('entity_id', 'in', ['light.outdoor_christmas']) | map(attribute='entity_id') | list %}
+              
+              {{ storage_lights + outdoor_lights }}
+        
+        - service: light.turn_off
+          target:
+            entity_id: "{{ targets }}"
 
 #=======================#
 #     House: Family     #

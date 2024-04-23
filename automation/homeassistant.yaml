@@ -11,6 +11,47 @@
   
   action:
     
+    # For some reason, we need to recreate dynamic light groups. Without this, they still show up in the list of entities,
+    # but don't show up in templates. Probably a bug, but for now make sure we do this as soon as possible.
+    - service: group.set
+      data:
+        name: Family Room Lights
+        object_id: family_room_lights
+        entities:
+          - light.family_room_lamp
+          - light.stairway_light
+          - light.family_room_fan
+    
+    - service: group.set
+      data:
+        name: Kitchen Lights
+        object_id: kitchen_lights
+        entities:
+          - light.island_light
+          - light.sink_light
+          - light.kitchen_light
+    
+    - service: group.set
+      data:
+        name: Downstairs Common Lights
+        object_id: downstairs_common_lights
+        entities:
+          - light.foyer_hutch
+          - light.dining_room_hutch
+          - light.dining_room_lamps
+          - light.laundry_room_light
+    
+    - service: group.set
+      data:
+        name: Outdoor Lights
+        object_id: outdoor_lights
+        entities:
+          - light.porch_light
+          - light.front_floodlight
+          - light.driveway_light
+          - light.back_floodlight
+          - light.back_yard_light
+    
     # Delete junk log files left over from backing up the logs on shutdown.
     - service: shell_command.delete_junk_log_files  
     

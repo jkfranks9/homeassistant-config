@@ -485,7 +485,6 @@
       trigger_time: '06:04:00'
       date_entities: [
                       'input_datetime.reminder_medication_eliquis', 
-                      'input_datetime.reminder_medication_gabapentin', 
                       'input_datetime.reminder_medication_metoprolol', 
                       'input_datetime.reminder_medication_rosuvastatin', 
                       'input_datetime.reminder_medication_bloodbuilder', 
@@ -835,7 +834,7 @@
     input:
       sensor_entity: [sensor.mail_amazon_packages_delivered, sensor.mail_fedex_delivered, sensor.mail_ups_delivered, sensor.mail_usps_delivered]
       trigger_threshold: 0
-      enable_clear_threshold: false
+      enable_clear_trigger: false
       enable_echo_destination: true
       extract_tag_from_entity: true
       title: attention

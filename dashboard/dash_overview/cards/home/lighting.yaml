@@ -2,6 +2,18 @@
 #     Lighting Card     #
 #=======================#
 
+# NOTES:
+#
+# 1) Normal light groups (light.xxx) have the light symbols passed as a simple list ('letters' variable).
+# 2) Old style light groups (group.xxx) are used for groups that include Christmas lights. They have
+#    the symbols passed from a template sensor, as part of the dynamic group logic.
+# 3) Groups that include fans cannot just contain the fan light, because they operate in optimistic mode
+#    and can't just be turned on or off, because we don't know the current state. So they are instead
+#    specified directly here (using the 'items' variable), along with all the other lights in the group.
+#    Not a fan (haha) but what can I do?
+# 4) The family room group also includes a fan light, but is an old style group, which is dynamically
+#    modified according to Christmas mode. So the dynamic group logic also must include the fan light.
+
 type: custom:stack-in-card
 title: Lighting
 mode: vertical
@@ -20,28 +32,10 @@ cards:
             - type: custom:button-card
               template:
                 - light_group
-              entity: light.family_room_lights
-              name: Family
-              variables:
-                items:
-                  - entity: light.family_room_lamp
-                    symbol: L
-                  - entity: light.stairway_light
-                    symbol: S
-      
-            - type: custom:button-card
-              template:
-                - light_group
-              entity: light.kitchen_lights
+              entity: group.kitchen_lights
               name: Kitchen
               variables:
-                items:
-                  - entity: light.island_light
-                    symbol: I
-                  - entity: light.sink_light
-                    symbol: S
-                  - entity: light.kitchen_light
-                    symbol: K
+                letters: "[[[ return states['sensor.dynamic_light_group_symbols'].attributes.kitchen_symbols; ]]]"
             
             - type: custom:button-card
               template:
@@ -51,21 +45,11 @@ cards:
               variables:
                 items:
                   - entity: light.office_lamp
-                    symbol: L
+                    symbol: 'L'
                   - entity: light.office_bookcase
-                    symbol: B
-            
-            - type: custom:button-card
-              template:
-                - light_group
-              entity: light.master_suite_lights
-              name: Master
-              variables:
-                items:
-                  - entity: light.master_bedroom_lamp
-                    symbol: L
-                  - entity: light.master_bath_light
-                    symbol: B
+                    symbol: 'B'
+                  - entity: light.office_fan
+                    symbol: 'F'
             
             - type: custom:button-card
               template:
@@ -73,50 +57,15 @@ cards:
               entity: light.studio_lights
               name: Studio
               variables:
-                items:
-                  - entity: light.studio_lamp_1
-                    symbol: '1'
-                  - entity: light.studio_lamp_2
-                    symbol: '2'
-                  - entity: light.studio_light
-                    symbol: B
-                  - entity: light.hallway_lamp
-                    symbol: H
+                letters: ['H', 'W', '1', '2']
             
             - type: custom:button-card
               template:
                 - light_group
-              entity: light.downstairs_common_lights
-              name: Common 1
+              entity: light.master_suite_lights
+              name: Master
               variables:
-                items:
-                  - entity: light.foyer_hutch
-                    symbol: F
-                  - entity: light.dining_room_hutch
-                    symbol: H
-                  - entity: light.dining_room_lamps
-                    symbol: L
-                  - entity: light.laundry_room_light
-                    symbol: Y
-            
-            - type: custom:button-card
-              template:
-                - light_group
-              entity: light.outdoor_lights
-              name: Outdoor
-              variables:
-                #width:  175px
-                items:
-                  - entity: light.porch_light
-                    symbol: P
-                  - entity: light.front_floodlight
-                    symbol: F
-                  - entity: light.driveway_light
-                    symbol: D
-                  - entity: light.back_floodlight
-                    symbol: F
-                  - entity: light.back_yard_light
-                    symbol: B
+                letters: ['B', 'W']
             
             - type: custom:button-card
               template:
@@ -124,29 +73,7 @@ cards:
               entity: light.penthouse_lights
               name: Penthouse
               variables:
-                items:
-                  - entity: light.penthouse_light
-                    symbol: P
-                  - entity: light.penthouse_lamp
-                    symbol: L
-                  - entity: light.penthouse_vanity_light
-                    symbol: V
-                  - entity: light.penthouse_tub_light
-                    symbol: T
-            
-            - type: custom:button-card
-              template:
-                - light_group
-              entity: light.upstairs_common_lights
-              name: Common 2
-              variables:
-                items:
-                  - entity: light.hallway_light
-                    symbol: H
-                  - entity: light.snack_light
-                    symbol: S
-                  - entity: light.utility_light
-                    symbol: U
+                letters: ['B', 'L', 'V', 'T']
             
             - type: custom:button-card
               template:
@@ -154,11 +81,56 @@ cards:
               entity: light.theater_lights
               name: Theater
               variables:
+                letters: ['C', 'S', 'F']
                 items:
-                  - entity: light.theater_sconces
-                    symbol: S
                   - entity: light.theater_ceiling
-                    symbol: C
+                    symbol: 'C'
+                  - entity: light.theater_sconces
+                    symbol: 'S'
+                  - entity: light.theater_fan
+                    symbol: 'F'
+  
+  - type: 'custom:button-card'
+    template: container
+
+    custom_fields:
+      buttons:
+        card:
+          type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: custom:button-card
+              template:
+                - light_group
+              entity: group.downstairs_common_lights
+              name: Common 1
+              variables:
+                letters: "[[[ return states['sensor.dynamic_light_group_symbols'].attributes.downstairs_common_symbols; ]]]"
+            
+            - type: custom:button-card
+              template:
+                - light_group
+              entity: light.upstairs_common_lights
+              name: Common 2
+              variables:
+                letters: ['S', 'U', 'H']
+      
+            - type: custom:button-card
+              template:
+                - light_group
+              entity: group.family_room_lights
+              name: Family
+              variables:
+                letters: "[[[ return states['sensor.dynamic_light_group_symbols'].attributes.family_room_symbols; ]]]"
+      
+            - type: custom:button-card
+              template:
+                - light_group
+              entity: group.outdoor_lights
+              name: Outdoor
+              variables:
+                letters: "[[[ return states['sensor.dynamic_light_group_symbols'].attributes.outdoor_symbols; ]]]"
             
             - type: custom:button-card
               template:
@@ -166,8 +138,4 @@ cards:
               entity: light.storage_lights
               name: Storage
               variables:
-                items:
-                  - entity: light.garage_light
-                    symbol: G
-                  - entity: light.attic_light
-                    symbol: A
+                letters: ['A', 'G']

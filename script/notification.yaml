@@ -275,6 +275,19 @@ register_mobile_notification:
     tag:
       description: The tag value.
     
+    # friendly_name:
+      # description: Friendly name for the tag.
+    
+    # clear_type:
+      # description: How the tag can be cleared.
+      # selector:
+        # select:
+          # options:
+            # - auto
+            # - assisted
+            # - manual
+            # - dual
+    
     title:
       description: The title of the message.
     

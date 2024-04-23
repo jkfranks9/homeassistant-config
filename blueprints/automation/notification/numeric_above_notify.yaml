@@ -126,7 +126,7 @@ action:
   - variables:
       tag: >
         {% if input_extract_tag_from_entity %}
-          {{ state_attr(trigger.from_state.entity_id, 'friendly_name') | replace('Mail ', '') | replace(' Packages Delivered', '') | lower ~ '_package_delivered' }}
+          {{ state_attr(trigger.from_state.entity_id, 'friendly_name') | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | lower ~ '_package_delivered' }}
         {% else %}
           {{ input_tag }}
         {% endif %}

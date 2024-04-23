@@ -7,6 +7,30 @@ title: Environment
 mode: vertical
 cards:
   
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: climate.downstairs
+        features:
+          - type: "target-temperature"
+          - type: "climate-preset-modes"
+            preset_modes:
+              - Home
+              - Away
+              - Sleep
+      
+      - type: tile
+        entity: climate.upstairs
+        features:
+          - type: "target-temperature"
+          - type: "climate-preset-modes"
+            preset_modes:
+              - Home
+              - Away
+              - Sleep
+  
   - type: 'custom:button-card'
     template: container
     
@@ -14,23 +38,9 @@ cards:
       buttons:
         card:
           type: grid
-          columns: 5
+          columns: 3
           square: false
           cards:
-    
-            - type: 'custom:button-card'
-              template: thermostat_button
-              entity: climate.downstairs
-              name: HVAC Down
-              variables:
-                humidity_entity: sensor.downstairs_humidity
-          
-            - type: 'custom:button-card'
-              template: thermostat_button
-              entity: climate.upstairs
-              name: HVAC Up
-              variables:
-                humidity_entity: sensor.upstairs_humidity
           
             - type: custom:button-card
               template: temperature_button

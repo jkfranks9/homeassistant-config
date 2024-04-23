@@ -120,6 +120,21 @@
           {% endfor %}        
           
           {{ val.overdue }}
+    
+    # This identifies the types of overdue exercises, for the front end.
+    - name: Exercise Overdue Types
+      unique_id: exercise_overdue_types
+      state: >
+        {% set val = namespace(types = '') %}
+        {% for type in state_attr('sensor.exercise_overdue', 'overdue') %}
+          {% if loop.first %}
+            {% set val.types = val.types ~ type[0] | upper %}
+          {% else %}
+            {% set val.types = val.types ~ ',' ~ type[0] | upper %}
+          {% endif %}
+        {% endfor %}
+        
+        {{ val.types }}
 
     #--------------------------#
     #   -- Workout Header --   #

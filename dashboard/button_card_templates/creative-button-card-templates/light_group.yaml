@@ -5,6 +5,7 @@ light_group:
   color: auto
   variables:
     items: []
+    letters: []  ### Added by Jon ###
     __defaults:
       entity: "[[[ return entity?.entity_id ]]]"
       icon: mdi:lightbulb
@@ -28,7 +29,7 @@ light_group:
               ...variables.__defaults, 
               ...{ 
                 entity: e, 
-                symbol: String(i+1) 
+                symbol: String(variables.letters[i])
                 }})
               })
             }

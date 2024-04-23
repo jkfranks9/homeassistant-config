@@ -444,6 +444,68 @@
 #     Christmas Lights     #
 #==========================#
 
+# Because of Christmas lights, some light groups are actually old-style groups that are dynamically built by this
+# automation (when the Christmas Mode toggle changes). For the front end, we need lists of symbols to display in 
+# the light group buttons that correspond to the lights in the group. The Dynamic Light Group Symbols sensor responds
+# to changes in the dynamic light groups, and creates the correct list of symbols for each dynamic group.
+#
+# NOTE: The order of symbols here and light entities built by the automation must be kept in sync.
+- alias: Build Dynamic Light Groups
+  id: build_dynamic_light_groups
+  
+  trigger:
+    - platform: state
+      entity_id: input_boolean.christmas_mode
+      from: 'on'
+      to: 'off'
+    
+    - platform: state
+      entity_id: input_boolean.christmas_mode
+      from: 'off'
+      to: 'on'
+      
+  variables:
+    family_room_lights: >
+      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
+      {{ build_dynamic_light_list('group.family_room_lights', 3, 'family_room') }}
+    
+    kitchen_lights: >
+      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
+      {{ build_dynamic_light_list('group.kitchen_lights', 3, 'kitchen') }}
+    
+    downstairs_common_lights: >
+      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
+      {{ build_dynamic_light_list('group.downstairs_common_lights', 4, 'downstairs_common') }}
+    
+    outdoor_lights: >
+      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
+      {{ build_dynamic_light_list('group.outdoor_lights', 5, 'outdoor') }}
+  
+  action:
+    - service: group.set
+      data:
+        name: Family Room Lights
+        object_id: family_room_lights
+        entities: "{{ family_room_lights }}"
+
+    - service: group.set
+      data:
+        name: Kitchen Lights
+        object_id: kitchen_lights
+        entities: "{{ kitchen_lights }}"
+
+    - service: group.set
+      data:
+        name: Downstairs Common Lights
+        object_id: downstairs_common_lights
+        entities: "{{ downstairs_common_lights }}"
+
+    - service: group.set
+      data:
+        name: Outdoor Lights
+        object_id: outdoor_lights
+        entities: "{{ outdoor_lights }}"
+
 # Turn on Christmas lights in the morning on certain Christmas-y days.
 - alias: Turn On Christmas Lights
   id: 'turn_on_christmas_lights'

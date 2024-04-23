@@ -45,7 +45,7 @@ initialize_global_variables:
     - event: set_variable
       event_data:
         key: light_rooms
-        value: ['family_room', 'master_bedroom', 'office', 'penthouse_bedroom', 'studio_bedroom', 'theater']
+        value: ['family_room', 'master_bedroom', 'office', 'penthouse', 'studio', 'theater']
     - event: set_variable
       event_data:
         key: light_rooms_lights
@@ -93,6 +93,16 @@ initialize_global_variables:
       event_data:
         key: steps_daily_goal
         value: 2500
+    
+    # Dynamic light group Christmas light names and symbols. See Build Dynamic Light Groups automation and
+    # Dynamic Light Group Symbols template sensor.
+    - event: set_variable
+      event_data:
+        key: dynamic_light_group_christmas_lights
+        value: {'family_room': [['family_room_christmas_tree', 'mantle_bookcase', 'stair_railing'], ['T', 'M', 'R']],
+                'kitchen': [['kitchen_christmas_tree'], ['T']],
+                'downstairs_common': [['christmas_village'], ['V']],
+                'outdoor': [['outdoor_christmas'], ['X']]}
 
 #===================#
 #     Utilities     #
@@ -446,7 +456,6 @@ gather_upcoming_reminders:
                                'input_datetime.reminder_payment_wellsfargo',
                                'input_datetime.reminder_medication_bloodbuilder',
                                'input_datetime.reminder_medication_eliquis',
-                               'input_datetime.reminder_medication_gabapentin',
                                'input_datetime.reminder_medication_methylb12',
                                'input_datetime.reminder_medication_metoprolol',
                                'input_datetime.reminder_medication_rosuvastatin'

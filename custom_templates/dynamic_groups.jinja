@@ -1,0 +1,37 @@
+{# Build a list of light entities for a dynamic light group. #}
+
+{% macro build_dynamic_light_list(group_entity, base_num, var_key) %}
+    
+	{% set var = namespace(lights = (state_attr(group_entity, 'entity_id') | list)[0:base_num]) %}
+    {% if (states('input_boolean.christmas_mode') == 'on') %}
+      {% for x_name in state_attr('sensor.variables', 'variables').dynamic_light_group_christmas_lights.get(var_key)[0] %}
+        {% set x_light = 'light.' ~ x_name %}
+        {% if states(x_light) not in ['unavailable', 'unknown'] %}
+          {% set var.lights = var.lights + [x_light] %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+      
+    {{ var.lights }}
+
+{% endmacro %}
+
+{# Build a list of light card symbols for a dynamic light group. The symbols are used for the light group card on the front end #}
+
+{% macro build_dynamic_symbol_list(group_entity, base_symbols, var_key) %}
+
+	{% set group = state_attr(group_entity, 'entity_id') %}
+	{% if group != none %}
+      {% set var = namespace(symbols = base_symbols) %}
+	  {% for x_name in state_attr('sensor.variables', 'variables').dynamic_light_group_christmas_lights.get(var_key)[0] %}
+	    {% set x_sym = state_attr('sensor.variables', 'variables').dynamic_light_group_christmas_lights.get(var_key)[1] %}
+	    {% set x_light = 'light.' ~ x_name %}
+	    {% if states(x_light) in group %}
+		  {% set var.symbols = var.symbols + [x_sym[loop.index0]] %}
+	    {% endif %}
+	  {% endfor %}
+	  
+	  {{ var.symbols }}
+	{% endif %}
+
+{% endmacro %}
