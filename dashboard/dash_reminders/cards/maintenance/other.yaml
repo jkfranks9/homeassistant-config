@@ -1,0 +1,62 @@
+#=============================#
+#     Periodic Other Card     #
+#=============================#
+
+type: custom:stack-in-card
+title: Other
+cards:
+      
+  # Ear drops
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.periodic_other_ear_drops
+      - name: Ear Drops
+      - icon: ear-hearing
+      - interval: 3
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Haircut
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.periodic_other_haircut
+      - name: Haircut
+      - icon: content-cut
+      - interval: 5
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Trash
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.periodic_other_trash
+      - name: Trash
+      - icon: trash-can
+      - interval: 2
+      - period: 'weeks'
+      - service: script.set_datetime_offset_weeks
+      
+  # Groceries
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.periodic_other_groceries
+      - name: Groceries
+      - icon: cart
+      - interval: 10
+      - period: 'days'
+      - service: script.set_datetime_offset_days
+      
+  # Laundry
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.periodic_other_laundry
+      - name: Laundry
+      - icon: washing-machine
+      - interval: 12
+      - period: 'days'
+      - service: script.set_datetime_offset_days

@@ -275,18 +275,15 @@ register_mobile_notification:
     tag:
       description: The tag value.
     
-    # friendly_name:
-      # description: Friendly name for the tag.
-    
-    # clear_type:
-      # description: How the tag can be cleared.
-      # selector:
-        # select:
-          # options:
-            # - auto
-            # - assisted
-            # - manual
-            # - dual
+    clear_type:
+      description: How the tag can be cleared.
+      selector:
+        select:
+          options:
+            - auto
+            - assisted
+            - manual
+            - dual
     
     title:
       description: The title of the message.
@@ -318,12 +315,12 @@ register_mobile_notification:
     # Create the value from the specified inputs.
     - variables:
         value: >
-          {% set ns = namespace(value = [title, message, channel, timeout]) %}
+          {% set val = namespace(value = [clear_type, title, message, channel, timeout]) %}
           {% if timer_entity is defined %}
-            {% set ns.value = ns.value + [timer_entity] %}
+            {% set val.value = val.value + [timer_entity] %}
           {% endif %}
           
-          {{ ns.value }}
+          {{ val.value }}
     
     # Add the tag to the registry.
     - event: register_mobile_tag
@@ -379,12 +376,115 @@ unregister_mobile_notification:
       event_data:
         key: "{{ tag }}"
 
-# The UI allows us to unregister a tag that can't be removed automatically, by picking the index of the tag from the
-# Mobile Tag Registry Keys sensor.
-remove_mobile_notification_from_index:
-  alias: Remove Mobile Notification From Index
+# Remove one or more mobile notifications that can only be cleared manually. This is intended to be called by an Alexa routine.
+remove_manual_mobile_notification:
+  alias: Remove Manual Mobile Notification
   
   sequence:
-    - service: script.remove_mobile_notification
-      data:
-        tag: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags')[states('input_number.mobile_tags_key') | int(0)] }}"
+    
+    # Get the room containing the echo device that was used.
+    - service: script.get_echo_room
+      response_variable: result
+    
+    - variables:
+        room: "{{ result.room }}"
+        num_manual: "{{ states('sensor.mobile_tag_registry_manual_clear') }}"
+    
+    - choose:
+      
+      # There are currently no manual clear notifications.
+      - conditions: "{{ num_manual == 0 }}"
+      
+        sequence:
+          - service: script.send_notification
+            data:
+              destination:
+                - echo
+              message: "There are no notifications that need to be manually removed."
+              media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
+      
+      # There is only one manual clear notification, so remove it and inform the user.
+      - conditions: "{{ num_manual == 1 }}"
+      
+        sequence:
+          - variables:
+              tag: "{{ state_attr('sensor.mobile_tag_registry_manual_clear', 'tags')[0] }}"
+          
+          - service: script.remove_mobile_notification
+            data:
+              tag: "{{ tag }}"
+          
+          - service: script.send_notification
+            data:
+              destination:
+                - echo
+              message: "{{ 'I unregistered tag ' ~ tag | replace('_', ' ') }}"
+              media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
+      
+      # There are multiple manual clear notifications.
+      default:
+          
+        # Inform the user.
+        - service: script.send_notification
+          data:
+            destination:
+              - echo
+            message: "{{ 'There are ' ~ num_manual ~ ' manual notifications. Check your phone for additional instructions.' }}"
+            media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
+        
+        # Handle all notifications.
+        - repeat:
+            for_each: "{{ state_attr('sensor.mobile_tag_registry_manual_clear', 'tags') }}"
+        
+            sequence:
+              - variables:
+                  tag: "{{ repeat.item }}"
+                  action_yes: "{{ 'Yes_' ~ tag }}"
+                  action_yes_quit: "{{ 'Yes_Quit' ~ tag }}"
+                  action_no: "{{ 'No_' ~ tag }}"
+    
+              # Send a notification with response buttons for this tag.
+              - service: notify.mobile_app_jon_galaxy
+                data:
+                  message: "{{ 'Remove notification ' ~ tag ~ '?' }}"
+                  data:
+                    actions:
+                      - action: "{{ action_yes }}"
+                        title: "Yes"
+                      - action: "{{ action_yes_quit }}"
+                        title: "Yes & Quit"
+                      - action: "{{ action_no }}"
+                        title: "No"
+            
+              # Wait for the user to press a button.
+              - wait_for_trigger:
+                  - platform: event
+                    event_type: mobile_app_notification_action
+                    event_data:
+                      action: "{{ action_yes }}"
+                  - platform: event
+                    event_type: mobile_app_notification_action
+                    event_data:
+                      action: "{{ action_yes_quit }}"
+                  - platform: event
+                    event_type: mobile_app_notification_action
+                    event_data:
+                      action: "{{ action_no }}"
+                
+                timeout: "00:01:00"
+            
+              # If the user responded in the affirmative, remove this notification.
+              - if:
+                  - "{{ wait.trigger.event.data.action in [action_yes, action_yes_quit] }}"
+              
+                then:          
+                  - service: script.remove_mobile_notification
+                    data:
+                      tag: "{{ tag }}"
+              
+              # If the user responded to also quit, we're done.
+              - if:
+                  - "{{ wait.trigger.event.data.action == action_yes_quit }}"
+                
+                then:
+                  - stop: "User asked to stop."

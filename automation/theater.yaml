@@ -236,7 +236,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Amazon Prime
-      volume: 0.60
+      volume: 0.58
 
 # Disney Plus
 - alias: Initialize Disney Plus Volume
@@ -272,7 +272,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Hulu
-      volume: 0.58
+      volume: 0.61
 
 # Kodi
 - alias: Initialize Kodi Volume
@@ -281,7 +281,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Kodi
-      volume: 0.63
+      volume: 0.57
 
 # Netflix
 - alias: Initialize Netflix Volume
@@ -308,7 +308,7 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Peacock
-      volume: 0.62
+      volume: 0.58
 
 # Youtube TV
 - alias: Initialize Youtube TV Volume

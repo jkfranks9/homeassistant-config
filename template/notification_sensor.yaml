@@ -37,4 +37,31 @@
       state: "{{ this.attributes.tags | length }}"
       
       attributes:
-        tags: "{{ state_attr('sensor.mobile_tag_registry', 'tags').keys() | list }}"
+        tags: >
+          {% set val = namespace(keys = []) %}
+          {% if states('sensor.mobile_tag_registry') != 'unavailable' %}
+            {% set val.keys = state_attr('sensor.mobile_tag_registry', 'tags').keys() | list %}
+          {% endif %}
+          
+          {{val.keys}}
+
+# This sensor contains all mobile notifications that can only be cleared manually. It is intended to be used by
+# the Remove Manual Mobile Notification script, which in turn is intended to be called by an Alexa routine.
+- sensor:
+    - name: Mobile Tag Registry Manual Clear
+      unique_id: mobile_tag_registry_manual_clear
+      state: "{{ this.attributes.tags | length }}"
+      
+      attributes:
+        tags: >
+          {% set val = namespace(manual_tags = []) %}
+          {% if states('sensor.mobile_tag_registry') != 'unavailable' %}
+            {% for tag in state_attr('sensor.mobile_tag_registry', 'tags') %}
+              {% set tag_entry = state_attr('sensor.mobile_tag_registry', 'tags').get(tag) %}
+              {% if tag_entry[0] == 'manual' %}
+                {% set val.manual_tags = val.manual_tags + [tag] %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          
+          {{val.manual_tags}}

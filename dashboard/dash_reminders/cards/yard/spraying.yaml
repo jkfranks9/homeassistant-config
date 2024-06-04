@@ -10,7 +10,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_spraying_frontage_driveway
+      - entity: input_datetime.periodic_yard_spray_frontage_driveway
       - name: Frontage / Driveway
       - icon: spray
       - interval: 15
@@ -21,7 +21,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_spraying_back_side_roadside
+      - entity: input_datetime.periodic_yard_spray_back_side_roadside
       - name: Back / Side / Roadside
       - icon: spray
       - interval: 15
@@ -32,7 +32,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_spraying_front_edge_courtyard_orchard
+      - entity: input_datetime.periodic_yard_spray_front_edge_courtyard_orchard
       - name: Front / Edge / Courtyard / Orchard
       - icon: spray
       - interval: 15

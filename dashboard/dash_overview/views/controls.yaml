@@ -9,11 +9,9 @@ visible:
 
 cards:
   - !include /config/dashboard/dash_overview/cards/controls/treadmill.yaml
-  - !include /config/dashboard/dash_overview/cards/controls/variables.yaml
   - !include /config/dashboard/dash_overview/cards/controls/other.yaml
   - !include /config/dashboard/dash_overview/cards/controls/extended_away.yaml
   - !include /config/dashboard/dash_overview/cards/controls/reminder_lookahead.yaml
-  - !include /config/dashboard/dash_overview/cards/controls/notification_tags.yaml
   - !include /config/dashboard/dash_overview/cards/controls/deep_sleep.yaml
   
   # We have conditionals to use a different history link card for each current index value for the

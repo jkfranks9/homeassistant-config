@@ -30,3 +30,4 @@ cards:
     card:
       !include /config/dashboard/dash_overview/cards/home/horizon.yaml
   - !include /config/dashboard/dash_overview/cards/home/doors_windows.yaml
+  - !include /config/dashboard/dash_overview/cards/home/mini_todo.yaml

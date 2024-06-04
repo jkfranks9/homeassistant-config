@@ -10,7 +10,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_dining_foyer
+      - entity: input_datetime.periodic_cleaning_dining_foyer
       - name: Dining / Foyer
       - icon: silverware-variant
       - interval: 6
@@ -21,7 +21,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_family_room
+      - entity: input_datetime.periodic_cleaning_family_room
       - name: Family Room
       - icon: sofa
       - interval: 4
@@ -32,7 +32,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_kitchen
+      - entity: input_datetime.periodic_cleaning_kitchen
       - name: Kitchen
       - icon: fridge-industrial
       - interval: 10
@@ -43,7 +43,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_laundry_room
+      - entity: input_datetime.periodic_cleaning_laundry_room
       - name: Laundry Room
       - icon: washing-machine
       - interval: 7
@@ -54,7 +54,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_master_bath
+      - entity: input_datetime.periodic_cleaning_master_bath
       - name: Master Bath
       - icon: bathtub
       - interval: 2
@@ -65,7 +65,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_master_bedroom
+      - entity: input_datetime.periodic_cleaning_master_bedroom
       - name: Master Bedroom
       - icon: bed
       - interval: 7
@@ -76,7 +76,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_office
+      - entity: input_datetime.periodic_cleaning_office
       - name: Office
       - icon: desk
       - interval: 5
@@ -87,7 +87,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_studio_bath
+      - entity: input_datetime.periodic_cleaning_studio_bath
       - name: Studio Bath
       - icon: bathtub
       - interval: 2
@@ -98,7 +98,7 @@ cards:
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.reminder_cleaning_studio_bedroom
+      - entity: input_datetime.periodic_cleaning_studio_bedroom
       - name: Studio Bedroom
       - icon: bed
       - interval: 8

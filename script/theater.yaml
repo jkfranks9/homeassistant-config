@@ -532,14 +532,14 @@ close_cinema:
         - service: script.set_thermostat_preset
           data:
             thermostat_entity: climate.upstairs
-            preset: 'Sleep'
+            preset: 'sleep'
       
       else:
         
         - service: script.set_thermostat_preset
           data:
             thermostat_entity: climate.upstairs
-            preset: 'Away'
+            preset: 'away'
     
     # Turn on the upstairs ecobee minimum fan time.
     # NOTE: The time amount should be coordinated with the ecobee system settings, using the app or the thermostat.
@@ -675,7 +675,7 @@ perform_post_open_tasks:
     - service: script.set_thermostat_preset
       data:
         thermostat_entity: climate.upstairs
-        preset: 'Home'
+        preset: 'home'
     
     # Turn off the upstairs Ecobee minimum fan time (it makes me cold sometimes).
     - service: ecobee.set_fan_min_on_time

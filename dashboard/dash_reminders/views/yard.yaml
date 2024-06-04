@@ -13,3 +13,9 @@ cards:
         state: 'True'
     card:
       !include /config/dashboard/dash_reminders/cards/yard/spraying.yaml
+  - type: conditional
+    conditions:
+      - entity: sensor.warm_weather
+        state: 'True'
+    card:
+      !include /config/dashboard/dash_reminders/cards/yard/mowing.yaml

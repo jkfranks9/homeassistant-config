@@ -103,6 +103,7 @@ action:
       - service: script.register_mobile_notification
         data:
           tag: !input tag
+          clear_type: assisted
           title: "{{ title_text }}"
           message: !input message
           channel: !input channel

@@ -61,6 +61,7 @@
         {{ (num_cold_days.count) | length == 3 }}
       
       timer_entity: timer.pool_chlorine_notification
+      clear_type: manual
       message: 'Pool might need chlorine tablets.'
       channel: standard
       tag: 'pool_chlorine'
@@ -112,6 +113,7 @@
         - condition: state
           entity_id: input_boolean.vacuum_kicked_off
           state: 'off'
+      clear_type: manual
       title: attention
       message: 'Vacuum did not run on time.'
       channel: standard
@@ -132,6 +134,7 @@
         - condition: numeric_state
           entity_id: sensor.ecovacs_battery
           below: 90
+      clear_type: assisted
       message: 'Vacuum appears to be stuck (or not charging).'
       channel: standard
       tag: 'vacuum_stuck'
@@ -195,6 +198,7 @@
       from_state: 'off'
       to_state: 'on'
       timer_entity: timer.studio_motion_detector_battery_notification
+      clear_type: auto
       message: 'Studio motion detector battery needs replacing.'
       channel: persistent
       tag: 'studio_motion_battery'
@@ -210,6 +214,7 @@
       from_state: 'off'
       to_state: 'on'
       timer_entity: timer.laundry_room_motion_detector_battery_notification
+      clear_type: auto
       message: 'Laundry room motion detector battery needs replacing.'
       channel: persistent
       tag: 'laundry_room_motion_battery'
@@ -225,6 +230,7 @@
       from_state: 'off'
       to_state: 'on'
       timer_entity: timer.master_bath_motion_detector_battery_notification
+      clear_type: auto
       message: 'Master bath motion detector battery needs replacing.'
       channel: persistent
       tag: 'master_bath_motion_battery'
@@ -244,20 +250,20 @@
       channel: persistent
       tag: 'back_door_sensor_battery'
 
-# Guest BR window sensor battery is too low.
-- alias: Notify Guest BR Window Sensor Battery Low
-  id: 'notify_guest_br_window_sensor_battery_low'
+# Studio window sensor battery is too low.
+- alias: Notify Studio Window Sensor Battery Low
+  id: 'notify_studio_window_sensor_battery_low'
   
   use_blueprint:
     path: notification/numeric_below_notify.yaml
     input:
-      sensor_entity: sensor.guest_br_window_sensor_battery
+      sensor_entity: sensor.studio_window_sensor_battery
       trigger_threshold: 15
       clear_threshold: 50
-      timer_entity: timer.guest_br_window_sensor_battery_notification
-      message: 'Guest BR window sensor battery needs replacing.'
+      timer_entity: timer.studio_window_sensor_battery_notification
+      message: 'Studio window sensor battery needs replacing.'
       channel: persistent
-      tag: 'guest_br_window_sensor_battery'
+      tag: 'studio_window_sensor_battery'
 
 # Porch battery powered sensor needs recharging.
 - alias: Notify Porch Sensor Battery Low
@@ -272,7 +278,7 @@
       timer_entity: timer.porch_battery_low_notification
       message: 'Porch sensor battery needs recharging.'
       channel: persistent
-      tag: 'porch_battery_low'
+      tag: 'porch_battery'
 
 # Master BR Vent 1 batteries are too low.
 - alias: Notify Master BR Vent 1 Batteries Low
@@ -317,7 +323,9 @@
     input:
       sensor_entity: sensor.exercise_overdue
       trigger_threshold: 3
-      clear_threshold: 4
+      trigger_template: "{{ state.attributes.overdue | length }}"
+      clear_threshold: 3.5
+      clear_template: "{{ state.attributes.overdue | length }}"
       title: attention
       message: 'Exercise is overdue.'
       channel: standard
@@ -513,20 +521,20 @@
     
     # This is the list of datetime objects for all the cleaning chores.
     date_entities: [
-                    'input_datetime.reminder_cleaning_dining_foyer',
-                    'input_datetime.reminder_cleaning_family_room',
-                    'input_datetime.reminder_cleaning_kitchen',
-                    'input_datetime.reminder_cleaning_laundry_room',
-                    'input_datetime.reminder_cleaning_master_bath',
-                    'input_datetime.reminder_cleaning_master_bedroom',
-                    'input_datetime.reminder_cleaning_office',
-                    'input_datetime.reminder_cleaning_penthouse_bath',
-                    'input_datetime.reminder_cleaning_penthouse_bedroom',
-                    'input_datetime.reminder_cleaning_snack_bar',
-                    'input_datetime.reminder_cleaning_studio_bath',
-                    'input_datetime.reminder_cleaning_studio_bedroom',
-                    'input_datetime.reminder_cleaning_theater',
-                    'input_datetime.reminder_cleaning_utility'
+                    'input_datetime.periodic_cleaning_dining_foyer',
+                    'input_datetime.periodic_cleaning_family_room',
+                    'input_datetime.periodic_cleaning_kitchen',
+                    'input_datetime.periodic_cleaning_laundry_room',
+                    'input_datetime.periodic_cleaning_master_bath',
+                    'input_datetime.periodic_cleaning_master_bedroom',
+                    'input_datetime.periodic_cleaning_office',
+                    'input_datetime.periodic_cleaning_penthouse_bath',
+                    'input_datetime.periodic_cleaning_penthouse_bedroom',
+                    'input_datetime.periodic_cleaning_snack_bar',
+                    'input_datetime.periodic_cleaning_studio_bath',
+                    'input_datetime.periodic_cleaning_studio_bedroom',
+                    'input_datetime.periodic_cleaning_theater',
+                    'input_datetime.periodic_cleaning_utility'
                    ]
     
     # This is the list of actionable cleaning chores (those overdue or due within the next week).
@@ -574,7 +582,7 @@
                   {% set item_list.list = item_list.list + [opt] %}
                   {% if loop.last %}
                     {% set item_date = states(repeat.item).split('-')[-2] ~ '/' ~ states(repeat.item).split('-')[-1] %}
-                    {% set item_text = (state_attr(repeat.item, 'friendly_name').split('Reminder Cleaning ')[-1]) ~ ' (' ~ item_date ~ ')' %}
+                    {% set item_text = (state_attr(repeat.item, 'friendly_name').split('Periodic Cleaning ')[-1]) ~ ' (' ~ item_date ~ ')' %}
                     {% if opt | length == 0 %}
                       {% set item_list.list = [item_text] %}
                     {% else %}
@@ -662,7 +670,7 @@
       entity_id: calendar.calendar
       offset: -14:00:00
   
-  condition: "{{ (trigger.id == 'event' and '(astro)' in trigger.calendar_event.summary) or 'timer' in trigger.id }}"
+  condition: "{{ '(astro)' in trigger.calendar_event.summary }}"
   
   action:
     - variables:
@@ -736,6 +744,7 @@
       entity: input_select.washer_state
       from_state: Rinse Drain
       to_state: 'Off'
+      clear_type: assisted
       enable_clear_trigger: false
       enable_echo_destination: true
       title: attention
@@ -753,6 +762,7 @@
       entity: input_boolean.dryer_running
       from_state: 'on'
       to_state: 'off'
+      clear_type: assisted
       enable_clear_trigger: false
       enable_echo_destination: true
       title: attention
@@ -778,7 +788,8 @@
           {{ iif((next - now) > 0, (((next - now) / 3600) | round(0)) < 12, false) }}
         {% else %}
           false
-        {% endif %}      
+        {% endif %}
+      clear_type: assisted
       title: attention
       message: >
           {% if states('sensor.canes_game_status') == 'Home' %}
@@ -811,6 +822,7 @@
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
+      clear_type: assisted
       enable_clear_trigger: false
       enable_echo_destination: true
       title: attention
@@ -881,10 +893,28 @@
       entity: sensor.credit_reports_due
       from_state: 'False'
       to_state: 'True'
+      clear_type: manual
       enable_clear_trigger: false
       message: 'Order annual credit reports.'
       channel: standard
       tag: 'credit_reports_due'
+
+# CPAP cleaning is due on Saturdays.
+- alias: Notify CPAP Cleaning Due
+  id: 'notify_cpap_cleaning_due'
+  
+  use_blueprint:
+    path: notification/time_notify.yaml
+    input:
+      time_of_day: '05:00:00'
+      conditions:
+        - condition: time
+          weekday:
+            - sat
+      clear_type: manual
+      message: 'CPAP Cleaning due.'
+      channel: standard
+      tag: 'cpap_cleaning_due'
 
 # Budget tracking is due on Sundays.
 - alias: Notify Budget Tracking Due
@@ -898,6 +928,7 @@
         - condition: time
           weekday:
             - sun
+      clear_type: manual
       message: 'Budget tracking due.'
       channel: standard
       tag: 'budget_tracking_due'
@@ -912,6 +943,7 @@
       entity: sensor.first_of_month
       from_state: 'False'
       to_state: 'True'
+      clear_type: manual
       enable_clear_trigger: false
       message: 'Debt tracking due.'
       channel: standard
@@ -927,12 +959,13 @@
       entity: sensor.first_of_month
       from_state: 'False'
       to_state: 'True'
+      clear_type: manual
       enable_clear_trigger: false
       message: 'Transfer monthly amount from checking to savings.'
       channel: standard
       tag: 'transfer_monthly_amount'
 
-# Pool cleaning is normally due on Saturdays, but also Wednesdays during peak spring and fall, because of extra blooms and leaves.
+# Pool cleaning is normally due 2 days a week, but 3 days a week during peak spring and fall, because of extra blooms and leaves.
 - alias: Notify Pool Cleaning Due
   id: 'notify_pool_cleaning_due'
   
@@ -942,11 +975,16 @@
       time_of_day: '07:00:00'
       conditions:
         - or:
+          
+          # Always on Saturday.
           - condition: time
             weekday:
               - sat          
+          
+          # Tuesdays and Thursdays during peak, Wednesdays otherwise.
           - condition: template
-            value_template: "{{ now().month in [3, 4, 10, 11] and now().isoweekday() in [2, 4] }}"
+            value_template: "{{ iif(now().month in [3, 4, 10, 11], now().isoweekday() in [2, 4], now().isoweekday() in [3]) }}"
+      clear_type: manual
       message: 'Pool cleaning due.'
       channel: standard
       tag: 'pool_cleaning_due'
@@ -988,11 +1026,12 @@
           - variables:
               tag_entry: "{{ state_attr('sensor.mobile_tag_registry', 'tags').get(repeat.item) }}"
               
-              # Build the notification data. We always have the first 4 items, but the timer entity only exists for throttled notifications.
+              # Build the notification data. Skip the first item, which is the clear type. We always have the next 4 items, 
+              # but the timer entity only exists for throttled notifications.
               notification_data: >
-                {% set vars = {'destination': ['mobile'], 'title': tag_entry[0], 'message': tag_entry[1], 'channel': tag_entry[2], 'timeout': tag_entry[3]} %}
-                {% if tag_entry | length > 4 %}
-                  {% set additional = {'throttled': true, 'timer_entity': tag_entry[4], 'tag': repeat.item} %}
+                {% set vars = {'destination': ['mobile'], 'title': tag_entry[1], 'message': tag_entry[2], 'channel': tag_entry[3], 'timeout': tag_entry[4]} %}
+                {% if tag_entry | length > 5 %}
+                  {% set additional = {'throttled': true, 'timer_entity': tag_entry[5], 'tag': repeat.item} %}
                 {% else %}
                   {% set additional = {'throttled': false, 'tag': repeat.item} %}
                 {% endif %}

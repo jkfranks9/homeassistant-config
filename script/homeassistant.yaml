@@ -103,6 +103,677 @@ initialize_global_variables:
                 'kitchen': [['kitchen_christmas_tree'], ['T']],
                 'downstairs_common': [['christmas_village'], ['V']],
                 'outdoor': [['outdoor_christmas'], ['X']]}
+    
+    # Mini todo list daily constants.
+    - event: set_variable
+      event_data:
+        key: mini_todo_start_time
+        value: '10:00:00'
+    
+    - event: set_variable
+      event_data:
+        key: mini_todo_end_time
+        value: '16:00:00'
+    
+    - event: set_variable
+      event_data:
+        key: mini_todo_downtime_minutes
+        value: 60
+    
+    - event: set_variable
+      event_data:
+        key: mini_todo_treadmill_minutes
+        value: 60
+    
+    - event: set_variable
+      event_data:
+        key: mini_todo_workout_minutes
+        value: 40
+    
+    # Mini todo list periodic cleaning time estimates.
+    - event: set_variable
+      event_data:
+        key: mini_todo_cleaning_times
+        value: { "{{ state_attr('input_datetime.periodic_cleaning_dining_foyer', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45, 
+                 "{{ state_attr('input_datetime.periodic_cleaning_family_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ state_attr('input_datetime.periodic_cleaning_kitchen', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45,
+                 "{{ state_attr('input_datetime.periodic_cleaning_laundry_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10,
+                 "{{ state_attr('input_datetime.periodic_cleaning_master_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ state_attr('input_datetime.periodic_cleaning_master_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45,
+                 "{{ state_attr('input_datetime.periodic_cleaning_office', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
+                 "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
+                 "{{ state_attr('input_datetime.periodic_cleaning_snack_bar', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10,
+                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 20,
+                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10,
+                 "{{ state_attr('input_datetime.periodic_cleaning_theater', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
+                 "{{ state_attr('input_datetime.periodic_cleaning_utility', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10
+               }
+    
+    # Mini todo list periodic yard work time estimates.
+    - event: set_variable
+      event_data:
+        key: mini_todo_yard_work_times
+        value: { "{{ state_attr('input_datetime.periodic_yard_mow_push', 'friendly_name').split('Periodic Yard ')[-1] }}": 25,
+                 "{{ state_attr('input_datetime.periodic_yard_mow_tractor', 'friendly_name').split('Periodic Yard ')[-1] }}": 100, 
+                 "{{ state_attr('input_datetime.periodic_yard_spray_back_side_roadside', 'friendly_name').split('Periodic Yard ')[-1] }}": 70,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_frontage_driveway', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_front_edge_courtyard_orchard', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_back', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_courtyard', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_edge_orchard', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_front', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_frontage_east', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_frontage_west', 'friendly_name').split('Periodic Yard ')[-1] }}": 90,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_pool', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_roadside', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_side', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_sidewalk', 'friendly_name').split('Periodic Yard ')[-1] }}": 40
+               }
+    
+    # Mini todo list periodic other time estimates.
+    - event: set_variable
+      event_data:
+        key: mini_todo_other_times
+        value: { "{{ state_attr('input_datetime.periodic_other_ear_drops', 'friendly_name').split('Periodic Other ')[-1] }}": 10, 
+                 "{{ state_attr('input_datetime.periodic_other_haircut', 'friendly_name').split('Periodic Other ')[-1] }}": 15,
+                 "{{ state_attr('input_datetime.periodic_other_trash', 'friendly_name').split('Periodic Other ')[-1] }}": 40,
+                 "{{ state_attr('input_datetime.periodic_other_groceries', 'friendly_name').split('Periodic Other ')[-1] }}": 80,
+                 "{{ state_attr('input_datetime.periodic_other_laundry', 'friendly_name').split('Periodic Other ')[-1] }}": 30
+               }
+
+#========================#
+#     Mini ToDo List     #
+#========================#
+
+# This is an input to the daily mini-todo list logic. It is run once a week to generate a short list of periodic tasks 
+# for the coming week (for cleaning, yard work and other types of items). The Create Daily Mini ToDo List automation then 
+# picks one or two items of each type as needed throughout the week.
+generate_weekly_periodic_list:
+  alias: Generate Weekly Periodic List
+  
+  fields:
+    type:
+      description: The type of periodic items to consider.
+      selector:
+        select:
+          options:
+            - cleaning
+            - yard_work
+            - other
+    
+    generator_count:
+      description: Maximum items to generate for the week.
+      selector:
+        number:
+          min: 1
+          max: 10
+    
+    date_entities:
+      description: Datetime entities for all the periodic items of a given type.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: input_datetime
+  
+  sequence:
+    
+    # Initialize the combinable buffer text in case we're going to combine 2 items.
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.mini_todo_periodic_combinable_buffer
+      data:
+        value: empty
+    
+    # Empty the Weekly Periodic List sensor.
+    - service: script.send_mini_todo_event
+      data:
+        event_type: reset
+        item_type: "{{ type }}"
+    
+    - variables:
+        split_text: "{{ 'Periodic ' ~ type.split('_')[0] | title }}"
+        times_var: "{{ 'mini_todo_' ~ type ~ '_times' }}"
+        
+        # List of actionable items (those overdue or due within the next week).
+        actionable_entities: >
+          {# Start with an empty list. #}
+          {% set var = namespace(list = []) %}
+          
+          {# Walk through the input date entities. #}
+          {% for entity in date_entities %}
+            
+            {# Continue if the entity is overdue or due within a few days. #}
+            {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(states('sensor.date')) + timedelta(days = 3), 0) %}
+              
+              {# Add the item to the list. We have a special case for mowing: only add it during warm weather. #}
+              {% if type != 'yard_work' or (state_attr(entity, 'friendly_name').split('Periodic Yard ')[-1].split()[0] != 'Mow' or states('sensor.warm_weather')) %}
+                {% set var.list = var.list + [entity] %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ var.list }}
+        
+        # Randomizer, just for fun.
+        randomizer: "{{ range(10) | random }}"
+        
+        # Walk through the list forwards or backwards randomly.
+        loop_template: "{{ iif(randomizer is even, actionable_entities[0:generator_count], actionable_entities[0:generator_count] | reverse | list) }}"
+        
+        # How many of the actionable items we're going to pick are combinable (consume <= 20 minutes)?
+        combinable_entities: >
+          {% set val = namespace(list = []) %}
+          {% for entity in loop_template %}
+            {% set name = state_attr(entity, 'friendly_name').split(split_text)[-1] | trim %}
+            {% set minutes = state_attr('sensor.variables', 'variables')[times_var][name] | int(0) %}
+            {% if minutes <= 20 %}
+              {% set val.list = val.list + [entity] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ val.list }}
+    
+    - repeat:
+        for_each: "{{ loop_template }}"
+        
+        sequence:
+          - variables:
+              item_text: "{{ state_attr(repeat.item, 'friendly_name').split(split_text)[-1] }}"
+              icon_tag: >
+                {% if type == 'cleaning' %}
+                  cl:
+                {% elif type == 'yard_work' %}
+                  {% set category = item_text.split()[0] %}
+                  {{ iif(category == 'Spray', 'ys:', iif(category == 'Trim', 'yt:', 'ym:')) }}
+                {% else %}
+                  ot:
+                {% endif %}
+          
+          # Handle a combinable item if we have at least 2 such.
+          - if:
+              - "{{ combinable_entities | length >= 2 and repeat.item in combinable_entities }}"
+            
+            then:
+              
+              # If this is the first combinable item, save it in a text.
+              - if:
+                  - "{{ states('input_text.mini_todo_periodic_combinable_buffer') == 'empty' }}"
+                
+                then:
+                  - service: input_text.set_value
+                    target:
+                      entity_id: input_text.mini_todo_periodic_combinable_buffer
+                    data:
+                      value: "{{ item_text }}"
+                
+                # Else combine the saved item with this one and add it to the weekly sensor.
+                else:
+                  - service: script.send_mini_todo_event
+                    data:
+                      event_type: add
+                      item_type: "{{ type }}"
+                      value: "{{ icon_tag ~ (states('input_text.mini_todo_periodic_combinable_buffer') + ',' ~ item_text).split(',') }}"
+            
+            # Else add this room to the weekly sensor.
+            else:
+              - service: script.send_mini_todo_event
+                data:
+                  event_type: add
+                  item_type: "{{ type }}"
+                  value: "{{ icon_tag ~ item_text }}"
+
+# This is an input to the daily mini-todo list logic. It is run once a week to pick a few days for free time.
+# This is represented as a bitmask, where the least significant bit represents Sunday.
+generate_weekly_free_time_days:
+  alias: Generate Weekly Free Time Days
+  
+  sequence:
+    - variables:
+        days: >
+          {# We want either 2 or 3 days per week. #}
+          {% set count = iif(now().day is odd, range(1, 3) | list, range(1, 4) | list) %}
+          
+          {# Initialize variables. #}
+          {% set v = namespace(value = 0) %}
+          {% set d = namespace(days = [0, 1, 2, 3, 4, 5, 6]) %}
+          {% set l = namespace(len = d.days | length) %}
+          
+          {# Loop per the loop count. #}
+          {% for iter in count %}
+            
+            {# Pick a random day and update the result. #}
+            {% set idx = range(0, l.len) | random %}
+            {% set day_on = 2 ** d.days[idx] %}
+            {% set v.value = v.value | bitwise_or(day_on) %}
+            
+            {# Remove the day we just picked from the days list. #}
+            {% set var = namespace(new = []) %}
+            {% for item in d.days %}
+              {% if loop.index0 != idx %}
+                {% set var.new = var.new + [item] %}
+              {% endif %}
+            {% endfor %}
+            {% set d.days = var.new %}
+            
+            {# Decrement the days length for the next iteration. #}
+            {% set l.len = l.len - 1 %}
+          {% endfor %}
+          
+          {{ v.value }}
+          
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.mini_todo_weekly_free_time_days
+      data:
+        value: "{{ days }}"
+
+# Helper script for sending mini todo list events. Looks like the event itself cannot be a template, and I don't want to keep
+# multiple copies of choose logic everywhere.
+send_mini_todo_event:
+  alias: Send Mini ToDo Event
+  
+  fields:
+    event_type:
+      description: The type of event to be sent.
+      selector:
+        select:
+          options:
+            - add
+            - remove
+            - reset
+    
+    item_type:
+      description: The type of periodic item.
+      selector:
+        select:
+          options:
+            - cleaning
+            - yard_work
+            - other
+    
+    value:
+      description: Event data value.
+  
+  sequence:
+    - choose:
+      - conditions: "{{ event_type == 'add' }}"
+        sequence:
+          - choose:
+            - conditions: "{{ item_type == 'cleaning' }}"
+              sequence:
+                - event: add_cleaning_item
+                  event_data:
+                    value: "{{ value }}"
+            
+            - conditions: "{{ item_type == 'yard_work' }}"
+              sequence:
+                - event: add_yard_work_item
+                  event_data:
+                    value: "{{ value }}"
+          
+            default:
+              - event: add_other_item
+                event_data:
+                  value: "{{ value }}"
+      
+      - conditions: "{{ event_type == 'remove' }}"
+        sequence:
+          - choose:
+            - conditions: "{{ item_type == 'cleaning' }}"
+              sequence:
+                - event: remove_cleaning_item
+                  event_data:
+                    value: "{{ value }}"
+            
+            - conditions: "{{ item_type == 'yard_work' }}"
+              sequence:
+                - event: remove_yard_work_item
+                  event_data:
+                    value: "{{ value }}"
+          
+            default:
+              - event: remove_other_item
+                event_data:
+                  value: "{{ value }}"
+      
+      default:
+        - choose:
+          - conditions: "{{ item_type == 'cleaning' }}"
+            sequence:
+              - event: reset_cleaning_items
+            
+          - conditions: "{{ item_type == 'yard_work' }}"
+            sequence:
+              - event: reset_yard_work_items
+          
+          default:
+            - event: reset_other_items
+
+# Add any relevant calendar tasks to the mini todo list.
+add_mini_todo_calendar_items:
+  alias: Add Mini ToDo Calendar Items
+  
+  fields:
+    window_lower_bound:
+      description: Daily window lower bound time (HH:MM:SS).
+      
+    window_upper_bound:
+      description: Daily window upper bound time (HH:MM:SS).
+      
+    start_time:
+      description: Calendar start time (yy-mm-dd HH:MM:SS).
+      
+    end_time:
+      description: Calendar end time (yy-mm-dd HH:MM:SS).
+  
+  sequence:
+    
+    # Get all events on the calendar for my normal available time period.
+    - service: calendar.get_events
+      target:
+        entity_id: calendar.calendar
+      data:
+        start_date_time: "{{ start_time }}"
+        end_date_time: "{{ end_time }}"
+      response_variable: agenda
+    
+    # If I'm on an extended away, ignore everything.
+    - if:
+        - condition: state
+          entity_id: input_boolean.extended_away_mode
+          state: 'on'
+      
+      then:
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.mini_todo_available_minutes
+          data:
+            value: 0
+      
+        - stop: Extended away
+        
+    # Process each calendar event.
+    - repeat:
+        for_each: "{{ agenda['calendar.calendar'].events }}"
+        
+        sequence:
+          - variables:
+              summary: "{{ repeat.item.summary }}"
+              extra_minutes: >
+                {% if '(appt:' in summary %}
+                  {{ (summary.split(':')[-1] | regex_replace("[^A-Za-z0-9]", "")) | int(0) }}
+                {% else %}
+                  {{ 0 }}
+                {% endif %}
+              
+              start: "{{ as_timestamp(repeat.item.start) - extra_minutes }}"
+              end: "{{ as_timestamp(repeat.item.end) + extra_minutes }}"
+          
+          - choose:
+            
+            # Handle an all day event, which means we can't add anything to the mini todo list.
+            - conditions: "{{ '(trip)' in summary or '(visit)' in summary }}"
+            
+              sequence:
+                - if:
+                    - "{{ (end - start) / 3600 % 24 == 0 }}"
+                
+                  then:
+                    - service: input_number.set_value
+                      target:
+                        entity_id: input_number.mini_todo_available_minutes
+                      data:
+                        value: 0
+          
+            # Handle a normal home or away event.
+            - conditions: "{{ '(home)' in summary or '(appt' in summary }}"
+            
+              sequence:
+                - variables:
+                    current_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(0) }}"
+                    calculated_minutes: >
+                      {% set var = namespace(minutes = (end - start) / 60) %}
+                      
+                      {# Only count time that falls within the lower bound of the normal hours. #}
+                      {% if as_datetime(start) < today_at('10:00:00') %}
+                        {% set delta = ((as_timestamp(today_at(window_lower_bound)) - start) / 60) | int(0) %}
+                        {% set var.minutes = var.minutes - delta %}
+                      
+                      {# Only count time that falls within the upper bound of the normal hours. #}
+                      {% elif as_datetime(end) > today_at('16:00:00') %}
+                        {% set delta = end - ((as_timestamp(today_at(window_upper_bound))) / 60) | int(0) %}
+                        {% set var.minutes = var.minutes - delta %}
+                      {% endif %}
+                      
+                      {{ var.minutes }}
+                
+                # Subtract the calculated time for this event from the current available time.
+                - service: input_number.set_value
+                  target:
+                    entity_id: input_number.mini_todo_available_minutes
+                  data:
+                    value: "{{ current_minutes - calculated_minutes }}"
+      
+                - event: add_mini_todo_item
+                  event_data:
+                    value: "{{ 'ca:' ~ summary.split('(appt')[0] }}"
+
+# Add an exercise task to the mini todo list. We rotate among the different types of exercise tasks as follows:
+#
+# 1) random:   pick a task according to a coin toss.
+# 2) opposite: pick the opposite of what we picked last time, based on the last changed sensor.
+# 3) skip:     do nothing.
+add_mini_todo_exercise_item:
+  alias: Add Mini ToDo Exercise Item
+  
+  sequence:
+    
+    # Select the next type.
+    - service: input_select.select_next
+      target:
+        entity_id: input_select.mini_todo_exercise_type
+      
+    # Proceed according to the type. There is no choice for the skip type, since we do nothing in that case.
+    - variables:
+        type: "{{ states('input_select.mini_todo_exercise_type') }}"
+        currrent_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(0) }}"
+        treadmill_minutes: "{{ state_attr('sensor.variables', 'variables').mini_todo_treadmill_minutes }}"
+        workout_minutes: "{{ state_attr('sensor.variables', 'variables').mini_todo_workout_minutes }}"
+    
+    - choose:
+        
+      # Random
+      - conditions: "{{ type == 'random' }}"
+          
+        sequence:
+          - variables:
+              heads_up: "{{ range(2) | random > 0 }}"
+              event_data_val: "{{ 'ex:' ~ iif(heads_up, 'Treadmill', 'Workout') }}"
+              minutes_var: "{{ iif(heads_up, treadmill_minutes, workout_minutes) }}"
+              
+          - event: add_mini_todo_item
+            event_data:
+              value: "{{ event_data_val }}"
+            
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.mini_todo_available_minutes
+            data:
+              value: "{{ currrent_minutes - minutes_var }}"
+        
+      # Opposite
+      - conditions: "{{ type == 'opposite' }}"
+          
+        sequence:
+          - variables:
+              treadmill_older: "{{ as_timestamp(states('sensor.treadmill_last_changed')) < as_timestamp(states('sensor.workout_last_changed')) }}"
+              event_data_val: "{{ 'ex:' ~ iif(treadmill_older, 'Treadmill', 'Workout') }}"
+              minutes_var: "{{ iif(treadmill_older, treadmill_minutes, workout_minutes) }}"
+              
+          - event: add_mini_todo_item
+            event_data:
+              value: "{{ event_data_val }}"
+            
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.mini_todo_available_minutes
+            data:
+              value: "{{ currrent_minutes - minutes_var }}"
+
+# Add a project from a (normal) todo list to the mini todo list.
+add_mini_todo_project_item:
+  alias: Add Mini ToDo Project Item
+  
+  mode: queued
+  
+  fields:
+    type:
+      description: The type of project todo list to query.
+      selector:
+        select:
+          options:
+            - minor
+            - major
+  
+  sequence:
+    - variables:
+        project_todo_list: "{{ 'todo.' ~ type ~ '_projects' }}"
+    
+    # Get the list of items from the project todo list.
+    - service: todo.get_items
+      target:
+        entity_id: "{{ project_todo_list }}"
+      data:
+        status: needs_action
+      response_variable: mylist
+
+    - variables:
+        
+        # This is a single project picked at random. First, we grab up to 2 each of internal and external items. These
+        # are the highest priority since we're walking through the list from the top. Then, if we found anything, pick
+        # one of those at random.
+        project: >
+          
+          {# Initialize variables. #}
+          {% set var = namespace(item = '', wtime = 0, time = 0, list = [], in_count = 0, ex_count = 0) %}
+          
+          {# Loop through the project todo list. #}
+          {% for item in mylist[project_todo_list]['items'] %}
+            
+            {# The item description contains the type (internal or external) and time estimate. #}
+            {% set desc = item.description %}
+            {% set time = desc.split(', ')[0].split(':')[1] %}
+            {% set type = desc.split(', ')[1].split(':')[1] %}
+          
+            {# Time is specified with a suffix (m, h or d) ... normalize it into minutes. #}
+            {% set prefix = time[:((time | length) - 1)] %}
+            {% set suffix = time[((time | length) - 1):] %}
+            {% if suffix == 'd' %}
+              {% set var.wtime = prefix | int(0) * 24 * 60 %}
+            {% elif suffix == 'h' %}
+              {% set var.wtime = prefix | int(0) * 60 %}
+            {% else %}
+              {% set var.wtime = prefix %}
+            {% endif %}
+            
+            {# Grab up to 2 external items, but only if it seems OK to work outside. #}
+            {% if type == 'external' and states('sensor.outdoor_work_friendly') and var.ex_count <=1 %}
+              {% set var.list = var.list + [item.summary ~ ':' ~ var.wtime] %}
+              {% set var.ex_count = var.ex_count + 1 %}
+            
+            {# Grab up to 2 internal items. #}
+            {% elif type == 'internal' and var.in_count <=1 %}
+              {% set var.list = var.list + [item.summary ~ ':' ~ var.wtime] %}
+              {% set var.in_count = var.in_count + 1 %}
+            {% endif %}
+            
+            {# Quit once we've grabbed 4 items. #}
+            {% if var.ex_count + var.in_count >= 4 %}
+              {{ break }}
+            {% endif %}
+          {% endfor %}
+          
+          {# If we found any items to choose from, pick one at random. #}
+          {% set len = var.list | length %}
+          {% if len > 0 %}
+            {% set var.item = var.list[range(len) | random] %}
+          {% endif %}
+          
+          {{ var.item }}
+          
+    # Did we find anything?
+    - if:
+        - "{{ project | length > 0 }}"
+      
+      then:
+        - variables:
+            summary: "{{ project.split(':')[0] }}"
+            est_minutes: "{{ project.split(':')[1] | int(0) }}"
+        
+        # Add the selected item to the mini todo list.
+        - event: add_mini_todo_item
+          event_data:
+            value: "{{ type[0:2] ~ ':' ~ summary }}"
+                        
+        # Subtract the estimated time for this event from the current available time.
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.mini_todo_available_minutes
+          data:
+            value: "{{ states('input_number.mini_todo_available_minutes') | int(0) - est_minutes }}"
+
+# Add a periodic task (cleaning, yard work, other) to the mini todo list. These are based on reminder datetimes, 
+# and set up by the Generate Weekly Periodic List script above.
+add_mini_todo_periodic_item:
+  alias: Add Mini ToDo Perodic Item
+  
+  mode: queued
+  
+  fields:
+    type:
+      description: The type of periodic list sensor to use.
+      selector:
+        select:
+          options:
+            - cleaning
+            - yard_work
+            - other
+  
+  sequence:
+    - variables:
+        list_sensor: "{{ 'sensor.mini_todo_weekly_' ~ type ~ '_list' }}"
+        list: "{{ state_attr(list_sensor, 'items') }}"
+
+    # Does anything exist in the list?
+    - if:
+        - "{{ list | length > 0 }}"
+    
+      then:
+        - variables:
+            times_variable: "{{ 'mini_todo_' ~ type ~ '_times' }}"
+            item: >
+              {% set index = range(0, list | length) | random %}
+              {% set witem = list[index] %}
+              {% set name = witem.split(':')[1] %}
+              {% set minutes = state_attr('sensor.variables', 'variables')[times_variable][name] %}
+          
+              {{ witem ~ '-' ~ minutes }}
+        
+            value: "{{ item.split('-')[0] }}"
+            est_minutes: "{{ item.split('-')[1] | int(0) }}"
+    
+        - event: add_mini_todo_item
+          event_data:
+            value: "{{ value }}"
+                        
+        # Subtract the estimated time for this event from the current available time.
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.mini_todo_available_minutes
+          data:
+            value: "{{ states('input_number.mini_todo_available_minutes') | int(0) - est_minutes }}"
 
 #===================#
 #     Utilities     #

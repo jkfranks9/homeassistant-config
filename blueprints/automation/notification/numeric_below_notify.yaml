@@ -21,6 +21,11 @@ blueprint:
           min: 0
           max: 3000
           
+    trigger_template:
+      name: Trigger Template
+      description: (Optional) Template to be evaluated instead of the entity state for the notification trigger. The default is the entity state.
+      default: "{{ state.state }}"
+          
     clear_threshold:
       name: Clear Threshold Value
       description: Sensor threshold value to clear the notification.
@@ -28,6 +33,11 @@ blueprint:
         number:
           min: 0
           max: 3000
+          
+    clear_template:
+      name: Clear Template
+      description: (Optional) Template to be evaluated instead of the entity state for the clear trigger. The default is the entity state.
+      default: "{{ state.state }}"
     
     timer_entity:
       name: Timer Entity
@@ -84,12 +94,14 @@ trigger:
   # Trigger when the sensor value drops below the trigger threshold.
   - platform: numeric_state
     entity_id: !input sensor_entity
+    value_template: !input trigger_template
     below: !input trigger_threshold
     id: notify
   
   # Trigger when the sensor value rises above the clear threshold.
   - platform: numeric_state
     entity_id: !input sensor_entity
+    value_template: !input clear_template
     above: !input clear_threshold
     id: clear
 
@@ -107,7 +119,7 @@ action:
       - variables:
           throttle: "{{ iif(input_timer_entity, true, false) }}"
           tag_registry_value: >
-            {% set ns = namespace(val = {'tag': input_tag, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
+            {% set ns = namespace(val = {'tag': input_tag, 'clear_type': 'auto', 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
             {% if input_timer_entity | length > 0 %}
               {% set timer = {'timer_entity': input_timer_entity} %}
               {{ dict(ns.val, **timer) }}

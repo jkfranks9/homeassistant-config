@@ -252,6 +252,159 @@
           
           {{ vars.lowest_price_details }}
 
+#--------------------------#
+#   -- Mini ToDo List --   #
+#--------------------------#
+
+# Mini todo list. This contains a daily suggested list of items to work on, including calendar events, cleaning, yard work,
+# exercise, office tasks, major/minor projects, etc. Basically everything I need to help organize my life.
+- trigger:
+    - platform: event
+      event_type: add_mini_todo_item
+    
+    - platform: event
+      event_type: remove_mini_todo_item
+    
+    - platform: event
+      event_type: reset_mini_todo_items
+  
+  sensor:
+    - name: Daily Mini ToDo List
+      unique_id: daily_mini_todo_list
+      state: Mini ToDo
+      
+      attributes:
+        items: >
+          {% set var1 = namespace(current = this.attributes.get('items', [])) %}
+          {% if trigger.event.event_type == 'add_mini_todo_item' %}
+            {% set var1.current = var1.current + [trigger.event.data.value] %}
+          {% elif trigger.event.event_type == 'remove_mini_todo_item' %}
+            {% set idx = var1.current.index(trigger.event.data.value) %}
+            {% set var2 = namespace(new = []) %}
+            {% for item in var1.current %}
+              {% if loop.index0 != idx %}
+                {% set var2.new = var2.new + [item] %}
+              {% endif %}
+            {% endfor %}
+            {% set var1.current = var2.new %}
+          {% elif trigger.event.event_type == 'reset_mini_todo_items' %}
+            {% set var1.current = [] %}
+          {% endif %}
+          
+          {{ var1.current }}
+
+# These are inputs to the daily mini-todo list logic, consisting of a short list of items to be worked on.
+# They are run once a week to generate the lists for the coming week. Items are then picked as needed by the
+# mini-todo list automation throughout the week.
+
+# Weekly cleaning list
+- trigger:
+    - platform: event
+      event_type: add_cleaning_item
+    
+    - platform: event
+      event_type: remove_cleaning_item
+    
+    - platform: event
+      event_type: reset_cleaning_items
+  
+  sensor:
+    - name: Mini ToDo Weekly Cleaning List
+      unique_id: mini_todo_weekly_cleaning_list
+      state: Cleaning
+      
+      attributes:
+        items: >
+          {% set var1 = namespace(current = this.attributes.get('items', [])) %}
+          {% if trigger.event.event_type == 'add_cleaning_item' %}
+            {% set var1.current = var1.current + [trigger.event.data.value] %}
+          {% elif trigger.event.event_type == 'remove_cleaning_item' %}
+            {% set idx = var1.current.index(trigger.event.data.value) %}
+            {% set var2 = namespace(new = []) %}
+            {% for item in var1.current %}
+              {% if loop.index0 != idx %}
+                {% set var2.new = var2.new + [item] %}
+              {% endif %}
+            {% endfor %}
+            {% set var1.current = var2.new %}
+          {% elif trigger.event.event_type == 'reset_cleaning_items' %}
+            {% set var1.current = [] %}
+          {% endif %}
+          
+          {{ var1.current }}
+
+# Weekly yard work list
+- trigger:
+    - platform: event
+      event_type: add_yard_work_item
+    
+    - platform: event
+      event_type: remove_yard_work_item
+    
+    - platform: event
+      event_type: reset_yard_work_items
+  
+  sensor:
+    - name: Mini ToDo Weekly Yard Work List
+      unique_id: mini_todo_weekly_yard_work_list
+      state: Yard Work
+      
+      attributes:
+        items: >
+          {% set var1 = namespace(current = this.attributes.get('items', [])) %}
+          {% if trigger.event.event_type == 'add_yard_work_item' %}
+            {% set var1.current = var1.current + [trigger.event.data.value] %}
+          {% elif trigger.event.event_type == 'remove_yard_work_item' %}
+            {% set idx = var1.current.index(trigger.event.data.value) %}
+            {% set var2 = namespace(new = []) %}
+            {% for item in var1.current %}
+              {% if loop.index0 != idx %}
+                {% set var2.new = var2.new + [item] %}
+              {% endif %}
+            {% endfor %}
+            {% set var1.current = var2.new %}
+          {% elif trigger.event.event_type == 'reset_yard_work_items' %}
+            {% set var1.current = [] %}
+          {% endif %}
+          
+          {{ var1.current }}
+
+# Weekly other list
+- trigger:
+    - platform: event
+      event_type: add_other_item
+    
+    - platform: event
+      event_type: remove_other_item
+    
+    - platform: event
+      event_type: reset_other_items
+  
+  sensor:
+    - name: Mini ToDo Weekly Other List
+      unique_id: mini_todo_weekly_other_list
+      state: Other
+      
+      attributes:
+        items: >
+          {% set var1 = namespace(current = this.attributes.get('items', [])) %}
+          {% if trigger.event.event_type == 'add_other_item' %}
+            {% set var1.current = var1.current + [trigger.event.data.value] %}
+          {% elif trigger.event.event_type == 'remove_other_item' %}
+            {% set idx = var1.current.index(trigger.event.data.value) %}
+            {% set var2 = namespace(new = []) %}
+            {% for item in var1.current %}
+              {% if loop.index0 != idx %}
+                {% set var2.new = var2.new + [item] %}
+              {% endif %}
+            {% endfor %}
+            {% set var1.current = var2.new %}
+          {% elif trigger.event.event_type == 'reset_other_items' %}
+            {% set var1.current = [] %}
+          {% endif %}
+          
+          {{ var1.current }}
+
 - sensor:
 
     #----------------------#
@@ -312,17 +465,19 @@
         {% set curr = namespace(index = 0, timestamp = 0) %}
           
         {# --Loop through all sets of timestamps-- #}
-        {% for time_range in state_attr('sensor.history_washer_debug_ranges', 'time_ranges') %}
+        {% if states('sensor.history_washer_debug_ranges') != 'unavailable' %}
+          {% for time_range in state_attr('sensor.history_washer_debug_ranges', 'time_ranges') %}
             
-          {# --We only need to check one value, so we choose the start-- #}
-          {% set start = state_attr(time_range[0], 'timestamp') | int(0) %}
+            {# --We only need to check one value, so we choose the start-- #}
+            {% set start = state_attr(time_range[0], 'timestamp') | int(0) %}
             
-          {# --Update the current index and timestamp if this is the most recent-- #}
-          {% if start > curr.timestamp %}
-            {% set curr.timestamp = start %}
-            {% set curr.index = loop.index0 %}
-          {% endif %}
-        {% endfor %}
+            {# --Update the current index and timestamp if this is the most recent-- #}
+            {% if start > curr.timestamp %}
+              {% set curr.timestamp = start %}
+              {% set curr.index = loop.index0 %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
           
         {{ curr.index }}
     
@@ -350,17 +505,19 @@
         {% set curr = namespace(index = 0, timestamp = 0) %}
           
         {# --Loop through all sets of timestamps-- #}
-        {% for time_range in state_attr('sensor.history_dryer_debug_ranges', 'time_ranges') %}
+        {% if states('sensor.history_dryer_debug_ranges') != 'unavailable' %}
+          {% for time_range in state_attr('sensor.history_dryer_debug_ranges', 'time_ranges') %}
             
-          {# --We only need to check one value, so we choose the start-- #}
-          {% set start = state_attr(time_range[0], 'timestamp') | int(0) %}
+            {# --We only need to check one value, so we choose the start-- #}
+            {% set start = state_attr(time_range[0], 'timestamp') | int(0) %}
             
-          {# --Update the current index and timestamp if this is the most recent-- #}
-          {% if start > curr.timestamp %}
-            {% set curr.timestamp = start %}
-            {% set curr.index = loop.index0 %}
-          {% endif %}
-        {% endfor %}
+            {# --Update the current index and timestamp if this is the most recent-- #}
+            {% if start > curr.timestamp %}
+              {% set curr.timestamp = start %}
+              {% set curr.index = loop.index0 %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
           
         {{ curr.index }}
 
@@ -509,12 +666,6 @@
     #----------------#
     #   -- Misc --   #
     #----------------#
-      
-    - name: 'Warm Weather'
-      unique_id: warm_weather
-      state: >
-        {% set n = now() %}
-        {{ n.month > 2 and n.month < 11 }}
 
     - name: 'Canes Game Status'
       unique_id: canes_game_status
@@ -637,10 +788,39 @@
       attributes:
         trigger_list: >
           {% set var = namespace(list = []) %}
-          {% for sensor in state_attr('sensor.esphome_update_sensor_list', 'sensor_list') %}
-            {% if states('update.' ~ sensor ~ '_firmware') == 'on' %}
-              {% set var.list = var.list + [sensor] %}
-            {% endif %}
-          {% endfor %}
+          {% if states('sensor.esphome_update_sensor_list') != 'unavailable' %}
+            {% for sensor in state_attr('sensor.esphome_update_sensor_list', 'sensor_list') %}
+              {% if states('update.' ~ sensor ~ '_firmware') == 'on' %}
+                {% set var.list = var.list + [sensor] %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
           
           {{ var.list }}
+
+    #-------------------#
+    #   -- Weather --   #
+    #-------------------#
+      
+    - name: 'Warm Weather'
+      unique_id: warm_weather
+      state: >
+        {% set n = now() %}
+        {{ n.month > 2 and n.month < 11 }}
+      
+    - name: 'Outdoor Work Friendly'
+      unique_id: outdoor_work_friendly
+      state: >
+        {% set high_temp = states('sensor.openweathermap_forecast_temperature') | int(0) %}
+        {% set low_temp = states('sensor.openweathermap_forecast_temperature_low') | int(0) %}
+        {% set humidity = average([states('sensor.openweathermap_humidity') | int(50), states('sensor.pirateweather_humidity') | int(50)]) %}
+        {% set precip_prob = average([states('sensor.openweathermap_forecast_precipitation_probability') | int(50), states('sensor.pirateweather_precip_probability') | int(50)]) %}
+        {% if precip_prob > 80 %}
+          false
+        {% elif humidity > 85 and (high_temp > 80 or low_temp < 50) %}
+          false
+        {% elif high_temp > 85 or low_temp < 45 %}
+          false
+        {% else %}
+          true
+        {% endif %}

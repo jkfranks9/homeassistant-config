@@ -346,7 +346,7 @@ establish_bedtime_environment:
               - service: script.set_thermostat_preset
                 data:
                   thermostat_entity: climate.upstairs
-                  preset: 'Sleep'
+                  preset: 'sleep'
           
           # Child only, upstairs.
           - conditions:
@@ -399,7 +399,7 @@ establish_bedtime_environment:
               - service: script.set_thermostat_preset
                 data:
                   thermostat_entity: climate.upstairs
-                  preset: 'Sleep'
+                  preset: 'sleep'
 
               # Mute master bedroom echo device.
               - service: script.turn_on
@@ -437,7 +437,7 @@ establish_bedtime_environment:
               - service: script.set_thermostat_preset
                 data:
                   thermostat_entity: climate.upstairs
-                  preset: 'Sleep'
+                  preset: 'sleep'
           
           # Adults only, upstairs.
           - conditions:

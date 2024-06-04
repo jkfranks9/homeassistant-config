@@ -35,7 +35,7 @@
     - service: script.set_thermostat_preset
       data:
         thermostat_entity: climate.upstairs
-        preset: 'Sleep'
+        preset: 'sleep'
 
 # Catch an unexpected transition away from vacation mode. If the upstairs bedroom is occupied, this should not happen.
 # So put the vacation hold back on, and log it.

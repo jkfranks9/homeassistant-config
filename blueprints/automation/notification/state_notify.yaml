@@ -35,6 +35,17 @@ blueprint:
         entity:
           domain: timer
     
+    clear_type:
+      name: Clear Type
+      description: How the tag can be cleared.
+      selector:
+        select:
+          options:
+            - auto
+            - assisted
+            - manual
+            - dual
+    
     enable_clear_trigger:
       name: Enable Clear Trigger
       description: (Optional) Whether or not the trigger to clear the notification is enabled. Use false if no automated clear event is expected.
@@ -83,6 +94,7 @@ mode: queued
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_timer_entity: !input timer_entity
+  input_clear_type: !input clear_type
   input_enable_echo_destination: !input enable_echo_destination
   input_title: !input title
   input_message: !input message
@@ -130,7 +142,7 @@ action:
               message: !input message
               throttle: "{{ iif(input_timer_entity, true, false) }}"
               tag_registry_value: >
-                {% set ns = namespace(val = {'tag': input_tag, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
+                {% set ns = namespace(val = {'tag': input_tag, 'clear_type': input_clear_type, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
                 {% if input_timer_entity | length > 0 %}
                   {% set timer = {'timer_entity': input_timer_entity} %}
                   {{ dict(ns.val, **timer) }}

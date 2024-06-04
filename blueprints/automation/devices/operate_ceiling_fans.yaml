@@ -44,6 +44,7 @@ blueprint:
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
   input_sensor_off_state: !input sensor_off_state
+  input_fan_entity: !input fan_entity
 
 # Trigger on any change to the sensor entity.
 trigger:
@@ -58,8 +59,9 @@ action:
     
   - choose:
       
-    # Sensor turned on.
-    - conditions: "{{ trigger.from_state.state == input_sensor_off_state and trigger.to_state.state != input_sensor_off_state }}"
+    # Sensor turned on, and the fan is off. I'm assuming if the fan is already on it's being controlled manually.
+    - conditions: "{{ trigger.from_state.state == input_sensor_off_state and trigger.to_state.state != input_sensor_off_state 
+                      and states(input_fan_entity) == 'off' }}"
       
       sequence:
             
@@ -73,8 +75,9 @@ action:
               thresholds: !input thresholds
               timeout: 0
       
-    # Sensor turned off.
-    - conditions: "{{ trigger.from_state.state != input_sensor_off_state and trigger.to_state.state == input_sensor_off_state }}"
+    # Sensor turned off, and the fan is on. I'm assuming if the fan is already off it's being controlled manually.
+    - conditions: "{{ trigger.from_state.state != input_sensor_off_state and trigger.to_state.state == input_sensor_off_state
+                      and states(input_fan_entity) == 'on' }}"
         
       # Turn off the fan.
       sequence:

@@ -44,6 +44,7 @@ smart_home:
       - script.bedtime
       - script.play_feature_movie
       - script.play_random_kodi_videos
+      - script.remove_manual_mobile_notification
       - script.set_theater_idle
       - script.set_workout_daily_time
       - script.sleeptime

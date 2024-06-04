@@ -137,7 +137,7 @@
   id: 'perform_daily_chores'
   
   trigger:
-    - platform:  time
+    - platform: time
       at: '01:01:01'
   
   action:
@@ -160,67 +160,6 @@
       data:
         value: 0
     
-    # If it's the start of a new week (Sunday), reset weekly exercise values.
-    - if:
-        - "{{ day_of_week == 0 }}"
-      
-      then:
-        - service: input_number.set_value
-          target:
-            entity_id:
-              - input_number.treadmill_weekly_time
-              - input_number.treadmill_weekly_calories
-              - input_number.workout_weekly_time
-              - input_number.workout_weekly_calories
-              - input_number.yard_work_weekly_time
-              - input_number.yard_work_weekly_calories
-              - input_number.steps_weekly
-              - input_number.steps_weekly_calories
-          data:
-            value: 0
-    
-    # If it's the start of a new month, reset monthly exercise values.
-    - if:
-        - "{{ day_of_month == 1 }}"
-      
-      then:
-        - service: input_number.set_value
-          target:
-            entity_id:
-              - input_number.treadmill_monthly_time
-              - input_number.treadmill_monthly_calories
-              - input_number.workout_monthly_time
-              - input_number.workout_monthly_calories
-              - input_number.yard_work_monthly_time
-              - input_number.yard_work_monthly_calories
-              - input_number.steps_monthly
-              - input_number.steps_monthly_calories
-          data:
-            value: 0
-    
-    # Turn off washer plug.
-    - service: switch.turn_off
-      entity_id: switch.washer
-    
-    # Backup automations and scripts log files.
-    - service: shell_command.backup_auto_scripts_log
-
-    # Make sure the dryer isn't running, just in case.
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.dryer_running
-    
-    # Backup the laundry events log file if indicated.
-    - if:
-        - condition: state
-          entity_id: input_boolean.backup_laundry_log
-          state: 'on'
-      
-      then:    
-        - service: shell_command.backup_laundry_log
-        
-        - service: input_boolean.turn_off
-          entity_id: input_boolean.backup_laundry_log
-    
     # Reset the exercise flags for the current day, so we won't count this day if no exercise is done.    
     - service: script.modify_current_exercise_day
       data:
@@ -240,7 +179,30 @@
         - automation.run_master_bath_motion_based_light
         - automation.turn_on_christmas_lights
         - automation.turn_on_guest_lights_sunset
-        - automation.turn_on_office_light
+        - automation.control_office_lamp
+    
+    # Backup automations and scripts log files.
+    - service: shell_command.backup_auto_scripts_log
+    
+    # Turn off washer plug.
+    - service: switch.turn_off
+      entity_id: switch.washer
+
+    # Make sure the dryer isn't running, just in case.
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.dryer_running
+    
+    # Backup the laundry events log file if indicated.
+    - if:
+        - condition: state
+          entity_id: input_boolean.backup_laundry_log
+          state: 'on'
+      
+      then:    
+        - service: shell_command.backup_laundry_log
+        
+        - service: input_boolean.turn_off
+          entity_id: input_boolean.backup_laundry_log
     
     # Update the hockey Rest sensors during hockey season. The sensors have a very long scan interval so
     # they don't try to update when there's no hockey.
@@ -263,6 +225,113 @@
         entity_id: input_number.f150_mileage
       data:
         value: "{{ states('input_number.f150_mileage') | int(0) + 32 }}"
+    
+    # Perform weekly chores at the start of a new week (Sunday).
+    - if:
+        - "{{ day_of_week == 0 }}"
+      
+      then:
+        
+        # Reset weekly exercise values.
+        - service: input_number.set_value
+          target:
+            entity_id:
+              - input_number.treadmill_weekly_time
+              - input_number.treadmill_weekly_calories
+              - input_number.workout_weekly_time
+              - input_number.workout_weekly_calories
+              - input_number.yard_work_weekly_time
+              - input_number.yard_work_weekly_calories
+              - input_number.steps_weekly
+              - input_number.steps_weekly_calories
+          data:
+            value: 0
+        
+        # Generate the weekly mini todo stuff:
+    
+        # 1) Toggle the generator switch, which introduces randomness into some decisions.
+        - service: input_boolean.toggle
+          entity_id: input_boolean.mini_todo_generator_switch
+        
+        # 2) Create weekly periodic lists.
+        - service: script.generate_weekly_periodic_list
+          data:
+            type: cleaning
+            generator_count: "{{ iif(states('input_boolean.mini_todo_generator_switch') == 'off', 3, 4) }}"
+            date_entities: [
+                            'input_datetime.periodic_cleaning_kitchen',
+                            'input_datetime.periodic_cleaning_studio_bath',
+                            'input_datetime.periodic_cleaning_master_bath',
+                            'input_datetime.periodic_cleaning_family_room',
+                            'input_datetime.periodic_cleaning_office',
+                            'input_datetime.periodic_cleaning_master_bedroom',
+                            'input_datetime.periodic_cleaning_theater',
+                            'input_datetime.periodic_cleaning_penthouse_bath',
+                            'input_datetime.periodic_cleaning_dining_foyer',
+                            'input_datetime.periodic_cleaning_laundry_room',
+                            'input_datetime.periodic_cleaning_snack_bar',
+                            'input_datetime.periodic_cleaning_utility',
+                            'input_datetime.periodic_cleaning_studio_bedroom',
+                            'input_datetime.periodic_cleaning_penthouse_bedroom'
+                           ]
+        
+        - service: script.generate_weekly_periodic_list
+          data:
+            type: yard_work
+            generator_count: 3
+            date_entities: [
+                            'input_datetime.periodic_yard_spray_frontage_driveway',
+                            'input_datetime.periodic_yard_spray_front_edge_courtyard_orchard',
+                            'input_datetime.periodic_yard_spray_back_side_roadside',
+                            'input_datetime.periodic_yard_trim_sidewalk',
+                            'input_datetime.periodic_yard_trim_frontage_west',
+                            'input_datetime.periodic_yard_trim_frontage_east',
+                            'input_datetime.periodic_yard_trim_front',
+                            'input_datetime.periodic_yard_trim_side',
+                            'input_datetime.periodic_yard_trim_back',
+                            'input_datetime.periodic_yard_trim_pool',
+                            'input_datetime.periodic_yard_trim_edge_orchard',
+                            'input_datetime.periodic_yard_trim_roadside',
+                            'input_datetime.periodic_yard_trim_courtyard',
+                            'input_datetime.periodic_yard_mow_tractor',
+                            'input_datetime.periodic_yard_mow_push'
+                           ]
+        
+        - service: script.generate_weekly_periodic_list
+          data:
+            type: other
+            generator_count: 5
+            date_entities: [
+                            'input_datetime.periodic_other_ear_drops',
+                            'input_datetime.periodic_other_haircut',
+                            'input_datetime.periodic_other_trash',
+                            'input_datetime.periodic_other_groceries',
+                            'input_datetime.periodic_other_laundry'
+                           ]
+        
+        # 3) Determine which days will be free time this week.
+        - service: script.generate_weekly_free_time_days
+    
+    # Perform monthly chores at the start of a new month.
+    - if:
+        - "{{ day_of_month == 1 }}"
+      
+      then:
+        
+        # Reset monthly exercise values.
+        - service: input_number.set_value
+          target:
+            entity_id:
+              - input_number.treadmill_monthly_time
+              - input_number.treadmill_monthly_calories
+              - input_number.workout_monthly_time
+              - input_number.workout_monthly_calories
+              - input_number.yard_work_monthly_time
+              - input_number.yard_work_monthly_calories
+              - input_number.steps_monthly
+              - input_number.steps_monthly_calories
+          data:
+            value: 0
 
 #=========================#
 #     Automations Log     #
@@ -804,8 +873,112 @@
       data:
         topic: 'porch-sensor/ota_mode'
     
-    - delay: '00:07:00'
+    - delay: '00:09:00'
     
     - service: script.resume_deep_sleep
       data:
         topic: 'porch-sensor/ota_mode'
+
+#========================#
+#     Mini ToDo List     #
+#========================#
+
+# Create today's mini todo list. We do this in several steps:
+#
+# 1) Add calendar tasks if any exist, and calculate the amount of time remaining for other tasks.
+# 2) Add an exercise task if needed, and reduce the remaining time accordingly.
+# 3) Add a free time task if needed - if so there is nothing else to do.
+# 4) Add other types of tasks as needed in a loop, to either fill up the remaining time, or until the maximum tasks have been added.
+- alias: Create Daily Mini ToDo List
+  id: create_daily_mini_todo_list
+  
+  trigger:
+    - platform: time
+      at: '05:00:00'
+  
+  action:
+    
+    # Clear the list for today.
+    - event: reset_mini_todo_items 
+    
+    - variables:
+        
+        # Calendar and processing variables.
+        window_lower_bound: "{{ state_attr('sensor.variables', 'variables').mini_todo_start_time }}"
+        window_upper_bound: "{{ state_attr('sensor.variables', 'variables').mini_todo_end_time }}"
+        start_time: "{{ states('sensor.date') ~ ' ' ~ window_lower_bound }}"
+        end_time: "{{ states('sensor.date') ~ ' ' ~ window_upper_bound }}"
+        total_minutes: "{{ (((as_timestamp(end_time) - as_timestamp(start_time)) / 60) - state_attr('sensor.variables', 'variables').mini_todo_downtime_minutes) | int(0) }}"
+        
+    # Initialize the available minutes using the daily start and end times, minus down time (for lunch and breaks).
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.mini_todo_available_minutes
+      data:
+        value: "{{ total_minutes }}"
+    
+    # Add any calendar items for today first. These are important to know about, and the amount of time they consume must be
+    # accounted for before we do anything else.
+    - service: script.add_mini_todo_calendar_items
+      data:
+        window_lower_bound: "{{ window_lower_bound }}"
+        window_upper_bound: "{{ window_upper_bound }}"
+        start_time: "{{ start_time }}"
+        end_time: "{{ end_time }}"
+                  
+    # Next, add an exercise task if needed.    
+    - service: script.add_mini_todo_exercise_item
+    
+    # If this is a free time day, just add that to the list and go away. Weekly Free Time Days is a bitmask, where the 
+    # least significant bit is Sunday.
+    - if:
+        - "{{ states('input_number.mini_todo_weekly_free_time_days') | int(0) | bitwise_and(2 ** now().isoweekday()) > 0 }}"
+      
+      then:
+        - event: add_mini_todo_item
+          event_data:
+            value: 'ft:FREE TIME'
+        
+        - stop: Free day
+    
+    # Now add other items until we've used up the available time or hit the max items (hardcoded here). This is done with priority in mind, 
+    # but is also subject to coin tosses.
+    - variables:
+        task_count: "{{ 5 - state_attr('sensor.daily_mini_todo_list', 'items') | length }}"
+    
+    - repeat:
+        while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) >= 0 and state_attr('sensor.daily_mini_todo_list', 'items') | length <= task_count }}"
+        
+        sequence:
+    
+          # Select the next task type.
+          - service: input_select.select_next
+            target:
+              entity_id: input_select.mini_todo_task_type
+          
+          - variables:
+              type: "{{ states('input_select.mini_todo_task_type') }}"
+          
+          - choose:
+          
+            # Add a periodic task.
+            - conditions: "{{ type in ['cleaning', 'other', 'yard_work'] }}"
+              
+              sequence:
+                - if: "{{ range(2) | random > 0 }}"
+                
+                  then:
+                    - service: script.add_mini_todo_periodic_item
+                      data:
+                        type: "{{ type }}"
+            
+            # Add a project task.
+            - conditions: "{{ type in ['major', 'minor'] }}"
+              
+              sequence:
+                - if: "{{ range(2) | random > 0 }}"
+                
+                  then:
+                    - service: script.add_mini_todo_project_item
+                      data:
+                        type: "{{ type }}"

@@ -11,3 +11,4 @@ visible:
 cards:
   - !include /config/dashboard/dash_reminders/cards/office/payments.yaml
   - !include /config/dashboard/dash_reminders/cards/office/medications.yaml
+  - !include /config/dashboard/dash_reminders/cards/office/variables.yaml

@@ -70,7 +70,7 @@
       
       state: >
         {% from 'utilities.jinja' import count_number_bits_8 %}
-        {{ count_number_bits_8('input_number.treadmill_days') }}
+        {{ count_number_bits_8(states('input_number.treadmill_days')) }}
     
     - name: 'Weekly Workout Total'
       unique_id: weekly_workout_total
@@ -78,7 +78,7 @@
       
       state: >
         {% from 'utilities.jinja' import count_number_bits_8 %}
-        {{ count_number_bits_8('input_number.workout_days') }}
+        {{ count_number_bits_8(states('input_number.workout_days')) }}
     
     - name: 'Weekly Yard Work Total'
       unique_id: weekly_yard_work_total
@@ -86,7 +86,7 @@
       
       state: >
         {% from 'utilities.jinja' import count_number_bits_8 %}
-        {{ count_number_bits_8('input_number.yard_work_days') }}
+        {{ count_number_bits_8(states('input_number.yard_work_days')) }}
     
     - name: 'Weekly Steps Total'
       unique_id: weekly_steps_total
@@ -94,7 +94,7 @@
       
       state: >
         {% from 'utilities.jinja' import count_number_bits_8 %}
-        {{ count_number_bits_8('input_number.steps_days') }}
+        {{ count_number_bits_8(states('input_number.steps_days')) }}
 
     #----------------------------#
     #   -- Exercise Overdue --   #
@@ -126,13 +126,15 @@
       unique_id: exercise_overdue_types
       state: >
         {% set val = namespace(types = '') %}
-        {% for type in state_attr('sensor.exercise_overdue', 'overdue') %}
-          {% if loop.first %}
-            {% set val.types = val.types ~ type[0] | upper %}
-          {% else %}
-            {% set val.types = val.types ~ ',' ~ type[0] | upper %}
-          {% endif %}
-        {% endfor %}
+        {% if states('sensor.exercise_overdue') != 'unavailable' %}
+          {% for type in state_attr('sensor.exercise_overdue', 'overdue') %}
+            {% if loop.first %}
+              {% set val.types = val.types ~ type[0] | upper %}
+            {% else %}
+              {% set val.types = val.types ~ ',' ~ type[0] | upper %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
         
         {{ val.types }}
 

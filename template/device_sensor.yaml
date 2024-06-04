@@ -173,7 +173,7 @@
           {# --List of device entities, associated last seen sensors-- #}
           {% set device_list = [
                                 ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen'],
-                                ['binary_sensor.guest_br_window_sensor_contact', 'sensor.guest_br_window_sensor_last_seen'],
+                                ['binary_sensor.studio_window_sensor_contact', 'sensor.studio_window_sensor_last_seen'],
                                 ['binary_sensor.studio_motion_detector_occupancy', 'sensor.studio_motion_detector_last_seen'],
                                 ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen'],
                                 ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen'],
@@ -214,7 +214,7 @@
           {# --List of timestamp entities-- #}
           {% set device_list = [
                                 'input_number.back_door_sensor_door',
-                                'input_number.guest_br_window_sensor',
+                                'input_number.studio_window_sensor',
                                 'input_number.studio_motion_detector',
                                 'input_number.laundry_room_motion_detector',
                                 'input_number.master_bath_motion_detector',
@@ -312,26 +312,28 @@
       
       state: >
         {% set vars = namespace(name = 'Off', time = now() - timedelta(days = 1)) %}
-        {% for device in state_attr('binary_sensor.downstairs_motion', 'devices') %}
-          {% set device_updated = states[device].last_updated %}
-          {% if device_updated > vars.time %}
-            {% set vars.time = device_updated %}
-            {% set device_name = state_attr(device, 'friendly_name') %}
-            {% if device_name == 'Downstairs Occupancy' %}
-              {% set vars.name = 'Ecobee' %}
-            {% elif device_name == 'Main Floor Occupancy' %}
-              {% set vars.name = 'Sensor' %}
-            {% elif device_name == 'Laundry Room Motion Detector Motion' %}
-              {% set vars.name = 'Laundry`' %}
-            {% elif device_name == 'Studio Motion Detector Motion' %}
-              {% set vars.name = 'Studio' %}
-            {% elif device_name == 'Master Bath Motion Detector Motion' %}
-              {% set vars.name = 'Master' %}
-            {% elif device_name == 'Office Human Sensor Presence' %}
-              {% set vars.name = 'Office' %}
+        {% if states('binary_sensor.downstairs_motion') != 'unavailable' %}
+          {% for device in state_attr('binary_sensor.downstairs_motion', 'devices') %}
+            {% set device_updated = states[device].last_updated %}
+            {% if device_updated > vars.time %}
+              {% set vars.time = device_updated %}
+              {% set device_name = state_attr(device, 'friendly_name') %}
+              {% if device_name == 'Downstairs Occupancy' %}
+                {% set vars.name = 'Ecobee' %}
+              {% elif device_name == 'Main Floor Occupancy' %}
+                {% set vars.name = 'Sensor' %}
+              {% elif device_name == 'Laundry Room Motion Detector Motion' %}
+                {% set vars.name = 'Laundry' %}
+              {% elif device_name == 'Studio Motion Detector Motion' %}
+                {% set vars.name = 'Studio' %}
+              {% elif device_name == 'Master Bath Motion Detector Motion' %}
+                {% set vars.name = 'Master' %}
+              {% elif device_name == 'Office Human Sensor Presence' %}
+                {% set vars.name = 'Office' %}
+              {% endif %}
             {% endif %}
-          {% endif %}
-        {% endfor %}
+          {% endfor %}
+        {% endif %}
           
         {{ vars.name }}
     
@@ -341,17 +343,19 @@
       
       state: >
         {% set vars = namespace(name = 'Off', time = now() - timedelta(days = 1)) %}
-        {% for device in state_attr('binary_sensor.upstairs_motion', 'devices') %}
-          {% set device_updated = states[device].last_updated %}
-          {% if device_updated > vars.time %}
-            {% set vars.time = device_updated %}
-            {% set device_name = state_attr(device, 'friendly_name') %}
-            {% if device_name == 'Upstairs Occupancy' %}
-              {% set vars.name = 'Ecobee' %}
-            {% elif device_name == 'Theater Occupancy' %}
-              {% set vars.name = 'Sensor' %}
+        {% if states('binary_sensor.upstairs_motion') != 'unavailable' %}
+          {% for device in state_attr('binary_sensor.upstairs_motion', 'devices') %}
+            {% set device_updated = states[device].last_updated %}
+            {% if device_updated > vars.time %}
+              {% set vars.time = device_updated %}
+              {% set device_name = state_attr(device, 'friendly_name') %}
+              {% if device_name == 'Upstairs Occupancy' %}
+                {% set vars.name = 'Ecobee' %}
+              {% elif device_name == 'Theater Occupancy' %}
+                {% set vars.name = 'Sensor' %}
+              {% endif %}
             {% endif %}
-          {% endif %}
-        {% endfor %}
+          {% endfor %}
+        {% endif %}
           
         {{ vars.name }}

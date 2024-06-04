@@ -33,8 +33,8 @@ variables:
   input_device_name: !input device_name
   input_conditional_processing: !input conditional_processing
   
-  message_tag: "{{ input_device_name | lower }}_message"
-  power_off_tag: "{{ input_device_name | lower }}_power_off"
+  message_tag: "{{ input_device_name | lower }}_power_off"
+  power_off_tag: "{{ input_device_name | lower }}_power_problem"
 
 # Trigger on any change to the device entity, or when the component is loaded.
 trigger:
@@ -78,6 +78,7 @@ action:
   - service: script.register_mobile_notification
     data:
       tag: "{{ message_tag }}"
+      clear_type: assisted
       title: 'Warning:'
       message: '{{ input_device_name }} off, turning it back on.'
       channel: critical
@@ -117,6 +118,7 @@ action:
       - service: script.register_mobile_notification
         data:
           tag: "{{ power_off_tag }}"
+          clear_type: manual
           title: 'Warning:'
           message: '{{ input_device_name }} did not turn on.'
           channel: critical

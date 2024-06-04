@@ -46,6 +46,7 @@ logs:
   # Other
   aioesphomeapi.connection:                warning
   aiounifi:                                warning
+  alexapy.alexaapi:                        info
   androidtv.adb_manager.adb_manager_async: warning
   frontend.js.latest:                      fatal
   googleapiclient.discovery:               warning

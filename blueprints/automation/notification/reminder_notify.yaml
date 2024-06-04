@@ -131,6 +131,7 @@ action:
             - service: script.register_mobile_notification
               data:
                 tag: "{{ input_tag_prefix ~ entity_suffix }}"
+                clear_type: auto
                 title: "{{ title_text }}"
                 message: "{{ input_message_prefix ~ ' (' ~ friendly_short_name ~ ').' }}"
                 channel: !input channel

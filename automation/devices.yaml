@@ -80,6 +80,7 @@
     - service: script.register_mobile_notification
       data:
         tag: 'power_out'
+        clear_type: dual
         title: 'Warning:'
         message: 'Power is out, shutting down PC.'
         channel: critical
@@ -137,6 +138,7 @@
     - service: script.register_mobile_notification
       data:
         tag: 'ups_battery'
+        clear_type: manual
         title: 'Warning:'
         message: 'UPS battery is critical, shutting down RPi.'
         channel: critical
@@ -188,6 +190,7 @@
     - service: script.register_mobile_notification
       data:
         tag: 'power_restored'
+        clear_type: manual
         title: 'Attention:'
         message: 'Power is restored, turning on the PC.'
         channel: standard
@@ -289,11 +292,11 @@
         skip_condition: false
     
     - service: automation.turn_on
-      entity_id: automation.turn_on_office_light
+      entity_id: automation.control_office_lamp
     
     - service: automation.trigger
       data:
-        entity_id: automation.turn_on_office_light
+        entity_id: automation.control_office_lamp
         skip_condition: false
     
     # Turn off extended away mode (this should have happened above based on proximity ... this is a failsafe).
@@ -396,7 +399,7 @@
               entity_id:
                 - automation.turn_on_christmas_lights
                 - automation.turn_on_guest_lights_sunset
-                - automation.turn_on_office_light
+                - automation.control_office_lamp
       
       # Must be sunset.
       else:
@@ -710,7 +713,6 @@
     - platform: state
       entity_id:
         - device_tracker.jon_companion
-        - device_tracker.jon_franks
       from: 'not_home'
       to: 'home'
   
@@ -868,7 +870,7 @@
       sensor_off_state: 'off'
       temperature_entity: sensor.office_temperature
       fan_entity: fan.office_fan
-      thresholds: [80, 79, 75]
+      thresholds: [79, 77, 74]
 
 # Operate the family room fan when the AV system is on.
 - alias: Operate Family Room Fan
@@ -881,7 +883,7 @@
       sensor_off_state: 'off'
       temperature_entity: sensor.main_floor_temperature
       fan_entity: fan.family_room_fan
-      thresholds: [80, 78, 75]
+      thresholds: [79, 76, 74]
 
 # Operate the theater fan when the AV system is on.
 - alias: Operate Theater Fan
@@ -894,7 +896,7 @@
       sensor_off_state: 'PowerOff'
       temperature_entity: sensor.theater_temperature
       fan_entity: fan.theater_fan
-      thresholds: [81, 77, 74]
+      thresholds: [78, 76, 74]
 
 # Turn off penthouse fan after a while.
 - alias: Turn Off Penthouse Fan
@@ -1192,7 +1194,7 @@
   
   trigger:
     - platform: time
-      at: '03:19:00'
+      at: '03:00:00'
   
   condition:
     - condition: time
@@ -1213,7 +1215,7 @@
     - service: timer.start
       data:
         entity_id: timer.vacuum
-        duration: '01:00:00'
+        duration: '01:30:00'
 
 # Land the vacuum.
 - alias: Stop Vacuum
@@ -1323,9 +1325,9 @@
         option: >
           {% if   washer_fill_seconds >= 180 and washer_fill_seconds < 350 %}
             Small
-          {% elif washer_fill_seconds >= 350 and washer_fill_seconds < 450 %}
+          {% elif washer_fill_seconds >= 350 and washer_fill_seconds < 500 %}
             Medium
-          {% elif washer_fill_seconds >= 450  %}
+          {% elif washer_fill_seconds >= 500  %}
             Large
           {% else %}
             Medium

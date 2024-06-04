@@ -58,6 +58,11 @@
           0
         {% endif %}
 
+    - name: 'Family Room Lamp Power'
+      unique_id: family_room_lamp_power
+      unit_of_measurement: 'W'
+      state: "{{ iif(is_state('light.family_room_lamp', 'on'), 10, 0) }}"
+
     - name: 'Foyer Hutch Power'
       unique_id: foyer_hutch_power
       unit_of_measurement: 'W'
@@ -274,6 +279,7 @@
                   states('sensor.dining_room_hutch_power') | float(0) +
                   states('sensor.dining_room_lamps_power') | float(0) +
                   states('sensor.driveway_lights_power') | float(0) +
+                  states('sensor.family_room_lamp_power') | float(0) +
                   states('sensor.foyer_hutch_power') | float(0) +
                   states('sensor.front_floodlight_power') | float(0) +
                   states('sensor.garage_lights_power') | float(0) +
@@ -366,7 +372,6 @@
       unit_of_measurement: 'W'
       icon: mdi:flash
       state: "{{ (
-                  states('sensor.family_room_lamp_current_consumption') | float(0) +
                   states('sensor.master_bedroom_lamp_current_consumption') | float(0) +
                   states('sensor.office_lamp_current_consumption') | float(0)
                  ) | round(2)
@@ -487,6 +492,7 @@
                   states('sensor.dining_room_lamps_daily_energy') | float(0) +
                   states('sensor.driveway_lights_daily_energy') | float(0) +
                   states('sensor.family_room_fan_daily_energy') | float(0) +
+                  states('sensor.family_room_lamp_daily_energy') | float(0) +
                   states('sensor.fire_tv_daily_energy') | float(0) +
                   states('sensor.foyer_hutch_daily_energy') | float(0) +
                   states('sensor.front_floodlight_daily_energy') | float(0) +
@@ -537,7 +543,6 @@
       icon: mdi:flash
       state: "{{ (
                   states('sensor.family_room_av_daily_energy') | float(0) +
-                  states('sensor.family_room_lamp_daily_energy') | float(0) +
                   states('sensor.master_bedroom_lamp_daily_energy') | float(0) +
                   states('sensor.office_lamp_daily_energy') | float(0) +
                   states('sensor.microwave_daily_energy') | float(0) +
@@ -583,6 +588,7 @@
                   states('sensor.dining_room_lamps_monthly_energy') | float(0) +
                   states('sensor.driveway_lights_monthly_energy') | float(0) +
                   states('sensor.family_room_fan_monthly_energy') | float(0) +
+                  states('sensor.family_room_lamp_monthly_energy') | float(0) +
                   states('sensor.fire_tv_monthly_energy') | float(0) +
                   states('sensor.foyer_hutch_monthly_energy') | float(0) +
                   states('sensor.front_floodlight_monthly_energy') | float(0) +
@@ -633,7 +639,6 @@
       icon: mdi:flash
       state: "{{ (
                   states('sensor.family_room_av_monthly_energy') | float(0) +
-                  states('sensor.family_room_lamp_monthly_energy') | float(0) +
                   states('sensor.master_bedroom_lamp_monthly_energy') | float(0) +
                   states('sensor.office_lamp_monthly_energy') | float(0) +
                   states('sensor.microwave_monthly_energy') | float(0) +

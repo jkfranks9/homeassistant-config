@@ -27,7 +27,7 @@
 {% macro count_number_bits_8(number) %}
         
 	{% set val = namespace(count = 0) %}
-    {% set bits = states(number) | int(0) %}
+    {% set bits = number | int(0) %}
     {% for i in [1, 2, 4, 8, 16, 32, 64, 128] %}
       {% if bits | bitwise_and(i) > 0 %}
         {% set val.count = val.count + 1 %}
@@ -37,4 +37,3 @@
     {{ val.count }}
 
 {% endmacro %}
-

@@ -23,13 +23,15 @@
 	{% set group = state_attr(group_entity, 'entity_id') %}
 	{% if group != none %}
       {% set var = namespace(symbols = base_symbols) %}
-	  {% for x_name in state_attr('sensor.variables', 'variables').dynamic_light_group_christmas_lights.get(var_key)[0] %}
-	    {% set x_sym = state_attr('sensor.variables', 'variables').dynamic_light_group_christmas_lights.get(var_key)[1] %}
-	    {% set x_light = 'light.' ~ x_name %}
-	    {% if states(x_light) in group %}
-		  {% set var.symbols = var.symbols + [x_sym[loop.index0]] %}
-	    {% endif %}
-	  {% endfor %}
+	  {% if states('sensor.variables') != 'unavailable' %}
+  	    {% for x_name in state_attr('sensor.variables', 'variables').dynamic_light_group_christmas_lights.get(var_key)[0] %}
+	      {% set x_sym = state_attr('sensor.variables', 'variables').dynamic_light_group_christmas_lights.get(var_key)[1] %}
+	      {% set x_light = 'light.' ~ x_name %}
+	      {% if states(x_light) in group %}
+		    {% set var.symbols = var.symbols + [x_sym[loop.index0]] %}
+	      {% endif %}
+	    {% endfor %}
+	  {% endif %}
 	  
 	  {{ var.symbols }}
 	{% endif %}

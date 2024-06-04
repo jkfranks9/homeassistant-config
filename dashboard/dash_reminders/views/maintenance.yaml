@@ -10,3 +10,4 @@ cards:
   - !include /config/dashboard/dash_reminders/cards/maintenance/filters.yaml
   - !include /config/dashboard/dash_reminders/cards/maintenance/devices.yaml
   - !include /config/dashboard/dash_reminders/cards/maintenance/misc.yaml
+  - !include /config/dashboard/dash_reminders/cards/maintenance/other.yaml

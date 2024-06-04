@@ -166,7 +166,7 @@ config:
         - binary_sensor.main_floor_occupancy
         - binary_sensor.office_human_sensor_presence
         - binary_sensor.back_door_sensor_contact
-        - binary_sensor.guest_br_window_sensor_contact
+        - binary_sensor.studio_window_sensor_contact
       tap_action: more-info
       state_action:
         action: call-service

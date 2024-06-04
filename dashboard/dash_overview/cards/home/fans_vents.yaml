@@ -51,6 +51,11 @@ cards:
         icon: mdi:fan
       
       - type: tile
+        entity: switch.treadmill_fan
+        name: Treadmill
+        icon: mdi:fan
+      
+      - type: tile
         entity: cover.master_br_vent_1
         name: BR 1
         icon: mdi:hvac

@@ -13,7 +13,7 @@ cards:
       - entity: input_datetime.reminder_misc_smokedetectors
       - name: Test Smoke Detectors
       - icon: smoke-detector-variant
-      - interval: 4
+      - interval: 3
       - period: 'months'
       - service: script.set_datetime_offset_months
       

@@ -50,8 +50,8 @@ variables:
   
   lockout_timer: "{{ 'timer.garage_door_' ~ input_name ~ '_lockout' }}"  
   msg_operation: "{{ iif(input_operation == 'Open', 'Opening', 'Closing') }}"  
-  message_tag: "{{ input_name | lower }}_garage_door_message"
-  error_tag: "{{ input_name | lower }}_operation_problem"
+  message_tag: "{{ input_name | lower }}_garage_door_operation"
+  error_tag: "{{ input_name | lower }}_garage_door_problem"
 
 sequence:
       
@@ -82,6 +82,7 @@ sequence:
       - service: script.register_mobile_notification
         data:
           tag: "{{ message_tag }}"
+          clear_type: auto
           title: 'Attention:'
           message: '{{ msg_operation }} garage door {{ input_name }}.'
           channel: standard
@@ -121,6 +122,7 @@ sequence:
       - service: script.register_mobile_notification
         data:
           tag: "{{ error_tag }}"
+          clear_type: manual
           title: 'Warning:'
           message: 'Garage door {{ input_name }} operation did not succeed.'
           channel: critical

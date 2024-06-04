@@ -22,8 +22,8 @@ cards:
       - entity: sensor.back_door_sensor_linkquality
         name: Back Door Sensor
       
-      - entity: sensor.guest_br_window_sensor_linkquality
-        name: Guest BR Window Sensor
+      - entity: sensor.studio_window_sensor_linkquality
+        name: Studio Window Sensor
       
       - entity: sensor.office_human_sensor_linkquality
         name: Office Human Presence Sensor

@@ -41,7 +41,7 @@ cards:
           
             - type: 'custom:button-card'
               template: door_window_button
-              entity: binary_sensor.guest_br_window_sensor_contact
+              entity: binary_sensor.studio_window_sensor_contact
               variables:
-                var_name: Guest BR
+                var_name: Studio
                 var_icon_prefix: mdi:window
