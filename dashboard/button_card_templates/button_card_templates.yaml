@@ -362,10 +362,7 @@ temperature_button:
   
   state_display: |-
     [[[
-      if (entity.state < 100)
-        return Math.round(entity.state).toString() + "°"
-      else
-        return Math.round(entity.state).toString()
+      return Math.round(entity.state).toString() + "°"
     ]]]
     
   custom_fields:

@@ -447,10 +447,8 @@
                       'input_datetime.reminder_misc_cleanoven',
                       'input_datetime.reminder_misc_cleanmicrowavefilter',
                       'input_datetime.reminder_misc_cleandishwasher',
-                      'input_datetime.reminder_misc_cleanhvacregs',
                       'input_datetime.reminder_misc_rechargeclipper',
-                      'input_datetime.reminder_misc_lubegaragedoors',
-                      'input_datetime.reminder_misc_britafilter'
+                      'input_datetime.reminder_misc_lubegaragedoors'
                      ]
       message_prefix: Misc maintenance due
       channel: persistent
@@ -503,116 +501,13 @@
       tag_prefix: medication_reorder_
       category_uppercase: false
 
-#======================================#
-#     Weekly Cleaning Notification     #
-#======================================#
-
-# Send an email once a week with the following week's cleaning chores.
-
-- alias: Notify Weekly Cleaning
-  id: 'notify_weekly_cleaning'
-  
-  # Trigger once each Sunday afternoon (the weekday is specified in the conditions).
-  trigger:
-    - platform: time
-      at: '16:00:00'
-  
-  variables:
-    
-    # This is the list of datetime objects for all the cleaning chores.
-    date_entities: [
-                    'input_datetime.periodic_cleaning_dining_foyer',
-                    'input_datetime.periodic_cleaning_family_room',
-                    'input_datetime.periodic_cleaning_kitchen',
-                    'input_datetime.periodic_cleaning_laundry_room',
-                    'input_datetime.periodic_cleaning_master_bath',
-                    'input_datetime.periodic_cleaning_master_bedroom',
-                    'input_datetime.periodic_cleaning_office',
-                    'input_datetime.periodic_cleaning_penthouse_bath',
-                    'input_datetime.periodic_cleaning_penthouse_bedroom',
-                    'input_datetime.periodic_cleaning_snack_bar',
-                    'input_datetime.periodic_cleaning_studio_bath',
-                    'input_datetime.periodic_cleaning_studio_bedroom',
-                    'input_datetime.periodic_cleaning_theater',
-                    'input_datetime.periodic_cleaning_utility'
-                   ]
-    
-    # This is the list of actionable cleaning chores (those overdue or due within the next week).
-    actionable_entities: >
-      {% set actionable_list = namespace(list = []) %}
-      {% for entity in date_entities %}
-        {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(states('sensor.date')) + timedelta(days = 7), 0) %}
-          {% set actionable_list.list = actionable_list.list + [entity] %}
-        {% endif %}
-      {% endfor %}    
-      {{ actionable_list.list }}
-  
-  # Continue if it's Sunday and the list of actionable cleaning chores is not empty.
-  condition:
-    - condition: time
-      weekday:
-        - sun
-    
-    - "{{ actionable_entities | length > 0 }}"
-  
-  action:
-    
-    # First, set the input select that we use for the email body (list of friendly names for cleaning chores) to a single null entry.
-    - service: input_select.set_options
-      target:
-        entity_id: input_select.weekly_cleaning_items
-      data:
-        options: ['']
-    
-    # Process each actionable chore entity.
-    - repeat:
-        for_each: "{{ actionable_entities }}"
-        
-        sequence:
-          
-          # Add the chore friendly name for the current actionable entity to the input select. Note that we skip the single
-          # null item we added above, by checking for an option length of zero.
-          - service: input_select.set_options
-            target:
-              entity_id: input_select.weekly_cleaning_items
-            data:
-              options: >
-                {% set item_list = namespace(list = []) %}
-                {% for opt in state_attr('input_select.weekly_cleaning_items', 'options') %}
-                  {% set item_list.list = item_list.list + [opt] %}
-                  {% if loop.last %}
-                    {% set item_date = states(repeat.item).split('-')[-2] ~ '/' ~ states(repeat.item).split('-')[-1] %}
-                    {% set item_text = (state_attr(repeat.item, 'friendly_name').split('Periodic Cleaning ')[-1]) ~ ' (' ~ item_date ~ ')' %}
-                    {% if opt | length == 0 %}
-                      {% set item_list.list = [item_text] %}
-                    {% else %}
-                      {% set item_list.list = item_list.list + [item_text] %}
-                    {% endif %}
-                  {% endif %}
-                {% endfor %}
-                {{ item_list.list }}
-    
-    # Send the email. The HTML body contains a list of the friendly names, using the input select we created above. The message is unused (we use the HTML instead),
-    # but I believe is a required parameter (at least it is using the developer tools Service tab).
-    - service: notify.gmail
-      data:
-        title: Weekly Cleaning Chores
-        message: Test
-        data:
-          html: >
-            <p>This week's cleaning chores:</p><ul>
-            {% for opt in state_attr('input_select.weekly_cleaning_items', 'options') %}
-              <li>{{ opt }}</li>
-            {% endfor %}
-            </ul>
-
 #================================#
 #     Calendar Notifications     #
 #================================#
 
-# Notify about an appointment type of calendar event, identified using the tag "(appt)" in the event title.
-# I want to see these 4 hours before the event, to allow ample driving time, etc. They expire 30 minutes after
-# the event.
+# Notify about an appointment type of calendar event, identified using the tag "(appt)" or "(appt:nn)" in the event title
+# (where nn is the one-way driving time estimate). I want to see these 4 hours before the event, to allow ample driving time, 
+# etc. They expire 30 minutes after the event.
 - alias: Notify Calendar Appointment
   id: 'notify_calendar_appointment'
   
@@ -620,12 +515,27 @@
     path: notification/calendar_notify.yaml
     input:
       offset: -04:00:00
-      calendar_tag: appt
+      calendar_tag: >
+        {% set summary = trigger.calendar_event.summary %}
+        {% if '(appt:' in summary %}
+          {% set min = (summary.split(':')[-1] | regex_replace("[^A-Za-z0-9]", "")) %}
+          {% set tag = '(appt:' ~ min ~ ')' %}
+        {% else %}
+          {% set tag = '(appt)' %}
+        {% endif %}
+        {{ tag }}
       title: attention
       message: >
+        {% set summary = trigger.calendar_event.summary %}
+        {% if '(appt:' in summary %}
+          {% set min = (summary.split(':')[-1] | regex_replace("[^A-Za-z0-9]", "")) %}
+          {% set tag = '(appt:' ~ min ~ ')' %}
+        {% else %}
+          {% set tag = '(appt)' %}
+        {% endif %}
         {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
         {% set time = timeobj.strftime('%H:%M') %}
-        {{ trigger.calendar_event.summary | replace(' (appt)', '') }} at {{ time }}
+        {{ trigger.calendar_event.summary | replace(tag, '') | trim }} at {{ time }}
       channel: temporary
       timeout: 16200
       tag: 'calendar_appointment'
@@ -640,12 +550,12 @@
     path: notification/calendar_notify.yaml
     input:
       offset: -00:15:00
-      calendar_tag: home
+      calendar_tag: '(home)'
       title: attention
       message: >
         {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
         {% set time = timeobj.strftime('%H:%M') %}
-        {{ trigger.calendar_event.summary | replace(' (home)', '') }} at {{ time }}
+        {{ trigger.calendar_event.summary | replace('(home)', '') | trim }} at {{ time }}
       channel: temporary
       timeout: 2700
       tag: 'calendar_home'
@@ -866,10 +776,6 @@
     path: notification/unavailable_devices_notify.yaml
     input:
       current_sensor_entity: sensor.current_zigbee_unavailable_devices
-      
-      # Ignore spurious nonsense during HA startup.
-      additional_condition_entity: input_boolean.zigbee_catch_22
-      additional_condition_state: 'off'
 
 - alias: Notify Echo Device Unavailable
   id: 'notify_echo_device_unavailable'
@@ -878,6 +784,58 @@
     path: notification/unavailable_devices_notify.yaml
     input:
       current_sensor_entity: sensor.current_echo_unavailable_devices
+
+#==============================#
+#     Temperature Extremes     #
+#==============================#
+
+- alias: Notify Min Attic Temp Extreme
+  id: 'notify_min_attic_temp_extreme'
+  
+  use_blueprint:
+    path: notification/temperature_extremes_notify.yaml
+    input:
+      temperature_entity: input_number.min_attic_temp
+
+- alias: Notify Max Attic Temp Extreme
+  id: 'notify_max_attic_temp_extreme'
+  
+  use_blueprint:
+    path: notification/temperature_extremes_notify.yaml
+    input:
+      temperature_entity: input_number.max_attic_temp
+
+- alias: Notify Min Garage Temp Extreme
+  id: 'notify_min_garage_temp_extreme'
+  
+  use_blueprint:
+    path: notification/temperature_extremes_notify.yaml
+    input:
+      temperature_entity: input_number.min_garage_temp
+
+- alias: Notify Max Garage Temp Extreme
+  id: 'notify_max_garage_temp_extreme'
+  
+  use_blueprint:
+    path: notification/temperature_extremes_notify.yaml
+    input:
+      temperature_entity: input_number.max_garage_temp
+
+- alias: Notify Min Porch Temp Extreme
+  id: 'notify_min_porch_temp_extreme'
+  
+  use_blueprint:
+    path: notification/temperature_extremes_notify.yaml
+    input:
+      temperature_entity: input_number.min_porch_temp
+
+- alias: Notify Max Porch Temp Extreme
+  id: 'notify_max_porch_temp_extreme'
+  
+  use_blueprint:
+    path: notification/temperature_extremes_notify.yaml
+    input:
+      temperature_entity: input_number.max_porch_temp
 
 #=======================================#
 #     Time/Date Based Notifications     #

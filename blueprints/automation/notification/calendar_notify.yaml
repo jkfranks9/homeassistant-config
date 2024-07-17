@@ -14,12 +14,13 @@ blueprint:
     
     calendar_tag:
       name: Calendar Tag
-      description: Tag that identifies the type of calendar entry.
+      description: Tag that identifies the type of calendar entry. For an appointment (appt) the one-way driving time can optionally be specified.
       selector:
         select:
           options:
-            - appt
-            - home
+            - (appt)
+            - (appt:nn)
+            - (home)
     
     title:
       name: Title
@@ -58,7 +59,6 @@ variables:
   input_title: !input title
   
   title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"
-  cal_tag: "{{ '(' ~ input_calendar_tag ~ ')' }}"
 
 trigger:
   
@@ -69,7 +69,7 @@ trigger:
     offset: !input offset
 
 # Ensure the event contains the calendar tag.
-condition: "{{ cal_tag in trigger.calendar_event.summary }}"
+condition: "{{ input_calendar_tag in trigger.calendar_event.summary }}"
 
 action:
   

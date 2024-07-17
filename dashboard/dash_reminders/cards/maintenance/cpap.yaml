@@ -15,7 +15,6 @@ cards:
       - icon: air-filter
       - interval: 15
       - period: 'days'
-      - service: script.set_datetime_offset_days
       
   # Mask
   - type: 'custom:decluttering-card'
@@ -26,7 +25,6 @@ cards:
       - icon: face-mask
       - interval: 1
       - period: 'month'
-      - service: script.set_datetime_offset_months
       
   # Hose
   - type: 'custom:decluttering-card'
@@ -37,7 +35,6 @@ cards:
       - icon: cable-data
       - interval: 3
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Headgear / Humidifier
   - type: 'custom:decluttering-card'
@@ -48,4 +45,3 @@ cards:
       - icon: air-humidifier
       - interval: 6
       - period: 'months'
-      - service: script.set_datetime_offset_months

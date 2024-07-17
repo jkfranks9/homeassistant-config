@@ -2,12 +2,11 @@
 #     Feature Movie List Card     #
 #=================================#
 
-type: vertical-stack
-cards:
-  - type: entities
-    entities:
-      - entity: script.play_feature_movie
-        name: Feature Movie
-        action_name: Play
-      
-      - entity: input_select.kodi_movies
+type: entities
+title: Feature Movies
+entities:
+  - entity: script.play_feature_movie
+    name: Current Feature
+    action_name: Play
+  
+  - entity: input_select.kodi_movies

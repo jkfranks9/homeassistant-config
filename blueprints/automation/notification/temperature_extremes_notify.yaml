@@ -1,0 +1,38 @@
+# Notify when new low or high temperatures are detected in certain areas.
+
+blueprint:
+  name: Temperature Extremes Notification
+  description: Notify when new low or high temperatures are detected in certain areas.
+  domain: automation
+  
+  input:
+    temperature_entity:
+      name: Temperature Entity
+      description: Minimum or maximum area temperature entity to be checked.
+      selector:
+        entity:
+          domain: input_number
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_temperature_entity: !input temperature_entity
+
+# Trigger on just the state changing, not any attributes.
+trigger:
+  - platform: state
+    entity_id: !input temperature_entity
+
+# Send a persistent notification. This is never dismissed automatically.
+action:
+  - variables:
+      entity_name: "{{ input_temperature_entity.split('.')[1] }}"
+      area: "{{ entity_name.split('_')[1] | title }}"
+      type: "{{ iif(entity_name.split('_')[0] == 'min', 'minimum', 'maximum') }}"
+    
+  - service: script.send_notification
+    data:
+      destination:
+        - persistent
+      title: "{{ area ~ ' ' ~ type | title ~ ' Temperature Change:' }}"
+      message: "{{ 'Changed from ' ~ trigger.from_state.state ~ ' to ' ~ trigger.to_state.state }}"
+      notification_id: "{{ area ~ '_' ~ type }}"

@@ -12,6 +12,7 @@ wifi:
 
 # Enable over the air updates
 ota:
+  - platform: esphome
 
 # WiFi signal sensor
 sensor:

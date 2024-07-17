@@ -2,14 +2,12 @@
 #     Weather Forecast Card     #
 #===============================#
 
-type: custom:stack-in-card
-cards:
-  - type: custom:clock-weather-card
-    entity: weather.openweathermap
-    title: Weather
-    sun_entity: sun.sun
-    #temperature_sensor: sensor.porch_temperature
-    #humidity_sensor: sensor.porch_humidity
-    weather_icon_type: fill
-    show_humidity: true
-    apparent_sensor: sensor.openweathermap_feels_like_temperature
+type: custom:clock-weather-card
+entity: weather.openweathermap
+title: Weather
+sun_entity: sun.sun
+#temperature_sensor: sensor.porch_temperature
+#humidity_sensor: sensor.porch_humidity
+weather_icon_type: fill
+show_humidity: true
+apparent_sensor: sensor.openweathermap_feels_like_temperature

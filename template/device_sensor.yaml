@@ -97,7 +97,10 @@
       unique_id: last_alexa
       state: >
         {{ expand(integration_entities('alexa_media') | select('search', 'media_player'))
-         | selectattr('attributes.last_called', 'eq', True) | map(attribute = 'entity_id') | list }}
+         | selectattr('attributes.last_called', 'eq', True) | map(attribute = 'entity_id') | first }}
+      availability: >
+        {{ expand(integration_entities('alexa_media') | select('search', 'media_player'))
+        | selectattr('attributes.last_called','eq',True) | first is defined }}
 
     #-----------------------------#
     #   -- Treadmill Service --   #
@@ -107,21 +110,6 @@
     - name: Treadmill Current Hours
       unique_id: treadmill_current_hours
       state: "{{ (states('input_number.treadmill_usage_minutes') | int(0) / 60) | round }}"
-
-    #---------------------------#
-    #   -- Beacon Presence --   #
-    #---------------------------#
-    
-    # Blue charm beacon presence, based on scanner distance being a valid number.
-    - name: 'Blue Charm Presence'
-      unique_id: blue_charm_presence
-      state: >
-        {% set distance = states('sensor.ble_house_blue_charm_distance') %}
-        {% if distance not in ['unknown', 'unavailable'] %}
-          House
-        {% else %}
-          Away
-        {% endif %}
 
     #------------------------------#
     #   -- Washer Power State --   #

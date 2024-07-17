@@ -2,45 +2,43 @@
 #     Lighting Controls Card     #
 #================================#
 
-type: vertical-stack
-cards:
-  - type: entities
-    title: Lighting Controls
+type: entities
+title: Lighting Controls
+entities:
+  - type: buttons
     entities:
-      - type: buttons
-        entities:
-          - entity: script.set_theater_bright
-            name: Bright
-            icon: mdi:lightbulb
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              service_data:
-                entity_id: script.set_theater_bright
-          
-          - entity: script.set_theater_dark
-            name: Dark
-            icon: mdi:lightbulb-outline
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              service_data:
-                entity_id: script.set_theater_dark
-          
-          - entity: script.set_theater_dim
-            name: Dim
-            icon: mdi:lightbulb-on-outline
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              service_data:
-                entity_id: script.set_theater_dim
-          
-          - entity: script.set_theater_idle
-            name: Idle
-            icon: mdi:lightbulb-on
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              service_data:
-                entity_id: script.set_theater_idle
+      - entity: script.set_theater_bright
+        name: Bright
+        icon: mdi:lightbulb
+        tap_action:
+          action: call-service
+          service: script.turn_on
+          service_data:
+            entity_id: script.set_theater_bright
+      
+      - entity: script.set_theater_dark
+        name: Dark
+        icon: mdi:lightbulb-outline
+        tap_action:
+          action: call-service
+          service: script.turn_on
+          service_data:
+            entity_id: script.set_theater_dark
+      
+      - entity: script.set_theater_dim
+        name: Dim
+        icon: mdi:lightbulb-on-outline
+        tap_action:
+          action: call-service
+          service: script.turn_on
+          service_data:
+            entity_id: script.set_theater_dim
+      
+      - entity: script.set_theater_idle
+        name: Idle
+        icon: mdi:lightbulb-on
+        tap_action:
+          action: call-service
+          service: script.turn_on
+          service_data:
+            entity_id: script.set_theater_idle

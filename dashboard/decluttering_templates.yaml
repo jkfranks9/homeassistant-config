@@ -17,11 +17,11 @@ next_event:
         secondary_info: '[[interval]] [[period]] [[amount]]'
         hold_action:
           action: call-service
-          service: '[[service]]'
+          service: script.handle_completed_reminder_or_periodic_item
           service_data:
             entity: '[[entity]]'
-            base_entity: '[[base_entity]]'
-            amount: '[[interval]]'
+            interval: '[[interval]]'
+            period: '[[period]]'
     
     card_mod:
       style: |
@@ -47,11 +47,12 @@ next_event_numeric:
         secondary_info: '[[interval]] [[period]] [[amount]]'
         hold_action:
           action: call-service
-          service: '[[service]]'
+          service: script.handle_completed_reminder_or_periodic_item
           service_data:
             entity: '[[entity]]'
             base_entity: '[[base_entity]]'
-            amount: '[[interval]]'
+            interval: '[[interval]]'
+            period: '[[period]]'
     
     card_mod:
       style: |

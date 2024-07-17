@@ -186,6 +186,99 @@ initialize_global_variables:
 #     Mini ToDo List     #
 #========================#
 
+# Front end to Generate Weekly Periodic List. That script should normally only be called once a week on Sunday. However, it
+# seems like the various weekly periodic list sensors can become unknown for some unknown (haha) reason. So we also 
+# regenerate the lists at HA startup if we detect such a case. Hence this script since I don't want to repeat this logic.
+generate_periodic_lists:
+  alias: Generate Periodic Lists
+  
+  fields:
+    type:
+      description: The type of list(s) to generate.
+      selector:
+        select:
+          options:
+            - cleaning
+            - other
+            - yard_work
+            - all
+    
+    start_date:
+      description: Starting date for list generation. This is the most recent Sunday.
+      selector:
+        date:
+  
+  sequence:
+    - if:
+        - "{{ type in ['all', 'cleaning'] }}"
+    
+      then:
+        - service: script.generate_weekly_periodic_list
+          data:
+            type: cleaning
+            start_date: "{{ start_date }}"
+            generator_count: "{{ iif(states('input_boolean.mini_todo_generator_switch') == 'off', 3, 4) }}"
+            date_entities: [
+                            'input_datetime.periodic_cleaning_kitchen',
+                            'input_datetime.periodic_cleaning_studio_bath',
+                            'input_datetime.periodic_cleaning_master_bath',
+                            'input_datetime.periodic_cleaning_family_room',
+                            'input_datetime.periodic_cleaning_office',
+                            'input_datetime.periodic_cleaning_master_bedroom',
+                            'input_datetime.periodic_cleaning_theater',
+                            'input_datetime.periodic_cleaning_penthouse_bath',
+                            'input_datetime.periodic_cleaning_dining_foyer',
+                            'input_datetime.periodic_cleaning_laundry_room',
+                            'input_datetime.periodic_cleaning_snack_bar',
+                            'input_datetime.periodic_cleaning_utility',
+                            'input_datetime.periodic_cleaning_studio_bedroom',
+                            'input_datetime.periodic_cleaning_penthouse_bedroom'
+                           ]
+    
+    - if:
+        - "{{ type in ['all', 'other'] }}"
+    
+      then:
+        - service: script.generate_weekly_periodic_list
+          data:
+            type: other
+            start_date: "{{ start_date }}"
+            generator_count: 5
+            date_entities: [
+                            'input_datetime.periodic_other_ear_drops',
+                            'input_datetime.periodic_other_haircut',
+                            'input_datetime.periodic_other_trash',
+                            'input_datetime.periodic_other_groceries',
+                            'input_datetime.periodic_other_laundry'
+                           ]
+    
+    - if:
+        - "{{ type in ['all', 'yard_work'] }}"
+    
+      then:
+        - service: script.generate_weekly_periodic_list
+          data:
+            type: yard_work
+            start_date: "{{ start_date }}"
+            generator_count: 3
+            date_entities: [
+                            'input_datetime.periodic_yard_spray_frontage_driveway',
+                            'input_datetime.periodic_yard_spray_front_edge_courtyard_orchard',
+                            'input_datetime.periodic_yard_spray_back_side_roadside',
+                            'input_datetime.periodic_yard_trim_sidewalk',
+                            'input_datetime.periodic_yard_trim_frontage_west',
+                            'input_datetime.periodic_yard_trim_frontage_east',
+                            'input_datetime.periodic_yard_trim_front',
+                            'input_datetime.periodic_yard_trim_side',
+                            'input_datetime.periodic_yard_trim_back',
+                            'input_datetime.periodic_yard_trim_pool',
+                            'input_datetime.periodic_yard_trim_edge_orchard',
+                            'input_datetime.periodic_yard_trim_roadside',
+                            'input_datetime.periodic_yard_trim_courtyard',
+                            'input_datetime.periodic_yard_mow_tractor',
+                            'input_datetime.periodic_yard_mow_push'
+                           ]
+
 # This is an input to the daily mini-todo list logic. It is run once a week to generate a short list of periodic tasks 
 # for the coming week (for cleaning, yard work and other types of items). The Create Daily Mini ToDo List automation then 
 # picks one or two items of each type as needed throughout the week.
@@ -201,6 +294,11 @@ generate_weekly_periodic_list:
             - cleaning
             - yard_work
             - other
+    
+    start_date:
+      description: Starting date for list generation. This is the most recent Sunday.
+      selector:
+        date:
     
     generator_count:
       description: Maximum items to generate for the week.
@@ -236,7 +334,7 @@ generate_weekly_periodic_list:
         split_text: "{{ 'Periodic ' ~ type.split('_')[0] | title }}"
         times_var: "{{ 'mini_todo_' ~ type ~ '_times' }}"
         
-        # List of actionable items (those overdue or due within the next week).
+        # List of actionable items (those overdue or due within a few days).
         actionable_entities: >
           {# Start with an empty list. #}
           {% set var = namespace(list = []) %}
@@ -245,7 +343,7 @@ generate_weekly_periodic_list:
           {% for entity in date_entities %}
             
             {# Continue if the entity is overdue or due within a few days. #}
-            {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(states('sensor.date')) + timedelta(days = 3), 0) %}
+            {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(start_date) + timedelta(days = 3), 0) %}
               
               {# Add the item to the list. We have a special case for mowing: only add it during warm weather. #}
               {% if type != 'yard_work' or (state_attr(entity, 'friendly_name').split('Periodic Yard ')[-1].split()[0] != 'Mow' or states('sensor.warm_weather')) %}
@@ -316,7 +414,7 @@ generate_weekly_periodic_list:
                       item_type: "{{ type }}"
                       value: "{{ icon_tag ~ (states('input_text.mini_todo_periodic_combinable_buffer') + ',' ~ item_text).split(',') }}"
             
-            # Else add this room to the weekly sensor.
+            # Else add this item to the weekly sensor.
             else:
               - service: script.send_mini_todo_event
                 data:
@@ -508,8 +606,8 @@ add_mini_todo_calendar_items:
                   {{ 0 }}
                 {% endif %}
               
-              start: "{{ as_timestamp(repeat.item.start) - extra_minutes }}"
-              end: "{{ as_timestamp(repeat.item.end) + extra_minutes }}"
+              start: "{{ as_timestamp(repeat.item.start) - extra_minutes * 60 }}"
+              end: "{{ as_timestamp(repeat.item.end) + extra_minutes * 60 }}"
           
           - choose:
             
@@ -521,11 +619,18 @@ add_mini_todo_calendar_items:
                     - "{{ (end - start) / 3600 % 24 == 0 }}"
                 
                   then:
+                    - variables:
+                        cal_tag: "{{ iif('(visit)' in summary, '(visit)', '(trip)') }}"
+                    
                     - service: input_number.set_value
                       target:
                         entity_id: input_number.mini_todo_available_minutes
                       data:
                         value: 0
+      
+                    - event: add_mini_todo_item
+                      event_data:
+                        value: "{{ 'ca:' ~ summary.split(cal_tag)[0]~ 'all day' }}"
           
             # Handle a normal home or away event.
             - conditions: "{{ '(home)' in summary or '(appt' in summary }}"
@@ -543,7 +648,7 @@ add_mini_todo_calendar_items:
                       
                       {# Only count time that falls within the upper bound of the normal hours. #}
                       {% elif as_datetime(end) > today_at('16:00:00') %}
-                        {% set delta = end - ((as_timestamp(today_at(window_upper_bound))) / 60) | int(0) %}
+                        {% set delta = (end - (as_timestamp(today_at(window_upper_bound)))) / 60 | int(0) %}
                         {% set var.minutes = var.minutes - delta %}
                       {% endif %}
                       
@@ -679,7 +784,7 @@ add_mini_todo_project_item:
             {% endif %}
             
             {# Grab up to 2 external items, but only if it seems OK to work outside. #}
-            {% if type == 'external' and states('sensor.outdoor_work_friendly') and var.ex_count <=1 %}
+            {% if type == 'external' and states('sensor.outdoor_work_friendly') == 'true' and var.ex_count <=1 %}
               {% set var.list = var.list + [item.summary ~ ':' ~ var.wtime] %}
               {% set var.ex_count = var.ex_count + 1 %}
             
@@ -691,7 +796,7 @@ add_mini_todo_project_item:
             
             {# Quit once we've grabbed 4 items. #}
             {% if var.ex_count + var.in_count >= 4 %}
-              {{ break }}
+              {% break %}
             {% endif %}
           {% endfor %}
           
@@ -710,12 +815,17 @@ add_mini_todo_project_item:
       then:
         - variables:
             summary: "{{ project.split(':')[0] }}"
+            value: "{{ type[0:2] ~ ':' ~ summary }}"
             est_minutes: "{{ project.split(':')[1] | int(0) }}"
+        
+        # One last check: ensure this item is unique.
+        - condition: template
+          value_template: "{{ value not in state_attr('sensor.daily_mini_todo_list', 'items') }}"
         
         # Add the selected item to the mini todo list.
         - event: add_mini_todo_item
           event_data:
-            value: "{{ type[0:2] ~ ':' ~ summary }}"
+            value: "{{ value }}"
                         
         # Subtract the estimated time for this event from the current available time.
         - service: input_number.set_value
@@ -727,7 +837,7 @@ add_mini_todo_project_item:
 # Add a periodic task (cleaning, yard work, other) to the mini todo list. These are based on reminder datetimes, 
 # and set up by the Generate Weekly Periodic List script above.
 add_mini_todo_periodic_item:
-  alias: Add Mini ToDo Perodic Item
+  alias: Add Mini ToDo Periodic Item
   
   mode: queued
   
@@ -763,6 +873,10 @@ add_mini_todo_periodic_item:
         
             value: "{{ item.split('-')[0] }}"
             est_minutes: "{{ item.split('-')[1] | int(0) }}"
+        
+        # One last check: ensure this item is unique.
+        - condition: template
+          value_template: "{{ value not in state_attr('sensor.daily_mini_todo_list', 'items') }}"
     
         - event: add_mini_todo_item
           event_data:
@@ -795,6 +909,100 @@ concat_auto_scripts_log_files:
 #     Reminders     #
 #===================#
 
+# Front end to the various scripts below that set offset values in datetimes and numbers. This is called when any button on the 
+# reminder dashboard is long pressed (meaning reset the item for the next interval). This happens in the next_event decluttering
+# template, which is used by all the buttons on the reminder dashboard.
+#
+# Note that some of the items on the reminder dashboard are part of the reminder infrastructure. This sends a reminder to my phone
+# when an item is due; the reminder is removed when the corresponding dashboard button is pressed, but that is handled elsewhere.
+# Other items on the dashboard are part of the mini-todo list infrastructure. This places items on the daily mini-todo list, without
+# a phone notification. In both cases we need to bump the datetime/number offset for the next interval, but for the mini-todo list
+# we also need to remove a completed item from the appropriate weekly list that is generated on Sundays. If we don't, then we can
+# get duplicate items on the mini-todo list during the week, since it uses the weekly list as input. Hope this makes sense.
+handle_completed_reminder_or_periodic_item:
+  alias: Handle Completed Reminder Or Periodic Item
+  
+  fields:
+    entity:
+      description: The entity that represents the interval for the completed item.
+      selector:
+        entity:
+          domain:
+            - input_datetime
+            - input_number
+    
+    base_entity:
+      description: The base entity to which the amount should be added. Only used when the input entity is a number.
+      selector:
+        entity:
+          domain: input_number
+    
+    interval:
+      description: The number of units defined by the input period.
+      selector:
+        number:
+          min: 1
+          max: 100000
+    
+    period:
+      description: The interval period. Note that these can be singular or plural.
+      selector:
+        select:
+          options:
+            - days
+            - weeks
+            - months
+            - miles
+            - hours
+  
+  sequence:
+    - variables:
+        normalized_period: "{{ iif(period[-1] != 's', period ~ 's', period) }}"
+        domain: "{{ states[entity].domain }}"
+        entity_name: "{{ entity.split('.')[-1] }}"
+    
+    # Call one of the datetime offset scripts (per the period), or the number offset script.
+    - if:
+        - "{{ domain == 'input_datetime' }}"
+      
+      then:
+        - service: "{{ 'script.set_datetime_offset_' ~ normalized_period }}"
+          data:
+            entity: "{{ entity }}"
+            amount: "{{ interval }}"
+      
+      else:
+        - service: script.set_number_offset
+          data:
+            entity: "{{ entity }}"
+            base_entity: "{{ base_entity }}"
+            amount: "{{ interval }}"
+    
+    # If the input is a periodic item, remove it from the appropriate weekly sensor.
+    - if:
+        - "{{ iif(entity_name.split('_')[0] == 'periodic', true, false) }}"
+      
+      then:
+        - variables:
+            type: "{{ entity_name.split('_')[1] }}"
+            category: "{{ entity_name.split('_')[2] }}"
+            list_entity: "{{ 'sensor.mini_todo_weekly_' ~ type ~ '_list' }}"
+            icon_tag: >
+              {% if type == 'cleaning' %}
+                cl:
+              {% elif type == 'yard' %}
+                {{ iif(category == 'spray', 'ys:', iif(category == 'trim', 'yt:', 'ym:')) }}
+              {% else %}
+                ot:
+              {% endif %}
+            item_name: "{{ icon_tag ~ entity_name | replace('periodic_' ~ type ~ '_', '') | replace('_', ' ') | title }}"
+        
+        - service: script.send_mini_todo_event
+          data:
+            event_type: remove
+            item_type: "{{ type }}"
+            value: "{{ item_name }}"
+    
 # Set an input datetime entity with an offset in days.
 set_datetime_offset_days:
   alias: Set Datetime Offset Days
@@ -866,7 +1074,7 @@ set_datetime_offset_months:
       data:
         entity_id: '{{ entity }}'
         datetime: >
-          {% set dtobj=now().fromtimestamp(as_timestamp(states(entity))) %} 
+          {% set dtobj=now().today().replace(hour=0, minute=0, second=0, microsecond=0) %} 
           {% set sub_months=((dtobj.year * 12) + (dtobj.month + amount - 1)) %}
           {% set new_months=((sub_months) % 12) + 1 %}
           {% set new_year=((sub_months - new_months + 1) / 12) | int(0) %}
@@ -1053,8 +1261,10 @@ log_laundry_event:
       - conditions: "{{ event_type == 'basic' }}"
         
         sequence:
-          - service: notify.laundry_events
-            data_template:
+          - service: notify.send_message
+            target:
+              entity_id: notify.laundry_events
+            data:
               message: "{{ timestamp }} {{ prefix }} {{ message }}"
           
           # Write a separator in the log for stopped messages.
@@ -1062,7 +1272,9 @@ log_laundry_event:
               - "{{ message == 'stopped' }}"
             
             then:
-              - service: notify.laundry_events
+              - service: notify.send_message
+                target:
+                  entity_id: notify.laundry_events
                 data:
                   message: '--------------------'
     
@@ -1070,32 +1282,40 @@ log_laundry_event:
       - conditions: "{{ event_type == 'metric' }}"
         
         sequence:
-          - service: notify.laundry_events
-            data_template:
+          - service: notify.send_message
+            target:
+              entity_id: notify.laundry_events
+            data:
               message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }})"
 
       # A metric plus gradient message includes both a single metric plus a trend sensor gradient. Obviously this only applies to the dryer.
       - conditions: "{{ event_type == 'metric_plus_gradient' }}"
 
         sequence:
-          - service: notify.laundry_events
-            data_template:
+          - service: notify.send_message
+            target:
+              entity_id: notify.laundry_events
+            data:
               message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }}) {{ state_attr(entity_id_2, 'gradient') | round(5) }}"
     
       # A fill plus load message includes both the washer fill seconds and calculated load size.
       - conditions: "{{ event_type == 'fill_plus_load' }}"
         
         sequence:
-          - service: notify.laundry_events
-            data_template:
+          - service: notify.send_message
+            target:
+              entity_id: notify.laundry_events
+            data:
               message: "{{ timestamp }} {{ prefix }} {{ message }}: {{ states(entity_id_1) }}, {{ states(entity_id_2) }}"
     
       # A timer message indicates the name of the timer.
       - conditions: "{{ event_type == 'timer' }}"
         
         sequence:
-          - service: notify.laundry_events
-            data_template:
+          - service: notify.send_message
+            target:
+              entity_id: notify.laundry_events
+            data:
               message: "{{ timestamp }} {{ prefix }} {{ message }}: {{ state_attr(entity_id_1, 'friendly_name') }}"
             
       # Should not occur.

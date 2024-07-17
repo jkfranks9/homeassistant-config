@@ -51,7 +51,7 @@ entities:
         #icon: toggle-switch
         name: Alone
         toggle: true
-      - entity: sensor.blue_charm_presence
+      - entity: device_tracker.blue_charm_beacon
         name: Beacon
         tap_action: 
           action: more-info

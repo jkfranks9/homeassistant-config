@@ -289,7 +289,8 @@ establish_bedtime_environment:
   
   sequence:
           
-    # Just me home: turn off everything except the master bedroom lamp. There's no need to bother with any devices.
+    # Just me home: turn off everything except the master bedroom lamp, and put the thermostat in sleep mode.
+    # There's no need to bother with any devices.
     - if:
         - condition: state
           entity_id: input_select.occupied_bedrooms
@@ -297,6 +298,11 @@ establish_bedtime_environment:
       
       then:
         - scene: scene.non_master_lights_out
+
+        - service: script.set_thermostat_preset
+          data:
+            thermostat_entity: climate.downstairs
+            preset: 'sleep'
       
       # Family members are present.
       else:

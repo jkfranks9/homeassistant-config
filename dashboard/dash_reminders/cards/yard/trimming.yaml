@@ -15,7 +15,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Frontage West
   - type: 'custom:decluttering-card'
@@ -26,7 +25,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Sidewalk
   - type: 'custom:decluttering-card'
@@ -37,7 +35,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Front
   - type: 'custom:decluttering-card'
@@ -48,7 +45,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Side
   - type: 'custom:decluttering-card'
@@ -59,7 +55,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Back
   - type: 'custom:decluttering-card'
@@ -70,7 +65,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Edge / orchard
   - type: 'custom:decluttering-card'
@@ -81,7 +75,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Courtyard
   - type: 'custom:decluttering-card'
@@ -92,7 +85,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Roadside
   - type: 'custom:decluttering-card'
@@ -103,7 +95,6 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Pool
   - type: 'custom:decluttering-card'
@@ -114,4 +105,3 @@ cards:
       - icon: sickle
       - interval: 4
       - period: 'months'
-      - service: script.set_datetime_offset_months

@@ -12,21 +12,6 @@ blueprint:
       selector:
         entity:
           domain: sensor
-    
-    # The next two inputs define an additional condition to use. This is needed for zigbee only (so far).
-    # The default is a (broken) motion detector tamper switch that should always be on, thus ensuring the 
-    # condition passes.
-    additional_condition_entity:
-      name: Additional Condition Entity
-      description: (Optional) An additional entity to be used as a condition.
-      default: binary_sensor.laundry_room_motion_detector_tamper
-      selector:
-        entity:
-    
-    additional_condition_state:
-      name: Additional Condition State
-      description: (Optional) An additional entity state to be used as a condition.
-      default: 'on'
 
 mode: queued
   
@@ -76,10 +61,10 @@ condition:
   - condition: template
     value_template: "{{ trigger.to_state.state | int(0) == curr_device_list | count }}"
     
-  # Additional condition to be checked.
+  # Ignore spurious nonsense during HA startup.
   - condition: state
-    entity_id: !input additional_condition_entity
-    state: !input additional_condition_state
+    entity_id: input_boolean.device_initialization_catch_22
+    state: 'off'
   
 action:
     

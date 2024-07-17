@@ -15,7 +15,6 @@ cards:
       - icon: air-filter
       - interval: 5
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Upstairs
   - type: 'custom:decluttering-card'
@@ -26,4 +25,3 @@ cards:
       - icon: air-filter
       - interval: 8
       - period: 'months'
-      - service: script.set_datetime_offset_months

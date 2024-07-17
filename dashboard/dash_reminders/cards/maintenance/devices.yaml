@@ -15,7 +15,6 @@ cards:
       - icon: smoke-detector-variant
       - interval: 3
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Clean Fridge & Condenser
   - type: 'custom:decluttering-card'
@@ -26,7 +25,6 @@ cards:
       - icon: fridge-variant
       - interval: 12
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Clean Oven
   - type: 'custom:decluttering-card'
@@ -35,9 +33,8 @@ cards:
       - entity: input_datetime.reminder_misc_cleanoven
       - name: Clean Oven
       - icon: stove
-      - interval: 7
+      - interval: 12
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Clean Microwave Grease Filter
   - type: 'custom:decluttering-card'
@@ -48,7 +45,6 @@ cards:
       - icon: microwave
       - interval: 6
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Clean Dishwasher Arms & Filters
   - type: 'custom:decluttering-card'
@@ -59,7 +55,6 @@ cards:
       - icon: dishwasher
       - interval: 3
       - period: 'months'
-      - service: script.set_datetime_offset_months
       
   # Recharge Hair Clipper Batteries
   - type: 'custom:decluttering-card'
@@ -70,4 +65,3 @@ cards:
       - icon: hvac
       - interval: 6
       - period: 'months'
-      - service: script.set_datetime_offset_months

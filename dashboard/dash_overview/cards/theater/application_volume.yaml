@@ -1,0 +1,22 @@
+#=================================#
+#     Application Volume Card     #
+#=================================#
+
+type: custom:stack-in-card
+title: App/Device Volume
+mode: vertical
+cards:
+  
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: input_select.volume_application
+        name: App/Device
+        #icon: mdi:fan
+      
+      - type: tile
+        entity: input_number.selected_app_volume
+        name: Volume
+        #icon: mdi:fan

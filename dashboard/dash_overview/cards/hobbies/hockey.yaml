@@ -5,6 +5,7 @@
 type: entities
 title: Hockey
 show_header_toggle: false
+
 entities:
   - type: custom:multiple-entity-row
     entity: sensor.canes_game_status

@@ -691,7 +691,7 @@ perform_post_open_tasks:
         turn_on: false
         christmas: true
     
-    # Turn off the family room AV system if it's late enough and no one else is home.
+    # Turn off the family room AV system and box 3 backlight if it's late enough and no one else is home.
     - condition:
         - condition: state
           entity_id: 
@@ -704,6 +704,145 @@ perform_post_open_tasks:
           before: '23:30:00'
     
     - service: script.disable_family_room_av
+    
+    - service: light.turn_off
+      entity_id: light.family_room_box3_lcd_backlight
+
+#=========================#
+#     Volume Control      #
+#=========================#
+
+# Set the receiver media player volume. This is called by:
+#
+# 1) The Initialize <app/device> Volume automations, when using the theater.
+# 2) The Set Application Volume script, if the theater is in use.
+set_receiver_volume:
+  alias: Set Receiver Volume
+  
+  fields:
+    appl_name:
+      description: The name of the application on the Shield TV, for example 'Youtube TV'.
+    
+    volume:
+      description: The receiver volume.
+      selector:
+        number:
+          min: 0.48
+          max: 0.64
+  
+  sequence:
+    - service: system_log.write
+      data:
+        message: "Setting volume for {{ appl_name }} to {{ volume }}"
+        level: debug
+  
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.marantz_sr7012
+        volume_level: "{{ volume | float(0.60) }}"
+
+# Set the volume for an app/device into an app-specific number, and also set the live volume if the theater is open
+# and the target app/device is currently in use.
+set_application_volume:
+  alias: Set Application Volume
+  
+  fields:
+    volume_entity:
+      description: The entity in which to set the volume for the target application.
+      selector:
+        entity:
+          domain: input_number
+    
+    volume:
+      description: The new volume for the target application.
+      selector:
+        number:
+          min: 0.48
+          max: 0.64
+  
+  sequence:
+    
+    # NOTE: The Shield TV app names for "plus" apps are named with a '+' for the Android Debug Bridge integration.
+    # For example Disney Plus is named Disney+. But we can't use '+' in entity IDs, so the application volume number
+    # entity is named input_number.disney_plus_volume. In order to check against the Shield TV app name, convert 'Plus' to '+'.
+    - variables:
+        target_name: "{{ state_attr(volume_entity, 'friendly_name').replace('Volume', '').replace(' Plus', '+') | trim }}"
+    
+    # Set the app-specific number, so the app will get set to this volume the next time it is opened/used.
+    - service: input_number.set_value
+      target:
+        entity_id: "{{ volume_entity }}"
+      data:
+        value: "{{ volume }}"
+    
+    # Also set the live volume if the target app/device is currently in use.
+    - if:
+        - "{{ states('input_boolean.theater_open') == 'on' and state_attr('media_player.shield_tv', 'app_name') == target_name }}"
+      
+      then:
+        - service: script.set_receiver_volume
+          data:
+            appl_name: "{{ target_name }}"
+            volume: "{{ volume }}"
+
+# Raise or lower the theater volume by one step.
+#
+# NOTE: This is intended to be called by voice control; I don't know how to provide input variables via voice, so these are
+# simple front ends to Change Theater Volume.
+raise_theater_volume:
+  alias: Raise Theater Volume
+  
+  sequence:
+    - service: script.change_theater_volume
+      data:
+        raise: true
+
+lower_theater_volume:
+  alias: Lower Theater Volume
+  
+  sequence:
+    - service: script.change_theater_volume
+      data:
+        raise: false
+
+# Raise or lower the theater volume.
+change_theater_volume:
+  alias: Change Theater Volume
+  
+  fields:
+    raise:
+      description: Whether to raise (true) or lower (false) the volume.
+      selector:
+        boolean:
+  
+  sequence:
+    - variables:
+        activity: "{{ states('sensor.harmony_hub') }}"
+        app_name: "{{ iif(activity == 'Stream Player', state_attr('media_player.shield_tv', 'app_name').replace('+', ' Plus').replace(' ', '_') | lower, 'none') }}"
+        volume_entity: >
+          {% if activity == 'Stream Player' %}
+            {{ 'input_number.' ~ app_name ~ '_volume' }}
+          {% elif activity == 'BD Player' %}
+            input_number.bd_player_volume
+          {% elif activity == 'LD Player' %}
+            input_number.ld_player_volume
+          {% endif %}
+        current_volume: "{{ states(volume_entity) | float(0.60) }}"
+    
+    - if:
+        - "{{ raise == true }}"
+      
+      then:
+        - service: script.set_application_volume
+          data:
+            volume_entity: "{{ volume_entity }}"
+            volume: "{{ current_volume + 0.01 }}"
+      
+      else:
+        - service: script.set_application_volume
+          data:
+            volume_entity: "{{ volume_entity }}"
+            volume: "{{ current_volume - 0.01 }}"
 
 #===========================#
 #     Theater Lighting      #
@@ -781,9 +920,9 @@ change_downstairs_lighting:
         
       then:
           
-        # Turn on lights. The use of the sun elevation angle here is a crude approximation of the Weather Based Light At Sunset blueprint.
+        # Turn on lights if needed.
         - if:
-            - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
+            - "{{ states('sensor.foyer_ambient_light') | int(0) <= 300 }}"
           
           then:    
             - service: light.turn_on

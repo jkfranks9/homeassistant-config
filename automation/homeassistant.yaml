@@ -52,6 +52,81 @@
           - light.back_floodlight
           - light.back_yard_light
     
+    # Reinitialize beacon device tracker.
+    - if:
+        - "{{ states('sensor.ble_house_blue_charm_distance') not in ['unknown', 'unavailable'] }}"
+        
+      then:          
+        - service: mqtt.publish
+          data:
+            topic: homeassistant/device_tracker/bluecharm_beacon
+            payload: home
+        
+      else:          
+        - service: mqtt.publish
+          data:
+            topic: homeassistant/device_tracker/bluecharm_beacon
+            payload: not_home
+    
+    # Reinitialize virtual device trackers.
+    - variables:
+        vtrack_entities: >
+          {% set var = namespace(vtrack = []) %}
+          {% for state in states.input_boolean %}
+            {% if 'Virtual' in state.name %}
+              {% set var.vtrack = var.vtrack + [state.entity_id] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ var.vtrack }}
+    
+    - repeat:
+        for_each: "{{ vtrack_entities }}"
+        
+        sequence:
+          - variables:
+              topic_suffix: "{{ repeat.item | replace('input_boolean.', '') }}"
+          
+          - if:
+              - "{{ states(repeat.item) == 'on' }}"
+            
+            then:          
+              - service: mqtt.publish
+                data:
+                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+                  payload: home
+            
+            else:          
+              - service: mqtt.publish
+                data:
+                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+                  payload: not_home
+    
+    # If for some reason any of the weekly lists are unknown, regenerate them, starting with the most recent Sunday,
+    # which can be in the past, or today.
+    - variables:
+        weekly_list_entities: ['sensor.mini_todo_weekly_cleaning_list', 'sensor.mini_todo_weekly_other_list', 'sensor.mini_todo_weekly_yard_work_list']
+        start_date: >
+          {% set day = now().isoweekday() %}
+          {% set offset = iif(day <= 6, day, 0) %}
+          {{ as_datetime(states('sensor.date')) - timedelta(days = offset) }}
+    
+    - repeat:
+        for_each: "{{ weekly_list_entities }}"
+        
+        sequence:
+          - if:
+              - "{{ states(repeat.item) == 'unknown' }}"
+            
+            then:
+              - variables:
+                  type: "{{ repeat.item.split('sensor.mini_todo_weekly_')[-1] | replace('_list', '') }}"
+              
+              - service: script.generate_periodic_lists
+                data:
+                  type: "{{ type }}"
+                  start_date: "{{ start_date }}"
+    
     # Delete junk log files left over from backing up the logs on shutdown.
     - service: shell_command.delete_junk_log_files  
     
@@ -111,6 +186,13 @@
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
+    
+    # TEMPORARY until Alexa Media Player startup problem is fixed.
+    - delay: '00:00:30'
+    
+    - service: homeassistant.reload_config_entry
+      target:
+        entity_id: media_player.office_echo
 
 #=========================#
 #     Shutdown Chores     #
@@ -254,60 +336,10 @@
           entity_id: input_boolean.mini_todo_generator_switch
         
         # 2) Create weekly periodic lists.
-        - service: script.generate_weekly_periodic_list
+        - service: script.generate_periodic_lists
           data:
-            type: cleaning
-            generator_count: "{{ iif(states('input_boolean.mini_todo_generator_switch') == 'off', 3, 4) }}"
-            date_entities: [
-                            'input_datetime.periodic_cleaning_kitchen',
-                            'input_datetime.periodic_cleaning_studio_bath',
-                            'input_datetime.periodic_cleaning_master_bath',
-                            'input_datetime.periodic_cleaning_family_room',
-                            'input_datetime.periodic_cleaning_office',
-                            'input_datetime.periodic_cleaning_master_bedroom',
-                            'input_datetime.periodic_cleaning_theater',
-                            'input_datetime.periodic_cleaning_penthouse_bath',
-                            'input_datetime.periodic_cleaning_dining_foyer',
-                            'input_datetime.periodic_cleaning_laundry_room',
-                            'input_datetime.periodic_cleaning_snack_bar',
-                            'input_datetime.periodic_cleaning_utility',
-                            'input_datetime.periodic_cleaning_studio_bedroom',
-                            'input_datetime.periodic_cleaning_penthouse_bedroom'
-                           ]
-        
-        - service: script.generate_weekly_periodic_list
-          data:
-            type: yard_work
-            generator_count: 3
-            date_entities: [
-                            'input_datetime.periodic_yard_spray_frontage_driveway',
-                            'input_datetime.periodic_yard_spray_front_edge_courtyard_orchard',
-                            'input_datetime.periodic_yard_spray_back_side_roadside',
-                            'input_datetime.periodic_yard_trim_sidewalk',
-                            'input_datetime.periodic_yard_trim_frontage_west',
-                            'input_datetime.periodic_yard_trim_frontage_east',
-                            'input_datetime.periodic_yard_trim_front',
-                            'input_datetime.periodic_yard_trim_side',
-                            'input_datetime.periodic_yard_trim_back',
-                            'input_datetime.periodic_yard_trim_pool',
-                            'input_datetime.periodic_yard_trim_edge_orchard',
-                            'input_datetime.periodic_yard_trim_roadside',
-                            'input_datetime.periodic_yard_trim_courtyard',
-                            'input_datetime.periodic_yard_mow_tractor',
-                            'input_datetime.periodic_yard_mow_push'
-                           ]
-        
-        - service: script.generate_weekly_periodic_list
-          data:
-            type: other
-            generator_count: 5
-            date_entities: [
-                            'input_datetime.periodic_other_ear_drops',
-                            'input_datetime.periodic_other_haircut',
-                            'input_datetime.periodic_other_trash',
-                            'input_datetime.periodic_other_groceries',
-                            'input_datetime.periodic_other_laundry'
-                           ]
+            type: all
+            start_date: "{{ states('sensor.date') }}"
         
         # 3) Determine which days will be free time this week.
         - service: script.generate_weekly_free_time_days
@@ -331,7 +363,10 @@
               - input_number.steps_monthly
               - input_number.steps_monthly_calories
           data:
-            value: 0
+            value: 0   
+        
+        # Backup the exercise activity log.
+        - service: shell_command.backup_exercise_log
 
 #=========================#
 #     Automations Log     #
@@ -348,8 +383,7 @@
     - platform: event
       event_type: state_changed
   
-  # Weed out non-automations and some we want to skip (including this one!). Also, verify we have a 
-  # valid old and new state to work with, and that the last triggered time has changed.
+  # Weed out non-automations and some we want to skip (including this one!).
   condition:
     - condition: template
       value_template: >
@@ -376,17 +410,15 @@
                             'set_washer_operation'
                            ] %}
         {{ trigger.event.data.entity_id.startswith('automation.') and
-           trigger.event.data.entity_id.split('.')[1] not in skip_list and
-           trigger.event.data.old_state is not none and
-           trigger.event.data.new_state is not none and
-           'last_triggered' in trigger.event.data.old_state.attributes and 'last_triggered' in trigger.event.data.new_state.attributes and
-           trigger.event.data.old_state.attributes.last_triggered != trigger.event.data.new_state.attributes.last_triggered }}
+           trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
   action:
     
     # Log it.
-    - service: notify.automations_scripts
-      data_template:
+    - service: notify.send_message
+      target:
+        entity_id: notify.automations_scripts
+      data:
         message: >
          {{ as_timestamp(trigger.event.data.new_state.last_updated) | timestamp_custom('%b %d: %X') }}: (A) {{ trigger.event.data.new_state.name }}
 
@@ -436,8 +468,10 @@
   action:
     
     # Log it.
-    - service: notify.automations_scripts
-      data_template:
+    - service: notify.send_message
+      target:
+        entity_id: notify.automations_scripts
+      data:
         message: >
          {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: (S) {{ trigger.event.data.name }}
 
@@ -947,7 +981,7 @@
         task_count: "{{ 5 - state_attr('sensor.daily_mini_todo_list', 'items') | length }}"
     
     - repeat:
-        while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) >= 0 and state_attr('sensor.daily_mini_todo_list', 'items') | length <= task_count }}"
+        while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) > 0 and state_attr('sensor.daily_mini_todo_list', 'items') | length <= task_count }}"
         
         sequence:
     

@@ -5,6 +5,7 @@
 type: entities
 title: Last Changed
 show_header_toggle: false
+
 entities:
   - entity: sensor.ups_last_changed
     name: UPS

@@ -27,9 +27,13 @@ mobile_notification_worker:
       description: 'The timeout for channel "temporary".'
     
     tag:
-      description: 'The tag for channels "persistent" and "critical".'
+      description: 'The tag for the notification.'
   
   sequence:
+    - variables:
+        tag_entry: "{{ state_attr('sensor.mobile_tag_registry', 'tags').get(tag) }}"
+        clear_type: "{{ iif(tag_entry is defined, tag_entry[0], 'unknown') }}"
+        expanded_title: "{{ iif(clear_type == 'manual', title ~ ' (type m)', title) }}"
     
     # Handle the different channels.
     - choose:
@@ -40,7 +44,7 @@ mobile_notification_worker:
         sequence:
           - service: notify.mobile_app_jon_galaxy
             data:
-              title: "{{ title }}"
+              title: "{{ expanded_title }}"
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
@@ -52,7 +56,7 @@ mobile_notification_worker:
         sequence:
           - service: notify.mobile_app_jon_galaxy
             data:
-              title: "{{ title }}"
+              title: "{{ expanded_title }}"
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
@@ -66,7 +70,7 @@ mobile_notification_worker:
         sequence:
           - service: notify.mobile_app_jon_galaxy
             data:
-              title: "{{ title }}"
+              title: "{{ expanded_title }}"
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
@@ -80,7 +84,7 @@ mobile_notification_worker:
         sequence:
           - service: notify.mobile_app_jon_galaxy
             data:
-              title: "{{ title }}"
+              title: "{{ expanded_title }}"
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
@@ -381,13 +385,7 @@ remove_manual_mobile_notification:
   alias: Remove Manual Mobile Notification
   
   sequence:
-    
-    # Get the room containing the echo device that was used.
-    - service: script.get_echo_room
-      response_variable: result
-    
     - variables:
-        room: "{{ result.room }}"
         num_manual: "{{ states('sensor.mobile_tag_registry_manual_clear') }}"
     
     - choose:
@@ -401,7 +399,9 @@ remove_manual_mobile_notification:
               destination:
                 - echo
               message: "There are no notifications that need to be manually removed."
-              media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
+              media_player_entity:
+                - media_player.family_room_echo
+                - media_player.office_echo
       
       # There is only one manual clear notification, so remove it and inform the user.
       - conditions: "{{ num_manual == 1 }}"
@@ -419,7 +419,9 @@ remove_manual_mobile_notification:
               destination:
                 - echo
               message: "{{ 'I unregistered tag ' ~ tag | replace('_', ' ') }}"
-              media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
+              media_player_entity:
+                - media_player.family_room_echo
+                - media_player.office_echo
       
       # There are multiple manual clear notifications.
       default:
@@ -430,7 +432,9 @@ remove_manual_mobile_notification:
             destination:
               - echo
             message: "{{ 'There are ' ~ num_manual ~ ' manual notifications. Check your phone for additional instructions.' }}"
-            media_player_entity: "{{ 'media_player.' ~ room ~ '_echo' }}"
+            media_player_entity:
+              - media_player.family_room_echo
+              - media_player.office_echo
         
         # Handle all notifications.
         - repeat:

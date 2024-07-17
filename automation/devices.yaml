@@ -1,27 +1,27 @@
 #===============================#
-#     Zigbee Initialization     #
+#     Device Initialization     #
 #===============================#
 
 # So this is cheating, and might not always work. I have a catch-22 during HA startup:
 #
-# 1) As zigbee devices are initialized by Zigbee2MQTT they change from 'unavailable' state
-# 2) In parallel, the Current Zigbee Unavailable Devices sensor gets initialized
-# 3) As a result, some zigbee devices might still be unavailable when the sensor is ready, resulting in a bogus numerical state for the sensor
-# 4) As the rest of the zigbee devices come up, the state of the above sensor continues to change toward 0
-# 5) About the same time, the Notify Zigbee Device Unavailable automation gets initialized and starts running, triggered by one of the above sensor changes
+# 1) As zigbee or echo devices are initialized they change from 'unavailable' state
+# 2) In parallel, the Current Zigbee/Echo Unavailable Devices sensor gets initialized
+# 3) As a result, some zigbee/echo devices might still be unavailable when the sensor is ready, resulting in a bogus numerical state for the sensor
+# 4) As the rest of the zigbee/echo devices come up, the state of the above sensor continues to change toward 0
+# 5) About the same time, the Notify Zigbee/Echo Device Unavailable automation gets initialized and starts running, triggered by one of the above sensor changes
 # 
-# At this point, the automation will likely fail due to templates not resolving correctly, but even if there are no failures, the automation should not
-# be running at all at this point, since it's just churn during startup. OK, I guess it's possible that a zigbee device could choose to really go unavailable
+# At this point, the automation may fail due to templates not resolving correctly, but even if there are no failures, the automation should not
+# be running at all at this point, since it's just churn during startup. OK, I guess it's possible that a device could choose to really go unavailable
 # at the same time, but oh well. I care less about that than seeing a bunch of errors in the log.
 #
-# So, the below automation runs at startup and sets a flag, which prevents Notify Zigbee Device Unavailable from running. It waits a bit, then resets the
-# flag, so the automation can run for real if a zigbee device becomes unavailable.
+# So, the below automation runs at startup and sets a flag, which prevents Notify Zigbee/Echo Device Unavailable from running. It waits a bit, then resets the
+# flag, so the automation can run for real if a zigbee/echo device becomes unavailable.
 #
 # So what was that about cheating? Automations are initialized in the order they are read from the files in the automations directory. This file is 'devices',
 # which is alphabetically before 'notification'. Which gives me a VERY short amount of time to get this flag set before the notification automation runs.
 # So yeah, super awesome stuff.
-- alias: Handle Zigbee Catch 22
-  id: handle_zigbee_catch_22
+- alias: Handle Device Initialization Catch 22
+  id: handle_device_initialization_catch_22
   
   trigger:
     - platform: homeassistant
@@ -29,12 +29,12 @@
   
   action:
     - service: input_boolean.turn_on
-      entity_id: input_boolean.zigbee_catch_22
+      entity_id: input_boolean.device_initialization_catch_22
     
-    - delay: '00:01:00'
+    - delay: '00:01:30'
     
     - service: input_boolean.turn_off
-      entity_id: input_boolean.zigbee_catch_22
+      entity_id: input_boolean.device_initialization_catch_22
 
 
 #=============#
@@ -279,26 +279,6 @@
         variables:
           use_info_message: false
     
-    # Turn on automations that were possibly turned off by Leave Home, and trigger them.
-    - service: automation.turn_on
-      entity_id: automation.turn_on_christmas_lights
-    
-    - service: automation.turn_on
-      entity_id: automation.turn_on_guest_lights_sunset
-    
-    - service: automation.trigger
-      data:
-        entity_id: automation.turn_on_guest_lights_sunset
-        skip_condition: false
-    
-    - service: automation.turn_on
-      entity_id: automation.control_office_lamp
-    
-    - service: automation.trigger
-      data:
-        entity_id: automation.control_office_lamp
-        skip_condition: false
-    
     # Turn off extended away mode (this should have happened above based on proximity ... this is a failsafe).
     - service: script.turn_off_extended_away_mode
     
@@ -393,13 +373,6 @@
         
             # Turn off all fans.
             - scene: scene.fans_off
-            
-            # Turn off automations that could turn on various lights.
-            - service: automation.turn_off
-              entity_id:
-                - automation.turn_on_christmas_lights
-                - automation.turn_on_guest_lights_sunset
-                - automation.control_office_lamp
       
       # Must be sunset.
       else:
@@ -598,16 +571,11 @@
         option: Empty
     
     # Turn off appropriate guest suite lights and fans.
-    - service: scene.apply
-      data:
-        entities:
-          light.studio_lamp_1:          'off'
-          light.studio_lamp_2:          'off'
-          light.penthouse_lights:       'off'
-          light.upstairs_common_lights: 'off'
-          light.theater_lights:         'off'
-          switch.penthouse_fan:         'off'
-          fan.theater_fan:              'off'
+    - service: homeassistant.turn_off
+      target:
+        label_id:
+          - guest_suite_down
+          - guest_suite_up
     
     # Reset Child Alone.
     - service: input_boolean.turn_off
@@ -677,14 +645,9 @@
         option: ChildDown
     
     # Turn off penthouse lights and fans.
-    - service: scene.apply
-      data:
-        entities:
-          light.penthouse_lights:       'off'
-          light.upstairs_common_lights: 'off'
-          light.theater_lights:         'off'
-          switch.penthouse_fan:         'off'
-          fan.theater_fan:              'off'
+    - service: homeassistant.turn_off
+      target:
+        label_id: guest_suite_up
     
     # Reset Child Alone.
     - service: input_boolean.turn_off
@@ -791,16 +754,19 @@
 #     Family Room AV     #
 #========================#
 
-# Turn on the Family Room AV during the day, depending on the presence of a grandchild.
+# Turn on the Family Room AV and box 3 backlight during the day, depending on the presence of a grandchild.
 - alias: Enable Family Room AV
   id: 'enable_family_room_av'
+  
   trigger:
     - platform: time
       at: '07:00:00'
       id: 'morning'
+    
     - platform: time
       at: '16:00:00'
       id: 'afternoon'
+  
   condition:
     - or:
       - and:
@@ -811,11 +777,16 @@
           id: 'morning'
       - condition: trigger
         id: 'afternoon'
+  
   action:
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'off'
+    
     - service: script.enable_family_room_av
+    
+    - service: light.turn_on
+      entity_id: light.family_room_box3_lcd_backlight
 
 #================================#
 #     Human Presence Sensors     #
@@ -1489,7 +1460,7 @@
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
           {% elif fr in ['stop', 'unknown'] and to == 'fill' %}                                    Wash Fill
-          {% elif fr == 'fill'              and to == 'raise'   and s == 'Wash Fill' %}            Wash
+          {% elif fr == ['fill', 'drop']    and to == 'raise'   and s == 'Wash Fill' %}            Wash
           {% elif fr == 'raise'             and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
           {% elif fr in ['drop', 'raise']   and to == 'fill'    and s == 'Wash Drain' %}           Rinse Fill
           {% elif fr in ['fill', 'drop']    and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
@@ -1832,10 +1803,6 @@
   
   trigger:
     - platform: state
-      entity_id: sensor.blue_charm_presence
-      id: Blue Charm
-    
-    - platform: state
       entity_id: sensor.ble_house_blue_charm_distance
       id: House distance
   
@@ -1851,44 +1818,38 @@
         message: "{{ trigger.id ~ ' from: ' ~ trigger.from_state.state ~ ', to: ' ~ trigger.to_state.state }}"
         level: debug
 
-# Activate Blue Charm beacon device tracker.
-- alias: Activate Beacon Device Tracker
-  id: 'activate_beacon_device_tracker'
+# Modify Blue Charm beacon device tracker.
+- alias: Modify Beacon Device Tracker
+  id: 'modify_beacon_device_tracker'
   
   trigger:
     - platform: state
-      entity_id: sensor.blue_charm_presence
-      to: 'House'
+      entity_id: sensor.ble_house_blue_charm_distance
+      to:
   
-  action:
-    - service: mqtt.publish
-      data:
-        topic: "homeassistant/device_tracker/bluecharm_beacon"
-        payload: "home"
-
-# Deactivate Blue Charm beacon device tracker.
-- alias: Deactivate Beacon Device Tracker
-  id: 'deactivate_beacon_device_tracker'
-  
-  trigger:
-    - platform: state
-      entity_id: sensor.blue_charm_presence
-      from: 'House'
-      to: 'Away'
-  
-  # So we have a possible timing problem: during startup, the Blue Charm Presence sensor can change to Away if ESPHome has not had 
-  # time to initialize the BLE reader. We don't want to turn off children home in this case.
-  # So we verify that the wifi sensor in the reader is in a good state before continuing. Yeah, I know.
+  # So we have a possible timing problem: during startup, the distance sensor might be invalid if ESPHome has not had 
+  # time to initialize the BLE reader. We don't want to modify the tracker in this case. So we verify that the 
+  # wifi sensor in the reader is in a good state before continuing. Yeah, I know.
   variables:
     house_wifi: "{{ states('sensor.ble_house_wifi_signal') }}"
   
   condition: "{{ house_wifi not in ['unknown', 'unavailable'] }}"
   
   action:
-    - service: mqtt.publish
-      data:
-        topic: "homeassistant/device_tracker/bluecharm_beacon"
-        payload: "not_home"
+    - if:
+        - "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
+      
+      then:    
+        - service: mqtt.publish
+          data:
+            topic: "homeassistant/device_tracker/bluecharm_beacon"
+            payload: "home"
+      
+      else:   
+        - service: mqtt.publish
+          data:
+            topic: "homeassistant/device_tracker/bluecharm_beacon"
+            payload: "not_home"
 
 #======================#
 #     Echo Devices     #

@@ -403,6 +403,10 @@
       entity_id: input_boolean.nighttime
       state: 'off'
   
+    - condition: state
+      entity_id: person.jon
+      state: 'home'
+    
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
@@ -679,6 +683,11 @@
               - service: light.turn_off
                 target:
                   entity_id: "{{ repeat.item }}"
+  
+              - service: system_log.write
+                data:
+                  message: "Turned off {{ repeat.item }}"
+                  level: info    
     
     # Reset the toggle.
     - service: input_boolean.turn_off

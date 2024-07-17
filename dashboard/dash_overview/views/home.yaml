@@ -30,4 +30,10 @@ cards:
     card:
       !include /config/dashboard/dash_overview/cards/home/horizon.yaml
   - !include /config/dashboard/dash_overview/cards/home/doors_windows.yaml
-  - !include /config/dashboard/dash_overview/cards/home/mini_todo.yaml
+  - type: conditional
+    conditions:
+      - condition: user
+        users:
+          - f02fbce66df546fa90f8f3d03283b55e
+    card:
+      !include /config/dashboard/dash_overview/cards/home/mini_todo.yaml

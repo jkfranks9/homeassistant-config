@@ -2,20 +2,13 @@
 #     Logger     #
 #================#
 
-default: error
+default: warning
 
 # Log levels for different components
 logs:
-  
-  # HA basic
 
   # HA automations
-  homeassistant.components.automation.close_house:              info
-  homeassistant.components.automation.close_house_for_family:   info
-  homeassistant.components.automation.open_house:               info
-  homeassistant.components.automation.open_house_for_family:    info
-  homeassistant.components.automation.respond_to_mobile_text:   info
-  homeassistant.components.automation.run_extended_away_lights: info
+  homeassistant.components.automation.perform_startup_chores: info
 
   # HA scripts
   homeassistant.components.script.play_feature_movie:      info
@@ -23,41 +16,41 @@ logs:
   homeassistant.components.script.play_random_kodi_videos: info
 
   # HA misc components
+  homeassistant.bootstrap:                            info
   homeassistant.components.alexa:                     info
   homeassistant.components.androidtv.media_player:    info
-  homeassistant.components.automation:                warning
   homeassistant.components.device_tracker:            info
-  homeassistant.components.ecovacs:                   info
-  homeassistant.components.esphome:                   info
+  #homeassistant.components.ecovacs:                   info
+  #homeassistant.components.esphome:                   info
   homeassistant.components.kodi.media_player:         info
   homeassistant.components.media_player:              info
-  homeassistant.components.script:                    warning
   homeassistant.components.system_log.external:       info # This is for logs in automations and scripts.
   homeassistant.components.tplink:                    info
   homeassistant.components.unifi:                     info
+  homeassistant.core:                                 info
+  homeassistant.setup:                                info
 
   # Custom components
   custom_components.alexa_media:           info
   custom_components.epson_projector_link:  info
-  custom_components.pyscript:              warning
   custom_components.sonoff.sonoff_cloud:   info
-  custom_components.unifics:               info
+  custom_components.unifics:               error
 
   # Other
-  aioesphomeapi.connection:                warning
-  aiounifi:                                warning
-  alexapy.alexaapi:                        info
-  androidtv.adb_manager.adb_manager_async: warning
+  aioesphomeapi:                           info
+  # aiounifi:                                warning
+  # alexapy.alexaapi:                        warning
+  # androidtv.adb_manager.adb_manager_async: warning
   frontend.js.latest:                      fatal
-  googleapiclient.discovery:               warning
-  kasa:                                    warning
-  pylutron_caseta:                         warning
-  pyunifi:                                 warning
-  sucks:                                   warning
+  # googleapiclient.discovery:               warning
+  # kasa:                                    warning
+  # pylutron_caseta:                         warning
+  # pyunifi:                                 warning
+  # sucks:                                   warning
 
-  sleekxmppfs.xmlstream.xmlstream: warning
-  sleekxmppfs.stanza.rootstanza:   warning
-  sleekxmppfs.basexmpp:            warning
+  # sleekxmppfs.xmlstream.xmlstream: warning
+  # sleekxmppfs.stanza.rootstanza:   warning
+  # sleekxmppfs.basexmpp:            warning
 
 # Filters ... these remove annoying or useless information.
 filters:
@@ -75,9 +68,20 @@ filters:
     - "Unable to find entity switch.stair_railing"
   ##################################################################
   
-  androidtv.adb_manager.adb_manager_async:
-    - "Couldn't connect to .*  TcpTimeoutException: Reading from .*:5555 timed out"
+  alexapy.alexaapi:
+    - ".*AlexapyTooManyRequestsError.*"
+    - ".*Too Many Requests.*"
   
+  alexapy.helpers:
+    - ".*AlexapyTooManyRequestsError.*"
+    - ".*Too Many Requests.*"
+  
+  androidtv.adb_manager.adb_manager_async:
+    - "Couldn't connect to .*  TcpTimeoutException: Reading from .*:5555 timed out"  
+  
+  custom_components.alexa_media:
+    - ".*AlexapyTooManyRequestsError.*"
+    - ".*Too Many Requests.*"
   
   custom_components.mail_and_packages:
     - "Timeout fetching Mail and Packages .* data"
@@ -96,8 +100,8 @@ filters:
     - "Updating from myAir"
   
   custom_components.satellitetracker:
-    - "Unexpected error fetching .* data: Server disconnected"
-    - "Unexpected error fetching .* data: Cannot connect to host .* [Try again]"
+    - "Unexpected error fetching International Space Station (ISS) data"
+    - "Timeout fetching International Space Station (ISS) data"
   
   custom_components.unifics.api_wrapper:
     - "There was a error while trying to retrieve"
@@ -106,6 +110,9 @@ filters:
   custom_components.unifics.sensor:
     - "Error fetching sensor data: Error communicating with API"
     - "Fetching sensor data recovered"
+    - "Timeout fetching sensor data"
+    - "raw data aps: .*"
+    - "raw data wlans: .*"
   
   custom_components.watchman:
     - "Watchman sensors updated"
@@ -119,7 +126,7 @@ filters:
   homeassistant.components.alexa.state_report:
     - "Timeout sending report to Alexa"
 
-  homeassistant.components.androidtv.media_player:
+  homeassistant.components.androidtv.entity:
     - ".* ADB connection re-establishing attempt in the next update. .*"
   
   homeassistant.components.automation:

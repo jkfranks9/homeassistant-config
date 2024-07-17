@@ -2,43 +2,39 @@
 #     Battery Levels Card     #
 #=============================#
 
-type: custom:stack-in-card
+type: entities
 title: Battery Levels
-mode: vertical
-
-cards:
-  - type: entities
-    entities:
-      
-      - entity: sensor.jon_galaxy_battery_level
-        name: Galaxy S10
-      
-      - entity: sensor.lenovo_tablet_battery_level
-        name: Lenovo Tablet
-      
-      - entity: sensor.ecovacs_battery
-        name: Ecovacs DEEBOT
-      
-      - entity: sensor.porch_battery_level
-        name: Porch Sensor
-      
-      - entity: sensor.studio_motion_detector_battery
-        name: Studio Motion Detector
-      
-      - entity: sensor.laundry_room_motion_detector_battery
-        name: Laundry Room Motion Detector
-      
-      - entity: sensor.master_bath_motion_detector_battery
-        name: Master Bath Motion Detector
-      
-      - entity: sensor.back_door_sensor_battery
-        name: Back Door Sensor
-      
-      - entity: sensor.studio_window_sensor_battery
-        name: Studio Window Sensor
-      
-      - entity: sensor.master_br_vent_1_battery
-        name: Master BR Vent 1
-     
-      - entity: sensor.master_br_vent_2_battery
-        name: Master BR Vent 2
+entities:
+  
+  - entity: sensor.jon_galaxy_battery_level
+    name: Galaxy S10
+  
+  - entity: sensor.lenovo_tablet_battery_level
+    name: Lenovo Tablet
+  
+  - entity: sensor.ecovacs_battery
+    name: Ecovacs DEEBOT
+  
+  - entity: sensor.porch_battery_level
+    name: Porch Sensor
+  
+  - entity: sensor.studio_motion_detector_battery
+    name: Studio Motion Detector
+  
+  - entity: sensor.laundry_room_motion_detector_battery
+    name: Laundry Room Motion Detector
+  
+  - entity: sensor.master_bath_motion_detector_battery
+    name: Master Bath Motion Detector
+  
+  - entity: sensor.back_door_sensor_battery
+    name: Back Door Sensor
+  
+  - entity: sensor.studio_window_sensor_battery
+    name: Studio Window Sensor
+  
+  - entity: sensor.master_br_vent_1_battery
+    name: Master BR Vent 1
+ 
+  - entity: sensor.master_br_vent_2_battery
+    name: Master BR Vent 2

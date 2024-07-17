@@ -1,5 +1,6 @@
 # Initialize the receiver volume based on the Harmony device in use.
-# The device name and volume are inputs.
+# The volume to use is set by the UI into a number for each device. We use a default of 60% if we
+# can't extract the volume from the number.
 
 blueprint:
   name: Harmony Device Volume Initializer
@@ -10,19 +11,12 @@ blueprint:
     device_name:
       name: Harmony Device Name
       description: The name of the Harmony device, for example 'BD Player'.
-    
-    volume:
-      name: Volume Level
-      description: The volume level as a percentage, for example 0.61 for 61%.
-      selector:
-        number:  # This is the minimum and maximum volume currently supported ... coordinate with automations in theater.yaml
-          min: 0.48
-          max: 0.64
-          mode: slider
 
 variables:
   input_device_name: !input device_name
-  input_volume: !input volume
+  
+  selected_device: "{{ input_device_name.replace(' ', '_') | lower }}"
+  selected_device_volume: "{{ states('input_number.' ~ selected_device ~ '_volume') | float(0.60) }}"
 
 trigger:
   - platform: state
@@ -30,12 +24,7 @@ trigger:
     to: !input device_name
 
 action:
-  - service: system_log.write
+  - service: script.set_receiver_volume
     data:
-      message: "Setting volume for {{ input_device_name }} to {{ input_volume }}"
-      level: debug
-  
-  - service: media_player.volume_set
-    data:
-      entity_id: media_player.marantz_sr7012
-      volume_level: "{{ input_volume | float(0) }}"
+      appl_name: "{{ input_device_name }}"
+      volume: "{{ selected_device_volume }}"

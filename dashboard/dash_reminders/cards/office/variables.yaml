@@ -33,7 +33,7 @@ cards:
               entity: input_number.variables_john_deere
               name: Deere
             
-            - type: 'custom:button-card'
-              template: input_button
-              entity: input_number.variables_disney
-              name: Disney
+            # - type: 'custom:button-card'
+              # template: input_button
+              # entity: input_number.variables_disney
+              # name: Disney

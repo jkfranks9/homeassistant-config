@@ -15,7 +15,6 @@ cards:
       - icon: mower
       - interval: 6
       - period: 'days'
-      - service: script.set_datetime_offset_days
   
   # Push
   - type: 'custom:decluttering-card'
@@ -26,4 +25,3 @@ cards:
       - icon: mower
       - interval: 6
       - period: 'days'
-      - service: script.set_datetime_offset_days

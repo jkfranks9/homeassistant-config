@@ -122,6 +122,14 @@ register_exercise_metrics:
                 entity_id: input_number.steps_monthly
               data:
                 value: "{{ states('input_number.steps_monthly') | int(0) + states('sensor.steps_daily') | int(0) }}"
+        
+        # Log the metrics, so I have a record of activity for each month (the log is backed up on the first of each
+        # month, which starts a new log file).
+        - service: notify.send_message
+          target:
+            entity_id: notify.exercise_activity
+          data:
+            message: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') ~ ': Exercise type: ' ~ exercise_type ~ ', time: ' ~ daily_time ~ ', calories: ' ~ daily_calories }}"
       
       # Invalid exercise type, log it.
       else:

@@ -178,15 +178,35 @@
         
         until: "{{ repeat.index == 2 or states('media_player.epson_projector') in ['warmup', 'on'] }}"
 
+# This is hopefully temporary, to help debug timing problems between the Handle Projector Error automation and the
+# Activate Cinema script. I need to know the exact timing of projector media player state changes.
+- alias: Log Projector states
+  id: log_projector_states
+  
+  # Trigger on just media player state changes, but not attributes.
+  trigger:
+    - platform: state
+      entity_id: media_player.epson_projector
+      from:
+  
+  action:
+    - service: system_log.write
+      data:
+        message: "Projector changed to '{{ trigger.to_state.state }}' state."
+        level: info
+
 #==================================#
 #     Automatic Volume Control     #
 #==================================#
 
-# Initialize the theater volume for Shield TV apps and other input devices.
+# Initialize the theater volume for Shield TV apps and other Harmony devices.
 #
-# NOTE: The volume levels in the map below must be coordinated with the *_volume blueprints.
+# NOTE: The initial volume levels are set by using the UI (App/Device card on the Theater tab on the Overview dashboard).
+# Afterwards, they can be changed by using the UI, or by raising/lowering the volume for any app/device using voice control.
 #
-# Mapping of db levels to percentages:
+# Mapping of db levels to percentages. These are the min/max levels we support - if this ever changes, update all of the 
+# volume number helpers as well, for example 'Youtube TV Volume'. Also update the generic number used by the UI:
+# 'Selected App Volume'.
 #
 # -16 db = 64%
 # -17 db = 63%
@@ -223,6 +243,36 @@
         entity_id: media_player.marantz_sr7012
         volume_level: 0.60
 
+# Initialize the volume for Shield TV applications and Harmony devices. This is triggered by UI changes to the
+# 'Selected App Volume' number.
+- alias: Initialize Application Volume
+  id: initialize_application_volume
+  
+  # Trigger on the state only, not any attributes.
+  trigger:
+    - platform: state
+      entity_id: input_number.selected_app_volume
+      to:
+  
+  action:
+    
+    # Get the selected app/device volume.
+    #
+    # NOTE: The Shield TV app names for "plus" apps are named with a '+' for the Android Debug Bridge integration.
+    # For example Disney Plus is named Disney+. But we can't use '+' in entity IDs, so the application volume number
+    # entity is named input_number.disney_plus_volume. We're OK here, since the names in the UI select use 'Plus'.
+    # But down the line we need to make sure to convert as needed to make sure everything works.
+    - variables:
+        selected_app: "{{ states('input_select.volume_application').replace(' ', '_') | lower }}"
+        selected_app_volume_entity: "{{ 'input_number.' ~ selected_app ~ '_volume' }}"
+    
+    - service: script.set_application_volume
+      data:
+        volume_entity: "{{ selected_app_volume_entity }}"
+        volume: "{{ trigger.to_state.state }}"
+
+# Set the volume level for all Shield TV apps and Harmony devices.
+#
 # NOTES:
 #   1) The Shield TV app names used here must match those defined for the androidtv integration.
 #   2) The Harmony activity names used here must match those defined in harmony_nnn.conf.
@@ -232,112 +282,112 @@
 # Amazon Prime
 - alias: Initialize Amazon Prime Volume
   id: initialize_amazon_prime_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Amazon Prime
-      volume: 0.58
 
 # Disney Plus
 - alias: Initialize Disney Plus Volume
   id: initialize_disney_plus_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Disney+
-      volume: 0.64
 
 # ESPN
 - alias: Initialize ESPN Volume
   id: initialize_espn_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: ESPN
-      volume: 0.57
 
 # HBO Max
 - alias: Initialize HBO Max Volume
   id: initialize_hbo_max_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: HBO Max
-      volume: 0.62
 
 # Hulu
 - alias: Initialize Hulu Volume
   id: initialize_hulu_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Hulu
-      volume: 0.61
 
 # Kodi
 - alias: Initialize Kodi Volume
   id: initialize_kodi_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Kodi
-      volume: 0.57
 
 # Netflix
 - alias: Initialize Netflix Volume
   id: initialize_netflix_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Netflix
-      volume: 0.62
 
 # Paramount Plus
 - alias: Initialize Paramount Plus Volume
   id: initialize_paramount_plus_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Paramount+
-      volume: 0.62
 
 # Peacock
 - alias: Initialize Peacock Volume
   id: initialize_peacock_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Peacock
-      volume: 0.58
 
 # Youtube TV
 - alias: Initialize Youtube TV Volume
   id: initialize_youtube_tv_volume
+  
   use_blueprint:
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Youtube TV
-      volume: 0.62
 
 #   -- Harmony Activities --   #
 
 # Blu-ray Player
 - alias: Initialize Bluray Volume
   id: initialize_bluray_volume
+  
   use_blueprint:
     path: theater/harmony_device_volume.yaml
     input:
       device_name: BD Player
-      volume: 0.63
 
 # Laserdisc Player
 - alias: Initialize Laserdisc Volume
   id: initialize_laserdisc_volume
+  
   use_blueprint:
     path: theater/harmony_device_volume.yaml
     input:
       device_name: LD Player
-      volume: 0.63
  
 #=================================#
 #     Kodi Feature Movie List     #

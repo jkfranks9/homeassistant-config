@@ -10,15 +10,20 @@ frontend:
   extra_module_url:
     - /local/community/lovelace-card-mod/card-mod.js
 
+# We need to specify allowed directories for the file notification service here.
+homeassistant:
+  allowlist_external_dirs:
+    - /config/debug_logs
+
 #========================#
 #     Included Files     #
 #========================#
 
-alexa:          !include database/alexa.yaml
 automation:     !include_dir_merge_list automation
 binary_sensor:  !include binary_sensor.yaml
 cover:          !include covers.yaml
 group:          !include_dir_merge_named group
+intent_script:  !include intents.yaml
 logger:         !include database/logger.yaml
 panel_custom:   !include panel_custom.yaml
 recorder:       !include database/recorder.yaml
@@ -51,6 +56,11 @@ lovelace:
       filename: dashboard_reminders.yaml
       show_in_sidebar: true
       require_admin: true
+
+#======================#
+#     Conversation     #
+#======================#
+conversation:
 
 #===================#
 #     Variables     #
@@ -151,27 +161,12 @@ lutron_caseta:
 #     Miscellaneous     #
 #=======================#
 
-#HTTP, needed for NGINX (check NGINX add-on log for current values)
-http:
-  use_x_forwarded_for: true
-  trusted_proxies: 
-    - 172.30.32.0/24
-    - 172.30.33.0/24
-
 # System log error detection
 system_log:
   fire_event: true
 
 # Notify service
 notify:
-  - name: automations_scripts
-    platform: file
-    filename: debug_logs/automations_scripts.log
-  
-  - name: laundry_events
-    platform: file
-    filename: debug_logs/laundry_events.log
-
   - name: gmail
     platform: smtp
     server: "smtp.gmail.com"
@@ -198,6 +193,7 @@ shell_command:
   backup_log:                     'python /config/python/backup_logs.py /config/home-assistant.log'
   backup_auto_scripts_log:        'python /config/python/backup_logs.py /config/debug_logs/automations_scripts.log'
   backup_laundry_log:             'python /config/python/backup_logs.py /config/debug_logs/laundry_events.log'
+  backup_exercise_log:            'python /config/python/backup_logs.py /config/debug_logs/exercise_activity.log'
   concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
   concat_auto_scripts_log_files:  'python /config/python/concat_logs.py /config/debug_logs/automations_scripts'
   delete_junk_log_files:          'rm -f /config/home-assistant.log.1'

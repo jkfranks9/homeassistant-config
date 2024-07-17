@@ -5,6 +5,7 @@
 type: entities
 title: System
 show_header_toggle: false
+
 entities:
   
   # HA Core

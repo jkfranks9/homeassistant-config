@@ -117,13 +117,14 @@ alexa_ask_fan_setting:
             suppress_confirmation: false
 
 # Shortcuts to set the fan speed directly, instead of asking the user.
-# Again, intended to be called by Alexa routines. 
+# Again, intended to be called by voice assistants. 
 alexa_set_fan_off:
   alias: Alexa Set Fan Off
   
   sequence:
     - service: script.modify_fan
       data:
+        caller: alexa
         speed: 'off'
 
 alexa_set_fan_low:
@@ -132,6 +133,7 @@ alexa_set_fan_low:
   sequence:
     - service: script.modify_fan
       data:
+        caller: alexa
         speed: 'low'
 
 alexa_set_fan_medium:
@@ -140,6 +142,7 @@ alexa_set_fan_medium:
   sequence:
     - service: script.modify_fan
       data:
+        caller: alexa
         speed: 'medium'
 
 alexa_set_fan_high:
@@ -148,6 +151,43 @@ alexa_set_fan_high:
   sequence:
     - service: script.modify_fan
       data:
+        caller: alexa
+        speed: 'high'
+
+nabu_set_fan_off:
+  alias: Nabu Set Fan Off
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        caller: nabu
+        speed: 'off'
+
+nabu_set_fan_low:
+  alias: Nabu Set Fan Low
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        caller: nabu
+        speed: 'low'
+
+nabu_set_fan_medium:
+  alias: Nabu Set Fan Medium
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        caller: nabu
+        speed: 'medium'
+
+nabu_set_fan_high:
+  alias: Nabu Set Fan High
+  
+  sequence:
+    - service: script.modify_fan
+      data:
+        caller: nabu
         speed: 'high'
 
 #=====================#
@@ -212,12 +252,36 @@ get_echo_room:
     - stop: "Returning room"
       response_variable: room
 
+# Get the room in which the called nabu device lives.
+get_nabu_room:
+  alias: Get Nabu Room
+  
+  sequence:    
+    - variables:
+        
+        # Extract the room from the last used nabu device.
+        # NOTE: Figure it out later ... I only have one for now.
+        room: "{{ {'room': 'family_room'} }}"
+        
+    # Return the room.
+    - stop: "Returning room"
+      response_variable: room
+
 # Modify a fan that lives in a room with an echo device.
 # This is used by the Alexa Set Fan <speed> scripts directly below.
 modify_fan:
   alias: Modify Fan
   
   fields:
+    caller:
+      name: Caller
+      description: Voice assistant caller.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+    
     speed:
       name: Speed
       description: Fan speed to be used (see fan_settings variable).
@@ -226,9 +290,19 @@ modify_fan:
   
   sequence:
     
-    # Get the room containing the echo device that was used.
-    - service: script.get_echo_room
-      response_variable: result
+    # Get the room containing the voice assistant device that was used.
+    - choose:
+        - conditions: "{{ caller == 'alexa' }}"
+          
+          sequence:
+            - service: script.get_echo_room
+              response_variable: result
+      
+        - conditions: "{{ caller == 'nabu' }}"
+          
+          sequence:
+            - service: script.get_nabu_room
+              response_variable: result
     
     - variables:
         

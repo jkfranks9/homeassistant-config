@@ -15,7 +15,6 @@ cards:
       - icon: card-account-details
       - interval: 1
       - period: 'month'
-      - service: script.set_datetime_offset_months
       
   # CU VISA
   - type: 'custom:decluttering-card'
@@ -26,18 +25,16 @@ cards:
       - icon: card-account-details
       - interval: 1
       - period: 'month'
-      - service: script.set_datetime_offset_months
       
   # Disney
-  - type: 'custom:decluttering-card'
-    template: next_event
-    variables:
-      - entity: input_datetime.reminder_payment_disney
-      - name: Disney
-      - icon: card-account-details
-      - interval: 1
-      - period: 'month'
-      - service: script.set_datetime_offset_months
+  # - type: 'custom:decluttering-card'
+    # template: next_event
+    # variables:
+      # - entity: input_datetime.reminder_payment_disney
+      # - name: Disney
+      # - icon: card-account-details
+      # - interval: 1
+      # - period: 'month'
       
   # John Deere
   - type: 'custom:decluttering-card'
@@ -48,7 +45,6 @@ cards:
       - icon: card-account-details
       - interval: 1
       - period: 'month'
-      - service: script.set_datetime_offset_months
       
   # Mortgage
   - type: 'custom:decluttering-card'
@@ -59,7 +55,6 @@ cards:
       - icon: home-account
       - interval: 1
       - period: 'month'
-      - service: script.set_datetime_offset_months
       
   # Randolph
   - type: 'custom:decluttering-card'
@@ -70,7 +65,6 @@ cards:
       - icon: card-account-phone
       - interval: 1
       - period: 'month'
-      - service: script.set_datetime_offset_months
       
   # Wells Fargo
   - type: 'custom:decluttering-card'
@@ -81,4 +75,3 @@ cards:
       - icon: card-account-details
       - interval: 1
       - period: 'month'
-      - service: script.set_datetime_offset_months

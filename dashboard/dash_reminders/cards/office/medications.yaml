@@ -15,7 +15,6 @@ cards:
       - icon: medication
       - interval: 90
       - period: 'days'
-      - service: script.set_datetime_offset_days
       
   # Metoprolol
   - type: 'custom:decluttering-card'
@@ -26,7 +25,6 @@ cards:
       - icon: medication
       - interval: 90
       - period: 'days'
-      - service: script.set_datetime_offset_days
       
   # Rosuvastatin
   - type: 'custom:decluttering-card'
@@ -37,7 +35,6 @@ cards:
       - icon: medication
       - interval: 90
       - period: 'days'
-      - service: script.set_datetime_offset_days
       
   # Blood Builder Minis
   - type: 'custom:decluttering-card'
@@ -48,7 +45,6 @@ cards:
       - icon: pill
       - interval: 72
       - period: 'days'
-      - service: script.set_datetime_offset_days
       
   # Methyl B12
   - type: 'custom:decluttering-card'
@@ -59,4 +55,3 @@ cards:
       - icon: pill
       - interval: 33
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks

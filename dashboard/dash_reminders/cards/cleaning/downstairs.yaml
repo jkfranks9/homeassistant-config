@@ -15,7 +15,6 @@ cards:
       - icon: silverware-variant
       - interval: 6
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Family Room
   - type: 'custom:decluttering-card'
@@ -26,7 +25,6 @@ cards:
       - icon: sofa
       - interval: 4
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Kitchen
   - type: 'custom:decluttering-card'
@@ -37,7 +35,6 @@ cards:
       - icon: fridge-industrial
       - interval: 10
       - period: 'days'
-      - service: script.set_datetime_offset_days
       
   # Laundry Room
   - type: 'custom:decluttering-card'
@@ -48,7 +45,6 @@ cards:
       - icon: washing-machine
       - interval: 7
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Master Bath
   - type: 'custom:decluttering-card'
@@ -59,7 +55,6 @@ cards:
       - icon: bathtub
       - interval: 2
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Master Bedroom
   - type: 'custom:decluttering-card'
@@ -70,7 +65,6 @@ cards:
       - icon: bed
       - interval: 7
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Office
   - type: 'custom:decluttering-card'
@@ -81,7 +75,6 @@ cards:
       - icon: desk
       - interval: 5
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Studio Bath
   - type: 'custom:decluttering-card'
@@ -92,7 +85,6 @@ cards:
       - icon: bathtub
       - interval: 2
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Studio Bedroom
   - type: 'custom:decluttering-card'
@@ -103,4 +95,3 @@ cards:
       - icon: bed
       - interval: 8
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks

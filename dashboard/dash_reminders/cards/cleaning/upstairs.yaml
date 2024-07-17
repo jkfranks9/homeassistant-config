@@ -15,7 +15,6 @@ cards:
       - icon: bathtub
       - interval: 6
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Penthouse Bedroom
   - type: 'custom:decluttering-card'
@@ -26,7 +25,6 @@ cards:
       - icon: bed
       - interval: 8
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Snack Bar
   - type: 'custom:decluttering-card'
@@ -37,7 +35,6 @@ cards:
       - icon: fridge-industrial
       - interval: 7
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Theater
   - type: 'custom:decluttering-card'
@@ -48,7 +45,6 @@ cards:
       - icon: theater
       - interval: 5
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks
       
   # Utility
   - type: 'custom:decluttering-card'
@@ -59,4 +55,3 @@ cards:
       - icon: audio-video
       - interval: 7
       - period: 'weeks'
-      - service: script.set_datetime_offset_weeks

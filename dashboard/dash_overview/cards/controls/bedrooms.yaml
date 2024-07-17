@@ -1,7 +1,0 @@
-#=======================#
-#     Bedrooms Card     #
-#=======================#
-  
-type: tile      
-entity: input_select.occupied_bedrooms
-name: Beds
