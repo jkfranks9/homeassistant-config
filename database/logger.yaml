@@ -100,7 +100,7 @@ filters:
     - "Updating from myAir"
   
   custom_components.satellitetracker:
-    - "Unexpected error fetching International Space Station (ISS) data"
+    - ".*Unexpected error fetching.*"
     - "Timeout fetching International Space Station (ISS) data"
   
   custom_components.unifics.api_wrapper:
@@ -108,6 +108,7 @@ filters:
     - "trying to login again, next poll should work"
   
   custom_components.unifics.sensor:
+    - ".*Unexpected error fetching.*"
     - "Error fetching sensor data: Error communicating with API"
     - "Fetching sensor data recovered"
     - "Timeout fetching sensor data"

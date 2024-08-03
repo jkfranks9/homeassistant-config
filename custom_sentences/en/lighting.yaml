@@ -1,0 +1,53 @@
+#==================#
+#     Lighting     #
+#==================#
+
+intents:
+  
+  # Bedtime routine
+  Bedtime:
+    data:
+      - sentences:
+          - "bedtime"
+  
+  # Kitchen lights
+  KitchenOn:
+    data:
+      - sentences:
+          - "kitchen on"
+  
+  KitchenBright:
+    data:
+      - sentences:
+          - "kitchen bright"
+  
+  KitchenOff:
+    data:
+      - sentences:
+          - "kitchen off"
+  
+  # Master bedroom lights
+  ToggleMaster:
+    data:
+      - sentences:
+          - "turn (on | off) [the] master light[s]"
+          - "master light[s] (on | off)"
+  
+  # Christmas lights
+  ChristmasOn:
+    data:
+      - sentences:
+          - "turn on [the] Christmas lights"
+          - "Christmas lights on"
+  
+  ChristmasOff:
+    data:
+      - sentences:
+          - "turn off [the] Christmas lights"
+          - "Christmas lights off"
+  
+  # Christmas lights
+  StartBathTime:
+    data:
+      - sentences:
+          - "start bath time"

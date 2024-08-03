@@ -395,7 +395,7 @@ entities:
           attribute: 'AP UDM'
           name: UDM
         - entity: sensor.unifi_counter
-          attribute: 'AP U6-Lite'
+          attribute: 'AP U6 Lite'
           name: U6
   
   - type: conditional

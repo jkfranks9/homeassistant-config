@@ -1,0 +1,42 @@
+#=================#
+#     Devices     #
+#=================#
+
+intents:
+
+  # Family room AV
+  TVOn:
+    data:
+      - sentences:
+          - "TV on"
+  
+  TVOff:
+    data:
+      - sentences:
+          - "TV off"
+  
+  RestartFireTV:
+    data:
+      - sentences:
+          - "Restart fire TV"
+
+  # Ceiling fans
+  FanLow:
+    data:
+      - sentences:
+          - "fan low"
+
+  FanMedium:
+    data:
+      - sentences:
+          - "fan medium"
+
+  FanHigh:
+    data:
+      - sentences:
+          - "fan high"
+
+  FanOff:
+    data:
+      - sentences:
+          - "fan off"

@@ -26,5 +26,5 @@ trigger:
 action:
   - service: script.set_receiver_volume
     data:
-      appl_name: "{{ input_device_name }}"
+      target_name: "{{ input_device_name }}"
       volume: "{{ selected_device_volume }}"

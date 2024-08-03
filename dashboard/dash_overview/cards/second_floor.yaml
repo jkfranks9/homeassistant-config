@@ -51,7 +51,7 @@ config:
         - switch.penthouse_light
         - switch.penthouse_tub_light
         - switch.penthouse_vanity_light
-        - switch.shield_tv
+        - switch.shield_tv_plug
         - switch.snack_light
         - switch.stairway_light
         - switch.theater_av

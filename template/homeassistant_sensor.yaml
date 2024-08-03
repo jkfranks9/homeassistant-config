@@ -2,6 +2,8 @@
 #     Home Assistant Sensors     #
 #================================#
 
+#---------- Trigger Sensors ----------#
+
 #---------------------------------#
 #   -- Global Variables Hack --   #
 #---------------------------------#
@@ -405,6 +407,8 @@
           
           {{ var1.current }}
 
+#---------- Normal Sensors ----------#
+
 - sensor:
 
     #----------------------#
@@ -776,7 +780,7 @@
       
       attributes:
         sensor_list: >
-          {% set sensor_list = ['attic_sensor', 'ble_house_sensor', 'dryer_sensor', 'energy_mon_2', 'foyer_sensor'] %}
+          {% set sensor_list = ['attic_sensor', 'ble_house_sensor', 'dryer_sensor', 'energy_mon_2', 'family_room_box3', 'foyer_sensor'] %}
           
           {{ sensor_list }}
     
@@ -798,29 +802,17 @@
           
           {{ var.list }}
 
-    #-------------------#
-    #   -- Weather --   #
-    #-------------------#
-      
-    - name: 'Warm Weather'
-      unique_id: warm_weather
-      state: >
-        {% set n = now() %}
-        {{ n.month > 2 and n.month < 11 }}
-      
-    - name: 'Outdoor Work Friendly'
-      unique_id: outdoor_work_friendly
-      state: >
-        {% set high_temp = states('sensor.openweathermap_forecast_temperature') | int(0) %}
-        {% set low_temp = states('sensor.openweathermap_forecast_temperature_low') | int(0) %}
-        {% set humidity = average([states('sensor.openweathermap_humidity') | int(50), states('sensor.pirateweather_humidity') | int(50)]) %}
-        {% set precip_prob = average([states('sensor.openweathermap_forecast_precipitation_probability') | int(50), states('sensor.pirateweather_precip_probability') | int(50)]) %}
-        {% if precip_prob > 80 %}
-          false
-        {% elif humidity > 85 and (high_temp > 80 or low_temp < 50) %}
-          false
-        {% elif high_temp > 85 or low_temp < 45 %}
-          false
-        {% else %}
-          true
-        {% endif %}
+#---------- Miscellaneous ----------#
+
+# Template select that is used on the UI, containing the current mobile tag registry keys. When an option is selected,
+# that tag is removed from my phome and the tag registry. This is only used if a non-manual tag somehow gets stuck, as
+# there is no other easy way to remove such a thing.
+- select:
+    - name: Mobile Tag Keys
+      unique_id: mobile_tag_keys
+      state: Select
+      options: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
+      select_option:
+        - service: script.remove_mobile_notification
+          data:
+            tag:  "{{ option }}"

@@ -1,0 +1,11 @@
+#=================#
+#     Theater     #
+#=================#
+
+intents:
+  
+  # Open theater
+  OpenCinema:
+    data:
+      - sentences:
+          - "open [the] (theater | cinema)"

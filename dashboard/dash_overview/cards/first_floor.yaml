@@ -71,7 +71,7 @@ config:
         - switch.dining_room_lamps
         - switch.driveway_lights
         - switch.family_room_av
-        - switch.fire_tv
+        - switch.fire_tv_plug
         - switch.foyer_hutch
         - switch.front_floodlight
         - switch.garage_lights
@@ -223,7 +223,7 @@ config:
     
     # Appliances
     - entities:
-        - switch.microwave
+        - switch.sonoff_microwave
         - switch.refrigerator
         - switch.washer
       tap_action: more-info

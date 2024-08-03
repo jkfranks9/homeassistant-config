@@ -21,6 +21,10 @@
 !blueprints/script/devices
 !blueprints/script/lighting
 !blueprints/script/notification
+!blueprints/script/theater
+
+!custom_sentences/
+!custom_sentences/en/
 
 !custom_templates/
 

@@ -6,7 +6,6 @@ type: custom:stack-in-card
 title: Spraying
 cards:
       
-  # Frontage / driveway
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -16,22 +15,29 @@ cards:
       - interval: 15
       - period: 'days'
   
-  # Back / side / roadside
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.periodic_yard_spray_back_side_roadside
-      - name: Back / Side / Roadside
+      - entity: input_datetime.periodic_yard_spray_sidewalk_front_side
+      - name: Sidewalk / Front / Side
       - icon: spray
       - interval: 15
       - period: 'days'
   
-  # Front / edge / courtyard / orchard
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.periodic_yard_spray_front_edge_courtyard_orchard
-      - name: Front / Edge / Courtyard / Orchard
+      - entity: input_datetime.periodic_yard_spray_back_pool_roadside
+      - name: Back / Pool / Roadside
+      - icon: spray
+      - interval: 15
+      - period: 'days'
+  
+  - type: 'custom:decluttering-card'
+    template: next_event
+    variables:
+      - entity: input_datetime.periodic_yard_spray_edge_trees
+      - name: Edge / Trees
       - icon: spray
       - interval: 15
       - period: 'days'

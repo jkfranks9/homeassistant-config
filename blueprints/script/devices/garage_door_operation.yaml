@@ -67,16 +67,6 @@ sequence:
       - "{{ use_info_message == true }}"
       
     then:
-      - service: script.send_notification
-        data:
-          destination:
-            - mobile
-          title: 'Attention:'
-          message: '{{ msg_operation }} garage door {{ input_name }}.'
-          channel: standard
-          throttled: false
-          tag: "{{ message_tag }}"
-          timeout: 0
           
       # Register the tag.
       - service: script.register_mobile_notification
@@ -86,6 +76,18 @@ sequence:
           title: 'Attention:'
           message: '{{ msg_operation }} garage door {{ input_name }}.'
           channel: standard
+          timeout: 0
+      
+      # Send the informational notification.
+      - service: script.send_notification
+        data:
+          destination:
+            - mobile
+          title: 'Attention:'
+          message: '{{ msg_operation }} garage door {{ input_name }}.'
+          channel: standard
+          throttled: false
+          tag: "{{ message_tag }}"
           timeout: 0
     
   # Operate the door.
@@ -105,6 +107,16 @@ sequence:
     
     # The operation did not succeed, so send a more important one.
     else:
+          
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data:
+          tag: "{{ error_tag }}"
+          clear_type: manual
+          title: 'Warning:'
+          message: 'Garage door {{ input_name }} operation did not succeed.'
+          channel: critical
+          timeout: 0
       
       # Send the new notification.
       - service: script.send_notification
@@ -116,16 +128,6 @@ sequence:
           channel: critical
           throttled: false
           tag: "{{ error_tag }}"
-          timeout: 0
-          
-      # Register the tag.
-      - service: script.register_mobile_notification
-        data:
-          tag: "{{ error_tag }}"
-          clear_type: manual
-          title: 'Warning:'
-          message: 'Garage door {{ input_name }} operation did not succeed.'
-          channel: critical
           timeout: 0
   
   - if:

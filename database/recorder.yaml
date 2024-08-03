@@ -86,6 +86,7 @@ include:
     - sensor.projector_energy
     - sensor.projector_plug_power
     - sensor.refrigerator_energy
+    - sensor.sonoff_microwave_energy
     - sensor.total_daily_energy
     - sensor.total_power
     - sensor.washer_power_state

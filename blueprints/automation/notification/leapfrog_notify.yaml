@@ -115,6 +115,10 @@ action:
               {{ ns.val }}
             {% endif %}
           
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data: "{{ tag_registry_value }}"
+          
       # Send the notification.
       - service: script.send_notification
         data:
@@ -127,10 +131,6 @@ action:
           throttled: "{{ throttle }}"
           timer_entity: !input timer_entity
           tag: !input tag
-          
-      # Register the tag.
-      - service: script.register_mobile_notification
-        data: "{{ tag_registry_value }}"
     
     # Clear trigger.
     else:

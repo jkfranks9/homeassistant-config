@@ -6,7 +6,6 @@ type: custom:stack-in-card
 title: Trimming
 cards:
       
-  # Frontage East
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -16,7 +15,6 @@ cards:
       - interval: 4
       - period: 'months'
       
-  # Frontage West
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -26,7 +24,6 @@ cards:
       - interval: 4
       - period: 'months'
       
-  # Sidewalk
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -36,7 +33,6 @@ cards:
       - interval: 4
       - period: 'months'
       
-  # Front
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -46,7 +42,6 @@ cards:
       - interval: 4
       - period: 'months'
       
-  # Side
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -56,7 +51,6 @@ cards:
       - interval: 4
       - period: 'months'
       
-  # Back
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -66,27 +60,15 @@ cards:
       - interval: 4
       - period: 'months'
       
-  # Edge / orchard
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.periodic_yard_trim_edge_orchard
-      - name: Edge / Orchard
+      - entity: input_datetime.periodic_yard_trim_pool
+      - name: Pool
       - icon: sickle
       - interval: 4
       - period: 'months'
       
-  # Courtyard
-  - type: 'custom:decluttering-card'
-    template: next_event
-    variables:
-      - entity: input_datetime.periodic_yard_trim_courtyard
-      - name: Courtyard
-      - icon: sickle
-      - interval: 4
-      - period: 'months'
-      
-  # Roadside
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
@@ -96,12 +78,20 @@ cards:
       - interval: 4
       - period: 'months'
       
-  # Pool
   - type: 'custom:decluttering-card'
     template: next_event
     variables:
-      - entity: input_datetime.periodic_yard_trim_pool
-      - name: Pool
+      - entity: input_datetime.periodic_yard_trim_edge_trees
+      - name: Edge / Trees
       - icon: sickle
       - interval: 4
       - period: 'months'
+      
+  # - type: 'custom:decluttering-card'
+    # template: next_event
+    # variables:
+      # - entity: input_datetime.periodic_yard_trim_courtyard
+      # - name: Courtyard
+      # - icon: sickle
+      # - interval: 4
+      # - period: 'months'

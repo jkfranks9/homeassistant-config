@@ -171,13 +171,13 @@ action:
             
             {{ dict(vars, **additional) }}
           
-      # Send the notification.
-      - service: script.send_notification
-        data: "{{ notification_data }}"
-          
       # Register the tag.
       - service: script.register_mobile_notification
         data: "{{ tag_registry_value }}"
+          
+      # Send the notification.
+      - service: script.send_notification
+        data: "{{ notification_data }}"
     
     # Clear trigger.
     else:

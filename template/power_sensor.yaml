@@ -260,7 +260,7 @@
     - name: 'Fire TV Power'
       unique_id: fire_tv_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('switch.fire_tv', 'on'), 4, 0) }}"
+      state: "{{ iif(is_state('switch.fire_tv_plug', 'on'), 4, 0) }}"
 
     # NOTE: The following groups are needed for the UI, which displays groups of things so as to not be
     #       overwhelming. These groups are only needed for power, not for daily/monthly energy.
@@ -399,8 +399,8 @@
       unit_of_measurement: 'W'
       icon: mdi:flash
       state: "{{ (
-                  states('sensor.microwave_current_consumption') | float(0) +
                   states('sensor.refrigerator_current_consumption') | float(0) +
+                  states('sensor.sonoff_microwave_power') | float(0) +
                   states('sensor.treadmill_current_consumption') | float(0) +
                   states('sensor.washer_current_consumption') | float(0)
                  ) | round(2)
@@ -545,8 +545,8 @@
                   states('sensor.family_room_av_daily_energy') | float(0) +
                   states('sensor.master_bedroom_lamp_daily_energy') | float(0) +
                   states('sensor.office_lamp_daily_energy') | float(0) +
-                  states('sensor.microwave_daily_energy') | float(0) +
                   states('sensor.refrigerator_daily_energy') | float(0 +
+                  states('sensor.sonoff_microwave_daily_energy') | float(0) +
                   states('sensor.treadmill_daily_energy') | float(0)) +
                   states('sensor.washer_daily_energy') | float(0)
                  ) | round(2)
@@ -641,8 +641,8 @@
                   states('sensor.family_room_av_monthly_energy') | float(0) +
                   states('sensor.master_bedroom_lamp_monthly_energy') | float(0) +
                   states('sensor.office_lamp_monthly_energy') | float(0) +
-                  states('sensor.microwave_monthly_energy') | float(0) +
                   states('sensor.refrigerator_monthly_energy') | float(0) +
+                  states('sensor.sonoff_microwave_monthly_energy') | float(0) +
                   states('sensor.treadmill_monthly_energy') | float(0) +
                   states('sensor.washer_monthly_energy') | float(0)
                  ) | round(2)

@@ -63,6 +63,16 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
+          
+    # Register the tag.
+    - service: script.register_mobile_notification
+      data:
+        tag: 'power_out'
+        clear_type: dual
+        title: 'Warning:'
+        message: 'Power is out, shutting down PC.'
+        channel: critical
+        timeout: 0
     
     # Send a notification.    
     - service: script.send_notification
@@ -74,16 +84,6 @@
         channel: critical
         throttled: false
         tag: 'power_out'
-        timeout: 0
-          
-    # Register the tag.
-    - service: script.register_mobile_notification
-      data:
-        tag: 'power_out'
-        clear_type: dual
-        title: 'Warning:'
-        message: 'Power is out, shutting down PC.'
-        channel: critical
         timeout: 0
     
     # The recorder database lives on the PC, so disable it before we shutdown.
@@ -121,6 +121,16 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
+          
+    # Register the tag.
+    - service: script.register_mobile_notification
+      data:
+        tag: 'ups_battery'
+        clear_type: manual
+        title: 'Warning:'
+        message: 'UPS battery is critical, shutting down RPi.'
+        channel: critical
+        timeout: 0
     
     # Send a notification.    
     - service: script.send_notification
@@ -132,16 +142,6 @@
         channel: critical
         throttled: false
         tag: 'ups_battery'
-        timeout: 0
-          
-    # Register the tag.
-    - service: script.register_mobile_notification
-      data:
-        tag: 'ups_battery'
-        clear_type: manual
-        title: 'Warning:'
-        message: 'UPS battery is critical, shutting down RPi.'
-        channel: critical
         timeout: 0
       
     # Remove the first power outage notification and unregister the tag.
@@ -173,6 +173,16 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
+          
+    # Register the tag.
+    - service: script.register_mobile_notification
+      data:
+        tag: 'power_restored'
+        clear_type: manual
+        title: 'Attention:'
+        message: 'Power is restored, turning on the PC.'
+        channel: standard
+        timeout: 0
     
     # Send a notification.  
     - service: script.send_notification
@@ -184,16 +194,6 @@
         channel: standard
         throttled: false
         tag: 'power_restored'
-        timeout: 0
-          
-    # Register the tag.
-    - service: script.register_mobile_notification
-      data:
-        tag: 'power_restored'
-        clear_type: manual
-        title: 'Attention:'
-        message: 'Power is restored, turning on the PC.'
-        channel: standard
         timeout: 0
     
     # Send a magic packet to power on the PC.
@@ -706,7 +706,6 @@
     - platform: state
       entity_id:
         - device_tracker.jon_companion
-        - device_tracker.jon_franks
       from: 'home'
       to: 'not_home'
   
@@ -1141,7 +1140,7 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.microwave
+      device_entity: switch.sonoff_microwave
       component_name: tplink
       device_name: Microwave
 
@@ -1460,7 +1459,7 @@
           
           {# --Transition to new state based on current state and washer power state sensor change-- #}
           {% elif fr in ['stop', 'unknown'] and to == 'fill' %}                                    Wash Fill
-          {% elif fr == ['fill', 'drop']    and to == 'raise'   and s == 'Wash Fill' %}            Wash
+          {% elif fr in ['fill', 'drop']    and to == 'raise'   and s == 'Wash Fill' %}            Wash
           {% elif fr == 'raise'             and to == 'drop'    and s in ['Wash', 'Wash Drain'] %} Wash Drain
           {% elif fr in ['drop', 'raise']   and to == 'fill'    and s == 'Wash Drain' %}           Rinse Fill
           {% elif fr in ['fill', 'drop']    and to == 'raise'   and s == 'Rinse Fill' %}           Rinse
@@ -1789,9 +1788,9 @@
       data:
         variables:
           fan_entity_id: fan.office_fan
-          temperature_entity_id: sensor.office_temperature
+          temperature_entity_id: sensor.main_floor_temperature
           thresholds: [76, 74, 72]
-          timeout: 240
+          timeout: 360
 
 #=============================#
 #     Tag/Beacon Presence     #

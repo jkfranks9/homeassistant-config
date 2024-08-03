@@ -1,0 +1,8 @@
+#==================================#
+#     Mobile Tag Registry Card     #
+#==================================#
+
+type: entities
+title: Tag Registry
+entities:
+  - entity: select.mobile_tag_keys

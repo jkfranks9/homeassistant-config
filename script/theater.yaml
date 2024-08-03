@@ -47,14 +47,14 @@ activate_cinema:
         - service: script.check_cinema_usage_control
           data:
             opening: true
-          response_variable: result
         
         - if:
-            - "{{ result.allowed == false }}"
+            - condition: state
+              entity_id: input_boolean.cinema_usage_allowed
+              state: 'off'
           
           then:
             - stop: "Cinema usage is denied."
-              response_variable: result
   
     # Start the input Harmony activity, which ensures the correct devices are on.
     # However, if Enable Streaming is requested but the cinema is currently on, then use the Stream Player
@@ -91,7 +91,7 @@ activate_cinema:
         # Turn on some lights.
         - service: script.set_theater_idle
     
-        # Announce the projector warm-up delay.
+        # Announce the grand opening.
         - service: notify.alexa_media
           data:
             message: >
@@ -103,7 +103,10 @@ activate_cinema:
                     "Hopefully the projector won't explode. Stay tuned.",
                     "Lights are on, just waiting on the projection equipment.",
                     "Loading the film canister now.",
-                    "Theater is waking up."
+                    "Theater is waking up.",
+                    "Popcorn is popping. Cokes are bubbling. Grab a seat and relax.",
+                    "I'm flipping on all the switches. Hope that works.",
+                    "What's this big red button do? Let's find out!"
                    ] | random }}
                 </amazon:emotion>
               </speak>
@@ -142,10 +145,11 @@ open_cinema:
       data:
         activity: Open Cinema
         need_kodi: false
-      response_variable: result
     
     - if:
-        - "{{ result.allowed == false }}"
+        - condition: state
+          entity_id: input_boolean.cinema_usage_allowed
+          state: 'off'
       
       then:
         - stop: "Cinema usage is denied."
@@ -164,10 +168,11 @@ play_feature_movie:
       data:
         activity: Enable Streaming
         need_kodi: true
-      response_variable: result
     
     - if:
-        - "{{ result.allowed == false }}"
+        - condition: state
+          entity_id: input_boolean.cinema_usage_allowed
+          state: 'off'
       
       then:
         - stop: "Cinema usage is denied."
@@ -243,10 +248,11 @@ play_random_kodi_videos:
       data:
         activity: Enable Streaming
         need_kodi: true
-      response_variable: result
     
     - if:
-        - "{{ result.allowed == false }}"
+        - condition: state
+          entity_id: input_boolean.cinema_usage_allowed
+          state: 'off'
       
       then:
         - stop: "Cinema usage is denied."
@@ -272,208 +278,130 @@ play_random_kodi_videos:
 #     4) Start Harmony Activity      #
 #====================================#
 
-# Template script that does the work.
-start_activity:
-  alias: Start Activity
-  fields:
-    activity:
-      description: 'The Harmony activity name to be started.'
-      example: 'BD Player'
-    lighting:
-      description: 'Script or scene that establishes the desired lighting.'
-      example: 'script.set_theater_dark'
-  
-  sequence:
-    
-    # Activate the cinema.
-    - service: script.activate_cinema
-      data:
-        activity: "{{ activity }}"
-        need_kodi: false
-      response_variable: result
-    
-    - if:
-        - "{{ result.allowed == false }}"
-      
-      then:
-        - stop: "Cinema usage is denied."
-  
-    # Establish the target lighting.
-    - service: "{{ lighting }}"
-
-#----------------------#
-#   -- Activities --   #
-#----------------------#
-
 # Shield TV (streaming)
 start_streaming:
   alias: Start Streaming
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'Stream Player'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/start_harmony_activity.yaml
+    input:
+      activity: Stream Player
+      lighting: script.set_theater_dark_delay
 
 # Blu-ray
 start_bluray:
   alias: Start Bluray
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'BD Player'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/start_harmony_activity.yaml
+    input:
+      activity: BD Player
+      lighting: script.set_theater_dark_delay
 
 # Laserdisc
 start_laserdisc:
   alias: Start Laserdisc
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'LD Player'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/start_harmony_activity.yaml
+    input:
+      activity: LD Player
+      lighting: script.set_theater_dark_delay
 
 # Turntable
 start_turntable:
   alias: Start Turntable
-  sequence:
-    - service: script.start_activity
-      data:
-        activity: 'LP Player'
-        lighting: 'script.set_theater_dim'
+  
+  use_blueprint:
+    path: theater/start_harmony_activity.yaml
+    input:
+      activity: LP Player
+      lighting: script.set_theater_dim
 
 #=================================#
 #     5) Watch Shield TV App      #
 #=================================#
 
-# Template script that does the work.
-watch_app:
-  alias: Watch Application
-  
-  fields:
-    component:
-      description: 'The component name of the target Shield TV application. These are obtained by querying the Shield TV box.'
-      example: 'com.netflix.ninja/.MainActivity'
-    
-    lighting:
-      description: 'Script or scene that establishes the desired lighting.'
-      example: 'script.set_theater_dark'
-  
-  sequence:
-    
-    # Activate the cinema.
-    - service: script.activate_cinema
-      data:
-        activity: Enable Streaming
-        need_kodi: false
-      response_variable: result
-    
-    - if:
-        - "{{ result.allowed == false }}"
-      
-      then:
-        - stop: "Cinema usage is denied."
-    
-    # After a short delay, bring up the target application on the Shield TV.
-    - delay: '00:00:02'
-    - service: androidtv.adb_command
-      data:
-        entity_id: media_player.shield_tv
-        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n {{ component }}"
-  
-    # Now switch the receiver to the proper input so the application can be viewed on screen.
-    - service: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'InputCbl/Sat'
-        device: Marantz Receiver
-  
-    # Establish the target lighting.
-    - service: "{{ lighting }}"
-
-#------------------------#
-#   -- Applications --   #
-#------------------------#
-
 # Amazon Prime
 watch_amazon_prime:
   alias: Watch Amazon Prime
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.amazon.amazonvideo.livingroom/com.amazon.ignition.IgnitionActivity'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Amazon Prime
 
 # Disney Plus
 watch_disney_plus:
   alias: Watch Disney Plus
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.disney.disneyplus/com.bamtechmedia.dominguez.main.MainActivity'
-        lighting: 'script.set_theater_dark_delay'
-
-# Max
-watch_max:
-  alias: Watch Max
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.wbd.stream/com.wbd.beam.BeamActivity'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Disney+
 
 # Hulu
 watch_hulu:
   alias: Watch Hulu
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.hulu.livingroomplus/.WKFactivity'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Hulu
 
 # Kodi
 watch_kodi:
   alias: Watch Kodi
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'org.xbmc.kodi/.Splash'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Kodi
+
+# Max
+watch_max:
+  alias: Watch Max
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: HBO Max
 
 # Netflix
 watch_netflix:
   alias: Watch Netflix
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.netflix.ninja/.MainActivity'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Netflix
 
 # Paramount Plus
 watch_paramount_plus:
   alias: Watch Paramount Plus
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.cbs.ott/com.paramount.android.pplus.splash.tv.ui.activity.SplashActivity'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Paramount+
 
 # Peacock
 watch_peacock:
   alias: Watch Peacock
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.peacocktv.peacockandroid/com.peacock.peacocktv.GoogleMainActivity'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Peacock
 
 # Youtube TV
 watch_youtube_tv:
   alias: Watch Youtube TV
-  sequence:
-    - service: script.watch_app
-      data:
-        component: 'com.google.android.youtube.tvunplugged/com.google.android.apps.youtube.tvunplugged.activity.MainActivity'
-        lighting: 'script.set_theater_dark_delay'
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: Youtube TV
 
 #=======================#
 #     Cinema Close      #
@@ -492,10 +420,11 @@ close_cinema:
     - service: script.check_cinema_usage_control
       data:
         opening: false
-      response_variable: result
     
     - if:
-        - "{{ result.allowed == false }}"
+        - condition: state
+          entity_id: input_boolean.cinema_usage_allowed
+          state: 'off'
       
       then:
         - stop: "Cinema usage is denied."
@@ -584,10 +513,6 @@ check_cinema_usage_control:
     
     # Time in seconds to delay the requested open or close.
     delay: "{{ (delay_time - delta_time) | round }}"
-    
-    # Response variables.
-    response_allowed: "{{ {'allowed': true} }}"
-    response_denied: "{{ {'allowed': false} }}"
   
   sequence:
     
@@ -596,6 +521,11 @@ check_cinema_usage_control:
         - "{{ delta_time | float(0) < delay_time }}"
       
       then:
+        
+        # Turn off the allowed toggle.
+        - service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.cinema_usage_allowed
         
         # Bypass the message and timer start if the timer is already running. Someone is being a jerk.
         - if:
@@ -618,12 +548,13 @@ check_cinema_usage_control:
               data:
                 entity_id: timer.cinema_usage_delay
                 duration: "{{ delay }}"
-        
-        # Return a denied response.
-        - stop: "{{ 'Cinema has been ' ~ message_state1 ~ ' recently. }}"
-          response_variable: response_denied
       
       else:
+        
+        # Turn on the allowed toggle.
+        - service: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.cinema_usage_allowed
     
         # Set the usage control timestamp.
         - service: input_datetime.set_datetime
@@ -631,10 +562,6 @@ check_cinema_usage_control:
             entity_id: input_datetime.cinema_usage_control
           data_template:
             datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-        
-        # Return an allowed response.
-        - stop: All is well
-          response_variable: response_allowed
 
 #==========================#
 #     Post-Open Tasks      #
@@ -661,7 +588,9 @@ perform_post_open_tasks:
                 "Don't forget to silence your phones!",
                 "Please don't lose your children in the dark!",
                 "Watch for weeping angels!",
-                "Come relax in our state of the art theater!"
+                "Come relax in our state of the art theater!",
+                "Prepare to laugh and weep in equal measure!",
+                "Time to vegetate on the couch!"
                ] | random }}
             </amazon:emotion>
           </speak>
@@ -720,8 +649,8 @@ set_receiver_volume:
   alias: Set Receiver Volume
   
   fields:
-    appl_name:
-      description: The name of the application on the Shield TV, for example 'Youtube TV'.
+    target_name:
+      description: The name of the application on the Shield TV (example 'Youtube TV'), or the Harmony device (example 'BD Player').
     
     volume:
       description: The receiver volume.
@@ -733,7 +662,7 @@ set_receiver_volume:
   sequence:
     - service: system_log.write
       data:
-        message: "Setting volume for {{ appl_name }} to {{ volume }}"
+        message: "Setting volume for {{ target_name }} to {{ volume }}"
         level: debug
   
     - service: media_player.volume_set
@@ -766,7 +695,8 @@ set_application_volume:
     # For example Disney Plus is named Disney+. But we can't use '+' in entity IDs, so the application volume number
     # entity is named input_number.disney_plus_volume. In order to check against the Shield TV app name, convert 'Plus' to '+'.
     - variables:
-        target_name: "{{ state_attr(volume_entity, 'friendly_name').replace('Volume', '').replace(' Plus', '+') | trim }}"
+        target_name: "{{ state_attr(volume_entity, 'friendly_name') | replace('Volume', '') | replace(' Plus', '+') | trim }}"
+        activity: "{{ states('sensor.harmony_hub') }}"
     
     # Set the app-specific number, so the app will get set to this volume the next time it is opened/used.
     - service: input_number.set_value
@@ -777,12 +707,14 @@ set_application_volume:
     
     # Also set the live volume if the target app/device is currently in use.
     - if:
-        - "{{ states('input_boolean.theater_open') == 'on' and state_attr('media_player.shield_tv', 'app_name') == target_name }}"
+        - "{{ states('input_boolean.theater_open') == 'on' and 
+              ('Stream' in activity and state_attr('media_player.shield_android_tv', 'app_name') == target_name) or
+              (activity == 'BD Player' or activity == 'LD Player') }}"
       
       then:
         - service: script.set_receiver_volume
           data:
-            appl_name: "{{ target_name }}"
+            target_name: "{{ target_name }}"
             volume: "{{ volume }}"
 
 # Raise or lower the theater volume by one step.
@@ -818,9 +750,9 @@ change_theater_volume:
   sequence:
     - variables:
         activity: "{{ states('sensor.harmony_hub') }}"
-        app_name: "{{ iif(activity == 'Stream Player', state_attr('media_player.shield_tv', 'app_name').replace('+', ' Plus').replace(' ', '_') | lower, 'none') }}"
+        app_name: "{{ iif('Stream' in activity, state_attr('media_player.shield_android_tv', 'app_name') | replace('+', ' Plus') | replace(' ', '_') | lower, 'none') }}"
         volume_entity: >
-          {% if activity == 'Stream Player' %}
+          {% if 'Stream' in activity %}
             {{ 'input_number.' ~ app_name ~ '_volume' }}
           {% elif activity == 'BD Player' %}
             input_number.bd_player_volume
@@ -1065,10 +997,11 @@ activate_kodi:
         - delay: '00:00:02'
   
     # Start Kodi on the Shield TV.
-    - service: androidtv.adb_command
+    - service: remote.turn_on
+      target:
+        entity_id: remote.shield_android_tv
       data:
-        entity_id: media_player.shield_tv
-        command: "am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER -n 'org.xbmc.kodi/.Splash'"
+        activity: Kodi
     - delay: '00:00:01'
 
 #============================#

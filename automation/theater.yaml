@@ -274,7 +274,7 @@
 # Set the volume level for all Shield TV apps and Harmony devices.
 #
 # NOTES:
-#   1) The Shield TV app names used here must match those defined for the androidtv integration.
+#   1) The Shield TV app names used here must match those defined for the Android TV Remote integration.
 #   2) The Harmony activity names used here must match those defined in harmony_nnn.conf.
 
 #   -- Shield TV Apps --   #

@@ -12,7 +12,6 @@ cards:
       icon_state: false
       volume: false
       volume_level: false
-      sound_mode: false
       source: true
       controls: true
       power_state: false
@@ -20,7 +19,31 @@ cards:
   - type: custom:mini-media-player
     entity: media_player.shield_tv
     name: Shield TV
-    artwork: cover
+    artwork: full-cover
+    hide:
+      icon_state: false
+      volume: true
+      mute: true
+      power_state: false
+      prev: true
+      next: true
+  
+  - type: custom:mini-media-player
+    entity: media_player.shield_tv_cast
+    name: Shield TV
+    artwork: full-cover
+    hide:
+      icon_state: false
+      volume: true
+      mute: true
+      power_state: false
+      prev: true
+      next: true
+  
+  - type: custom:mini-media-player
+    entity: media_player.theater_shield
+    name: Shield TV
+    artwork: full-cover
     hide:
       icon_state: false
       volume: true
@@ -31,7 +54,7 @@ cards:
   
   - type: conditional
     conditions:
-      - entity: media_player.shield_tv
+      - entity: media_player.shield_android_tv
         state_not: 'off'
       - entity: media_player.kodi
         state_not: 'off'

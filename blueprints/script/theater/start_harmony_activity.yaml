@@ -1,0 +1,43 @@
+# Start a Harmony activity in the theater.
+
+blueprint:
+  name: Harmony Activity
+  description: Start a theater activity using the Harmony remote control.
+  domain: script
+  
+  input:
+    activity:
+      name: Harmony Activity
+      description: The Harmony activity name to be started.
+    
+    lighting:
+      name: Desired Lighting
+      description: Script that establishes the desired type of lighting once the activity starts.
+      selector:
+        entity:
+          domain: script
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_activity: !input activity
+  input_lighting: !input lighting
+
+sequence:
+    
+  # Activate the Harmony activity in the cinema.
+  - service: script.activate_cinema
+    data:
+      activity: "{{ input_activity }}"
+      need_kodi: false
+    
+  # Stop if cinema usage is denied.
+  - if:
+      - condition: state
+        entity_id: input_boolean.cinema_usage_allowed
+        state: 'off'
+      
+    then:
+      - stop: "Cinema usage is denied."
+  
+  # Establish the target lighting.
+  - service: "{{ input_lighting }}"

@@ -156,12 +156,13 @@ initialize_global_variables:
         key: mini_todo_yard_work_times
         value: { "{{ state_attr('input_datetime.periodic_yard_mow_push', 'friendly_name').split('Periodic Yard ')[-1] }}": 25,
                  "{{ state_attr('input_datetime.periodic_yard_mow_tractor', 'friendly_name').split('Periodic Yard ')[-1] }}": 100, 
-                 "{{ state_attr('input_datetime.periodic_yard_spray_back_side_roadside', 'friendly_name').split('Periodic Yard ')[-1] }}": 70,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_back_pool_roadside', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_edge_trees', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
                  "{{ state_attr('input_datetime.periodic_yard_spray_frontage_driveway', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
-                 "{{ state_attr('input_datetime.periodic_yard_spray_front_edge_courtyard_orchard', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_sidewalk_front_side', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
                  "{{ state_attr('input_datetime.periodic_yard_trim_back', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
                  "{{ state_attr('input_datetime.periodic_yard_trim_courtyard', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_edge_orchard', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_edge_trees', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
                  "{{ state_attr('input_datetime.periodic_yard_trim_front', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
                  "{{ state_attr('input_datetime.periodic_yard_trim_frontage_east', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
                  "{{ state_attr('input_datetime.periodic_yard_trim_frontage_west', 'friendly_name').split('Periodic Yard ')[-1] }}": 90,
@@ -185,6 +186,134 @@ initialize_global_variables:
 #========================#
 #     Mini ToDo List     #
 #========================#
+
+# Before we can attempt adding outdoor tasks to the mini todo list, we need to know if it's sensible and safe to work outdoors.
+# We gather temperature and humidity for the hours between the daily start and end times, as well as precipitation probability
+# and the UV index. The first 3 of these metrics are averaged over the time span, and we take the maximum UV index over the 
+# same period. These are all placed in number helpers, and are input to the Outdoor Work Friendly sensor.
+get_weather_metrics:
+  alias: Get Weather Metrics
+  
+  sequence:
+    
+    # Get the hourly weather forecast data. Although this script is only run once per day, we need the hourly data in order to
+    # calculate the values for the daily time span.
+    - service: weather.get_forecasts
+      data:
+        type: hourly
+      target:
+        entity_id: weather.openweathermap
+      response_variable: result
+    
+    - variables:
+        
+        # The first and last hours of the daily time span. We use the normal time span but slide the window back one hour, so I can start earlier 
+        # than the normal start during the hot summer, while also avoiding a bit of the late afternoon. For example if the normal span is from 10 AM 
+        # to 4 PM, we pick 9 as the start and 14 (2 PM) as the end (since the last hour of the normal span is the hour from 3 to 4 PM, which is a 
+        # value of 15).
+        first_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_start_time.split(':')[0] | int(0) - 1 }}"
+        last_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_end_time.split(':')[0] | int(0) - 2 }}"
+        
+        # The list of hourly weather data for the daily time span.
+        forecast_list: >
+          {% set var = namespace(list = []) %}
+          {% for i in result['weather.openweathermap'].forecast %}
+            {% set hour = as_local(as_datetime(i.datetime)).strftime('%H') | int(0) %}
+            {% if first_hour <= hour <= last_hour %}
+              {% set var.list = var.list + [i] %}
+            {% endif %}
+            {% if hour > last_hour %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
+          {{ var.list }}
+    
+    # Clear the metrics we're about to collect during the loop. Not needed for the apparent temperature since that's a single
+    # calculation after the loop.
+    - service: input_number.set_value
+      target:
+        entity_id:
+          - input_number.average_outdoor_temperature
+          - input_number.average_outdoor_humidity
+          - input_number.average_outdoor_precipitation_probability
+          - input_number.maximum_outdoor_uv_index
+      data:
+        value: 0
+    
+    # Walk through the hourly weather data list.
+    - repeat:
+        for_each: "{{ forecast_list }}"
+      
+        sequence:
+          
+          # Add the temperature for this hour ...
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.average_outdoor_temperature
+            data:
+              value: "{{ states('input_number.average_outdoor_temperature') | float(75) + repeat.item.temperature }}"
+          
+          # ... and the humidity ...
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.average_outdoor_humidity
+            data:
+              value: "{{ states('input_number.average_outdoor_humidity') | float(50) + repeat.item.humidity }}"
+          
+          # ... and the precipitation probability.
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.average_outdoor_precipitation_probability
+            data:
+              value: "{{ states('input_number.average_outdoor_precipitation_probability') | float(50) + repeat.item.precipitation_probability }}"
+          
+          # Keep the highest UV index during the span.
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.maximum_outdoor_uv_index
+            data:
+              value: "{{ max(states('input_number.maximum_outdoor_uv_index') | float(3), repeat.item.uv_index) }}"
+    
+    # Now average the temperature ...
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.average_outdoor_temperature
+      data:
+        value: "{{ states('input_number.average_outdoor_temperature') | float(75 * forecast_list | length) / forecast_list | length }}"
+    
+    # ... and the humidity ...
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.average_outdoor_humidity
+      data:
+        value: "{{ states('input_number.average_outdoor_humidity') | float(50 * forecast_list | length) / forecast_list | length }}"
+    
+    # ... and the precipitation probability.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.average_outdoor_precipitation_probability
+      data:
+        value: "{{ states('input_number.average_outdoor_precipitation_probability') | float(50 * forecast_list | length) / forecast_list | length }}"
+    
+    # Finally, calculate the apparent temperature, using the average temperature and humidity. The formula is from the National Weather Service:
+    # https://www.weather.gov/media/epz/wxcalc/heatIndex.pdf
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.apparent_outdoor_temperature
+      data:
+        value: >
+          {% set T = states('input_number.average_outdoor_temperature') | float(75) %}
+          {% set H = states('input_number.average_outdoor_humidity') | float(50) %}
+          {% set c1 = 42.379 %}
+          {% set c2 = 2.04901523 %}
+          {% set c3 = 10.14333127 %}
+          {% set c4 = 0.22475541 %}
+          {% set c5 = 0.00683783 %}
+          {% set c6 = 0.05481717 %}
+          {% set c7 = 0.00122874 %}
+          {% set c8 = 0.00085282 %}
+          {% set c9 = 0.00000199 %}
+          {{ (-c1 + (c2 * T) + (c3 * H) - (c4 * T * H) - (c5 * T**2) - (c6 * H**2) + (c7 * T**2 * H) + (c8 * T * H**2) - (c9 * T**2 * H**2)) | round(2) }}
 
 # Front end to Generate Weekly Periodic List. That script should normally only be called once a week on Sunday. However, it
 # seems like the various weekly periodic list sensors can become unknown for some unknown (haha) reason. So we also 
@@ -252,6 +381,8 @@ generate_periodic_lists:
                             'input_datetime.periodic_other_laundry'
                            ]
     
+    # NOTE: The following is temporarily removed; add back when needed.
+    #       'input_datetime.periodic_yard_trim_courtyard',
     - if:
         - "{{ type in ['all', 'yard_work'] }}"
     
@@ -263,18 +394,18 @@ generate_periodic_lists:
             generator_count: 3
             date_entities: [
                             'input_datetime.periodic_yard_spray_frontage_driveway',
-                            'input_datetime.periodic_yard_spray_front_edge_courtyard_orchard',
-                            'input_datetime.periodic_yard_spray_back_side_roadside',
-                            'input_datetime.periodic_yard_trim_sidewalk',
-                            'input_datetime.periodic_yard_trim_frontage_west',
+                            'input_datetime.periodic_yard_spray_sidewalk_front_side',
+                            'input_datetime.periodic_yard_spray_back_pool_roadside',
+                            'input_datetime.periodic_yard_spray_edge_trees',
                             'input_datetime.periodic_yard_trim_frontage_east',
+                            'input_datetime.periodic_yard_trim_frontage_west',
+                            'input_datetime.periodic_yard_trim_sidewalk',
                             'input_datetime.periodic_yard_trim_front',
                             'input_datetime.periodic_yard_trim_side',
                             'input_datetime.periodic_yard_trim_back',
                             'input_datetime.periodic_yard_trim_pool',
-                            'input_datetime.periodic_yard_trim_edge_orchard',
                             'input_datetime.periodic_yard_trim_roadside',
-                            'input_datetime.periodic_yard_trim_courtyard',
+                            'input_datetime.periodic_yard_trim_edge_trees',
                             'input_datetime.periodic_yard_mow_tractor',
                             'input_datetime.periodic_yard_mow_push'
                            ]
@@ -345,8 +476,8 @@ generate_weekly_periodic_list:
             {# Continue if the entity is overdue or due within a few days. #}
             {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(start_date) + timedelta(days = 3), 0) %}
               
-              {# Add the item to the list. We have a special case for mowing: only add it during warm weather. #}
-              {% if type != 'yard_work' or (state_attr(entity, 'friendly_name').split('Periodic Yard ')[-1].split()[0] != 'Mow' or states('sensor.warm_weather')) %}
+              {# Add the item to the list. We have a special case for mowing: only add it if it seems OK to work outside. #}
+              {% if type != 'yard_work' or (state_attr(entity, 'friendly_name').split('Periodic Yard ')[-1].split()[0] != 'Mow' or states('binary_sensor.outdoor_work_friendly') == 'on') %}
                 {% set var.list = var.list + [entity] %}
               {% endif %}
             {% endif %}
@@ -592,6 +723,13 @@ add_mini_todo_calendar_items:
       
         - stop: Extended away
         
+        # Initialize the calendar all day type.
+        - service: input_select.select_option
+          target:
+            entity_id: input_select.mini_todo_all_day_calendar_type
+          data:
+            option: none
+        
     # Process each calendar event.
     - repeat:
         for_each: "{{ agenda['calendar.calendar'].events }}"
@@ -611,7 +749,7 @@ add_mini_todo_calendar_items:
           
           - choose:
             
-            # Handle an all day event, which means we can't add anything to the mini todo list.
+            # Handle an all day event, which means we won't add much to the mini todo list.
             - conditions: "{{ '(trip)' in summary or '(visit)' in summary }}"
             
               sequence:
@@ -620,7 +758,26 @@ add_mini_todo_calendar_items:
                 
                   then:
                     - variables:
-                        cal_tag: "{{ iif('(visit)' in summary, '(visit)', '(trip)') }}"
+                        all_day_type: "{{ iif('(visit)' in summary, 'visit', 'trip') }}"
+                        cal_tag: "{{ '(' ~ all_day_type ~ ')' }}"
+                    
+                    # We need to note what type of all day event this is.
+                    - if:
+                        - "{{ all_day_type == 'visit' }}"
+                      
+                      then:
+                        - service: input_select.select_option
+                          target:
+                            entity_id: input_select.mini_todo_all_day_calendar_type
+                          data:
+                            option: visit
+                      
+                      else:                    
+                        - service: input_select.select_option
+                          target:
+                            entity_id: input_select.mini_todo_all_day_calendar_type
+                          data:
+                            option: trip
                     
                     - service: input_number.set_value
                       target:
@@ -630,7 +787,7 @@ add_mini_todo_calendar_items:
       
                     - event: add_mini_todo_item
                       event_data:
-                        value: "{{ 'ca:' ~ summary.split(cal_tag)[0]~ 'all day' }}"
+                        value: "{{ 'ca:' ~ summary.split(cal_tag)[0] ~ 'all day' }}"
           
             # Handle a normal home or away event.
             - conditions: "{{ '(home)' in summary or '(appt' in summary }}"
@@ -683,7 +840,6 @@ add_mini_todo_exercise_item:
     # Proceed according to the type. There is no choice for the skip type, since we do nothing in that case.
     - variables:
         type: "{{ states('input_select.mini_todo_exercise_type') }}"
-        currrent_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(0) }}"
         treadmill_minutes: "{{ state_attr('sensor.variables', 'variables').mini_todo_treadmill_minutes }}"
         workout_minutes: "{{ state_attr('sensor.variables', 'variables').mini_todo_workout_minutes }}"
     
@@ -697,16 +853,13 @@ add_mini_todo_exercise_item:
               heads_up: "{{ range(2) | random > 0 }}"
               event_data_val: "{{ 'ex:' ~ iif(heads_up, 'Treadmill', 'Workout') }}"
               minutes_var: "{{ iif(heads_up, treadmill_minutes, workout_minutes) }}"
-              
-          - event: add_mini_todo_item
-            event_data:
-              value: "{{ event_data_val }}"
-            
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.mini_todo_available_minutes
+        
+          # Insert the selected item.
+          - service: script.insert_mini_todo_item
             data:
-              value: "{{ currrent_minutes - minutes_var }}"
+              value: "{{ event_data_val }}"
+              item_time: "{{ minutes_var }}"
+              major: false
         
       # Opposite
       - conditions: "{{ type == 'opposite' }}"
@@ -716,16 +869,13 @@ add_mini_todo_exercise_item:
               treadmill_older: "{{ as_timestamp(states('sensor.treadmill_last_changed')) < as_timestamp(states('sensor.workout_last_changed')) }}"
               event_data_val: "{{ 'ex:' ~ iif(treadmill_older, 'Treadmill', 'Workout') }}"
               minutes_var: "{{ iif(treadmill_older, treadmill_minutes, workout_minutes) }}"
-              
-          - event: add_mini_todo_item
-            event_data:
-              value: "{{ event_data_val }}"
-            
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.mini_todo_available_minutes
+        
+          # Insert the selected item.
+          - service: script.insert_mini_todo_item
             data:
-              value: "{{ currrent_minutes - minutes_var }}"
+              value: "{{ event_data_val }}"
+              item_time: "{{ minutes_var }}"
+              major: false
 
 # Add a project from a (normal) todo list to the mini todo list.
 add_mini_todo_project_item:
@@ -784,12 +934,12 @@ add_mini_todo_project_item:
             {% endif %}
             
             {# Grab up to 2 external items, but only if it seems OK to work outside. #}
-            {% if type == 'external' and states('sensor.outdoor_work_friendly') == 'true' and var.ex_count <=1 %}
+            {% if type == 'external' and states('binary_sensor.outdoor_work_friendly') == 'on' and var.ex_count <= 1 %}
               {% set var.list = var.list + [item.summary ~ ':' ~ var.wtime] %}
               {% set var.ex_count = var.ex_count + 1 %}
             
             {# Grab up to 2 internal items. #}
-            {% elif type == 'internal' and var.in_count <=1 %}
+            {% elif type == 'internal' and var.in_count <= 1 %}
               {% set var.list = var.list + [item.summary ~ ':' ~ var.wtime] %}
               {% set var.in_count = var.in_count + 1 %}
             {% endif %}
@@ -818,21 +968,12 @@ add_mini_todo_project_item:
             value: "{{ type[0:2] ~ ':' ~ summary }}"
             est_minutes: "{{ project.split(':')[1] | int(0) }}"
         
-        # One last check: ensure this item is unique.
-        - condition: template
-          value_template: "{{ value not in state_attr('sensor.daily_mini_todo_list', 'items') }}"
-        
-        # Add the selected item to the mini todo list.
-        - event: add_mini_todo_item
-          event_data:
-            value: "{{ value }}"
-                        
-        # Subtract the estimated time for this event from the current available time.
-        - service: input_number.set_value
-          target:
-            entity_id: input_number.mini_todo_available_minutes
+        # Insert the selected item.
+        - service: script.insert_mini_todo_item
           data:
-            value: "{{ states('input_number.mini_todo_available_minutes') | int(0) - est_minutes }}"
+            value: "{{ value }}"
+            item_time: "{{ est_minutes }}"
+            major: "{{ type == 'major' }}"
 
 # Add a periodic task (cleaning, yard work, other) to the mini todo list. These are based on reminder datetimes, 
 # and set up by the Generate Weekly Periodic List script above.
@@ -874,10 +1015,61 @@ add_mini_todo_periodic_item:
             value: "{{ item.split('-')[0] }}"
             est_minutes: "{{ item.split('-')[1] | int(0) }}"
         
-        # One last check: ensure this item is unique.
-        - condition: template
-          value_template: "{{ value not in state_attr('sensor.daily_mini_todo_list', 'items') }}"
+        # Insert the selected item.
+        - service: script.insert_mini_todo_item
+          data:
+            value: "{{ value }}"
+            item_time: "{{ est_minutes }}"
+            major: false
+
+# Insert a selected item into the mini todo list. This is called by all the scripts that handle mini todo items, except
+# Add Mini ToDo Calendar Items. Here we ensure the item is unique and that it fits in the available time. We also
+# update the Mini ToDo Attempts counter to prevent an infinite loop in the Create Daily Mini ToDo List automation.
+insert_mini_todo_item:
+  alias: Insert Mini ToDo Item
+  
+  mode: queued
+  
+  fields:
+    value:
+      description: The item to be inserted.
     
+    item_time:
+      description: The amount of time the item consumes.
+    
+    major:
+      description: True if this is a major item; these can be worked on in pieces - for example it can take days to complete.
+  
+  sequence:
+    - variables:
+        current_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(0) }}"
+        major_item: "{{ states('input_boolean.mini_todo_major_item_added') == 'off' and major == true and current_minutes >= 30 }}"
+        tag: "{{ value.split(':')[0] }}"
+        tag_allowed: >
+          {% set var = namespace(allowed = true) %}
+          {% set single_tags = ['yt', 'ys'] %}
+          {% for item in state_attr('sensor.daily_mini_todo_list', 'items') %}
+            {% set item_tag = item.split(':')[0] %}
+            {% if(item_tag in single_tags and tag == item_tag) %}
+              {% set var.allowed = false %}
+            {% endif %}
+          {% endfor %}
+          {{ var.allowed }}
+                    
+    # Bump the attempts counter.
+    - service: counter.increment
+      target:
+        entity_id: counter.mini_todo_attempts
+        
+    # Ensure this item is unique. Also, for certain types of items, we only want one max per day.
+    - condition: template
+      value_template: "{{ value not in state_attr('sensor.daily_mini_todo_list', 'items') and tag_allowed }}"
+        
+    # Add the selected item if it fits, or is major (with a minimum time limit).
+    - if:
+        - "{{ item_time <= current_minutes or major_item == true }}"
+        
+      then:
         - event: add_mini_todo_item
           event_data:
             value: "{{ value }}"
@@ -887,7 +1079,17 @@ add_mini_todo_periodic_item:
           target:
             entity_id: input_number.mini_todo_available_minutes
           data:
-            value: "{{ states('input_number.mini_todo_available_minutes') | int(0) - est_minutes }}"
+            value: "{{ current_minutes - item_time }}"
+        
+        # Turn on the major item added toggle if we just added one.
+        - if:
+            - "{{ major_item }}"
+          
+          then:
+            - service: input_boolean.turn_off
+              data:
+                entity_id: input_boolean.mini_todo_major_item_added
+            
 
 #===================#
 #     Utilities     #
@@ -984,18 +1186,19 @@ handle_completed_reminder_or_periodic_item:
       
       then:
         - variables:
-            type: "{{ entity_name.split('_')[1] }}"
+            name_type: "{{ entity_name.split('_')[1] }}"
+            type: "{{ iif(name_type == 'yard', 'yard_work', name_type) }}"
             category: "{{ entity_name.split('_')[2] }}"
             list_entity: "{{ 'sensor.mini_todo_weekly_' ~ type ~ '_list' }}"
             icon_tag: >
-              {% if type == 'cleaning' %}
+              {% if name_type == 'cleaning' %}
                 cl:
-              {% elif type == 'yard' %}
+              {% elif name_type == 'yard' %}
                 {{ iif(category == 'spray', 'ys:', iif(category == 'trim', 'yt:', 'ym:')) }}
               {% else %}
                 ot:
               {% endif %}
-            item_name: "{{ icon_tag ~ entity_name | replace('periodic_' ~ type ~ '_', '') | replace('_', ' ') | title }}"
+            item_name: "{{ icon_tag ~ state_attr(entity, 'friendly_name') | replace('Periodic ' ~ name_type | title ~ ' ', '') }}"
         
         - service: script.send_mini_todo_event
           data:

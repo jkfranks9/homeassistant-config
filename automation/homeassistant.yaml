@@ -102,31 +102,6 @@
                   topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
                   payload: not_home
     
-    # If for some reason any of the weekly lists are unknown, regenerate them, starting with the most recent Sunday,
-    # which can be in the past, or today.
-    - variables:
-        weekly_list_entities: ['sensor.mini_todo_weekly_cleaning_list', 'sensor.mini_todo_weekly_other_list', 'sensor.mini_todo_weekly_yard_work_list']
-        start_date: >
-          {% set day = now().isoweekday() %}
-          {% set offset = iif(day <= 6, day, 0) %}
-          {{ as_datetime(states('sensor.date')) - timedelta(days = offset) }}
-    
-    - repeat:
-        for_each: "{{ weekly_list_entities }}"
-        
-        sequence:
-          - if:
-              - "{{ states(repeat.item) == 'unknown' }}"
-            
-            then:
-              - variables:
-                  type: "{{ repeat.item.split('sensor.mini_todo_weekly_')[-1] | replace('_list', '') }}"
-              
-              - service: script.generate_periodic_lists
-                data:
-                  type: "{{ type }}"
-                  start_date: "{{ start_date }}"
-    
     # Delete junk log files left over from backing up the logs on shutdown.
     - service: shell_command.delete_junk_log_files  
     
@@ -458,9 +433,7 @@
                             'set_theater_dark',
                             'set_theater_dark_delay',
                             'set_theater_dim',
-                            'set_theater_idle',
-                            'start_activity', 
-                            'watch_app'
+                            'set_theater_idle'
                            ] %}
         {{ trigger.event.data.entity_id.startswith('script.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list }}
@@ -767,7 +740,6 @@
         - sensor.master_bath_fan_energy
         - sensor.master_bath_light_energy
         - sensor.master_bedroom_lamp_energy
-        - sensor.microwave_energy
         - sensor.office_bookcase_light_energy
         - sensor.office_fan_energy
         - sensor.office_lamp_energy
@@ -781,6 +753,7 @@
         - sensor.refrigerator_energy
         - sensor.sink_light_energy
         - sensor.snack_light_energy
+        - sensor.sonoff_microwave_energy
         - sensor.stairway_light_energy
         - sensor.studio_fan_energy
         - sensor.studio_lamp_1_energy
@@ -932,8 +905,37 @@
   
   action:
     
-    # Clear the list for today.
-    - event: reset_mini_todo_items 
+    # If for some reason any of the weekly lists are unknown or unavailable, regenerate them, starting with the most recent Sunday,
+    # which can be in the past, or today.
+    - variables:
+        weekly_list_entities: ['sensor.mini_todo_weekly_cleaning_list', 'sensor.mini_todo_weekly_other_list', 'sensor.mini_todo_weekly_yard_work_list']
+        start_date: >
+          {% set day = now().isoweekday() %}
+          {% set offset = iif(day <= 6, day, 0) %}
+          {{ as_datetime(states('sensor.date')) - timedelta(days = offset) }}
+    
+    - repeat:
+        for_each: "{{ weekly_list_entities }}"
+        
+        sequence:
+          - if:
+              - "{{ states(repeat.item) in ['unknown', 'unavailable'] }}"
+            
+            then:
+              - variables:
+                  type: "{{ repeat.item.split('sensor.mini_todo_weekly_')[-1] | replace('_list', '') }}"
+              
+              - service: script.generate_periodic_lists
+                data:
+                  type: "{{ type }}"
+                  start_date: "{{ start_date }}"
+    
+    # Get the weather metrics, which are then input to the Outdoor Work Friendly binary sensor. This in turn is needed so we can know
+    # whether or not to add outdoor tasks.
+    - service: script.get_weather_metrics
+    
+    # Clear the todo list for today.
+    - event: reset_mini_todo_items
     
     - variables:
         
@@ -951,6 +953,11 @@
       data:
         value: "{{ total_minutes }}"
     
+    # Initialize the major item added toggle. We only allow one major item per day.
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.mini_todo_major_item_added
+    
     # Add any calendar items for today first. These are important to know about, and the amount of time they consume must be
     # accounted for before we do anything else.
     - service: script.add_mini_todo_calendar_items
@@ -960,8 +967,12 @@
         start_time: "{{ start_time }}"
         end_time: "{{ end_time }}"
                   
-    # Next, add an exercise task if needed.    
-    - service: script.add_mini_todo_exercise_item
+    # Next, add an exercise task if needed. We skip this if all day trip is scheduled, since I won't be home.
+    - if:
+        - "{{ states('input_select.mini_todo_all_day_calendar_type') != 'trip' }}"
+      
+      then:
+        - service: script.add_mini_todo_exercise_item
     
     # If this is a free time day, just add that to the list and go away. Weekly Free Time Days is a bitmask, where the 
     # least significant bit is Sunday.
@@ -975,13 +986,22 @@
         
         - stop: Free day
     
-    # Now add other items until we've used up the available time or hit the max items (hardcoded here). This is done with priority in mind, 
+    # Initialize the attempts count. Since we're checking within the called scripts if the task to be added fits within the remaining
+    # available time, we might not find anything that works, which could lead to a large or infinite loop. To avoid this, we only attempt
+    # to find tasks a small finite number of times.
+    - service: counter.reset
+      target:
+        entity_id: counter.mini_todo_attempts
+    
+    # Now add other items until we've used up the available time or hit the max items or attempts. This is done with priority in mind, 
     # but is also subject to coin tosses.
     - variables:
         task_count: "{{ 5 - state_attr('sensor.daily_mini_todo_list', 'items') | length }}"
     
     - repeat:
-        while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) > 0 and state_attr('sensor.daily_mini_todo_list', 'items') | length <= task_count }}"
+        while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) > 0 and 
+                   state_attr('sensor.daily_mini_todo_list', 'items') | length < task_count and
+                   states('counter.mini_todo_attempts') | int(0) <= 10 }}"
         
         sequence:
     

@@ -460,6 +460,7 @@
 #==========================#
 
 # Payment due
+# On hiatus: add this to date_entities to reestablish: 'input_datetime.reminder_payment_disney',
 - alias: Notify Payment Due Reminder
   id: 'notify_payment_due_reminder'
   
@@ -470,7 +471,6 @@
       date_entities: [
                       'input_datetime.reminder_payment_amazon', 
                       'input_datetime.reminder_payment_creditunion', 
-                      'input_datetime.reminder_payment_disney',
                       'input_datetime.reminder_payment_johndeere',
                       'input_datetime.reminder_payment_mortgage', 
                       'input_datetime.reminder_payment_randolph', 
@@ -827,7 +827,7 @@
   use_blueprint:
     path: notification/temperature_extremes_notify.yaml
     input:
-      temperature_entity: input_number.min_porch_temp
+      temperature_entity: input_number.min_outdoor_temp
 
 - alias: Notify Max Porch Temp Extreme
   id: 'notify_max_porch_temp_extreme'
@@ -835,7 +835,7 @@
   use_blueprint:
     path: notification/temperature_extremes_notify.yaml
     input:
-      temperature_entity: input_number.max_porch_temp
+      temperature_entity: input_number.max_outdoor_temp
 
 #=======================================#
 #     Time/Date Based Notifications     #

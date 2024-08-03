@@ -1,0 +1,50 @@
+# Watch a Shield TV application in the theater.
+
+blueprint:
+  name: Watch Shield TV App
+  description: Watch an application on the Shield TV box.
+  domain: script
+  
+  input:
+    appl_name:
+      name: Shield Application Name
+      description: The name of the application on the Shield TV, for example 'Youtube TV'.
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_appl_name: !input appl_name
+
+sequence:
+    
+  # Activate Shield TV streaming in the cinema.
+  - service: script.activate_cinema
+    data:
+      activity: Enable Streaming
+      need_kodi: false
+    
+  # Stop if cinema usage is denied.
+  - if:
+      - condition: state
+        entity_id: input_boolean.cinema_usage_allowed
+        state: 'off'
+      
+    then:
+      - stop: "Cinema usage is denied."
+    
+  # After a short delay, bring up the target application on the Shield TV.
+  - delay: '00:00:02'
+  - service: remote.turn_on
+    target:
+      entity_id: remote.shield_android_tv
+    data:
+      activity: "{{ input_appl_name }}"
+  
+  # Now switch the receiver to the proper input so the application can be viewed on screen.
+  - service: remote.send_command
+    entity_id: remote.harmony_hub
+    data:
+      command: 'InputCbl/Sat'
+      device: Marantz Receiver
+  
+  # Establish the target lighting.
+  - service: script.set_theater_dark_delay

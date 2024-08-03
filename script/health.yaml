@@ -137,3 +137,176 @@ register_exercise_metrics:
           data:
             message: "Invalid exercise type '{{ exercise_type }}' specified"
             level: error
+
+#===================#
+#     Yard Work     #
+#===================#
+
+# Begin a yard work episode.
+start_yard_work:
+  alias: Start Yard Work
+  
+  sequence:
+    
+    # Set the start time. We use this to accumulate time across breaks.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.yard_work_start
+      data:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Initialize the accumulated time.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.yard_work_accumulated_time
+      data:
+        value: 0
+    
+    # Set up necessary devices.
+    - service: script.set_up_yard_work_devices
+      data:
+        going_out: true
+        stage: initial
+
+# Pause yard work because I need to take a break, cool off and hydrate.
+pause_yard_work:
+  alias: Pause Yard Work
+  
+  sequence:
+    
+    # Accumulate the time so far, rounding down to the nearest 5 minutes, since it takes a few minutes to get going.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.yard_work_accumulated_time
+      data:
+        value: >
+          {% set accum = states('input_number.yard_work_accumulated_time') | int(0) %}
+          {% set start = as_timestamp(strptime(states('input_datetime.yard_work_start'), '%Y-%m-%d %H:%M:%S')) %}
+          {% set num = (now().timestamp() - start) // 60 %}
+          {% set minutes = (num - (num % 5)) %}
+          {{ accum + minutes }}
+    
+    # Set up necessary devices.
+    - service: script.set_up_yard_work_devices
+      data:
+        going_out: false
+        stage: intermediate
+
+# Ugh, back to the grind.
+resume_yard_work:
+  alias: Resume Yard Work
+  
+  sequence:
+    
+    # Reinitialize the start time for the next interval of work.
+    - service: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.yard_work_start
+      data:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Set up necessary devices.
+    - service: script.set_up_yard_work_devices
+      data:
+        going_out: true
+        stage: intermediate
+
+# Yay! I'm done!
+stop_yard_work:
+  alias: Stop Yard Work
+  
+  sequence:
+    
+    # Accumulate the final time.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.yard_work_accumulated_time
+      data:
+        value: >
+          {% set accum = states('input_number.yard_work_accumulated_time') | int(0) %}
+          {% set start = as_timestamp(strptime(states('input_datetime.yard_work_start'), '%Y-%m-%d %H:%M:%S')) %}
+          {% set num = (now().timestamp() - start) // 60 %}
+          {% set minutes = (num - (num % 5)) %}
+          {{ accum + minutes }}
+    
+    # Set the daily time from the accumulated time.
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.yard_work_daily_time
+      data:
+        value: "{{ states('input_number.yard_work_accumulated_time') }}"
+    
+    # Set up necessary devices.
+    - service: script.set_up_yard_work_devices
+      data:
+        going_out: false
+        stage: final
+
+# Set up the devices involved with doing yard work: office fan, laundry room light and garage door.
+set_up_yard_work_devices:
+  alias: Set Up Yard Work Devices
+  
+  fields:
+    going_out:
+      description: True if going outside, false if coming inside.
+      selector:
+        boolean:
+    
+    stage:
+      description: Stage of the yard work episode.
+      selector:
+        select:
+          options:
+            - initial
+            - intermediate
+            - final
+  
+  sequence:
+    
+    # Handle the office fan and laundry room light when going outside.
+    - if:
+        - "{{ going_out == true }}"
+      
+      then:
+        - service: script.set_fan_to_speed
+          data:
+            entity_id: fan.office_fan
+            speed: 0
+        
+        - service: light.turn_on
+          target:
+            entity_id: light.laundry_room_light
+      
+      # Handle the office fan and laundry room light when coming inside.
+      else:
+    
+        - service: script.set_fan_to_speed
+          data:
+            entity_id: fan.office_fan
+            speed: 99
+        
+        - service: light.turn_off
+          target:
+            entity_id: light.laundry_room_light
+    
+    # Handle the garage door (do nothing for intermediate stage).
+    - choose:
+      - conditions: "{{ stage == 'initial' }}"
+        
+        sequence:
+          - service: script.turn_on
+            target:
+              entity_id: script.open_garage_door_north
+            data:
+              variables:
+                use_info_message: false
+      
+      - conditions: "{{ stage == 'final' }}"
+        
+        sequence:
+          - service: script.turn_on
+            target:
+              entity_id: script.close_garage_door_north
+            data:
+              variables:
+                use_info_message: false

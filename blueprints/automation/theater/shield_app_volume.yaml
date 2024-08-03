@@ -23,15 +23,12 @@ variables:
 
 trigger:
   - platform: state
-    entity_id: media_player.shield_tv
+    entity_id: media_player.shield_android_tv
     attribute: app_name
     to: !input appl_name
-
-# Weed out spurious broken pipe errors, which for some odd reason show up in the app name.
-condition: "{{ trigger.from_state.attributes.app_name is defined and 'Broken pipe' not in trigger.from_state.attributes.app_name }}"
 
 action:
   - service: script.set_receiver_volume
     data:
-      appl_name: "{{ input_appl_name }}"
+      target_name: "{{ input_appl_name }}"
       volume: "{{ selected_app_volume }}"

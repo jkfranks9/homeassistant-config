@@ -72,6 +72,16 @@ trigger:
 condition: "{{ input_calendar_tag in trigger.calendar_event.summary }}"
 
 action:
+      
+  # Register the tag.
+  - service: script.register_mobile_notification
+    data:
+      tag: !input tag
+      clear_type: assisted
+      title: "{{ title_text }}"
+      message: !input message
+      channel: !input channel
+      timeout: !input timeout
   
   # Send the notification.
   - service: script.send_notification
@@ -86,13 +96,3 @@ action:
       throttled: false
       media_player_entity: media_player.everywhere
       tag: !input tag
-      
-  # Register the tag.
-  - service: script.register_mobile_notification
-    data:
-      tag: !input tag
-      clear_type: assisted
-      title: "{{ title_text }}"
-      message: !input message
-      channel: !input channel
-      timeout: !input timeout

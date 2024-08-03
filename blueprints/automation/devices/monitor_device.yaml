@@ -61,6 +61,16 @@ action:
   - delay: 5
   
   - condition: "{{ not is_state(input_device_entity, 'on') }}"
+          
+  # Register the tag.
+  - service: script.register_mobile_notification
+    data:
+      tag: "{{ message_tag }}"
+      clear_type: assisted
+      title: 'Warning:'
+      message: '{{ input_device_name }} off, turning it back on.'
+      channel: critical
+      timeout: 0
   
   # Send a warning notification that the device is being turned on.
   - service: script.send_notification
@@ -72,16 +82,6 @@ action:
       channel: critical
       throttled: false
       tag: "{{ message_tag }}"
-      timeout: 0
-          
-  # Register the tag.
-  - service: script.register_mobile_notification
-    data:
-      tag: "{{ message_tag }}"
-      clear_type: assisted
-      title: 'Warning:'
-      message: '{{ input_device_name }} off, turning it back on.'
-      channel: critical
       timeout: 0
   
   # Turn the device back on.
@@ -101,6 +101,16 @@ action:
     
     # The device did not turn on, so send a more important one.
     else:
+          
+      # Register the tag.
+      - service: script.register_mobile_notification
+        data:
+          tag: "{{ power_off_tag }}"
+          clear_type: manual
+          title: 'Warning:'
+          message: '{{ input_device_name }} did not turn on.'
+          channel: critical
+          timeout: 0
     
       # Send the new notification.
       - service: script.send_notification
@@ -112,16 +122,6 @@ action:
           channel: critical
           throttled: false
           tag: "{{ power_off_tag }}"
-          timeout: 0
-          
-      # Register the tag.
-      - service: script.register_mobile_notification
-        data:
-          tag: "{{ power_off_tag }}"
-          clear_type: manual
-          title: 'Warning:'
-          message: '{{ input_device_name }} did not turn on.'
-          channel: critical
           timeout: 0
 
   # Remove the first notification and unregister the tag.

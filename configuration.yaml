@@ -88,18 +88,6 @@ variable:
     value: 9
     restore: false
 
-#=========================#
-#     Device Trackers     #
-#=========================#
-
-device_tracker:
-  - platform: arpscan_tracker
-    interval_seconds: 15
-    consider_home: 60
-    track_new_devices: true
-    include:
-      - 192.168.1.138
-
 #==============#
 #     MQTT     #
 #==============#
@@ -145,6 +133,29 @@ mqtt:
 #==========================#
 
 wake_on_lan:
+
+#================================#
+#     Universal Media Player     #
+#================================#
+
+media_player:
+  - platform: universal
+    name: Theater Shield
+    unique_id: theater_shield
+    device_class: tv
+    children:
+      - media_player.shield_android_tv
+      - media_player.shield_tv_cast
+    browse_media_entity: media_player.shield_tv_cast
+    commands:
+      turn_off:
+        service: media_player.turn_off
+        data:
+          entity_id: media_player.shield_android_tv
+      turn_on:
+        service: media_player.turn_on
+        data:
+          entity_id: media_player.shield_android_tv
 
 #=================#
 #     Devices     #
