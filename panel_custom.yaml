@@ -12,25 +12,3 @@
   require_admin: true
   config:
     ingress: core_configurator
-  
-# First floor plan
-- name: ha_first_floor
-  sidebar_title: First Floor
-  sidebar_icon: mdi:home-floor-1
-  js_url: /api/hassio/app/entrypoint.js
-  url_path: 'dashboard-overview/first_floor'
-  embed_iframe: true
-  require_admin: false
-  config:
-    ingress: core_configurator
-  
-# Second floor plan
-- name: ha_second_floor
-  sidebar_title: Second Floor
-  sidebar_icon: mdi:home-floor-2
-  js_url: /api/hassio/app/entrypoint.js
-  url_path: 'dashboard-overview/second_floor'
-  embed_iframe: true
-  require_admin: false
-  config:
-    ingress: core_configurator

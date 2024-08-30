@@ -194,17 +194,7 @@ initialize_global_variables:
 get_weather_metrics:
   alias: Get Weather Metrics
   
-  sequence:
-    
-    # Get the hourly weather forecast data. Although this script is only run once per day, we need the hourly data in order to
-    # calculate the values for the daily time span.
-    - service: weather.get_forecasts
-      data:
-        type: hourly
-      target:
-        entity_id: weather.openweathermap
-      response_variable: result
-    
+  sequence:    
     - variables:
         
         # The first and last hours of the daily time span. We use the normal time span but slide the window back one hour, so I can start earlier 
@@ -213,89 +203,20 @@ get_weather_metrics:
         # value of 15).
         first_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_start_time.split(':')[0] | int(0) - 1 }}"
         last_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_end_time.split(':')[0] | int(0) - 2 }}"
-        
-        # The list of hourly weather data for the daily time span.
-        forecast_list: >
-          {% set var = namespace(list = []) %}
-          {% for i in result['weather.openweathermap'].forecast %}
-            {% set hour = as_local(as_datetime(i.datetime)).strftime('%H') | int(0) %}
-            {% if first_hour <= hour <= last_hour %}
-              {% set var.list = var.list + [i] %}
-            {% endif %}
-            {% if hour > last_hour %}
-              {% break %}
-            {% endif %}
-          {% endfor %}
-          {{ var.list }}
     
-    # Clear the metrics we're about to collect during the loop. Not needed for the apparent temperature since that's a single
-    # calculation after the loop.
-    - service: input_number.set_value
-      target:
-        entity_id:
-          - input_number.average_outdoor_temperature
-          - input_number.average_outdoor_humidity
-          - input_number.average_outdoor_precipitation_probability
-          - input_number.maximum_outdoor_uv_index
+    # Calculate the weather metrics for the daily time span.
+    - action: script.calculate_weather_metrics
       data:
-        value: 0
+        weather_entity: weather.openweathermap
+        first_hour: "{{ first_hour }}"
+        last_hour: "{{ last_hour }}"
+        metrics_list:
+          - ['input_number.average_outdoor_temperature', 'temperature', 75]
+          - ['input_number.average_outdoor_humidity', 'humidity', 50]
+          - ['input_number.average_outdoor_precipitation_probability', 'precipitation_probability', 50]
+          - ['input_number.maximum_outdoor_uv_index', 'uv_index', 3]
     
-    # Walk through the hourly weather data list.
-    - repeat:
-        for_each: "{{ forecast_list }}"
-      
-        sequence:
-          
-          # Add the temperature for this hour ...
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.average_outdoor_temperature
-            data:
-              value: "{{ states('input_number.average_outdoor_temperature') | float(75) + repeat.item.temperature }}"
-          
-          # ... and the humidity ...
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.average_outdoor_humidity
-            data:
-              value: "{{ states('input_number.average_outdoor_humidity') | float(50) + repeat.item.humidity }}"
-          
-          # ... and the precipitation probability.
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.average_outdoor_precipitation_probability
-            data:
-              value: "{{ states('input_number.average_outdoor_precipitation_probability') | float(50) + repeat.item.precipitation_probability }}"
-          
-          # Keep the highest UV index during the span.
-          - service: input_number.set_value
-            target:
-              entity_id: input_number.maximum_outdoor_uv_index
-            data:
-              value: "{{ max(states('input_number.maximum_outdoor_uv_index') | float(3), repeat.item.uv_index) }}"
-    
-    # Now average the temperature ...
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.average_outdoor_temperature
-      data:
-        value: "{{ states('input_number.average_outdoor_temperature') | float(75 * forecast_list | length) / forecast_list | length }}"
-    
-    # ... and the humidity ...
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.average_outdoor_humidity
-      data:
-        value: "{{ states('input_number.average_outdoor_humidity') | float(50 * forecast_list | length) / forecast_list | length }}"
-    
-    # ... and the precipitation probability.
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.average_outdoor_precipitation_probability
-      data:
-        value: "{{ states('input_number.average_outdoor_precipitation_probability') | float(50 * forecast_list | length) / forecast_list | length }}"
-    
-    # Finally, calculate the apparent temperature, using the average temperature and humidity. The formula is from the National Weather Service:
+    # Calculate the apparent temperature, using the average temperature and humidity. The formula is from the National Weather Service:
     # https://www.weather.gov/media/epz/wxcalc/heatIndex.pdf
     - service: input_number.set_value
       target:
@@ -788,12 +709,18 @@ add_mini_todo_calendar_items:
                     - event: add_mini_todo_item
                       event_data:
                         value: "{{ 'ca:' ~ summary.split(cal_tag)[0] ~ 'all day' }}"
+                    
+                    # Bump the tasks counter.
+                    - service: counter.increment
+                      target:
+                        entity_id: counter.mini_todo_tasks
           
             # Handle a normal home or away event.
             - conditions: "{{ '(home)' in summary or '(appt' in summary }}"
             
               sequence:
                 - variables:
+                    cal_tag: "{{ iif('(home)' in summary, '(home)', '(appt') }}"
                     current_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(0) }}"
                     calculated_minutes: >
                       {% set var = namespace(minutes = (end - start) / 60) %}
@@ -820,7 +747,12 @@ add_mini_todo_calendar_items:
       
                 - event: add_mini_todo_item
                   event_data:
-                    value: "{{ 'ca:' ~ summary.split('(appt')[0] }}"
+                    value: "{{ 'ca:' ~ summary.split(cal_tag)[0] }}"
+                    
+                # Bump the tasks counter.
+                - service: counter.increment
+                  target:
+                    entity_id: counter.mini_todo_tasks
 
 # Add an exercise task to the mini todo list. We rotate among the different types of exercise tasks as follows:
 #
@@ -1073,6 +1005,11 @@ insert_mini_todo_item:
         - event: add_mini_todo_item
           event_data:
             value: "{{ value }}"
+                    
+        # Bump the tasks counter.
+        - service: counter.increment
+          target:
+            entity_id: counter.mini_todo_tasks
                         
         # Subtract the estimated time for this event from the current available time.
         - service: input_number.set_value

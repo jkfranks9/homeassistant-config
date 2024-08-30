@@ -171,3 +171,36 @@
     - service: climate.turn_on
       target:
         entity_id: climate.downstairs
+
+#================================#
+#     Astronomical Condition     #
+#================================#
+
+# The astronomical condition is whether or not it's worthwhile to head outside for some stargazing.
+
+# We want to calculate the astronomical condition an hour or two before the end of astronomical twilight, so I
+# have time to prepare. Sunset is a reasonable offset.
+- alias: Calculate Astronomical Condition
+  id: calculate_astronomical_condition
+  
+  trigger:
+    - platform: sun
+      event: sunset
+
+  action:   
+    - variables:
+        
+        # The first hour of the target time span is the end of astronomical twilight. The last hour is hardcoded as 11 PM.
+        first_hour: "{{ as_local(as_datetime(states('sensor.astroweather_white_rabbit_gardens_sun_next_setting_astronomical'))).hour }}"
+    
+    # Calculate the weather metrics for the target time span.
+    - action: script.calculate_weather_metrics
+      data:
+        weather_entity: weather.astroweather_white_rabbit_gardens
+        first_hour: "{{ first_hour }}"
+        last_hour: 23
+        metrics_list:
+          - ['input_number.average_astro_condition', 'condition', 50]
+          - ['input_number.average_astro_cloudless_percentage', 'cloudless_percentage', 50]
+          - ['input_number.average_astro_seeing_percentage', 'seeing_percentage', 50]
+          - ['input_number.average_astro_transparency_percentage', 'transparency_percentage', 50]

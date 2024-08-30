@@ -5,11 +5,6 @@
 # Default setup of Home Assistant (frontend, api, etc)
 default_config:
 
-# Front end
-frontend:
-  extra_module_url:
-    - /local/community/lovelace-card-mod/card-mod.js
-
 # We need to specify allowed directories for the file notification service here.
 homeassistant:
   allowlist_external_dirs:
@@ -31,31 +26,6 @@ script:         !include_dir_merge_named script
 scene:          !include scenes.yaml
 sensor:         !include_dir_merge_list sensor
 template:       !include_dir_merge_list template
-
-#======================#
-#     Dashboard UI     #
-#======================#
-
-lovelace:
-  mode: yaml
-  resources: !include dashboard/resources.yaml
-  dashboards:
-    
-    dashboard-overview:
-      mode: yaml
-      title: Overview
-      icon: mdi:monitor-dashboard
-      filename: dashboard_overview.yaml
-      show_in_sidebar: true
-      require_admin: false
-    
-    dashboard-reminders:
-      mode: yaml
-      title: Reminders
-      icon: mdi:reminder
-      filename: dashboard_reminders.yaml
-      show_in_sidebar: true
-      require_admin: true
 
 #======================#
 #     Conversation     #
@@ -99,32 +69,38 @@ mqtt:
     # Manual device tracker for the Blue Charm beacon.
     - name: Blue Charm Beacon
       state_topic: "homeassistant/device_tracker/bluecharm_beacon"
+      source_type: bluetooth_le
       payload_home: "home"
       payload_not_home: "not_home"
     
     # Test device trackers, so I can simulate various family members arriving and leaving.
     - name: Virtual David
       state_topic: "homeassistant/device_tracker/virtual_david"
+      source_type: router
       payload_home: "home"
       payload_not_home: "not_home"
 
     - name: Virtual Maryam
       state_topic: "homeassistant/device_tracker/virtual_maryam"
+      source_type: router
       payload_home: "home"
       payload_not_home: "not_home"
 
     - name: Virtual Mike
       state_topic: "homeassistant/device_tracker/virtual_mike"
+      source_type: router
       payload_home: "home"
       payload_not_home: "not_home"
 
     - name: Virtual Sarah
       state_topic: "homeassistant/device_tracker/virtual_sarah"
+      source_type: router
       payload_home: "home"
       payload_not_home: "not_home"
 
     - name: Virtual Skylar
       state_topic: "homeassistant/device_tracker/virtual_skylar"
+      source_type: router
       payload_home: "home"
       payload_not_home: "not_home"
 
@@ -133,6 +109,28 @@ mqtt:
 #==========================#
 
 wake_on_lan:
+
+#==================#
+#     Switches     #
+#==================#
+
+switch:
+
+  # Amazon Smart Plug ... copies the input boolean of the same name, allowing the plug to be a switch (and thus a light),
+  # which in turn allows it to be placed in a group.
+  - platform: template
+    switches:
+      alexa_ha_plug:
+        friendly_name: Office Bookcase
+        value_template: "{{ is_state('input_boolean.alexa_ha_plug', 'on') }}"
+        turn_on:
+          - service: input_boolean.turn_on
+            entity_id:
+              - input_boolean.alexa_ha_plug
+        turn_off:
+          - service: input_boolean.turn_off
+            entity_id:
+              - input_boolean.alexa_ha_plug
 
 #================================#
 #     Universal Media Player     #

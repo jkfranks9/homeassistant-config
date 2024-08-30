@@ -203,12 +203,12 @@
     #-------------------#
       
     # Used to hide certain yard work tasks on the Reminders dashboard.
-    - name: 'Warm Weather'
+    - name: Warm Weather
       unique_id: warm_weather
       state: "{{ 2 < as_local(as_datetime(states('sensor.date'))).strftime('%m') | int(0) < 11 }}"
       
     # Used as a conditional for certain yard work tasks for the mini todo list.
-    - name: 'Outdoor Work Friendly'
+    - name: Outdoor Work Friendly
       unique_id: outdoor_work_friendly
       state: >
         {% set AT = states('input_number.apparent_outdoor_temperature') | int(75) %}
@@ -216,3 +216,14 @@
         {% set PP = states('input_number.average_outdoor_precipitation_probability') | int(50) %}
         
         {{ 45 < AT < 95 and UV < 5 and PP < 35 }}
+      
+    # Whether or not tonight will be good for stargazing.
+    - name: Astronomy Friendly
+      unique_id: astronomy_friendly
+      state: >
+        {% set condition = states('input_number.average_astro_condition') | int(50) %}
+        {% set cloudless = states('input_number.average_astro_cloudless_percentage') | int(50) %}
+        {% set seeing = states('input_number.average_astro_seeing_percentage') | int(50) %}
+        {% set transparency = states('input_number.average_astro_transparency_percentage') | int(50) %}
+        
+        {{ condition > 75 and cloudless > 90 and seeing >= 50 and transparency >= 70 }}

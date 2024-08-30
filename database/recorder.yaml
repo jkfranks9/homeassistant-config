@@ -60,7 +60,8 @@ include:
 
   entities:
     
-    - binary_sensor.office_human_sensor_presence
+    - binary_sensor.adults_home
+    - binary_sensor.children_home
     - input_boolean.office_occupied
     - input_boolean.washer_fabric_softener
     - input_number.washer_fill_seconds
@@ -90,6 +91,7 @@ include:
     - sensor.total_daily_energy
     - sensor.total_power
     - sensor.washer_power_state
+    - weather.astroweather_white_rabbit_gardens
   
   entity_globs:
     

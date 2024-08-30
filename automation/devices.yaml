@@ -63,34 +63,35 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-          
-    # Register the tag.
-    - service: script.register_mobile_notification
-      data:
-        tag: 'power_out'
-        clear_type: dual
+       
+    - variables:
+        tag: power_out
         title: 'Warning:'
-        message: 'Power is out, shutting down PC.'
+        message: Power is out, shutting down PC.
         channel: critical
-        timeout: 0
+        tag_registry_value: "{{ {'tag': tag, 'clear_type': 'auto', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
+        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'throttled': false, 'tag': tag} }}"
+    
+    # Save a timestamp for this event.
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.ups_power_out
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Register the tag.
+    - action: script.register_mobile_notification
+      data: "{{ tag_registry_value }}"
     
     # Send a notification.    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Warning:'
-        message: 'Power is out, shutting down PC.'
-        channel: critical
-        throttled: false
-        tag: 'power_out'
-        timeout: 0
+    - action: script.send_notification
+      data: "{{ notification_data }}"
     
     # The recorder database lives on the PC, so disable it before we shutdown.
-    - service: recorder.disable
+    - action: recorder.disable
     
     # Shut down the PC.
-    - service: script.turn_off_pc
+    - action: script.turn_off_pc
     
     # The vacuum bizarrely starts running if the power goes out, so stop it (unless it's already running).
     - if:  
@@ -99,7 +100,7 @@
           state: 'idle'
       
       then:        
-        - service: vacuum.return_to_base
+        - action: vacuum.return_to_base
           entity_id: vacuum.ecovacs_deebot 
 
 # Shut down the host if UPS runtime reaches critical level.
@@ -121,37 +122,33 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-          
-    # Register the tag.
-    - service: script.register_mobile_notification
-      data:
-        tag: 'ups_battery'
-        clear_type: manual
+       
+    - variables:
+        tag: ups_battery
         title: 'Warning:'
-        message: 'UPS battery is critical, shutting down RPi.'
+        message: UPS battery is critical, shutting down RPi.
         channel: critical
-        timeout: 0
+        tag_registry_value: "{{ {'tag': tag, 'clear_type': 'auto', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
+        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'throttled': false, 'tag': tag} }}"
+    
+    # Save a timestamp for this event.
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.ups_battery_critical
+      data_template:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Register the tag.
+    - action: script.register_mobile_notification
+      data: "{{ tag_registry_value }}"
     
     # Send a notification.    
-    - service: script.send_notification
-      data:
-        destination:
-          - mobile
-        title: 'Warning:'
-        message: 'UPS battery is critical, shutting down RPi.'
-        channel: critical
-        throttled: false
-        tag: 'ups_battery'
-        timeout: 0
-      
-    # Remove the first power outage notification and unregister the tag.
-    - service: script.remove_mobile_notification
-      data:
-        tag: 'power_out'
+    - action: script.send_notification
+      data: "{{ notification_data }}"
     
     # Goodbye.
-    - delay: 1
-    - service: hassio.host_shutdown
+    - delay: 3
+    - action: hassio.host_shutdown
 
 # Turn the PC back on if power is restored.
 - alias: Handle Power Restoration
@@ -173,52 +170,68 @@
   action:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
+       
+    - variables:
+        tag: power_restored
+        title: 'Attention:'
+        
+        # The message indicates power is restored, but also includes the original outage time. If the UPS battery went critical it includes that time as well.
+        message: >
+          {% set var = namespace(outage = '', critical = '') %}
+          {% set prefix = 'Power is restored, turning on the PC (' %}
+          {% set keys = state_attr('sensor.mobile_tag_registry_keys', 'tags') %}
+          {% set var.outage = 'outage: ' ~ state_attr('input_datetime.ups_power_out', 'timestamp') | timestamp_custom %}
+          {% if 'ups_battery' in keys %}
+            {% set var.critical = ', critical: ' ~ state_attr('input_datetime.ups_battery_critical', 'timestamp') | timestamp_custom %}
+          {% endif %}
           
-    # Register the tag.
-    - service: script.register_mobile_notification
-      data:
-        tag: 'power_restored'
-        clear_type: manual
-        title: 'Attention:'
-        message: 'Power is restored, turning on the PC.'
+          {{ prefix ~ var.outage ~ var.critical ~ ')' }}
+        
         channel: standard
-        timeout: 0
+        tag_registry_value: "{{ {'tag': tag, 'clear_type': 'manual', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
+        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'throttled': false, 'tag': tag} }}"
     
-    # Send a notification.  
-    - service: script.send_notification
+    # Register the tag.
+    - action: script.register_mobile_notification
+      data: "{{ tag_registry_value }}"
+    
+    # Send a notification.    
+    - action: script.send_notification
+      data: "{{ notification_data }}"
+      
+    # Remove previous notifications and unregister the tags. We could have one or both of these but there's no need to check, since
+    # nothing bad happens if a tag doesn't exist.
+    - action: script.remove_mobile_notification
       data:
-        destination:
-          - mobile
-        title: 'Attention:'
-        message: 'Power is restored, turning on the PC.'
-        channel: standard
-        throttled: false
-        tag: 'power_restored'
-        timeout: 0
+        tag: 'power_out'
+    
+    - action: script.remove_mobile_notification
+      data:
+        tag: 'ups_battery'
     
     # Send a magic packet to power on the PC.
-    - service: wake_on_lan.send_magic_packet
+    - action: wake_on_lan.send_magic_packet
       data:
         mac: 98-EE-CB-A6-80-EA
     
     # Enable the recorder after a short delay.
     - delay: '00:02:00'
-    - service: recorder.enable
+    - action: recorder.enable
     
     # Reset smart bulbs if needed.
-    - service: script.reset_smart_bulbs
+    - action: script.reset_smart_bulbs
     
     # Instruct the vacuum to return home.
-    - service: vacuum.return_to_base
+    - action: vacuum.return_to_base
       entity_id: vacuum.ecovacs_deebot
     
     # The theater might have been on when power went out; reset the flag so it will open the next time.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.theater_open
     
     # Also, make sure the theater devices are turned off. The Activate Cinema script won't function properly
     # otherwise.
-    - service: remote.turn_off
+    - action: remote.turn_off
       entity_id: remote.harmony_hub
 
 # Restart the NUT server service if it becomes unavailable.
@@ -1792,30 +1805,40 @@
           thresholds: [76, 74, 72]
           timeout: 360
 
-#=============================#
-#     Tag/Beacon Presence     #
-#=============================#
+#=========================#
+#     Device Trackers     #
+#=========================#
 
-- alias: Log Blue Charm Debug
-  id: log_blue_charm_debug
+# Toggle virtual device trackers.
+- alias: Toggle Virtual Device Tracker
+  id: 'toggle_virtual_device_tracker'
   mode: queued
   
   trigger:
     - platform: state
-      entity_id: sensor.ble_house_blue_charm_distance
-      id: House distance
-  
-  condition:
-    
-    # Ignore any change to or from unavailable state.
-    - condition: template
-      value_template: "{{ trigger.from_state.state != 'unavailable' and trigger.to_state.state != 'unavailable' }}"
+      entity_id:
+        - input_boolean.virtual_david
+        - input_boolean.virtual_maryam
+        - input_boolean.virtual_mike
+        - input_boolean.virtual_sarah
+        - input_boolean.virtual_skylar
+      to:
   
   action:
-    - service: system_log.write
+    - variables:
+        new_state: >
+          {% if trigger.to_state.state == 'on' %}
+            home
+          {% else %}
+            not_home
+          {% endif %}
+        
+        topic_suffix: "{{ trigger.to_state.entity_id | replace('input_boolean.', '') }}"
+    
+    - service: mqtt.publish
       data:
-        message: "{{ trigger.id ~ ' from: ' ~ trigger.from_state.state ~ ', to: ' ~ trigger.to_state.state }}"
-        level: debug
+        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+        payload: "{{ new_state }}"
 
 # Modify Blue Charm beacon device tracker.
 - alias: Modify Beacon Device Tracker
@@ -1941,13 +1964,14 @@
       entity_id: sensor.legion_t530_lastboot
       to:
   
+  condition: "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
+  
   action:
     - service: input_datetime.set_datetime
       target:
         entity_id: input_datetime.pc_lastboot
       data:
         timestamp: "{{ as_timestamp(states('sensor.legion_t530_lastboot')) }}"
-      
 
 #=======================#
 #     Network Debug     #

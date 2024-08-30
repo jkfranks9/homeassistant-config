@@ -183,6 +183,8 @@
 - alias: Log Projector states
   id: log_projector_states
   
+  mode: queued
+  
   # Trigger on just media player state changes, but not attributes.
   trigger:
     - platform: state

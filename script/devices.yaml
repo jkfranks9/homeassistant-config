@@ -207,33 +207,47 @@ update_laundry_history_time_ranges:
   
   sequence:
     - variables:
-        
-        # These are the washer or dryer sensor entities we need.
-        ranges_entity: "{{ iif(is_washer, 'sensor.history_washer_debug_ranges', 'sensor.history_dryer_debug_ranges') }}"
-        index_entity: "{{ iif(is_washer, 'sensor.history_washer_debug_current_index', 'sensor.history_dryer_debug_current_index') }}"
-        
-        # This is the index suffix we need for the start/stop datetime entities. Since the index entity is zero origin
-        # and the datetime entities are 1 through n, we add 2 to the current index to arrive at the value we need.
-        next_index_suffix: "{{ states(index_entity) | int(0) + 2 }}"
-        
-        # Determine the start/stop datetime entities. Wrap from the last entity to the first if needed.
         start_entity_prefix: "{{ iif(is_washer, 'input_datetime.history_washer_start_', 'input_datetime.history_dryer_start_') }}"
         stop_entity_prefix: "{{ iif(is_washer, 'input_datetime.history_washer_stop_', 'input_datetime.history_dryer_stop_') }}"
-        start_entity: "{{ iif(next_index_suffix > states(ranges_entity) | int(0), start_entity_prefix ~ '1', start_entity_prefix ~ next_index_suffix) }}"
-        stop_entity: "{{ iif(next_index_suffix > states(ranges_entity) | int(0), stop_entity_prefix ~ '1', stop_entity_prefix ~ next_index_suffix) }}"
+        iterations: 4
     
-    # Set the start and stop times. This has the effect of updating the ranges and current index sensors for the next time we get called.
+    # Treat the existing start/stop times as a stack, and push items 1-4 into 2-5. This eliminates the oldest and
+    # lets us put the most recent times into item 1.
+    - repeat:
+        count: "{{ iterations }}"
+        sequence:
+          - variables:
+              x: "{{ repeat.index - 1 }}"
+              from_start_entity: "{{ start_entity_prefix ~ (iterations - x) }}"
+              to_start_entity: "{{ start_entity_prefix ~ (iterations - x + 1) }}"
+              from_stop_entity: "{{ stop_entity_prefix ~ (iterations - x) }}"
+              to_stop_entity: "{{ stop_entity_prefix ~ (iterations - x + 1) }}"
+          
+          - action: input_datetime.set_datetime
+            target:
+              entity_id: "{{ to_start_entity }}"
+            data:
+              timestamp: "{{ state_attr(from_start_entity, 'timestamp') }}"
+          
+          - action: input_datetime.set_datetime
+            target:
+              entity_id: "{{ to_stop_entity }}"
+            data:
+              timestamp: "{{ state_attr(from_stop_entity, 'timestamp') }}"
+    
+    # Set the new start/stop times. Note that we add 60 seconds to the stop time, in order to be able to see any final 
+    # transitions of the debug entities.
     - service: input_datetime.set_datetime
       target:
-        entity_id: "{{ start_entity }}"
+        entity_id: "{{ start_entity_prefix ~ '1' }}"
       data_template:
         timestamp: "{{ start_time }}"
     
     - service: input_datetime.set_datetime
       target:
-        entity_id: "{{ stop_entity }}"
+        entity_id: "{{ stop_entity_prefix ~ '1' }}"
       data_template:
-        timestamp: "{{ stop_time }}"
+        timestamp: "{{ stop_time + 60 }}"
 
 #======================#
 #     Echo Devices     #

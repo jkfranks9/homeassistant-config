@@ -236,8 +236,10 @@ get_echo_room:
   sequence:
     
     # We need to update the last called echo device, because this information is not pushed to us by Alexa.
-    # This will in turn update the last alexa sensor.
     - service: alexa_media.update_last_called
+    
+    # Next update the Last Alexa sensor, using an event trigger.
+    - event: update_last_alexa_sensor
     
     # Then we need to wait a bit.
     - delay: 

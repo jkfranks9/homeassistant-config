@@ -984,6 +984,20 @@ start_bath_time:
         entity_id: timer.bath_time
         duration: '00:45:00'
 
+#======================#
+#     Studio Lamps     #
+#======================#
+
+# Switch lamps in the studio bedroom.
+switch_studio_lamps:
+  alias: Switch Studio Lamps
+  
+  sequence:
+    service: light.toggle
+    entity_id:
+      - light.studio_lamp_1
+      - light.studio_lamp_2
+
 #========================#
 #     Kitchen Lights     #
 #========================#

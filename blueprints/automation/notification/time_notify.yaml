@@ -36,7 +36,6 @@ blueprint:
             - auto
             - assisted
             - manual
-            - dual
     
     title:
       name: Title

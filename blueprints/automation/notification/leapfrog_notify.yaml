@@ -107,7 +107,7 @@ action:
       - variables:
           throttle: "{{ iif(input_timer_entity, true, false) }}"
           tag_registry_value: >
-            {% set ns = namespace(val = {'tag': input_tag, 'clear_type': 'assisted', 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
+            {% set ns = namespace(val = {'tag': input_tag, 'clear_type': 'auto', 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
             {% if input_timer_entity | length > 0 %}
               {% set timer = {'timer_entity': input_timer_entity} %}
               {{ dict(ns.val, **timer) }}

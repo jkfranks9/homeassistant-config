@@ -371,6 +371,7 @@
                             'log_notifications', 
                             'log_scripts',
                             'log_unifi_changes',
+                            'modify_beacon_device_tracker',
                             'perform_daily_chores',
                             'remove_saved_notifications_on_dismiss',
                             'restore_notifications',
@@ -616,8 +617,10 @@
       above: 0
       id: yard_work
     
-    - platform: template
-      value_template: "{{ states('input_number.steps_daily') | int(0) >= state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) }}"
+    - platform: numeric_state
+      entity_id: input_number.steps_daily
+      value_template: "{{ state.state | int(0) - state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) }}"
+      above: 0
       id: steps
   
   variables:
@@ -952,6 +955,12 @@
         entity_id: input_number.mini_todo_available_minutes
       data:
         value: "{{ total_minutes }}"
+        
+    # Initialize the number of tasks in the list. I tried to just use the length of the list but for some odd reason
+    # that sometimes produces the wrong number.
+    - service: counter.reset
+      target:
+        entity_id: counter.mini_todo_tasks
     
     # Initialize the major item added toggle. We only allow one major item per day.
     - service: input_boolean.turn_off
@@ -983,6 +992,11 @@
         - event: add_mini_todo_item
           event_data:
             value: 'ft:FREE TIME'
+                    
+        # Bump the tasks counter.
+        - service: counter.increment
+          target:
+            entity_id: counter.mini_todo_tasks
         
         - stop: Free day
     
@@ -996,11 +1010,11 @@
     # Now add other items until we've used up the available time or hit the max items or attempts. This is done with priority in mind, 
     # but is also subject to coin tosses.
     - variables:
-        task_count: "{{ 5 - state_attr('sensor.daily_mini_todo_list', 'items') | length }}"
+        task_count: "{{ 5 - states('counter.mini_todo_tasks') | int(0) }}"
     
     - repeat:
         while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) > 0 and 
-                   state_attr('sensor.daily_mini_todo_list', 'items') | length < task_count and
+                   states('counter.mini_todo_tasks') | int(0) < task_count and
                    states('counter.mini_todo_attempts') | int(0) <= 10 }}"
         
         sequence:
@@ -1036,3 +1050,41 @@
                     - service: script.add_mini_todo_project_item
                       data:
                         type: "{{ type }}"
+
+#===============================#
+#     Integration Reloading     #
+#===============================#
+
+# Some integrations seem to go berserk sometimes. We watch for certain error messages, and reload the associated
+# config entry to hopefully restore sanity.
+
+- alias: Reload Unifi Integration
+  id: reload_unifi_integration
+  
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        name: 'homeassistant.components.unifi'
+        level: 'WARNING'
+  
+  condition: "{{ 'received 401 Unauthorized' in trigger.event.data.message[0] }}"
+  
+  action:
+    - action: counter.increment
+      target:
+        entity_id: counter.unifi_integration_errors
+    
+    - if:
+        - condition: numeric_state
+          entity_id: counter.unifi_integration_errors
+          above: 5
+      
+      then:     
+        - action: homeassistant.reload_config_entry
+          target:
+            entity_id: sensor.udm_state
+        
+        - action: counter.reset
+          target:
+            entity_id: counter.unifi_integration_errors

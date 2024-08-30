@@ -36,4 +36,4 @@ sequence:
         - service: mqtt.publish
           data_template:
             topic: "zigbee2mqtt/{{ vent_name }}/set"
-            payload_template: "{\"position\": {{ input_position }}}"
+            payload: "{\"position\": {{ input_position }}}"

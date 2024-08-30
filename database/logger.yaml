@@ -24,6 +24,7 @@ logs:
   #homeassistant.components.esphome:                   info
   homeassistant.components.kodi.media_player:         info
   homeassistant.components.media_player:              info
+  homeassistant.components.rest.util:                 debug
   homeassistant.components.system_log.external:       info # This is for logs in automations and scripts.
   homeassistant.components.tplink:                    info
   homeassistant.components.unifi:                     info
@@ -139,7 +140,7 @@ filters:
   homeassistant.components.bond.entity:
     - "Updating .* took longer than the scheduled update interval .*"
   
-  homeassistant.components.brother:
+  homeassistant.components.brother.coordinator:
     - "Timeout fetching brother data"
   
   homeassistant.components.denonavr.media_player:
@@ -210,3 +211,6 @@ filters:
   
   sleekxmppfs.basexmpp:
     - "fulljid property deprecated. Use boundjid.resource"
+  
+  slixmpp.stringprep:
+    - "Using slower stringprep, consider compiling the faster cython/libidn one"

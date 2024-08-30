@@ -14,7 +14,7 @@
       clear_threshold: 1999
       timer_entity: timer.projector_lamp_notification
       message: 'Epson projector lamp might need replacing soon.'
-      channel: persistent
+      channel: standard
       tag: 'projector_lamp'
 
 # Printer toner is getting low.
@@ -29,7 +29,7 @@
       clear_threshold: 10
       timer_entity: timer.printer_toner_notification
       message: 'Printer toner might need replacing soon.'
-      channel: persistent
+      channel: standard
       tag: 'printer_toner'
 
 # Pool needs chlorine tabs.
@@ -77,7 +77,7 @@
       due_value_entity: input_number.f150_service_due
       timer_entity: timer.f150_service_notification
       message: 'F150 service is due.'
-      channel: persistent
+      channel: standard
       tag: 'f150_service'
 
 # Treadmill lubrication is due.
@@ -91,7 +91,7 @@
       due_value_entity: input_number.treadmill_lube_due
       timer_entity: timer.treadmill_lube_notification
       message: 'Treadmill lubrication is due.'
-      channel: persistent
+      channel: standard
       tag: 'treadmill_lube'
 
 #==========================================#
@@ -169,7 +169,7 @@
       clear_threshold: 50
       timer_entity: timer.phone_battery_notification
       message: 'Phone needs recharging.'
-      channel: persistent
+      channel: standard
       tag: 'phone_battery'
 
 # Tablet battery is too low.
@@ -184,7 +184,7 @@
       clear_threshold: 50
       timer_entity: timer.tablet_battery_notification
       message: 'Tablet needs recharging.'
-      channel: persistent
+      channel: standard
       tag: 'tablet_battery'
 
 # Studio motion detector battery is too low.
@@ -200,7 +200,7 @@
       timer_entity: timer.studio_motion_detector_battery_notification
       clear_type: auto
       message: 'Studio motion detector battery needs replacing.'
-      channel: persistent
+      channel: standard
       tag: 'studio_motion_battery'
 
 # Laundry room motion detector battery is too low.
@@ -216,7 +216,7 @@
       timer_entity: timer.laundry_room_motion_detector_battery_notification
       clear_type: auto
       message: 'Laundry room motion detector battery needs replacing.'
-      channel: persistent
+      channel: standard
       tag: 'laundry_room_motion_battery'
 
 # Master bath motion detector battery is too low.
@@ -232,7 +232,7 @@
       timer_entity: timer.master_bath_motion_detector_battery_notification
       clear_type: auto
       message: 'Master bath motion detector battery needs replacing.'
-      channel: persistent
+      channel: standard
       tag: 'master_bath_motion_battery'
 
 # Back door sensor battery is too low.
@@ -247,7 +247,7 @@
       clear_threshold: 50
       timer_entity: timer.back_door_sensor_battery_notification
       message: 'Back door sensor battery needs replacing.'
-      channel: persistent
+      channel: standard
       tag: 'back_door_sensor_battery'
 
 # Studio window sensor battery is too low.
@@ -262,7 +262,7 @@
       clear_threshold: 50
       timer_entity: timer.studio_window_sensor_battery_notification
       message: 'Studio window sensor battery needs replacing.'
-      channel: persistent
+      channel: standard
       tag: 'studio_window_sensor_battery'
 
 # Porch battery powered sensor needs recharging.
@@ -277,7 +277,7 @@
       clear_threshold: 95
       timer_entity: timer.porch_battery_low_notification
       message: 'Porch sensor battery needs recharging.'
-      channel: persistent
+      channel: standard
       tag: 'porch_battery'
 
 # Master BR Vent 1 batteries are too low.
@@ -292,7 +292,7 @@
       clear_threshold: 74
       timer_entity: timer.master_br_vent_1_battery_notification
       message: 'Master BR vent 1 batteries need replacing.'
-      channel: persistent
+      channel: standard
       tag: 'master_br_vent_1_battery'
 
 # Master BR Vent 2 batteries are too low.
@@ -307,7 +307,7 @@
       clear_threshold: 74
       timer_entity: timer.master_br_vent_2_battery_notification
       message: 'Master BR vent 2 batteries need replacing.'
-      channel: persistent
+      channel: standard
       tag: 'master_br_vent_2_battery'
 
 #===============================#
@@ -405,13 +405,14 @@
     input:
       trigger_time: '06:00:00'
       date_entities: [
+                      'input_datetime.reminder_cpap_cleaning', 
                       'input_datetime.reminder_cpap_filter', 
                       'input_datetime.reminder_cpap_humidifier', 
                       'input_datetime.reminder_cpap_hose', 
                       'input_datetime.reminder_cpap_mask'
                      ]
       message_prefix: CPAP maintenance due
-      channel: persistent
+      channel: standard
       tag_prefix: cpap_maintenance_
       category_uppercase: true
 
@@ -428,7 +429,7 @@
                       'input_datetime.reminder_hvac_upstairs'
                      ]
       message_prefix: HVAC maintenance due
-      channel: persistent
+      channel: standard
       tag_prefix: hvac_maintenance_
       category_uppercase: true
 
@@ -451,7 +452,7 @@
                       'input_datetime.reminder_misc_lubegaragedoors'
                      ]
       message_prefix: Misc maintenance due
-      channel: persistent
+      channel: standard
       tag_prefix: misc_maintenance_
       category_uppercase: false
 
@@ -477,7 +478,7 @@
                       'input_datetime.reminder_payment_wellsfargo'
                      ]
       message_prefix: Payment due
-      channel: persistent
+      channel: standard
       tag_prefix: payment_due_
       category_uppercase: false
 
@@ -497,8 +498,27 @@
                       'input_datetime.reminder_medication_methylb12'
                      ]
       message_prefix: Medication due for reorder
-      channel: persistent
+      channel: standard
       tag_prefix: medication_reorder_
+      category_uppercase: false
+
+# Financial
+- alias: Notify Financial Reminder
+  id: 'notify_financial_reminder'
+  
+  use_blueprint:
+    path: notification/reminder_notify.yaml
+    input:
+      trigger_time: '06:05:00'
+      date_entities: [
+                      'input_datetime.reminder_financial_creditreports', 
+                      'input_datetime.reminder_financial_budgettracking', 
+                      'input_datetime.reminder_financial_debttracking', 
+                      'input_datetime.reminder_financial_monthlytransfer'
+                     ]
+      message_prefix: Financial
+      channel: standard
+      tag_prefix: financial_
       category_uppercase: false
 
 #================================#
@@ -680,9 +700,9 @@
       channel: standard
       tag: 'dryer_done'
 
-#================#
-#     Hockey     #
-#================#
+#=================#
+#     Hobbies     #
+#=================#
 
 # Next Canes game
 - alias: Notify Next Canes Game
@@ -709,10 +729,6 @@
           {% endif %}
       channel: standard
       tag: 'next_canes_game'
-
-#=============#
-#     ISS     #
-#=============#
 
 # Next ISS pass
 - alias: Notify Next ISS Pass
@@ -742,6 +758,29 @@
       channel: temporary
       timeout: 2400
       tag: 'next_iss_pass'
+
+# Astronomy friendly.
+- alias: Notify Astronomy Friendly
+  id: 'notify_astronomy_friendly'
+  
+  use_blueprint:
+    path: notification/state_notify.yaml
+    input:
+      entity: binary_sensor.astronomy_friendly
+      from_state: 'off'
+      to_state: 'on'
+      conditions:
+        - condition: state
+          entity_id: input_boolean.nighttime
+          state: 'off'
+      clear_type: assisted
+      enable_clear_trigger: false
+      enable_echo_destination: true
+      title: attention
+      message: 'It looks like a good night for stargazing.'
+      channel: temporary
+      timeout: 5400
+      tag: 'astronomy_friendly'
 
 #=========================#
 #     Mail & Packages     #
@@ -840,88 +879,6 @@
 #=======================================#
 #     Time/Date Based Notifications     #
 #=======================================#
-
-# Credit reports should be ordered early in the year.
-- alias: Notify Credit Reports Due
-  id: 'notify_credit_reports_due'
-  
-  use_blueprint:
-    path: notification/state_notify.yaml
-    input:
-      entity: sensor.credit_reports_due
-      from_state: 'False'
-      to_state: 'True'
-      clear_type: manual
-      enable_clear_trigger: false
-      message: 'Order annual credit reports.'
-      channel: standard
-      tag: 'credit_reports_due'
-
-# CPAP cleaning is due on Saturdays.
-- alias: Notify CPAP Cleaning Due
-  id: 'notify_cpap_cleaning_due'
-  
-  use_blueprint:
-    path: notification/time_notify.yaml
-    input:
-      time_of_day: '05:00:00'
-      conditions:
-        - condition: time
-          weekday:
-            - sat
-      clear_type: manual
-      message: 'CPAP Cleaning due.'
-      channel: standard
-      tag: 'cpap_cleaning_due'
-
-# Budget tracking is due on Sundays.
-- alias: Notify Budget Tracking Due
-  id: 'notify_budget_tracking_due'
-  
-  use_blueprint:
-    path: notification/time_notify.yaml
-    input:
-      time_of_day: '08:00:00'
-      conditions:
-        - condition: time
-          weekday:
-            - sun
-      clear_type: manual
-      message: 'Budget tracking due.'
-      channel: standard
-      tag: 'budget_tracking_due'
-
-# Debt tracking is due the first of the month.
-- alias: Notify Debt Tracking Due
-  id: 'notify_debt_tracking_due'
-  
-  use_blueprint:
-    path: notification/state_notify.yaml
-    input:
-      entity: sensor.first_of_month
-      from_state: 'False'
-      to_state: 'True'
-      clear_type: manual
-      enable_clear_trigger: false
-      message: 'Debt tracking due.'
-      channel: standard
-      tag: 'debt_tracking_due'
-
-# Monthly transfer is due the first of the month.
-- alias: Notify Monthly Transfer Due
-  id: 'notify_monthly_transfer_due'
-  
-  use_blueprint:
-    path: notification/state_notify.yaml
-    input:
-      entity: sensor.first_of_month
-      from_state: 'False'
-      to_state: 'True'
-      clear_type: manual
-      enable_clear_trigger: false
-      message: 'Transfer monthly amount from checking to savings.'
-      channel: standard
-      tag: 'transfer_monthly_amount'
 
 # Pool cleaning is normally due 2 days a week, but 3 days a week during peak spring and fall, because of extra blooms and leaves.
 - alias: Notify Pool Cleaning Due

@@ -116,7 +116,7 @@
     - name: 'Office Bookcase Light Power'
       unique_id: office_bookcase_light_power
       unit_of_measurement: 'W'
-      state: "{{ iif(is_state('switch.office_bookcase', 'on'), 6, 0) }}"
+      state: "{{ iif(is_state('input_boolean.alexa_ha_plug', 'on'), 6, 0) }}"
 
     - name: 'Office Fan Power'
       unique_id: office_fan_power

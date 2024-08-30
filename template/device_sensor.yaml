@@ -2,6 +2,29 @@
 #     Device Sensors     #
 #========================#
 
+#---------- Trigger Sensors ----------#
+
+#----------------------#
+#   -- Last Alexa --   #
+#----------------------#
+
+# The state of this sensor is the most recent Alexa device spoken to. Useful for room-awareness. We use a trigger to update the sensor
+# since it appears none of the media player entities change state when the Alexa Media Player update_last_called service is invoked.
+# Obviously attributes are updated but not the state, so after we call the update_last_called service we issue the event that triggers
+# this sensor. 
+- trigger:
+    - platform: event
+      event_type: update_last_alexa_sensor
+    
+  sensor:
+    - name: Last Alexa
+      unique_id: last_alexa
+      state: >
+        {{ expand(integration_entities('alexa_media') | select('search', 'media_player'))
+         | selectattr('attributes.last_called', 'eq', True) | map(attribute = 'entity_id') | first }}
+
+#---------- Normal Sensors ----------#
+
 - sensor:
 
     #----------------------#
@@ -87,20 +110,6 @@
       unique_id: ecovacs_side_brush_life
       unit_of_measurement: '%'
       state: "{{ state_attr('vacuum.ecovacs_deebot', 'component_side_brush') | int(0) }}"
-
-    #----------------------#
-    #   -- Last Alexa --   #
-    #----------------------#
-    
-    # The state of this sensor is the most recent Alexa device spoken to. Useful for room-awareness.
-    - name: Last Alexa
-      unique_id: last_alexa
-      state: >
-        {{ expand(integration_entities('alexa_media') | select('search', 'media_player'))
-         | selectattr('attributes.last_called', 'eq', True) | map(attribute = 'entity_id') | first }}
-      availability: >
-        {{ expand(integration_entities('alexa_media') | select('search', 'media_player'))
-        | selectattr('attributes.last_called','eq',True) | first is defined }}
 
     #-----------------------------#
     #   -- Treadmill Service --   #

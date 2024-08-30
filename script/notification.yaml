@@ -20,7 +20,6 @@ mobile_notification_worker:
           options:
             - standard
             - temporary
-            - persistent
             - critical
     
     timeout:
@@ -30,24 +29,24 @@ mobile_notification_worker:
       description: 'The tag for the notification.'
   
   sequence:
-    - variables:
-        tag_entry: "{{ state_attr('sensor.mobile_tag_registry', 'tags').get(tag) }}"
-        clear_type: "{{ iif(tag_entry is defined, tag_entry[0], 'unknown') }}"
-        expanded_title: "{{ iif(clear_type == 'manual', title ~ ' (type m)', title) }}"
     
-    # Handle the different channels.
+    # Handle the different channels. Note that we specify both sticky (notification not dismissed when tapped) and persistent 
+    # (can't be swiped away) for all channels. Every notification must be cleared by an automation/script when it makes sense.
+    # Some are cleared automatically, while others use the Remove Manual Mobile Notification script via voice control.
     - choose:
                 
-      # Standard channel; use all defaults.
+      # Standard channel; used for most notifications.
       - conditions: "{{ channel == 'standard' }}"
         
         sequence:
           - service: notify.mobile_app_jon_galaxy
             data:
-              title: "{{ expanded_title }}"
+              title: "{{ title }}"
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
+                sticky: true
+                persistent: true
                 tag: "{{ tag }}"
         
       # Temporary channel; specify a timeout in seconds.
@@ -56,26 +55,13 @@ mobile_notification_worker:
         sequence:
           - service: notify.mobile_app_jon_galaxy
             data:
-              title: "{{ expanded_title }}"
-              message: "{{ message }}"
-              data:
-                channel: "{{ channel }}"
-                timeout: "{{ timeout }}"
-                tag: "{{ tag }}"
-        
-      # Persistent channel; specify both sticky (notification not dismissed when tapped) and persistent (can't be swiped away).
-      # The notification must be cleared by an automation/script when it makes sense.
-      - conditions: "{{ channel == 'persistent' }}"
-        
-        sequence:
-          - service: notify.mobile_app_jon_galaxy
-            data:
-              title: "{{ expanded_title }}"
+              title: "{{ title }}"
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
                 sticky: true
                 persistent: true
+                timeout: "{{ timeout }}"
                 tag: "{{ tag }}"
         
       # Critical channel; used for high priority notifications.
@@ -84,10 +70,11 @@ mobile_notification_worker:
         sequence:
           - service: notify.mobile_app_jon_galaxy
             data:
-              title: "{{ expanded_title }}"
+              title: "{{ title }}"
               message: "{{ message }}"
               data:
                 channel: "{{ channel }}"
+                sticky: true
                 persistent: true
                 importance: high
                 tag: "{{ tag }}"
@@ -128,7 +115,6 @@ send_notification:
           options:
             - standard
             - temporary
-            - persistent
             - critical
     
     throttled:
@@ -287,7 +273,6 @@ register_mobile_notification:
             - auto
             - assisted
             - manual
-            - dual
     
     title:
       description: The title of the message.
@@ -302,7 +287,6 @@ register_mobile_notification:
           options:
             - standard
             - temporary
-            - persistent
             - critical
     
     timeout:

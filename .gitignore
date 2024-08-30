@@ -27,31 +27,6 @@
 !custom_sentences/en/
 
 !custom_templates/
-
-!dashboard/
-!dashboard/button_card_templates/
-!dashboard/button_card_templates/creative-button-card-templates
-!dashboard/button_card_templates/creative-button-card-templates/addons
-!dashboard/dash_overview/
-!dashboard/dash_overview/cards/
-!dashboard/dash_overview/cards/controls
-!dashboard/dash_overview/cards/devices
-!dashboard/dash_overview/cards/energy
-!dashboard/dash_overview/cards/health
-!dashboard/dash_overview/cards/hobbies
-!dashboard/dash_overview/cards/home
-!dashboard/dash_overview/cards/levels
-!dashboard/dash_overview/cards/monitoring
-!dashboard/dash_overview/cards/theater
-!dashboard/dash_overview/views
-!dashboard/dash_reminders/
-!dashboard/dash_reminders/cards/
-!dashboard/dash_reminders/cards/cleaning
-!dashboard/dash_reminders/cards/maintenance
-!dashboard/dash_reminders/cards/office
-!dashboard/dash_reminders/cards/yard
-!dashboard/dash_reminders/views
-
 !database
 
 !esphome
@@ -64,10 +39,11 @@
 !sensor
 !template
 
-# Ensure these YAML files are ignored.
+# Ensure these files are ignored.
 google_calendars.yaml
 ip_bans.yaml
 known_devices.yaml
 secrets.yaml
 automation/test.yaml
 script/test.yaml
+custom_templates/easy_time.jinja

@@ -44,7 +44,6 @@ blueprint:
             - auto
             - assisted
             - manual
-            - dual
     
     enable_clear_trigger:
       name: Enable Clear Trigger
