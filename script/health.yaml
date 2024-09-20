@@ -70,6 +70,7 @@ register_exercise_metrics:
     monthly_calories_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_calories' }}"
     daily_time: "{{ states('input_number.' ~ exercise_type ~ '_daily_time') | int(0) }}"
     daily_calories: "{{ states('input_number.' ~ exercise_type ~ '_daily_calories') | int(0) }}"
+    recordable_exercise_minimum_time: "{{ state_attr('sensor.variables', 'variables').recordable_exercise_minimum_time | int(0) }}"
   
   sequence:
     
@@ -122,6 +123,16 @@ register_exercise_metrics:
                 entity_id: input_number.steps_monthly
               data:
                 value: "{{ states('input_number.steps_monthly') | int(0) + states('sensor.steps_daily') | int(0) }}"
+        
+        # Bump the recordable exercise counter if the time meets or exceeds the daily threshold. This is mainly used
+        # for insurance purposes (if I exercise at least n minutes a day for n days a month I get a benefit).
+        - if:
+            - "{{ daily_time >= recordable_exercise_minimum_time }}"
+          
+          then:
+            - action: counter.increment
+              target:
+                entity_id: counter.exercise_recordable
         
         # Log the metrics, so I have a record of activity for each month (the log is backed up on the first of each
         # month, which starts a new log file).

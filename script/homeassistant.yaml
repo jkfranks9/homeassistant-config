@@ -94,6 +94,17 @@ initialize_global_variables:
         key: steps_daily_goal
         value: 2500
     
+    # Recordable exercise minimums.
+    - event: set_variable
+      event_data:
+        key: recordable_exercise_minimum_time
+        value: 30
+    
+    - event: set_variable
+      event_data:
+        key: recordable_exercise_minimum_days_per_month
+        value: 10
+    
     # Dynamic light group Christmas light names and symbols. See Build Dynamic Light Groups automation and
     # Dynamic Light Group Symbols template sensor.
     - event: set_variable
@@ -1093,12 +1104,37 @@ handle_completed_reminder_or_periodic_item:
             - months
             - miles
             - hours
+    
+    target_day:
+      description: Target day of the month. If zero, new day is calculated based on current day + amount.
+      selector:
+        number:
+          min: 0
+          max: 31
   
   sequence:
     - variables:
         normalized_period: "{{ iif(period[-1] != 's', period ~ 's', period) }}"
         domain: "{{ states[entity].domain }}"
         entity_name: "{{ entity.split('.')[-1] }}"
+        
+        # This is the input to the datetime offset script. For days and weeks offsets it includes just the datetime entity
+        # and the amount. But for months offset it also includes a target day. This allows us to set the next interval
+        # using 2 methods:
+        #
+        # 1) Target day = 0: This is the normal method, where the next interval is the same day of the month as today, in
+        #    the month determined by the input amount.
+        # 2) Target day != 0: This is used for things we want to happen on a specific day of the month, such as the first.
+        #    So if we execute the item say, on the ninth of the month because we're lazy, the next interval will be the first
+        #    (or whatever target day) of the month determined by the input amount.
+        datetime_offset_data: >
+          {% set ns = namespace(val = {'entity': entity, 'amount': interval}) %}
+          {% if normalized_period == 'months' %}
+            {% set day = {'target_day': target_day} %}
+            {{ dict(ns.val, **day) }}
+          {% else %}
+            {{ ns.val }}
+          {% endif %}
     
     # Call one of the datetime offset scripts (per the period), or the number offset script.
     - if:
@@ -1106,9 +1142,7 @@ handle_completed_reminder_or_periodic_item:
       
       then:
         - service: "{{ 'script.set_datetime_offset_' ~ normalized_period }}"
-          data:
-            entity: "{{ entity }}"
-            amount: "{{ interval }}"
+          data: "{{ datetime_offset_data }}"
       
       else:
         - service: script.set_number_offset
@@ -1208,6 +1242,13 @@ set_datetime_offset_months:
         number:
           min: 1
           max: 24
+    
+    target_day:
+      description: Target day of the month. If zero, new day is calculated based on current day + amount.
+      selector:
+        number:
+          min: 0
+          max: 31
   
   sequence:
     - service: input_datetime.set_datetime
@@ -1219,7 +1260,9 @@ set_datetime_offset_months:
           {% set new_months=((sub_months) % 12) + 1 %}
           {% set new_year=((sub_months - new_months + 1) / 12) | int(0) %}
           {% set new_day = dtobj.day %}
-          {% if new_day == 31 and new_months in [9, 4, 6, 11] or new_months == 2 and new_day > 28 %}
+          {% if target_day != 0 %}
+            {% set new_day = target_day %}
+          {% elif new_day == 31 and new_months in [9, 4, 6, 11] or new_months == 2 and new_day > 28 %}
             {% set new_months = new_months + 1 %}
             {% set new_day = 1 %}
           {% endif %}

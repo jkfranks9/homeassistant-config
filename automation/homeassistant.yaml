@@ -203,7 +203,7 @@
         day_of_month: "{{ now().day }}"
     
     # Reset daily exercise values.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id:
           - input_number.treadmill_daily_time
@@ -218,7 +218,7 @@
         value: 0
     
     # Reset the exercise flags for the current day, so we won't count this day if no exercise is done.    
-    - service: script.modify_current_exercise_day
+    - action: script.modify_current_exercise_day
       data:
         exercise_types: ['treadmill', 'workout', 'yard_work', 'steps']
         operation: false
@@ -227,7 +227,7 @@
     # if certain automations or scripts do not finish normally.
     #
     # Don't touch the few that are turned off most of the time, or for extended periods.
-    - service: automation.turn_on
+    - action: automation.turn_on
       entity_id:
         - automation.close_house
         - automation.notify_zigbee_device_unavailable
@@ -239,14 +239,14 @@
         - automation.control_office_lamp
     
     # Backup automations and scripts log files.
-    - service: shell_command.backup_auto_scripts_log
+    - action: shell_command.backup_auto_scripts_log
     
     # Turn off washer plug.
-    - service: switch.turn_off
+    - action: switch.turn_off
       entity_id: switch.washer
 
     # Make sure the dryer isn't running, just in case.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.dryer_running
     
     # Backup the laundry events log file if indicated.
@@ -256,9 +256,9 @@
           state: 'on'
       
       then:    
-        - service: shell_command.backup_laundry_log
+        - action: shell_command.backup_laundry_log
         
-        - service: input_boolean.turn_off
+        - action: input_boolean.turn_off
           entity_id: input_boolean.backup_laundry_log
     
     # Update the hockey Rest sensors during hockey season. The sensors have a very long scan interval so
@@ -269,7 +269,7 @@
           state: 'on'
       
       then:    
-        - service: homeassistant.update_entity
+        - action: homeassistant.update_entity
           target:
             entity_id:
               - sensor.next_canes_game
@@ -277,7 +277,7 @@
           continue_on_error: true
     
     # Bump the F150 mileage. We use this to notify when the next service is due.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.f150_mileage
       data:
@@ -290,7 +290,7 @@
       then:
         
         # Reset weekly exercise values.
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id:
               - input_number.treadmill_weekly_time
@@ -307,17 +307,17 @@
         # Generate the weekly mini todo stuff:
     
         # 1) Toggle the generator switch, which introduces randomness into some decisions.
-        - service: input_boolean.toggle
+        - action: input_boolean.toggle
           entity_id: input_boolean.mini_todo_generator_switch
         
         # 2) Create weekly periodic lists.
-        - service: script.generate_periodic_lists
+        - action: script.generate_periodic_lists
           data:
             type: all
             start_date: "{{ states('sensor.date') }}"
         
         # 3) Determine which days will be free time this week.
-        - service: script.generate_weekly_free_time_days
+        - action: script.generate_weekly_free_time_days
     
     # Perform monthly chores at the start of a new month.
     - if:
@@ -326,7 +326,7 @@
       then:
         
         # Reset monthly exercise values.
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id:
               - input_number.treadmill_monthly_time
@@ -338,10 +338,15 @@
               - input_number.steps_monthly
               - input_number.steps_monthly_calories
           data:
-            value: 0   
+            value: 0
+        
+        # Reset the recordable exercise counter.
+        - action: counter.reset
+          target:
+            entity_id: counter.exercise_recordable
         
         # Backup the exercise activity log.
-        - service: shell_command.backup_exercise_log
+        - action: shell_command.backup_exercise_log
 
 #=========================#
 #     Automations Log     #
@@ -1011,21 +1016,16 @@
     # but is also subject to coin tosses.
     - variables:
         task_count: "{{ 5 - states('counter.mini_todo_tasks') | int(0) }}"
+        avail_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) }}"
+        accum_tasks: "{{ states('counter.mini_todo_tasks') | int(0) }}"
+        accum_attempts: "{{ states('counter.mini_todo_attempts') | int(0) }}"
     
     - repeat:
-        while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) > 0 and 
-                   states('counter.mini_todo_tasks') | int(0) < task_count and
-                   states('counter.mini_todo_attempts') | int(0) <= 10 }}"
+        while: "{{ avail_minutes > 0 and accum_tasks < task_count and accum_attempts <= 10 }}"
         
         sequence:
-    
-          # Select the next task type.
-          - service: input_select.select_next
-            target:
-              entity_id: input_select.mini_todo_task_type
-          
           - variables:
-              type: "{{ states('input_select.mini_todo_task_type') }}"
+              type: "{{ ['cleaning', 'other', 'yard_work', 'major', 'minor'] | random }}"
           
           - choose:
           
@@ -1055,7 +1055,7 @@
 #     Integration Reloading     #
 #===============================#
 
-# Some integrations seem to go berserk sometimes. We watch for certain error messages, and reload the associated
+# Some integrations seem to go berserk sometimes. We watch for certain error messages or states, and reload the associated
 # config entry to hopefully restore sanity.
 
 - alias: Reload Unifi Integration
@@ -1088,3 +1088,16 @@
         - action: counter.reset
           target:
             entity_id: counter.unifi_integration_errors
+
+- alias: Reload Ecovacs Integration
+  id: reload_ecovacs_integration
+  
+  trigger:
+    - platform: state
+      entity_id: vacuum.ecovacs_deebot
+      to: unavailable
+  
+  action:    
+    - action: homeassistant.reload_config_entry
+      target:
+        entity_id: vacuum.ecovacs_deebot

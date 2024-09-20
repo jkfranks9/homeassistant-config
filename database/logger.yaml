@@ -24,7 +24,6 @@ logs:
   #homeassistant.components.esphome:                   info
   homeassistant.components.kodi.media_player:         info
   homeassistant.components.media_player:              info
-  homeassistant.components.rest.util:                 debug
   homeassistant.components.system_log.external:       info # This is for logs in automations and scripts.
   homeassistant.components.tplink:                    info
   homeassistant.components.unifi:                     info
@@ -158,7 +157,7 @@ filters:
   homeassistant.components.recorder.db_schema:
     - "Event data for system_log_event exceed maximum size of 32768 bytes"
   
-  homeassistant.components.rest.sensor:
+  homeassistant.components.rest.util:
     - "JSON result was not a dictionary or list with 0th element a dictionary"
   
   homeassistant.components.scene:
@@ -173,6 +172,9 @@ filters:
   
   homeassistant.components.switch:
     - "Updating .* switch took longer than the scheduled update interval .*"
+  
+  homeassistant.components.tplink.entity:
+    - "Device feature: Reboot (reboot) needs an entity description defined in HA"
   
   homeassistant.components.update:
     - "Setup of update platform .* is taking over 10 seconds"

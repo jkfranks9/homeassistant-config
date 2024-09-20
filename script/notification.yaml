@@ -369,7 +369,17 @@ remove_manual_mobile_notification:
   alias: Remove Manual Mobile Notification
   
   sequence:
+    
+    # Get the room containing the echo device that was used.
+    - service: script.get_echo_room
+      response_variable: result
+    
     - variables:
+        
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
+        
+        echo_device: "{{ 'media_player.' ~ room ~ '_echo' }}"
         num_manual: "{{ states('sensor.mobile_tag_registry_manual_clear') }}"
     
     - choose:
@@ -383,9 +393,7 @@ remove_manual_mobile_notification:
               destination:
                 - echo
               message: "There are no notifications that need to be manually removed."
-              media_player_entity:
-                - media_player.family_room_echo
-                - media_player.office_echo
+              media_player_entity: "{{ echo_device }}"
       
       # There is only one manual clear notification, so remove it and inform the user.
       - conditions: "{{ num_manual == 1 }}"
@@ -403,9 +411,7 @@ remove_manual_mobile_notification:
               destination:
                 - echo
               message: "{{ 'I unregistered tag ' ~ tag | replace('_', ' ') }}"
-              media_player_entity:
-                - media_player.family_room_echo
-                - media_player.office_echo
+              media_player_entity: "{{ echo_device }}"
       
       # There are multiple manual clear notifications.
       default:
@@ -416,9 +422,7 @@ remove_manual_mobile_notification:
             destination:
               - echo
             message: "{{ 'There are ' ~ num_manual ~ ' manual notifications. Check your phone for additional instructions.' }}"
-            media_player_entity:
-              - media_player.family_room_echo
-              - media_player.office_echo
+            media_player_entity: "{{ echo_device }}"
         
         # Handle all notifications.
         - repeat:

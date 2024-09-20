@@ -4,130 +4,9 @@
 
 - binary_sensor:
 
-    #-----------------------------#
-    #   -- Floorplan Mirrors --   #
-    #-----------------------------#
-
-    # These sensors are used to create mirror entities to items on the floorplan. For example,
-    # there are four wall sconces in the theater, but the floorplan card only allows one element
-    # in the SVG file with a given entity ID. By having sensors that mirror that one entity's
-    # state, we can then place elements in the SVG file using those sensor IDs.    
-    - name: 'Driveway Lights Mirror'
-      unique_id: driveway_lights_mirror
-      device_class: light
-      state: "{{ is_state('switch.driveway_lights', 'on') }}"
-    
-    - name: 'Garage Lights Mirror'
-      unique_id: garage_lights_mirror
-      device_class: light
-      state: "{{ is_state('switch.garage_lights', 'on') }}"
-    
-    - name: 'Hallway Lights Mirror'
-      unique_id: hallway_lights_mirror
-      device_class: light
-      state: "{{ is_state('switch.hallway_lights', 'on') }}"
-    
-    - name: 'Kitchen Light Mirror'
-      unique_id: kitchen_light_mirror
-      device_class: light
-      state: "{{ is_state('switch.kitchen_light', 'on') }}"
-    
-    - name: 'Penthouse Light Mirror'
-      unique_id: penthouse_light_mirror
-      device_class: light
-      state: "{{ is_state('switch.penthouse_light', 'on') }}"
-    
-    - name: 'Snack Light Mirror'
-      unique_id: snack_light_mirror
-      device_class: light
-      state: "{{ is_state('switch.snack_light', 'on') }}"
-      
-    - name: 'Theater Sconces Mirror'
-      unique_id: theater_sconces_mirror
-      device_class: light
-      state: "{{ is_state('light.theater_sconces', 'on') }}"
-    
-    - name: 'Theater Ceiling Mirror'
-      unique_id: theater_ceiling_mirror
-      device_class: light
-      state: "{{ is_state('light.theater_ceiling', 'on') }}"
-
-    #-------------------------#
-    #   -- History Stats --   #
-    #-------------------------#
-    
-    # These sensors are used to support history stats.
-    
-    # Family Room AV is true if the AV system is drawing power, and a grandchild
-    # is not home or a grandchild is home and it's in the evening (I don't count a grandchild
-    # watching YouTube or cartoon shows all day).
-    - name: 'Family Room AV Usage'
-      unique_id: family_room_av_usage
-      state: >
-        {{ is_state('binary_sensor.family_room_av_system', 'on') and
-           (is_state('binary_sensor.children_home', 'off') or
-             (is_state('binary_sensor.children_home', 'on') and
-              now().strftime('%H') >= '19')) }}
-    
-    # Theater AV is true if the Harmony remote is active, and the source device is not Shield TV
-    # (we can't know if such devices are playing or not) or the source is Shield TV and it's in
-    # playing state.
-    - name: 'Theater AV Usage'
-      unique_id: theater_av_usage
-      state: >
-        {{ not is_state('sensor.harmony_hub', 'PowerOff') and
-           (not is_state('sensor.harmony_hub', 'Stream Player') or
-             (is_state('sensor.harmony_hub', 'Stream Player') and
-              is_state('media_player.shield_tv', 'playing'))) }}
-    
-    #------------------------------#
-    #   -- Device Power Flags --   #
-    #------------------------------#
-
-    # These indicate if a device or device group (such as an AV system) are drawing power.
-    
-    - name: Family Room AV System
-      unique_id: family_room_av_system
-      state: >
-        {% set cstate = states('sensor.family_room_av_current_consumption') %}
-        {% if cstate not in ['unavailable', 'unknown'] %}
-          {{ cstate  | float(0) > 10 }}
-        {% else %}
-          false
-        {% endif %}
-
-    #-------------------------#
-    #   -- Dryer Control --   #
-    #-------------------------#
-    
-    # Needed for the front end. The dryer is initially started (when the pushbutton is used), then transitions to running 
-    # (when the temperature is detected). This sensor makes showing the status on the front end easier.
-    - name: Dryer Active
-      unique_id: dryer_active
-      state: "{{ is_state('input_boolean.dryer_started', 'on') or is_state('input_boolean.dryer_running', 'on') }}"
-
-    # This sensor controls when we turn off the dryer. There are trend sensors to detect temperature and humidity falling,
-    # but sometimes these can be spurious, for example getting 2 humidity falling events, then a temperature falling event.
-    # So we have a counter for each type of event, and only turn this sensor on when both counters are above zero.
-    - name: 'Dryer Done'
-      unique_id: dryer_done
-      state: "{{ states('counter.dryer_temperature_count') | int(0) > 0 and states('counter.dryer_humidity_count') | int(0) > 0 }}"
-
     #------------------------------#
     #   -- Presence Detection --   #
     #------------------------------#
-    
-    # This sensor indicates if any adult family members are home or not.
-    - name: Adults Home
-      unique_id: adults_home
-      state: "{{ states('person.david') == 'home' or states('person.maryam') == 'home' or states('person.mike') == 'home' or states('person.sarah') == 'home' }}"
-      device_class: presence
-    
-    # This sensor indicates if any child family members are home or not.
-    - name: Children Home
-      unique_id: children_home
-      state: "{{ states('person.skylar') == 'home' }}"
-      device_class: presence
     
     # Downstairs motion detection.
     - name: Downstairs Motion
@@ -175,16 +54,6 @@
           
           {{ vars.motion }}
 
-    #------------------------------#
-    #   -- Penthouse Occupied --   #
-    #------------------------------#
-    
-    # Note that the house is considered a device.
-    - name: Penthouse Occupied
-      unique_id: penthouse_occupied
-      state: >
-        {{ states('input_select.occupied_bedrooms') in ['AdultUp', 'ChildUp', 'ChildDownPlus', 'ChildUpPlus', 'Both'] }}
-
     #-------------------#
     #   -- Driving --   #
     #-------------------#
@@ -197,33 +66,3 @@
       state: "{{ state_attr('device_tracker.jon_companion', 'speed') > 10 }}"
       delay_off:
         minutes: 2
-
-    #-------------------#
-    #   -- Weather --   #
-    #-------------------#
-      
-    # Used to hide certain yard work tasks on the Reminders dashboard.
-    - name: Warm Weather
-      unique_id: warm_weather
-      state: "{{ 2 < as_local(as_datetime(states('sensor.date'))).strftime('%m') | int(0) < 11 }}"
-      
-    # Used as a conditional for certain yard work tasks for the mini todo list.
-    - name: Outdoor Work Friendly
-      unique_id: outdoor_work_friendly
-      state: >
-        {% set AT = states('input_number.apparent_outdoor_temperature') | int(75) %}
-        {% set UV = states('input_number.maximum_outdoor_uv_index') | int(3) %}
-        {% set PP = states('input_number.average_outdoor_precipitation_probability') | int(50) %}
-        
-        {{ 45 < AT < 95 and UV < 5 and PP < 35 }}
-      
-    # Whether or not tonight will be good for stargazing.
-    - name: Astronomy Friendly
-      unique_id: astronomy_friendly
-      state: >
-        {% set condition = states('input_number.average_astro_condition') | int(50) %}
-        {% set cloudless = states('input_number.average_astro_cloudless_percentage') | int(50) %}
-        {% set seeing = states('input_number.average_astro_seeing_percentage') | int(50) %}
-        {% set transparency = states('input_number.average_astro_transparency_percentage') | int(50) %}
-        
-        {{ condition > 75 and cloudless > 90 and seeing >= 50 and transparency >= 70 }}

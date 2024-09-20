@@ -24,7 +24,7 @@
         
         downstairs_common_symbols: >
           {% from 'dynamic_groups.jinja' import build_dynamic_symbol_list %}
-          {{ build_dynamic_symbol_list('group.downstairs_common_lights', ['1', '2', 'F', 'L'], 'downstairs_common') }}
+          {{ build_dynamic_symbol_list('group.downstairs_common_lights', ['1', '2', 'D', 'L'], 'downstairs_common') }}
         
         outdoor_symbols: >
           {% from 'dynamic_groups.jinja' import build_dynamic_symbol_list %}

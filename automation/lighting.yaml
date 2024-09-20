@@ -118,8 +118,8 @@
     input:
       lux_sensor: sensor.foyer_ambient_light
       light_target: light.family_room_lamp
-      min_lux_level: 300
-      max_lux_level: 700
+      min_lux_level: 250
+      max_lux_level: 650
       check_theater: true
 
 # Control the hallway lamp based on ambient lux level.

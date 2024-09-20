@@ -270,7 +270,6 @@ get_nabu_room:
       response_variable: room
 
 # Modify a fan that lives in a room with an echo device.
-# This is used by the Alexa Set Fan <speed> scripts directly below.
 modify_fan:
   alias: Modify Fan
   

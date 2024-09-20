@@ -362,36 +362,6 @@
       proximity_meters: 12000
       person_name: Sarah
 
-#==========================#
-#     Software Updates     #
-#==========================#
-
-# HACS update
-- alias: Notify HACS Updated
-  id: 'notify_hacs_updated'
-  
-  trigger:
-    - platform: state
-      entity_id: sensor.hacs
-  
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.hacs
-      above: 0
-  
-  action:
-    - service: script.send_notification
-      data:
-        destination:
-          - persistent
-        title: 'HACS Updated'
-        notification_id: 'hacs_update'
-        message: |
-          {% set num = states('sensor.hacs') %}
-          Updates available for {{ num }} HACS repo{% if num | int(0) > 1 %}s{% endif %}:{{"\n"}}
-          {% for repo in states.sensor.hacs.attributes.repositories %}{{ repo.name }} ({{ repo.installed_version }} -> {{ repo.available_version }})
-          {% endfor %}
-
 #===============================#
 #     Maintenance Reminders     #
 #===============================#
@@ -449,7 +419,8 @@
                       'input_datetime.reminder_misc_cleanmicrowavefilter',
                       'input_datetime.reminder_misc_cleandishwasher',
                       'input_datetime.reminder_misc_rechargeclipper',
-                      'input_datetime.reminder_misc_lubegaragedoors'
+                      'input_datetime.reminder_misc_lubegaragedoors',
+                      'input_datetime.reminder_misc_poolcleaning'
                      ]
       message_prefix: Misc maintenance due
       channel: standard
@@ -875,34 +846,6 @@
     path: notification/temperature_extremes_notify.yaml
     input:
       temperature_entity: input_number.max_outdoor_temp
-
-#=======================================#
-#     Time/Date Based Notifications     #
-#=======================================#
-
-# Pool cleaning is normally due 2 days a week, but 3 days a week during peak spring and fall, because of extra blooms and leaves.
-- alias: Notify Pool Cleaning Due
-  id: 'notify_pool_cleaning_due'
-  
-  use_blueprint:
-    path: notification/time_notify.yaml
-    input:
-      time_of_day: '07:00:00'
-      conditions:
-        - or:
-          
-          # Always on Saturday.
-          - condition: time
-            weekday:
-              - sat          
-          
-          # Tuesdays and Thursdays during peak, Wednesdays otherwise.
-          - condition: template
-            value_template: "{{ iif(now().month in [3, 4, 10, 11], now().isoweekday() in [2, 4], now().isoweekday() in [3]) }}"
-      clear_type: manual
-      message: 'Pool cleaning due.'
-      channel: standard
-      tag: 'pool_cleaning_due'
 
 #=====================================#
 #     Notification Tag Management     #
