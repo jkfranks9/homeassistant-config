@@ -39,6 +39,9 @@
       
       attributes:
         device_list: >
+          {# --List of devices that don't make contact for many hours-- #}
+          {% set skip_time_check_entities = ['switch.hall_light', 'switch.dining_table_light', 'switch.master_vanity_light'] %}
+          
           {# --List of device entities, associated last seen sensors-- #}
           {% set device_list = [
                                 ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen'],
@@ -49,7 +52,11 @@
                                 ['cover.master_br_vent_1', 'sensor.master_br_vent_1_last_seen'],
                                 ['cover.master_br_vent_2', 'sensor.master_br_vent_2_last_seen'],
                                 ['binary_sensor.cc2530_router_led', 'sensor.cc2530_router_last_seen'],
-                                ['switch.sonoff_router', 'sensor.sonoff_router_last_seen']
+                                ['switch.sonoff_router', 'sensor.sonoff_router_last_seen'],
+                                ['binary_sensor.office_human_sensor_presence', 'sensor.office_human_sensor_last_seen'],
+                                ['switch.hall_light', 'sensor.hall_light_last_seen'],
+                                ['switch.dining_table_light', 'sensor.dining_table_light_last_seen'],
+                                ['switch.master_vanity_light', 'sensor.master_vanity_light_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -65,7 +72,7 @@
           
             {# --Add a device to the list if the device entity is unavailable, or hasn't been seen in the timeout window-- #}
             {% if states(device_entity) in ['unknown', 'unavailable']
-                  or as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (timeout_minutes * 60) %}
+                  or (device_entity not in skip_time_check_entities and as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (timeout_minutes * 60)) %}
               {% set unavail_device_list.list = unavail_device_list.list + [state_attr(device_entity, 'friendly_name')] %}
             {% endif %}
           {% endfor %}
@@ -83,14 +90,18 @@
           {# --List of timestamp entities-- #}
           {% set device_list = [
                                 'input_number.back_door_sensor_door',
-                                'input_number.studio_window_sensor',
-                                'input_number.studio_motion_detector',
-                                'input_number.laundry_room_motion_detector',
-                                'input_number.master_bath_motion_detector',
+                                'input_number.studio_window_sensor_door',
+                                'input_number.studio_motion_detector_occupancy',
+                                'input_number.laundry_room_motion_detector_occupancy',
+                                'input_number.master_bath_motion_detector_occupancy',
                                 'input_number.master_br_vent_1',
                                 'input_number.master_br_vent_2',
-                                'input_number.cc2530_router',
-                                'input_number.sonoff_router'
+                                'input_number.cc2530_router_led',
+                                'input_number.sonoff_router',
+                                'input_number.office_human_sensor_presence',
+                                'input_number.hall_light',
+                                'input_number.dining_table_light',
+                                'input_number.master_vanity_light'
                                ] %}
                                
           {# --Create an empty list to start-- #}

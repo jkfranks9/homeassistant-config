@@ -7,6 +7,6 @@ binary_sensor:
       mode:
         input: true
         pullup: true
-    name: ${friendly_name} Start Button
+    name: Start Button
     filters:
       - delayed_on: 10ms

@@ -70,8 +70,8 @@ initialize_global_variables:
         key: hockey_teams
         value: [['ANA', 'Ducks'], ['ARI', 'Coyotes'], ['BOS', 'Bruins'], ['BUF', 'Sabres'], ['CAR', 'Hurricanes'], ['CBJ', 'Blue Jackets'], ['CGY', 'Flames'], ['CHI', 'Blackhawks'], ['COL', 'Avalanche'], ['DAL', 'Stars'], 
                 ['DET', 'Red Wings'], ['EDM', 'Oilers'], ['FLA', 'Panthers'], ['LAK', 'Kings'], ['MIN', 'Wild'], ['MTL', 'Canadiens'], ['NJD', 'Devils'], ['NSH', 'Predators'], ['NYI', 'Islanders'], ['NYR', 'Rangers'], 
-                ['OTT', 'Senators'], ['PHI', 'Flyers'], ['PIT', 'Penguins'], ['SEA', 'Kraken'], ['SJS', 'Sharks'], ['STL', 'Blues'], ['TBL', 'Lightning'], ['TOR', 'Maple Leafs'], ['VAN', 'Canucks'], ['VGK', 'Golden Knights'], 
-                ['WPG', 'Jets'], ['WSH', 'Capitals']]
+                ['OTT', 'Senators'], ['PHI', 'Flyers'], ['PIT', 'Penguins'], ['SEA', 'Kraken'], ['SJS', 'Sharks'], ['STL', 'Blues'], ['TBL', 'Lightning'], ['TOR', 'Maple Leafs'], ['UTA', 'Utah Hockey Club'], ['VAN', 'Canucks'], 
+                ['VGK', 'Golden Knights'], ['WPG', 'Jets'], ['WSH', 'Capitals']]
     
     # Calorie values for simple exercise types.
     - event: set_variable
@@ -104,16 +104,6 @@ initialize_global_variables:
       event_data:
         key: recordable_exercise_minimum_days_per_month
         value: 10
-    
-    # Dynamic light group Christmas light names and symbols. See Build Dynamic Light Groups automation and
-    # Dynamic Light Group Symbols template sensor.
-    - event: set_variable
-      event_data:
-        key: dynamic_light_group_christmas_lights
-        value: {'family_room': [['family_room_christmas_tree', 'mantle_bookcase', 'stair_railing'], ['T', 'M', 'R']],
-                'kitchen': [['kitchen_christmas_tree'], ['T']],
-                'downstairs_common': [['christmas_village'], ['V']],
-                'outdoor': [['outdoor_christmas'], ['X']]}
     
     # Mini todo list daily constants.
     - event: set_variable
@@ -227,25 +217,43 @@ get_weather_metrics:
           - ['input_number.average_outdoor_precipitation_probability', 'precipitation_probability', 50]
           - ['input_number.maximum_outdoor_uv_index', 'uv_index', 3]
     
+    - variables:
+        average_temperature: "{{ states('input_number.average_outdoor_temperature') | float(75) }}"
+        average_humidity: "{{ states('input_number.average_outdoor_humidity') | float(50) }}"
+    
     # Calculate the apparent temperature, using the average temperature and humidity. The formula is from the National Weather Service:
     # https://www.weather.gov/media/epz/wxcalc/heatIndex.pdf
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.apparent_outdoor_temperature
-      data:
-        value: >
-          {% set T = states('input_number.average_outdoor_temperature') | float(75) %}
-          {% set H = states('input_number.average_outdoor_humidity') | float(50) %}
-          {% set c1 = 42.379 %}
-          {% set c2 = 2.04901523 %}
-          {% set c3 = 10.14333127 %}
-          {% set c4 = 0.22475541 %}
-          {% set c5 = 0.00683783 %}
-          {% set c6 = 0.05481717 %}
-          {% set c7 = 0.00122874 %}
-          {% set c8 = 0.00085282 %}
-          {% set c9 = 0.00000199 %}
-          {{ (-c1 + (c2 * T) + (c3 * H) - (c4 * T * H) - (c5 * T**2) - (c6 * H**2) + (c7 * T**2 * H) + (c8 * T * H**2) - (c9 * T**2 * H**2)) | round(2) }}
+    #
+    # However, this only works if the temperature and humidity are above certain thresholds.
+    - if:
+        - "{{ average_temperature >= 80 and average_humidity >= 40 }}"
+      
+      then:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.apparent_outdoor_temperature
+          data:
+            value: >
+              {% set T = average_temperature %}
+              {% set H = average_humidity %}
+              {% set c1 = 42.379 %}
+              {% set c2 = 2.04901523 %}
+              {% set c3 = 10.14333127 %}
+              {% set c4 = 0.22475541 %}
+              {% set c5 = 0.00683783 %}
+              {% set c6 = 0.05481717 %}
+              {% set c7 = 0.00122874 %}
+              {% set c8 = 0.00085282 %}
+              {% set c9 = 0.00000199 %}
+              {{ (-c1 + (c2 * T) + (c3 * H) - (c4 * T * H) - (c5 * T**2) - (c6 * H**2) + (c7 * T**2 * H) + (c8 * T * H**2) - (c9 * T**2 * H**2)) | round(2) }}
+      
+      # Thresholds not met, so just use the average temperature.
+      else:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.apparent_outdoor_temperature
+          data:
+            value: "{{ average_temperature }}"        
 
 # Front end to Generate Weekly Periodic List. That script should normally only be called once a week on Sunday. However, it
 # seems like the various weekly periodic list sensors can become unknown for some unknown (haha) reason. So we also 
@@ -381,14 +389,14 @@ generate_weekly_periodic_list:
   sequence:
     
     # Initialize the combinable buffer text in case we're going to combine 2 items.
-    - service: input_text.set_value
+    - action: input_text.set_value
       target:
         entity_id: input_text.mini_todo_periodic_combinable_buffer
       data:
         value: empty
     
     # Empty the Weekly Periodic List sensor.
-    - service: script.send_mini_todo_event
+    - action: script.send_mini_todo_event
       data:
         event_type: reset
         item_type: "{{ type }}"
@@ -405,13 +413,9 @@ generate_weekly_periodic_list:
           {# Walk through the input date entities. #}
           {% for entity in date_entities %}
             
-            {# Continue if the entity is overdue or due within a few days. #}
+            {# Add to the list if the entity is overdue or due within a few days. #}
             {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(start_date) + timedelta(days = 3), 0) %}
-              
-              {# Add the item to the list. We have a special case for mowing: only add it if it seems OK to work outside. #}
-              {% if type != 'yard_work' or (state_attr(entity, 'friendly_name').split('Periodic Yard ')[-1].split()[0] != 'Mow' or states('binary_sensor.outdoor_work_friendly') == 'on') %}
-                {% set var.list = var.list + [entity] %}
-              {% endif %}
+              {% set var.list = var.list + [entity] %}
             {% endif %}
           {% endfor %}
           
@@ -463,7 +467,7 @@ generate_weekly_periodic_list:
                   - "{{ states('input_text.mini_todo_periodic_combinable_buffer') == 'empty' }}"
                 
                 then:
-                  - service: input_text.set_value
+                  - action: input_text.set_value
                     target:
                       entity_id: input_text.mini_todo_periodic_combinable_buffer
                     data:
@@ -471,15 +475,15 @@ generate_weekly_periodic_list:
                 
                 # Else combine the saved item with this one and add it to the weekly sensor.
                 else:
-                  - service: script.send_mini_todo_event
+                  - action: script.send_mini_todo_event
                     data:
                       event_type: add
                       item_type: "{{ type }}"
-                      value: "{{ icon_tag ~ (states('input_text.mini_todo_periodic_combinable_buffer') + ',' ~ item_text).split(',') }}"
+                      value: "{{ icon_tag ~ (states('input_text.mini_todo_periodic_combinable_buffer') ~ ', ' ~ item_text) }}"
             
             # Else add this item to the weekly sensor.
             else:
-              - service: script.send_mini_todo_event
+              - action: script.send_mini_todo_event
                 data:
                   event_type: add
                   item_type: "{{ type }}"
@@ -958,12 +962,16 @@ add_mini_todo_periodic_item:
             value: "{{ item.split('-')[0] }}"
             est_minutes: "{{ item.split('-')[1] | int(0) }}"
         
-        # Insert the selected item.
-        - service: script.insert_mini_todo_item
-          data:
-            value: "{{ value }}"
-            item_time: "{{ est_minutes }}"
-            major: false
+        # Insert the selected item, but skip yard work if it's not OK to work outside.
+        - if:
+            - "{{ type != 'yard_work' or states('sensor.outdoor_work_friendly') == 'on' }}"
+          
+          then:
+            - action: script.insert_mini_todo_item
+              data:
+                value: "{{ value }}"
+                item_time: "{{ est_minutes }}"
+                major: false
 
 # Insert a selected item into the mini todo list. This is called by all the scripts that handle mini todo items, except
 # Add Mini ToDo Calendar Items. Here we ensure the item is unique and that it fits in the available time. We also
@@ -1417,7 +1425,6 @@ log_laundry_event:
           options:
             - basic
             - metric
-            - metric_plus_gradient
             - fill_plus_load
             - timer
     
@@ -1444,7 +1451,7 @@ log_laundry_event:
       - conditions: "{{ event_type == 'basic' }}"
         
         sequence:
-          - service: notify.send_message
+          - action: notify.send_message
             target:
               entity_id: notify.laundry_events
             data:
@@ -1455,7 +1462,7 @@ log_laundry_event:
               - "{{ message == 'stopped' }}"
             
             then:
-              - service: notify.send_message
+              - action: notify.send_message
                 target:
                   entity_id: notify.laundry_events
                 data:
@@ -1465,27 +1472,17 @@ log_laundry_event:
       - conditions: "{{ event_type == 'metric' }}"
         
         sequence:
-          - service: notify.send_message
+          - action: notify.send_message
             target:
               entity_id: notify.laundry_events
             data:
               message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }})"
-
-      # A metric plus gradient message includes both a single metric plus a trend sensor gradient. Obviously this only applies to the dryer.
-      - conditions: "{{ event_type == 'metric_plus_gradient' }}"
-
-        sequence:
-          - service: notify.send_message
-            target:
-              entity_id: notify.laundry_events
-            data:
-              message: "{{ timestamp }} {{ prefix }} {{ message }} ({{ states(entity_id_1) }}) {{ state_attr(entity_id_2, 'gradient') | round(5) }}"
     
       # A fill plus load message includes both the washer fill seconds and calculated load size.
       - conditions: "{{ event_type == 'fill_plus_load' }}"
         
         sequence:
-          - service: notify.send_message
+          - action: notify.send_message
             target:
               entity_id: notify.laundry_events
             data:
@@ -1495,7 +1492,7 @@ log_laundry_event:
       - conditions: "{{ event_type == 'timer' }}"
         
         sequence:
-          - service: notify.send_message
+          - action: notify.send_message
             target:
               entity_id: notify.laundry_events
             data:
@@ -1504,7 +1501,7 @@ log_laundry_event:
       # Should not occur.
       default:
           
-        - service: system_log.write
+        - action: system_log.write
           data:
             message: "Event type invalid value ({{ event_type }})"
             level: error

@@ -17,5 +17,5 @@ ota:
 # WiFi signal sensor
 sensor:
   - platform: wifi_signal
-    name: ${friendly_name} WiFi Signal
+    name: WiFi Signal
     update_interval: $update_interval

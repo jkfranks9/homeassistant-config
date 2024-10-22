@@ -5,16 +5,31 @@
 - id: 'lights_out'
   name: Lights Out
   entities:
-    group.downstairs_common_lights:       'off'
-    light.studio_lights:                  'off'
-    group.family_room_lights:             'off'
-    group.kitchen_lights:                 'off'
-    light.office_lights:                  'off'
+    
+    # Downstairs
+    light.downstairs_common_lights:       'off'
+    light.dining_room_lights:             'off'
+    light.family_room_lamp:               'off'
+    light.stairway_light:                 'off'
+    light.kitchen_lights:                 'off'
     light.master_suite_lights:            'off'
+    light.office_lamp:                    'off'
+    light.office_bookcase:                'off'
+    light.studio_lights:                  'off'
+    
+    # Upstairs
+    light.upstairs_common_lights:         'off'
+    light.penthouse_lights:               'off'
+    light.theater_ceiling:                'off'
+    light.theater_sconces:                'off'
+    
+    # Misc
     light.all_christmas_lights:           'off'
-    light.upstairs_lights:                'off'
+    light.outdoor_lights:                 'off'
     light.storage_lights:                 'off'
-    group.outdoor_lights:                 'off'
+    
+    # Fans (see Turn Off Fan Lights automation) ... also note that rooms that contain ceiling fan lights
+    # need to have their contents expanded above, minus the fan light
     input_boolean.ceiling_fan_lights_off: 'on'
 
 #===============================#
@@ -25,16 +40,32 @@
 - id: 'non_master_lights_out'
   name: Non Master Lights Out
   entities:
+    
+    # Downstairs
+    light.downstairs_common_lights:       'off'
+    light.dining_room_lights:             'off'
+    light.family_room_lamp:               'off'
+    light.stairway_light:                 'off'
+    light.kitchen_lights:                 'off'
     light.master_bath_light:              'off'
-    group.downstairs_common_lights:       'off'
+    light.master_vanity_light:            'off'
+    light.office_lamp:                    'off'
+    light.office_bookcase:                'off'
     light.studio_lights:                  'off'
-    group.family_room_lights:             'off'
-    group.kitchen_lights:                 'off'
-    light.office_lights:                  'off'
+    
+    # Upstairs
+    light.upstairs_common_lights:         'off'
+    light.penthouse_lights:               'off'
+    light.theater_ceiling:                'off'
+    light.theater_sconces:                'off'
+    
+    # Misc
     light.all_christmas_lights:           'off'
-    light.upstairs_lights:                'off'
     light.storage_lights:                 'off'
-    group.outdoor_lights:                 'off'
+    light.outdoor_lights:                 'off'
+    
+    # Fans (see Turn Off Fan Lights automation) ... also note that rooms that contain ceiling fan lights
+    # need to have their contents expanded above, minus the fan light
     input_boolean.ceiling_fan_lights_off: 'on'
 
 #================================#
@@ -49,15 +80,27 @@
 - id: 'non_bedroom_lights_out'
   name: Non Bedroom Lights Out
   entities:
-    light.master_bath_light:              'off'
+    
+    # Downstairs
+    light.downstairs_common_lights:       'off'
+    light.dining_room_lights:             'off'
     light.stairway_light:                 'off'
+    light.kitchen_lights:                 'off'
+    light.master_bath_light:              'off'
+    light.master_vanity_light:            'off'
+    light.office_lamp:                    'off'
+    light.office_bookcase:                'off'
+    
+    # Upstairs    
     light.utility_light:                  'off'
-    group.downstairs_common_lights:       'off'
-    group.kitchen_lights:                 'off'
-    light.office_lights:                  'off'
+    
+    # Misc
     light.all_christmas_lights:           'off'
     light.storage_lights:                 'off'
-    group.outdoor_lights:                 'off'
+    light.outdoor_lights:                 'off'
+    
+    # Fans (see Turn Off Fan Lights automation) ... also note that rooms that contain ceiling fan lights
+    # need to have their contents expanded above, minus the fan light
     input_boolean.ceiling_fan_lights_off: 'on'
 
 #==================================#

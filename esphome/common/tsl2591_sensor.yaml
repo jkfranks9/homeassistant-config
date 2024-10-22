@@ -6,7 +6,7 @@ sensor:
     update_interval: $window_interval
     power_save_mode: false
     visible:
-      name: ${friendly_name} Ambient Light
+      name: Ambient Light
       unit_of_measurement: lux
       filters:
         - filter_out: 65535

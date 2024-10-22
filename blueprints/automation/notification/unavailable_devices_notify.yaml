@@ -41,17 +41,17 @@ variables:
   unavail_title: "{{ device_type_friendly ~ ' ' ~ curr_devices_str ~ ' Unavailable:' }}"
   restored_title: "{{ device_type_friendly  ~ ' Device Restored:' }}"
   unavail_id: "{{ device_type_lower ~ '_device_unavail' }}"
-  restored_id: "{{ device_type_lower ~ '_device_restored_' ~ as_timestamp(now()) | int(0) }}"
+  restored_id_prefix: "{{ device_type_lower ~ '_device_restored_' }}"
   
   # Trigger on any state change to the unavailable devices sensor.
   # NOTE: I'm assuming that the device list can't change while the state stays the same. In other words a single device can't
   # become available at the same time another device becomes unavailable.
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: !input current_sensor_entity
     from:
   
-condition:
+conditions:
     
   # Ignore any change to or from unavailable state.
   - condition: template
@@ -66,14 +66,14 @@ condition:
     entity_id: input_boolean.device_initialization_catch_22
     state: 'off'
   
-action:
+actions:
     
   # DEBUG messages
-  - service: system_log.write
+  - action: system_log.write
     data:
       message: "From state: {{ trigger.from_state }}"
       level: info    
-  - service: system_log.write
+  - action: system_log.write
     data:
       message: "To state: {{ trigger.to_state }}"
       level: info
@@ -87,7 +87,7 @@ action:
       sequence:
           
         # Issue the unavailable devices notification.
-        - service: script.send_notification
+        - action: script.send_notification
           data:
             destination:
               - persistent
@@ -108,7 +108,7 @@ action:
                   timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
                 
               # Save the timestamp for the device. This causes the device to be added to the previous unavailable devices sensor.
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: "{{ timestamp_entity }}"
                 data:
@@ -120,7 +120,7 @@ action:
       sequence:
           
         # Remove the unavailable devices notification.
-        - service: persistent_notification.dismiss
+        - action: persistent_notification.dismiss
           data:
             notification_id: "{{ unavail_id }}"
           
@@ -131,7 +131,8 @@ action:
                 
               - variables:
                   device_name: "{{ prev_device_list[repeat.index - 1] }}"
-                  timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
+                  device_name_id: "{{ (device_name | replace(' ', '_') | lower) }}"
+                  timestamp_entity: "{{ 'input_number.' ~ device_name_id }}"
                   from_time: "{{ states(timestamp_entity) | int(0) | timestamp_custom('%b %d %X') }}"
                   to_time: "{{ as_timestamp(now()) | timestamp_custom('%b %d %X') }}"
                   total_friendly: >
@@ -139,16 +140,16 @@ action:
                     {{ format_duration(states(timestamp_entity) | float(0)) }}
               
               # Issue the restored device notification.
-              - service: script.send_notification
+              - action: script.send_notification
                 data:
                   destination:
                     - persistent
                   title: "{{ restored_title }}"
-                  notification_id: "{{ device_type_lower ~ '_device_restored_' ~ as_timestamp(now()) | int(0) }}"
+                  notification_id: "{{ restored_id_prefix ~ device_name_id }}"
                   message: "{{ device_name ~ ' restored: (' ~ from_time ~ ' - ' ~ to_time ~ '), ' ~ total_friendly }}"
               
               # Remove the timestamp for the device.
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: "{{ timestamp_entity }}"
                 data:
@@ -160,7 +161,7 @@ action:
       sequence:
           
         # Issue the unavailable devices notification.
-        - service: script.send_notification
+        - action: script.send_notification
           data:
             destination:
               - persistent
@@ -188,7 +189,7 @@ action:
                       timestamp_entity: "{{ 'input_number.' ~ (device_name | replace(' ', '_') | lower) }}"
           
                   # Save the timestamp for the device. This causes the device to be added to the previous unavailable devices sensor.
-                  - service: input_number.set_value
+                  - action: input_number.set_value
                     target:
                       entity_id: "{{ timestamp_entity }}"
                     data:
@@ -200,7 +201,7 @@ action:
       sequence:
           
         # Issue the unavailable devices notification.
-        - service: script.send_notification
+        - action: script.send_notification
           data:
             destination:
               - persistent
@@ -234,16 +235,16 @@ action:
                         {{ format_duration(states(timestamp_entity) | float(0)) }}
           
                   # Issue the restored device notification.
-                  - service: script.send_notification
+                  - action: script.send_notification
                     data:
                       destination:
                         - persistent
                       title: "{{ restored_title }}"
-                      notification_id: "{{ device_type_lower ~ '_device_restored_' ~ device_name_id ~ '_' ~ as_timestamp(now()) | int(0) }}"
+                      notification_id: "{{ restored_id_prefix ~ device_name_id  }}"
                       message: "{{ device_name ~ ' restored: (' ~ from_time ~ ' - ' ~ to_time ~ '), ' ~ total_friendly }}"
           
                   # Remove the timestamp for the device.
-                  - service: input_number.set_value
+                  - action: input_number.set_value
                     target:
                       entity_id: "{{ timestamp_entity }}"
                     data:

@@ -51,6 +51,7 @@ bedtime:
 # Going to sleep now.
 sleeptime:
   alias: Sleeptime
+  
   sequence:
     
     # Only works during night time.
@@ -59,18 +60,17 @@ sleeptime:
       state: 'on'
     
     # Turn on sleeptime mode.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.sleeptime
     
-    # Also, turn off the master bedroom lamp and bath lights.
-    - service: light.turn_off
-      entity_id: light.master_bedroom_lamp
-    - service: light.turn_off
-      entity_id: light.master_bath_light
+    # Also, turn off the master suite lights.
+    - action: light.turn_off
+      entity_id: light.master_suite_lights
 
 # Turn on the bathroom light during the night.
 turn_on_bathroom_light:
   alias: Turn On Bathroom Light
+  
   sequence:
     
     # Only works during sleep time.
@@ -79,24 +79,24 @@ turn_on_bathroom_light:
       state: 'on'
     
     # Turn on bathroom flag.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.bathroom
     
     # Turn on master bedroom lamp.
-    - service: light.turn_on
+    - action: light.turn_on
       entity_id: light.master_bedroom_lamp
       data:
         kelvin: 2700
         brightness_pct: 20
     
-    # Turn on bath lights.
-    - service: light.turn_on
-      entity_id: light.master_bath_light
+    # Turn on bath light.
+    - action: light.turn_on
+      entity_id: light.master_vanity_light
     
     # Wait a few minutes then turn off the bathroom flag.
     - delay: '00:05:00'
     
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.bathroom
   
 # Awake but still in bed.
@@ -117,30 +117,22 @@ awake:
 # I have awoken.
 wakeup:
   alias: Wakeup
+  
   sequence:
     
-    # Turn off nighttime and sleeptime modes.
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.nighttime    
-    
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.sleeptime
+    # Turn off nighttime and sleeptime modes.The nighttime flag turning off triggers an automation that calls
+    # the Reset Bedtime Environment script, which (among other things) turns off the master suite lights. So
+    # we don't need to do that here.
+    - action: input_boolean.turn_off
+      entity_id:
+        - input_boolean.nighttime
+        - input_boolean.sleeptime
     
     # Turn on island light if needed. Other wakeup lights handled by lux sensor.
-    - service: script.change_lighting_per_weather
+    - action: script.change_lighting_per_weather
       data:
         light_entity: light.island_light
         wakeup: true
-    
-    # Transition from bedroom to wakeup lights using a delay.
-    - delay: '00:00:07'
-    
-    # Turn off the master bedroom and bath lights.
-    - service: light.turn_off
-      entity_id: light.master_bedroom_lamp    
-    
-    - service: light.turn_off
-      entity_id: light.master_bath_light
     
     # Turn off the island light when I'm in the office, or after a few minutes (lets me get breakfast).
     - wait_for_trigger:
@@ -150,7 +142,7 @@ wakeup:
           for: 120
       timeout: '00:10:00'
     
-    - service: light.turn_off
+    - action: light.turn_off
       entity_id: light.island_light
 
 # Toggle master suite lights. Mostly used after Awake (at least master lamp is on), but Wakeup not needed or desired
@@ -821,14 +813,14 @@ reset_smart_bulbs:
   alias: Reset Smart Bulbs
   
   sequence:
-    - service: script.reset_smart_bulb_nighttime
+    - action: script.reset_smart_bulb_nighttime
       data:
         light_entity: light.master_bedroom_lamp
     
-    - service: script.reset_smart_bulb_lux_sensor
+    - action: script.reset_smart_bulb_lux_sensor
       data:
         light_entity: light.office_lamp
-        lux_entity: sensor.office_ambient_light
+        lux_entity: sensor.office_sensor_ambient_light
         lux_value: 300
 
 # Reset a smart bulb based on the sky conditions (sun angle and weather).

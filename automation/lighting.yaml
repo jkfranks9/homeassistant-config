@@ -103,7 +103,7 @@
   use_blueprint:
     path: lighting/lux_light.yaml
     input:
-      lux_sensor: sensor.office_ambient_light
+      lux_sensor: sensor.office_sensor_ambient_light
       light_target: light.office_lamp
       min_lux_level: 150
       max_lux_level: 300
@@ -116,7 +116,7 @@
   use_blueprint:
     path: lighting/lux_light.yaml
     input:
-      lux_sensor: sensor.foyer_ambient_light
+      lux_sensor: sensor.foyer_sensor_ambient_light
       light_target: light.family_room_lamp
       min_lux_level: 250
       max_lux_level: 650
@@ -129,7 +129,7 @@
   use_blueprint:
     path: lighting/lux_light.yaml
     input:
-      lux_sensor: sensor.foyer_ambient_light
+      lux_sensor: sensor.foyer_sensor_ambient_light
       light_target: light.hallway_lamp
       min_lux_level: 400
       max_lux_level: 900
@@ -362,7 +362,7 @@
     path: lighting/motion_light_with_fan.yaml
     input:
       motion_entity: binary_sensor.master_bath_motion_detector_occupancy
-      light_entity: light.master_bath_light
+      light_entity: light.master_vanity_light
       fan_entity: switch.master_bath_fan
       no_motion_wait_fan_off: 240
       no_motion_wait_fan_on:  420
@@ -447,68 +447,6 @@
 #==========================#
 #     Christmas Lights     #
 #==========================#
-
-# Because of Christmas lights, some light groups are actually old-style groups that are dynamically built by this
-# automation (when the Christmas Mode toggle changes). For the front end, we need lists of symbols to display in 
-# the light group buttons that correspond to the lights in the group. The Dynamic Light Group Symbols sensor responds
-# to changes in the dynamic light groups, and creates the correct list of symbols for each dynamic group.
-#
-# NOTE: The order of symbols here and light entities built by the automation must be kept in sync.
-- alias: Build Dynamic Light Groups
-  id: build_dynamic_light_groups
-  
-  trigger:
-    - platform: state
-      entity_id: input_boolean.christmas_mode
-      from: 'on'
-      to: 'off'
-    
-    - platform: state
-      entity_id: input_boolean.christmas_mode
-      from: 'off'
-      to: 'on'
-      
-  variables:
-    family_room_lights: >
-      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
-      {{ build_dynamic_light_list('group.family_room_lights', 3, 'family_room') }}
-    
-    kitchen_lights: >
-      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
-      {{ build_dynamic_light_list('group.kitchen_lights', 3, 'kitchen') }}
-    
-    downstairs_common_lights: >
-      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
-      {{ build_dynamic_light_list('group.downstairs_common_lights', 4, 'downstairs_common') }}
-    
-    outdoor_lights: >
-      {% from 'dynamic_groups.jinja' import build_dynamic_light_list %}
-      {{ build_dynamic_light_list('group.outdoor_lights', 5, 'outdoor') }}
-  
-  action:
-    - service: group.set
-      data:
-        name: Family Room Lights
-        object_id: family_room_lights
-        entities: "{{ family_room_lights }}"
-
-    - service: group.set
-      data:
-        name: Kitchen Lights
-        object_id: kitchen_lights
-        entities: "{{ kitchen_lights }}"
-
-    - service: group.set
-      data:
-        name: Downstairs Common Lights
-        object_id: downstairs_common_lights
-        entities: "{{ downstairs_common_lights }}"
-
-    - service: group.set
-      data:
-        name: Outdoor Lights
-        object_id: outdoor_lights
-        entities: "{{ outdoor_lights }}"
 
 # Turn on Christmas lights in the morning on certain Christmas-y days.
 - alias: Turn On Christmas Lights

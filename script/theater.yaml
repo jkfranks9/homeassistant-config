@@ -854,10 +854,10 @@ change_downstairs_lighting:
           
         # Turn on lights if needed.
         - if:
-            - "{{ states('sensor.foyer_ambient_light') | int(0) <= 300 }}"
+            - "{{ states('sensor.foyer_sensor_ambient_light') | int(0) <= 300 }}"
           
           then:    
-            - service: light.turn_on
+            - action: light.turn_on
               data_template:
                 entity_id: >
                   {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
@@ -866,7 +866,7 @@ change_downstairs_lighting:
                     {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
                   {% endif %}
             
-            - service: light.turn_on
+            - action: light.turn_on
               entity_id:
                 - light.stairway_light
                 - light.island_light
@@ -877,7 +877,7 @@ change_downstairs_lighting:
           entity_id: binary_sensor.adults_home
           state: 'off'
         
-        - service: light.turn_off
+        - action: light.turn_off
           data_template:
             entity_id: >
               {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
@@ -886,7 +886,7 @@ change_downstairs_lighting:
                 {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
               {% endif %}
         
-        - service: light.turn_off
+        - action: light.turn_off
           entity_id: 
             - light.stairway_light
             - light.island_light

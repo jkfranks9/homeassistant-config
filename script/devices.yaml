@@ -39,15 +39,14 @@ restore_normal_penthouse_bedroom:
   sequence:
     
     # Remove upstairs thermostat hold.
-    - service: script.remove_thermostat_hold
+    - action: script.remove_thermostat_hold
       data:
         thermostat_entity: climate.upstairs
         extended: false
             
     # Turn on the vacuum automation.
-    - service: script.toggle_vacuum_automation
+    - action: script.toggle_vacuum_automation
       data:
-        vacuum_name: "{{ state_attr('vacuum.ecovacs_deebot', 'friendly_name') }}"
         operation: 'on'
 
 #==========================#
@@ -145,9 +144,6 @@ toggle_vacuum_automation:
   alias: Toggle Vacuum Automation
   
   fields:
-    vacuum_name:
-      description: Name of the vacuum.
-    
     operation:
       description: Whether to turn the automation on or off.
       selector:
@@ -170,11 +166,11 @@ toggle_vacuum_automation:
             - "{{ operation == 'on' }}"
           
           then:
-            - service: automation.turn_on
+            - action: automation.turn_on
               entity_id: automation.start_vacuum
           
           else:
-            - service: automation.turn_off
+            - action: automation.turn_off
               entity_id: automation.start_vacuum
 
 #=========================#

@@ -67,22 +67,19 @@ include:
     - input_number.washer_fill_seconds
     - input_select.washer_load_size
     - input_select.washer_state
-    - light.theater_fan                 # debugging
     - sensor.ahi_average
-    - sensor.ble_house_blue_charm_distance
+    - sensor.ble_house_sensor_blue_charm_distance
     - sensor.cpap_ahi_events_per_hour
     - sensor.cpap_average
     - sensor.cpap_usage_hours
     - sensor.cpap_usage_minutes
     - sensor.cpu_temp
     - sensor.downstairs_humidity
-    - sensor.dryer_humidity
-    - sensor.em2_air_handler_kwh
-    - sensor.em2_total_kwh
+    - sensor.dryer_sensor_humidity
     - sensor.jon_galaxy_detected_activity
     - sensor.memory_use_percent
     - sensor.nighttime
-    - sensor.porch_humidity
+    - sensor.porch_sensor_humidity
     - sensor.processor_use_percent
     - sensor.projector_energy
     - sensor.projector_plug_power
@@ -90,6 +87,8 @@ include:
     - sensor.sonoff_microwave_energy
     - sensor.total_daily_energy
     - sensor.total_power
+    - sensor.treadmill_energy
+    - sensor.washer_energy
     - sensor.washer_power_state
     - weather.astroweather_white_rabbit_gardens
   
@@ -107,8 +106,9 @@ include:
     - sensor.*_current_consumption
     - sensor.*_temperature
     - sensor.best_price_gas_*
-    - sensor.em2_*_amps
-    - sensor.em2_*_watts
+    - sensor.energy_mon_2_*_amps
+    - sensor.energy_mon_2_*_energy
+    - sensor.energy_mon_2_*_watts
     - sensor.home_*_distance
     - sensor.total_*_calories
     - sensor.total_*_time

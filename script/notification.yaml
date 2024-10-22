@@ -480,3 +480,38 @@ remove_manual_mobile_notification:
                 
                 then:
                   - stop: "User asked to stop."
+
+#===================#
+#     Utilities     #
+#===================#
+
+# Some notifications use a list of entities on which to trigger. Therefore, we can't determine the unique notification tag until run time.
+# To avoid placing such unique logic into the notification blueprint, a blueprint input is used that results in this script being called
+# to extract the required tag.
+extract_notification_tag_from_entity:
+  alias: Extract Notification Tag From Entity
+  
+  fields:
+    entity:
+      description: The triggered entity from which to extract the tag.
+    
+    type:
+      description: The type of the input entity. This determines the unique processing required to extract the tag.
+      selector:
+        select:
+          options:
+            - delivery
+  
+  sequence:
+    - variables:
+        tag: >
+          {% if type == 'delivery' %}
+            {{ state_attr(entity, 'friendly_name') | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | lower ~ '_package_delivered' }}
+          {% else %}
+            unknown
+          {% endif %}
+    
+        return_tag: "{{ {'tag': tag} }}"
+    
+    - stop: "Returning tag"
+      response_variable: return_tag

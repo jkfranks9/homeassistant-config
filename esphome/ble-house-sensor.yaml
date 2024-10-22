@@ -1,12 +1,12 @@
 # Device specific information
 substitutions:
+  friendly_name:    BLE House Sensor
   
   # Used by boards
   device_name:      ble-house-sensor
   loglevel:         DEBUG
   
   # Used by WiFi and sensors
-  friendly_name:    BLE House
   update_interval:  600s
   
   # Used by BLE sensor

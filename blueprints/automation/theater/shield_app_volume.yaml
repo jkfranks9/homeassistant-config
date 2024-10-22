@@ -1,10 +1,9 @@
-# Initialize the receiver volume based on the Shield TV application in use.
-# The volume to use is set by the UI into a number for each application. We use a default of 60% if we
-# can't extract the volume from the number.
-
 blueprint:
   name: Shield App Volume Initializer
-  description: Initialize the volume for a Shield TV application.
+  description: >
+    Initialize the receiver volume based on the Shield TV application in use. The volume to use is set by the UI into a number
+    for each application. We use a default of 60% if we can't extract the volume from the number.
+  
   domain: automation
   
   input:
@@ -21,14 +20,19 @@ variables:
   selected_app: "{{ input_appl_name.replace('+', ' plus').replace(' ', '_') | lower }}"
   selected_app_volume: "{{ states('input_number.' ~ selected_app ~ '_volume') | float(0.60) }}"
 
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: media_player.shield_android_tv
     attribute: app_name
     to: !input appl_name
 
-action:
-  - service: script.set_receiver_volume
+conditions:
+  
+  # Weed out junk.
+  - "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
+
+actions:
+  - action: script.set_receiver_volume
     data:
       target_name: "{{ input_appl_name }}"
       volume: "{{ selected_app_volume }}"

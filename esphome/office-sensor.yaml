@@ -1,12 +1,10 @@
 # Device specific information
 substitutions:
+  friendly_name:             Office Sensor
   
   # Used by boards
   device_name:               office-sensor
   loglevel:                  DEBUG
-  
-  # Used by sensors and WiFi
-  friendly_name:             Office
   
   # Used by WiFi
   update_interval:           600s
@@ -30,7 +28,7 @@ substitutions:
   hum_calibrate_truth_4:     "45.0"
   
   # Used by bme280 sensor
-  prefix:                    office
+  prefix:                    office_sensor
   
   # Used by TSL2591 sensor
   gain:                      medium

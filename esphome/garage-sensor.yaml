@@ -1,12 +1,10 @@
 # Device specific information
 substitutions:
+  friendly_name:             Garage Sensor
   
   # Used by boards
   device_name:               garage-sensor
   loglevel:                  DEBUG
-  
-  # Used by sensors and WiFi
-  friendly_name:             Garage
   
   # Used by WiFi
   update_interval:           600s
@@ -30,7 +28,7 @@ substitutions:
   hum_calibrate_truth_4:     "45.0"
   
   # Used by bme280 sensor
-  prefix:                    garage
+  prefix:                    garage_sensor
 
 # Pull in common configuration
 packages:

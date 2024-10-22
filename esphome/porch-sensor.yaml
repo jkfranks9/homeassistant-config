@@ -1,12 +1,10 @@
 # Device specific information
 substitutions:
+  friendly_name:             Porch Sensor
   
   # Used by boards (device name also used by MQTT)
   device_name:               porch-sensor
   loglevel:                  DEBUG
-  
-  # Used by sensors and WiFi
-  friendly_name:             Porch
   
   # Used by WiFi
   update_interval:           3s
@@ -30,7 +28,7 @@ substitutions:
   hum_calibrate_truth_4:     "50.0"
   
   # Used by bme280 sensor
-  prefix:                    porch
+  prefix:                    porch_sensor
 
 # Pull in common configuration
 packages:
@@ -78,7 +76,7 @@ sensor:
       - multiply: 4.2  
   
   - platform: template
-    name: ${friendly_name} Battery Voltage
+    name: Battery Voltage
     unit_of_measurement: 'V'
     icon: "mdi:battery-plus"
     update_interval: $update_interval
@@ -87,7 +85,7 @@ sensor:
       return (id(LIION).state);
     
   - platform: template
-    name: ${friendly_name} Battery Level
+    name: Battery Level
     unit_of_measurement: '%'
     icon: "mdi:battery-medium"
     update_interval: $update_interval

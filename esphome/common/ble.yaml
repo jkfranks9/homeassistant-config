@@ -43,7 +43,7 @@ esp32_ble_tracker:
 # Sensors for each tracked device. These return the current estimated distance.
 sensor:
   - platform: template
-    name: ${friendly_name} Blue Charm Distance
+    name: Blue Charm Distance
     id: ${sensor_id_prefix}_blue_charm_dist
     update_interval: ${sensor_interval}
     unit_of_measurement: "ft"
@@ -55,7 +55,7 @@ sensor:
       return getTracker(id(blue_charm_name)).get_dist();
   
   - platform: template
-    name: ${friendly_name} Jon Phone Distance
+    name: Jon Phone Distance
     id: ${sensor_id_prefix}_jon_phone_dist
     update_interval: ${sensor_interval}
     unit_of_measurement: "ft"

@@ -16,7 +16,7 @@
       attributes:
         overdue: >
           {% set val = namespace(overdue = []) %}
-          {% for type in ['treadmill', 'workout', 'yard_work', 'steps'] %}
+          {% for type in ['treadmill', 'workout'] %}
             {% set changed = states('sensor.' ~ type ~ '_last_changed') %}
             {% if changed not in ['unknown', 'unavailable'] %}
               {% set delta = now() - strptime(changed, '%Y-%m-%dT%H:%M:%S%z', now()) %}
@@ -42,6 +42,9 @@
               {% set val.types = val.types ~ ',' ~ type[0] | upper %}
             {% endif %}
           {% endfor %}
+          {% if val.types | length == 0 %}
+            {% set val.types = '-' %}
+          {% endif %}
         {% endif %}
         
         {{ val.types }}

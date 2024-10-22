@@ -4,7 +4,7 @@ sensor:
     address: 0x76
     update_interval: $window_interval
     temperature:
-      name: ${friendly_name} Temperature
+      name: Temperature
       id: ${prefix}_temperature
       unit_of_measurement: "°F"
       filters:
@@ -17,14 +17,14 @@ sensor:
             window_size: $window_size
             send_every:  $window_size
     pressure:
-      name: ${friendly_name} Pressure
+      name: Pressure
       id: ${prefix}_pressure
       filters:
         - sliding_window_moving_average:
             window_size: $window_size
             send_every:  $window_size
     humidity:
-      name: ${friendly_name} Humidity
+      name: Humidity
       id: ${prefix}_humidity
       filters:
         - calibrate_linear:

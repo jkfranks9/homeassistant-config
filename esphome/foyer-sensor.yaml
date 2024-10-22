@@ -1,12 +1,10 @@
 # Device specific information
 substitutions:
+  friendly_name:   Foyer Sensor
   
   # Used by boards
   device_name:     foyer-sensor
   loglevel:        DEBUG
-  
-  # Used by sensors and WiFi
-  friendly_name:   Foyer
   
   # Used by WiFi
   update_interval: 600s

@@ -1,12 +1,10 @@
 # Device specific information
 substitutions:
+  friendly_name:      Dryer Sensor
   
   # Used by boards
   device_name:        dryer-sensor
   loglevel:           DEBUG
-  
-  # Used by sensors and WiFi
-  friendly_name:      Dryer
   
   # Used by WiFi
   update_interval:    60s

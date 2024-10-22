@@ -7,11 +7,14 @@
   id: 'notify_projector_lamp_aging'
   
   use_blueprint:
-    path: notification/numeric_above_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.epson_lamp_hours
-      trigger_threshold: 1999
-      clear_threshold: 1999
+      trigger_type: numeric_state_above
+      entity: sensor.epson_lamp_hours
+      numeric_notify_threshold: 1999
+      numeric_clear_threshold: 1999
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.projector_lamp_notification
       message: 'Epson projector lamp might need replacing soon.'
       channel: standard
@@ -22,11 +25,14 @@
   id: 'notify_printer_toner_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.brother_printer_black_toner_remaining
-      trigger_threshold: 10
-      clear_threshold: 10
+      trigger_type: numeric_state_below
+      entity: sensor.brother_printer_black_toner_remaining
+      numeric_notify_threshold: 10
+      numeric_clear_threshold: 10
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.printer_toner_notification
       message: 'Printer toner might need replacing soon.'
       channel: standard
@@ -42,8 +48,9 @@
   # Note that the template below is tricky. The idea is to skip the first day of the forecast, because that's today.
   # Then bump the count if both temps are below the minimum for the next 3 days.
   use_blueprint:
-    path: notification/template_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: template
       template: >
         {% set forecast = state_attr('weather.openweathermap', 'forecast') %}
         {% set num_cold_days = namespace(count = []) %}
@@ -60,8 +67,8 @@
         
         {{ (num_cold_days.count) | length == 3 }}
       
-      timer_entity: timer.pool_chlorine_notification
       clear_type: manual
+      timer_entity: timer.pool_chlorine_notification
       message: 'Pool might need chlorine tablets.'
       channel: standard
       tag: 'pool_chlorine'
@@ -71,10 +78,13 @@
   id: 'notify_f150_service_due'
   
   use_blueprint:
-    path: notification/leapfrog_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: leapfrog
       current_value_entity: input_number.f150_mileage
       due_value_entity: input_number.f150_service_due
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.f150_service_notification
       message: 'F150 service is due.'
       channel: standard
@@ -85,10 +95,13 @@
   id: 'notify_treadmill_lube_due'
   
   use_blueprint:
-    path: notification/leapfrog_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: leapfrog
       current_value_entity: sensor.treadmill_current_hours
       due_value_entity: input_number.treadmill_lube_due
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.treadmill_lube_notification
       message: 'Treadmill lubrication is due.'
       channel: standard
@@ -103,8 +116,9 @@
   id: 'notify_vacuum_lazy'
   
   use_blueprint:
-    path: notification/time_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: time
       time_of_day: '07:00:00'
       conditions:
         - condition: time
@@ -124,8 +138,9 @@
   id: 'notify_vacuum_stuck'
   
   use_blueprint:
-    path: notification/time_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: time
       time_of_day: '07:01:00'
       conditions:
         - condition: time
@@ -144,11 +159,13 @@
   id: 'notify_vacuum_needs_maintenance'
   
   use_blueprint:
-    path: notification/event_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: event
       event_type: system_log_event
       event_data: {'name': 'sleekxmppfs.basexmpp', 'level': 'ERROR'}
       conditions: "{{ 'error' in trigger.event.data.message[0] }}"
+      clear_type: assisted
       message: 'Vacuum needs maintenance.'
       channel: standard
       tag: 'vacuum_maintenance'
@@ -162,11 +179,14 @@
   id: 'notify_phone_battery_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.jon_galaxy_battery_level
-      trigger_threshold: 15
-      clear_threshold: 50
+      trigger_type: numeric_state_below
+      entity: sensor.jon_galaxy_battery_level
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.phone_battery_notification
       message: 'Phone needs recharging.'
       channel: standard
@@ -177,11 +197,14 @@
   id: 'notify_tablet_battery_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.lenovo_tablet_battery_level
-      trigger_threshold: 15
-      clear_threshold: 50
+      trigger_type: numeric_state_below
+      entity: sensor.lenovo_tablet_battery_level
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.tablet_battery_notification
       message: 'Tablet needs recharging.'
       channel: standard
@@ -192,13 +215,15 @@
   id: 'notify_studio_motion_battery_low'
   
   use_blueprint:
-    path: notification/state_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: state
       entity: binary_sensor.studio_motion_detector_battery_low
       from_state: 'off'
       to_state: 'on'
-      timer_entity: timer.studio_motion_detector_battery_notification
+      enable_clear_trigger: true
       clear_type: auto
+      timer_entity: timer.studio_motion_detector_battery_notification
       message: 'Studio motion detector battery needs replacing.'
       channel: standard
       tag: 'studio_motion_battery'
@@ -208,13 +233,15 @@
   id: 'notify_laundry_room_motion_battery_low'
   
   use_blueprint:
-    path: notification/state_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: state
       entity: binary_sensor.laundry_room_motion_detector_battery_low
       from_state: 'off'
       to_state: 'on'
-      timer_entity: timer.laundry_room_motion_detector_battery_notification
+      enable_clear_trigger: true
       clear_type: auto
+      timer_entity: timer.laundry_room_motion_detector_battery_notification
       message: 'Laundry room motion detector battery needs replacing.'
       channel: standard
       tag: 'laundry_room_motion_battery'
@@ -224,13 +251,15 @@
   id: 'notify_master_bath_motion_battery_low'
   
   use_blueprint:
-    path: notification/state_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: state
       entity: binary_sensor.master_bath_motion_detector_battery_low
       from_state: 'off'
       to_state: 'on'
-      timer_entity: timer.master_bath_motion_detector_battery_notification
+      enable_clear_trigger: true
       clear_type: auto
+      timer_entity: timer.master_bath_motion_detector_battery_notification
       message: 'Master bath motion detector battery needs replacing.'
       channel: standard
       tag: 'master_bath_motion_battery'
@@ -240,11 +269,14 @@
   id: 'notify_back_door_sensor_battery_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.back_door_sensor_battery
-      trigger_threshold: 15
-      clear_threshold: 50
+      trigger_type: numeric_state_below
+      entity: sensor.back_door_sensor_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.back_door_sensor_battery_notification
       message: 'Back door sensor battery needs replacing.'
       channel: standard
@@ -255,11 +287,14 @@
   id: 'notify_studio_window_sensor_battery_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.studio_window_sensor_battery
-      trigger_threshold: 15
-      clear_threshold: 50
+      trigger_type: numeric_state_below
+      entity: sensor.studio_window_sensor_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.studio_window_sensor_battery_notification
       message: 'Studio window sensor battery needs replacing.'
       channel: standard
@@ -270,11 +305,14 @@
   id: 'notify_porch_sensor_battery_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.porch_battery_level
-      trigger_threshold: 20
-      clear_threshold: 95
+      trigger_type: numeric_state_below
+      entity: sensor.porch_sensor_battery_level
+      numeric_notify_threshold: 20
+      numeric_clear_threshold: 95
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.porch_battery_low_notification
       message: 'Porch sensor battery needs recharging.'
       channel: standard
@@ -285,11 +323,14 @@
   id: 'notify_master_br_vent_1_batteries_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.master_br_vent_1_battery
-      trigger_threshold: 26
-      clear_threshold: 74
+      trigger_type: numeric_state_below
+      entity: sensor.master_br_vent_1_battery
+      numeric_notify_threshold: 26
+      numeric_clear_threshold: 74
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.master_br_vent_1_battery_notification
       message: 'Master BR vent 1 batteries need replacing.'
       channel: standard
@@ -300,11 +341,14 @@
   id: 'notify_master_br_vent_2_batteries_low'
   
   use_blueprint:
-    path: notification/numeric_below_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.master_br_vent_2_battery
-      trigger_threshold: 26
-      clear_threshold: 74
+      trigger_type: numeric_state_below
+      entity: sensor.master_br_vent_2_battery
+      numeric_notify_threshold: 26
+      numeric_clear_threshold: 74
+      enable_clear_trigger: true
+      clear_type: auto
       timer_entity: timer.master_br_vent_2_battery_notification
       message: 'Master BR vent 2 batteries need replacing.'
       channel: standard
@@ -319,13 +363,16 @@
   id: 'notify_exercise_due'
   
   use_blueprint:
-    path: notification/numeric_above_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: sensor.exercise_overdue
-      trigger_threshold: 3
-      trigger_template: "{{ state.attributes.overdue | length }}"
-      clear_threshold: 3.5
-      clear_template: "{{ state.attributes.overdue | length }}"
+      trigger_type: numeric_state_above
+      entity: sensor.exercise_overdue
+      numeric_notify_threshold: 3
+      numeric_notify_template: "{{ state.attributes.overdue | length }}"
+      numeric_clear_threshold: 3.5
+      numeric_clear_template: "{{ state.attributes.overdue | length }}"
+      enable_clear_trigger: true
+      clear_type: auto
       title: attention
       message: 'Exercise is overdue.'
       channel: standard
@@ -503,9 +550,10 @@
   id: 'notify_calendar_appointment'
   
   use_blueprint:
-    path: notification/calendar_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      offset: -04:00:00
+      trigger_type: calendar
+      calendar_offset: -04:00:00
       calendar_tag: >
         {% set summary = trigger.calendar_event.summary %}
         {% if '(appt:' in summary %}
@@ -515,6 +563,7 @@
           {% set tag = '(appt)' %}
         {% endif %}
         {{ tag }}
+      clear_type: assisted
       title: attention
       message: >
         {% set summary = trigger.calendar_event.summary %}
@@ -538,10 +587,12 @@
   id: 'notify_calendar_home_event'
   
   use_blueprint:
-    path: notification/calendar_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      offset: -00:15:00
+      trigger_type: calendar
+      calendar_offset: -00:15:00
       calendar_tag: '(home)'
+      clear_type: assisted
       title: attention
       message: >
         {% set timeobj = as_datetime(as_timestamp(trigger.calendar_event.start, now())) | as_local %}
@@ -605,11 +656,13 @@
   id: 'notify_calendar_astronomy_event_1'
   
   use_blueprint:
-    path: notification/event_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: event
       event_type: timer.finished
       event_data: {'entity_id': 'timer.calendar_astronomy_notification_1'}
       enable_echo_destination: true
+      clear_type: assisted
       title: attention
       message: "{{ states('input_text.calendar_astronomy_notification_message_1') }}"
       channel: temporary
@@ -620,11 +673,13 @@
   id: 'notify_calendar_astronomy_event_2'
   
   use_blueprint:
-    path: notification/event_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: event
       event_type: timer.finished
       event_data: {'entity_id': 'timer.calendar_astronomy_notification_2'}
       enable_echo_destination: true
+      clear_type: assisted
       title: attention
       message: "{{ states('input_text.calendar_astronomy_notification_message_2') }}"
       channel: temporary
@@ -640,14 +695,14 @@
   id: 'notify_washer_done'
   
   use_blueprint:
-    path: notification/state_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: state
       entity: input_select.washer_state
       from_state: Rinse Drain
       to_state: 'Off'
-      clear_type: assisted
-      enable_clear_trigger: false
       enable_echo_destination: true
+      clear_type: assisted
       title: attention
       message: 'Washer has finished.'
       channel: standard
@@ -658,14 +713,14 @@
   id: 'notify_dryer_done'
   
   use_blueprint:
-    path: notification/state_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: state
       entity: input_boolean.dryer_running
       from_state: 'on'
       to_state: 'off'
-      clear_type: assisted
-      enable_clear_trigger: false
       enable_echo_destination: true
+      clear_type: assisted
       title: attention
       message: 'Dryer has probably finished.'
       channel: standard
@@ -680,8 +735,9 @@
   id: 'notify_next_canes_game'
   
   use_blueprint:
-    path: notification/template_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: template
       template: >
         {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
           {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), now()) %}
@@ -701,13 +757,41 @@
       channel: standard
       tag: 'next_canes_game'
 
+# Next Flyers game
+- alias: Notify Next Flyers Game
+  id: 'notify_next_flyers_game'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: template
+      template: >
+        {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.startTimeUTC is defined %}
+          {% set next = as_timestamp(state_attr('sensor.next_flyers_game', 'startTimeUTC'), now()) %}
+          {% set now =  as_timestamp(now()) %}
+          {{ iif((next - now) > 0, (((next - now) / 3600) | round(0)) < 12, false) }}
+        {% else %}
+          false
+        {% endif %}
+      clear_type: assisted
+      title: attention
+      message: >
+          {% if states('sensor.flyers_game_status') == 'Home' %}
+            {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }}
+          {% else %}
+            Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }}
+          {% endif %}
+      channel: standard
+      tag: 'next_flyers_game'
+
 # Next ISS pass
 - alias: Notify Next ISS Pass
   id: 'notify_next_iss_pass'
   
   use_blueprint:
-    path: notification/state_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: state
       entity: binary_sensor.international_space_station_iss_10_minute_pass_warning
       from_state: 'off'
       to_state: 'on'
@@ -715,13 +799,13 @@
         - condition: template
           value_template: >
             {{ states('sensor.international_space_station_iss_pass_0') | int(0) >= 300 and 
-               state_attr('sensor.international_space_station_iss_pass_0', 'max_elevation') | int(0) >= 35 }}        
+               state_attr('sensor.international_space_station_iss_pass_0', 'max_elevation') | int(0) >= 35 and
+               states('sensor.astroweather_white_rabbit_gardens_cloudless') | int(0) >= 50 }}        
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
-      clear_type: assisted
-      enable_clear_trigger: false
       enable_echo_destination: true
+      clear_type: assisted
       title: attention
       message: >
         {% set pass = states.sensor.international_space_station_iss_pass_0.entity_id %}
@@ -735,8 +819,9 @@
   id: 'notify_astronomy_friendly'
   
   use_blueprint:
-    path: notification/state_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
+      trigger_type: state
       entity: binary_sensor.astronomy_friendly
       from_state: 'off'
       to_state: 'on'
@@ -744,9 +829,8 @@
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
-      clear_type: assisted
-      enable_clear_trigger: false
       enable_echo_destination: true
+      clear_type: assisted
       title: attention
       message: 'It looks like a good night for stargazing.'
       channel: temporary
@@ -762,13 +846,14 @@
   id: 'notify_packages_delivered'
   
   use_blueprint:
-    path: notification/numeric_above_notify.yaml
+    path: notification/mobile_notify.yaml
     input:
-      sensor_entity: [sensor.mail_amazon_packages_delivered, sensor.mail_fedex_delivered, sensor.mail_ups_delivered, sensor.mail_usps_delivered]
-      trigger_threshold: 0
-      enable_clear_trigger: false
+      trigger_type: numeric_state_above
+      entity: [sensor.mail_amazon_packages_delivered, sensor.mail_fedex_delivered, sensor.mail_ups_delivered, sensor.mail_usps_delivered]
+      numeric_notify_threshold: 0
       enable_echo_destination: true
-      extract_tag_from_entity: true
+      extract_tag_type: delivery
+      clear_type: manual
       title: attention
       message: >
         {% set num = states(trigger.entity_id) | int(0) %}
@@ -949,18 +1034,18 @@
 - alias: Unregister Vacuum Problem Notifications
   id: unregister_vacuum_problem_notifications
   
-  trigger:
-    - platform: state
-      entity_id: vacuum.ecovacs_deebot
+  triggers:
+    - trigger: state
+      entity_id: vacuum.ecovacs_deebot_none
       not_from: docked
       to: docked
   
-  condition:
+  conditions:
     - condition: numeric_state
       entity_id: input_number.vacuum_problems
       above: 0
   
-  action:
+  actions:
     - variables:
         problems: "{{ states('input_number.vacuum_problems') }}"
           
@@ -971,7 +1056,7 @@
       then:
     
         # Remove the notification and unregister the tag.
-        - service: script.remove_mobile_notification
+        - action: script.remove_mobile_notification
           data:
             tag: vacuum_stuck
           
@@ -982,12 +1067,12 @@
       then:
     
         # Remove the notification and unregister the tag.
-        - service: script.remove_mobile_notification
+        - action: script.remove_mobile_notification
           data:
             tag: vacuum_maintenance
     
     # Clear the saved vacuum problems.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.vacuum_problems
       data:
@@ -997,22 +1082,22 @@
 - alias: Unregister Single Day Notifications
   id: unregister_single_day_notifications
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_boolean.sleeptime
       from: 'off'
       to: 'on'
   
-  action:
+  actions:
     - repeat:
         for_each: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         sequence:
           - if:
-              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next_canes_game'] }}"
+              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next_canes_game', 'next_flyers_game'] }}"
             
             then:
         
               # Remove the notification and unregister the tag.
-              - service: script.remove_mobile_notification
+              - action: script.remove_mobile_notification
                 data:
                   tag: "{{ repeat.item }}"

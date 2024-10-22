@@ -1,6 +1,7 @@
 # Core configuration for an ESP32 board
 esphome:
   name: $device_name
+  friendly_name: $friendly_name
   platform: ESP32
   board: nodemcu-32s
   #board: esp32dev

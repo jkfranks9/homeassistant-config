@@ -101,7 +101,7 @@
       
       then:        
         - action: vacuum.return_to_base
-          entity_id: vacuum.ecovacs_deebot 
+          entity_id: vacuum.ecovacs_deebot_none 
 
 # Shut down the host if UPS runtime reaches critical level.
 - alias: Handle UPS Critical
@@ -223,7 +223,7 @@
     
     # Instruct the vacuum to return home.
     - action: vacuum.return_to_base
-      entity_id: vacuum.ecovacs_deebot
+      entity_id: vacuum.ecovacs_deebot_none
     
     # The theater might have been on when power went out; reset the flag so it will open the next time.
     - action: input_boolean.turn_off
@@ -262,30 +262,30 @@
 - alias: Open House
   id: 'open_house'
   
-  trigger:
+  triggers:
     
     # Jon arrives home.
-    - platform: state
+    - trigger: state
       entity_id: person.jon
       from: 'not_home'
       to: 'home'
   
-  condition:
+  conditions:
     
     # Make sure the Jon Away flag is on. This turns on when I leave home, so should be on now.
     - condition: state
       entity_id: input_boolean.jon_away
       state: 'on'
   
-  action:    
+  actions:    
     
     # The Jon Away flag needs to get reset now that I'm home. Don't wait for the script, because it contains a several minute delay.
-    - service: script.turn_on
+    - action: script.turn_on
       target:
         entity_id: script.reset_jon_away
     
     # Open garage door.
-    - service: script.turn_on
+    - action: script.turn_on
       target:
         entity_id: script.open_garage_door_north
       data:
@@ -293,44 +293,41 @@
           use_info_message: false
     
     # Turn off extended away mode (this should have happened above based on proximity ... this is a failsafe).
-    - service: script.turn_off_extended_away_mode
+    - action: script.turn_off_extended_away_mode
     
     # Turn on appropriate lights if it's dark-ish.
     - if:
-        - "{{ states('sensor.foyer_ambient_light') | float(0) < 450 }}"
+        - "{{ states('sensor.foyer_sensor_ambient_light') | float(0) < 450 }}"
       
-      then:        
-        - service: light.turn_on
-          entity_id: light.office_lamp
-        
-        - service: light.turn_on
-          data_template:
-            entity_id: "{{ iif(states('input_boolean.christmas_mode') == 'off', 'light.daytime_lights', 'light.daytime_christmas_lights') }}"
+      then:
+        - action: light.turn_on
+          target:
+            entity_id: "{{ iif(states('input_boolean.christmas_mode') == 'off', ['light.daytime_lights', 'light.office_lamp'], ['light.all_christmas_lights', 'light.hallway_lamp', 'light.office_lamp']) }}"
 
 # Close up the house when needed.
 - alias: Close House
   id: 'close_house'
   
-  trigger:
+  triggers:
     
     # Jon leaves home.
-    - platform: state
+    - trigger: state
       entity_id: person.jon
       from: 'home'
       to: 'not_home'
     
     # The sun goes to bed.
-    - platform: state
+    - trigger: state
       entity_id: sun.sun
       from: 'above_horizon'
       to: 'below_horizon'
     
     # In case HA was rebooting when one of the above triggers would have happened.
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
   
   # These conditions cover the HA start trigger.
-  condition:
+  conditions:
     - or:
       - condition: state
         entity_id: person.jon
@@ -340,19 +337,19 @@
         entity_id: sun.sun
         state: 'below_horizon'
   
-  action:
+  actions:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
     # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
-    - service: script.turn_on
+    - action: script.turn_on
       target:
         entity_id: script.close_garage_door_north
       data:
         variables:
           use_info_message: true
     
-    - service:  script.turn_on
+    - action:  script.turn_on
       target:
         entity_id: script.close_garage_door_south
       data:
@@ -367,11 +364,11 @@
       then:
     
         # Indicate I'm  away.
-        - service: input_boolean.turn_on
+        - action: input_boolean.turn_on
           entity_id: input_boolean.jon_away
     
         # Lock the PC.
-        - service: script.turn_on
+        - action: script.turn_on
           entity_id: script.lock_pc
     
         - if:
@@ -389,18 +386,18 @@
       
       # Must be sunset.
       else:
-        
-        # Turn off certain light domains. However, make sure not to turn off outdoor christmas lights at sunset.
-        - variables:
-            targets: >
-              {% set storage_lights = expand('light.storage_lights') | map(attribute='entity_id') | list %}
-              {% set outdoor_lights = expand('group.outdoor_lights') | rejectattr('entity_id', 'in', ['light.outdoor_christmas']) | map(attribute='entity_id') | list %}
-              
-              {{ storage_lights + outdoor_lights }}
-        
-        - service: light.turn_off
-          target:
-            entity_id: "{{ targets }}"
+         
+-        # Turn off certain light domains. However, make sure not to turn off outdoor christmas lights at sunset.
+-        - variables:
+-            targets: >
+-              {% set storage_lights = expand('light.storage_lights') | map(attribute='entity_id') | list %}
+-              {% set outdoor_lights = expand('group.outdoor_lights') | rejectattr('entity_id', 'in', ['light.outdoor_christmas']) | map(attribute='entity_id') | list %}
+-              
+-              {{ storage_lights + outdoor_lights }}
+-        
+-        - action: light.turn_off
+           target:
+-            entity_id: "{{ targets }}"
 
 #=======================#
 #     House: Family     #
@@ -606,8 +603,8 @@
   mode: queued
   
   # Trigger when the penthouse bedroom is occupied by an adult.
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_select.occupied_bedrooms
       not_from:
         - 'AdultUp'
@@ -618,10 +615,10 @@
         - 'ChildDownPlus'
         - 'Both'
   
-  action:
+  actions:
 
     # Set a temporary temperature hold upstairs. Assume 7 days total.
-    - service: script.set_temporary_thermostat_hold
+    - action: script.set_temporary_thermostat_hold
       data:
         thermostat_entity: climate.upstairs
         heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
@@ -629,9 +626,8 @@
         days: 7
             
     # Turn off the vacuum automation.
-    - service: script.toggle_vacuum_automation
+    - action: script.toggle_vacuum_automation
       data:
-        vacuum_name: "{{ state_attr('vacuum.ecovacs_deebot', 'friendly_name') }}"
         operation: 'off'
 
 # If a child is home with parents, we don't have a way to determine if the parents leave (not a temporary leave),
@@ -851,7 +847,7 @@
     input:
       sensor_entity: input_boolean.office_occupied
       sensor_off_state: 'off'
-      temperature_entity: sensor.office_temperature
+      temperature_entity: sensor.office_sensor_temperature
       fan_entity: fan.office_fan
       thresholds: [79, 77, 74]
 
@@ -866,7 +862,7 @@
       sensor_off_state: 'off'
       temperature_entity: sensor.main_floor_temperature
       fan_entity: fan.family_room_fan
-      thresholds: [79, 76, 74]
+      thresholds: [80, 78.5, 74]
 
 # Operate the theater fan when the AV system is on.
 - alias: Operate Theater Fan
@@ -1175,11 +1171,11 @@
 - alias: Start Vacuum
   id: 'start_vacuum'
   
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: '03:00:00'
   
-  condition:
+  conditions:
     - condition: time
       weekday:
         - mon
@@ -1188,14 +1184,14 @@
       entity_id: timer.vacuum
       state: 'idle'
   
-  action:
-    - service: input_boolean.turn_off
+  actions:
+    - action: input_boolean.turn_off
       entity_id: input_boolean.vacuum_kicked_off
     
-    - service: vacuum.start
-      entity_id: vacuum.ecovacs_deebot
+    - action: vacuum.start
+      entity_id: vacuum.ecovacs_deebot_none
     
-    - service: timer.start
+    - action: timer.start
       data:
         entity_id: timer.vacuum
         duration: '01:30:00'
@@ -1203,21 +1199,25 @@
 # Land the vacuum.
 - alias: Stop Vacuum
   id: 'stop_vacuum'
-  trigger:
-    - platform: event
+  
+  triggers:
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.vacuum
-    - platform: numeric_state
+    
+    - trigger: numeric_state
       entity_id: sensor.ecovacs_battery
       below: 20
-  condition:
+  
+  conditions:
     - condition: time
       weekday:
         - mon
-  action:
-    - service: vacuum.return_to_base
-      entity_id: vacuum.ecovacs_deebot
+  
+  actions:
+    - action: vacuum.return_to_base
+      entity_id: vacuum.ecovacs_deebot_none
 
 # Detect the vacuum running - we use the battery dropping below a threshold as the trigger.
 - alias: Detect Vacuum Running
@@ -1527,107 +1527,130 @@
 - alias: Start Dryer
   id: start_dryer
   
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.dryer_start_button
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.dryer_sensor_start_button
       from: 'off'
       to: 'on'
   
-  action:    
+  actions:    
     
     # Indicate the dryer has started. This is the initial state before the temperature has been detected (in Turn On Dryer Running).
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.dryer_started
     
     # Remember to backup the log tomorrow morning.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.backup_laundry_log
     
     # Log the start in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: basic
         prefix: Dryer
         message: >
           {% set intemp  = states('sensor.downstairs_temperature') %}
           {% set inhum   = states('sensor.downstairs_humidity') %}
-          {% set outtemp = states('sensor.porch_temperature') %}
-          {% set outhum  = states('sensor.porch_humidity') %}
-          {% set drytemp = states('sensor.dryer_temperature') %}
-          {% set dryhum  = states('sensor.dryer_humidity') %}
+          {% set outtemp = states('sensor.porch_sensor_temperature') %}
+          {% set outhum  = states('sensor.porch_sensor_humidity') %}
+          {% set drytemp = states('sensor.dryer_sensor_temperature') %}
+          {% set dryhum  = states('sensor.dryer_sensor_humidity') %}
           
           starting: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%); dryer ({{ drytemp }}°, {{ dryhum }}%)
 
 - alias: Turn On Dryer Running
   id: turn_on_dryer_running
   
-  trigger:
+  triggers:
 
     # Trigger when the dryer temperature rises a bit above ambient.
-    - platform: template
+    - trigger: template
       value_template: >
-        {{ states('sensor.dryer_temperature') not in ['unavailable', 'unknown'] and states('sensor.downstairs_temperature') not in ['unavailable', 'unknown'] and
-           states('sensor.dryer_temperature') | int(0) > (states('sensor.downstairs_temperature') | int(0) + 30) }}
+        {{ states('sensor.dryer_sensor_temperature') not in ['unavailable', 'unknown'] and states('sensor.downstairs_temperature') not in ['unavailable', 'unknown'] and
+           states('sensor.dryer_sensor_temperature') | int(0) > (states('sensor.downstairs_temperature') | int(0) + 30) }}
       
-  action:
+  actions:
     
     # Set the dryer start time. Note that we delay this until we detect a rising temperature because nothing interesting
     # happens before then.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.dryer_start
       data_template:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
 
     # Initialize the temperature & humidity counts. This has the side effect of turning off the Dryer Done binary sensor.
-    - service: counter.reset
+    - action: counter.reset
       entity_id:
         - counter.dryer_temperature_count
         - counter.dryer_humidity_count
     
     # Indicate the dryer is running.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.dryer_running   
     
     # Turn off dryer started.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.dryer_started
     
     # Log temperature detected in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: metric
         prefix: Dryer
         message: temperature detected
-        entity_id_1: sensor.dryer_temperature
+        entity_id_1: sensor.dryer_sensor_temperature
+    
+    # Start a timer to ensure the Dryer Done binary sensor gets turned off at a failsafe time. This is accomplished
+    # by resetting the temperature & humidity counts.
+    - action: timer.start
+      data:
+        entity_id: timer.dryer_done_failsafe
+        duration: '02:00:00'
+
+# Ensure the Dryer Done binary sensor gets turned off at a failsafe time.
+- alias: Reset Dryer Done Failsafe
+  id: reset_dryer_done_failsafe
+  
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.dryer_done_failsafe
+  
+  actions:
+    - action: counter.reset
+      entity_id:
+        - counter.dryer_temperature_count
+        - counter.dryer_humidity_count
 
 - alias: Register Dryer Event
   id: register_dryer_event
 
-  trigger:
+  triggers:
 
     # Since our humidity trend sensor is looking for a drop of 30 points, only trigger if the current humidity is 70 or below.
     # This should weed out inaccurate trend sensor readings.
     # NOTE: The drop amount here must be kept in sync with the Dryer Humidity Falling trend sensor.
-    - platform: template
-      value_template: "{{ states('binary_sensor.dryer_humidity_falling') == 'on' and states('sensor.dryer_humidity') | int(0) <= 70 }}"
+    - trigger: template
+      value_template: "{{ states('binary_sensor.dryer_humidity_falling') == 'on' and states('sensor.dryer_sensor_humidity') | int(0) <= 70 }}"
       id: humidity
 
     # We don't bother doing the above for temperature. This would require saving the initial temperature when we detect the dryer is running, 
     # and I don't want to.
-    - platform: state
+    - trigger: state
       entity_id: binary_sensor.dryer_temperature_falling
       to: 'on'
       id: temperature
 
-  condition:
+  conditions:
 
     # Make sure the dryer is running ... we could easily detect changes at any time, since the sensor lives in the dryer vent connected to the outdoors.
     - condition: state
       entity_id: input_boolean.dryer_running
       state: 'on'
 
-  action: 
+  actions: 
 
     # Bump the appropriate count. The dryer done binary sensor only turns on when both counts are above 0. We use counts in case we get 
     # spurious triggers, for example back to back humidity falling.
@@ -1635,28 +1658,28 @@
         - "{{ trigger.id == 'temperature' }}"
 
       then:
-        - service: counter.increment
+        - action: counter.increment
           entity_id: counter.dryer_temperature_count
 
         # Log the event in the laundry events log.
-        - service: script.log_laundry_event
+        - action: script.log_laundry_event
           data:
             event_type: metric
             prefix: Dryer
             message: temperature falling
-            entity_id_1: sensor.dryer_temperature
+            entity_id_1: sensor.dryer_sensor_temperature
 
       else:
-        - service: counter.increment
+        - action: counter.increment
           entity_id: counter.dryer_humidity_count
 
         # Log the event in the laundry events log.
-        - service: script.log_laundry_event
+        - action: script.log_laundry_event
           data:
             event_type: metric
             prefix: Dryer
             message: humidity falling
-            entity_id_1: sensor.dryer_humidity
+            entity_id_1: sensor.dryer_sensor_humidity
 
 - alias: Turn Off Dryer Running
   id: turn_off_dryer_running
@@ -1694,52 +1717,6 @@
         is_washer: false
         start_time: "{{ state_attr('input_datetime.dryer_start', 'timestamp') | int(0) }}"
         stop_time: "{{ as_timestamp(now()) | round(0) }}"
-
-# Log the dryer trend sensors for debugging purposes. I anticipate needing a lot of dryer runs in different seasons
-# and conditions before settling on the final settings for the trend sensors that trigger the end of the cycle.
-- alias: Log Dryer Trend Sensors
-  id: log_dryer_trend_sensors
-  mode: queued
-
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.dryer_humidity_falling
-      attribute: gradient
-      id: humidity
-    - platform: state
-      entity_id: binary_sensor.dryer_temperature_falling
-      attribute: gradient
-      id: temperature
-
-  condition:
-    - condition: state
-      entity_id: input_boolean.dryer_running
-      state: 'on'
-
-  action:
-
-    # Log either the humidity or the temperature, based on the trigger id.
-    - if:
-        - condition: trigger
-          id: humidity
-
-      then:
-        - service: script.log_laundry_event
-          data:
-            event_type: metric_plus_gradient
-            prefix: Dryer
-            message: humidity
-            entity_id_1: sensor.dryer_humidity
-            entity_id_2: binary_sensor.dryer_humidity_falling
-
-      else:
-        - service: script.log_laundry_event
-          data:
-            event_type: metric_plus_gradient
-            prefix: Dryer
-            message: temperature
-            entity_id_1: sensor.dryer_temperature
-            entity_id_2: binary_sensor.dryer_temperature_falling
 
 #=======================#
 #     Treadmill Fan     #
@@ -1844,31 +1821,31 @@
 - alias: Modify Beacon Device Tracker
   id: 'modify_beacon_device_tracker'
   
-  trigger:
-    - platform: state
-      entity_id: sensor.ble_house_blue_charm_distance
+  triggers:
+    - trigger: state
+      entity_id: sensor.ble_house_sensor_blue_charm_distance
       to:
   
   # So we have a possible timing problem: during startup, the distance sensor might be invalid if ESPHome has not had 
   # time to initialize the BLE reader. We don't want to modify the tracker in this case. So we verify that the 
   # wifi sensor in the reader is in a good state before continuing. Yeah, I know.
   variables:
-    house_wifi: "{{ states('sensor.ble_house_wifi_signal') }}"
+    house_wifi: "{{ states('sensor.ble_house_sensor_wifi_signal') }}"
   
-  condition: "{{ house_wifi not in ['unknown', 'unavailable'] }}"
+  conditions: "{{ house_wifi not in ['unknown', 'unavailable'] }}"
   
-  action:
+  actions:
     - if:
         - "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
       
       then:    
-        - service: mqtt.publish
+        - action: mqtt.publish
           data:
             topic: "homeassistant/device_tracker/bluecharm_beacon"
             payload: "home"
       
       else:   
-        - service: mqtt.publish
+        - action: mqtt.publish
           data:
             topic: "homeassistant/device_tracker/bluecharm_beacon"
             payload: "not_home"
@@ -1972,26 +1949,3 @@
         entity_id: input_datetime.pc_lastboot
       data:
         timestamp: "{{ as_timestamp(states('sensor.legion_t530_lastboot')) }}"
-
-#=======================#
-#     Network Debug     #
-#=======================#
-
-- alias: Log Unifi Changes
-  id: log_unifi_changes
-  
-  trigger:
-    - platform: state
-      entity_id: sensor.unifi_counter
-  
-  action:
-    - variables:
-        IoT: "{{ state_attr('sensor.unifi_counter', 'White Rabbit IoT') }}"
-        NoT: "{{ state_attr('sensor.unifi_counter', 'White Rabbit NoT') }}"
-        UDM: "{{ state_attr('sensor.unifi_counter', 'AP UDM') }}"
-        U6: "{{ state_attr('sensor.unifi_counter', 'AP U6-Lite') }}"
-    
-    - service: system_log.write
-      data:
-        message: "{{ 'JKF: IoT (' ~ IoT ~ '); NoT (' ~ NoT ~ '); UDM (' ~ UDM ~ '); U6 (' ~ U6 ~ ')' }}"
-        level: warning

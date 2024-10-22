@@ -1,11 +1,11 @@
 substitutions:
+  friendly_name:    Energy Mon 2
   
   # Used by boards
   device_name:      energy-mon-2
   loglevel:         DEBUG
   
   # Used by WiFi and sensors
-  friendly_name:    EM2
   update_interval:  10s
 
   # Current Transformers:
@@ -59,11 +59,11 @@ sensor:
     
     phase_a:
       voltage:
-        name: ${friendly_name} Volts A
+        name: Volts A
         id: ic1Volts
         accuracy_decimals: 1
       current:
-        name: ${friendly_name} CT1 Amps
+        name: CT1 Amps
         id: ct1Amps
 
 # The max value for current that the meter can output is 65.535. If you expect to measure current over 65A, 
@@ -71,7 +71,7 @@ sensor:
 #        filters:
 #          - multiply: 2
       power:
-        name: ${friendly_name} CT1 Watts
+        name: CT1 Watts
         id: ct1Watts
 #        filters:
 #          - multiply: 2
@@ -80,20 +80,20 @@ sensor:
     
     phase_b:
       current:
-        name: ${friendly_name} CT2 Amps
+        name: CT2 Amps
         id: ct2Amps
       power:
-        name: ${friendly_name} CT2 Watts
+        name: CT2 Watts
         id: ct2Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_006_cal}
     
     phase_c:
       current:
-        name: ${friendly_name} CT3 Amps
+        name: CT3 Amps
         id: ct3Amps
       power:
-        name: ${friendly_name} CT3 Watts
+        name: CT3 Watts
         id: ct3Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
@@ -109,19 +109,19 @@ sensor:
     phase_a:
 # This voltage is only needed if monitoring 2 voltages
 #      voltage:
-#        name: ${friendly_name} Volts B
+#        name: Volts B
 #        id: ic2Volts
 #        accuracy_decimals: 1
       
       # This is the upstairs air handler. I currently only have one CT clamp, so am doubling the 
       # values to compensate, as per Circuit Setup instructions.
       current:
-        name: ${friendly_name} CT4 Amps
+        name: CT4 Amps
         id: ct4Amps
         filters:
           - multiply: 2
       power:
-        name: ${friendly_name} CT4 Watts
+        name: CT4 Watts
         id: ct4Watts
         filters:
           - multiply: 2
@@ -130,20 +130,20 @@ sensor:
     
     phase_b:
       current:
-        name: ${friendly_name} CT5 Amps
+        name: CT5 Amps
         id: ct5Amps
       power:
-        name: ${friendly_name} CT5 Watts
+        name: CT5 Watts
         id: ct5Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
     
     phase_c:
       current:
-        name: ${friendly_name} CT6 Amps
+        name: CT6 Amps
         id: ct6Amps
       power:
-        name: ${friendly_name} CT6 Watts
+        name: CT6 Watts
         id: ct6Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
@@ -154,7 +154,7 @@ sensor:
         
 # Total Amps   
   - platform: template
-    name: ${friendly_name} Total Amps
+    name: Total Amps
     id: totalAmps
     lambda: return id(ct1Amps).state + id(ct2Amps).state + id(ct3Amps).state + id(ct4Amps).state + id(ct5Amps).state + id(ct6Amps).state ;
     accuracy_decimals: 2
@@ -164,7 +164,7 @@ sensor:
 
 # Total Watts
   - platform: template
-    name: ${friendly_name} Total Watts
+    name: Total Watts
     id: totalWatts
     lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
     accuracy_decimals: 1
@@ -172,24 +172,92 @@ sensor:
     device_class: power
     update_interval: ${update_interval}
 
-# These will show up on the Home Assistant energy dashboard
+# CT6 includes the projector, for which we already have the power in watts in HA because it's plugged into a power monitoring plug.
+# We only want to report the excess power on this circuit, so pull in the projector power from HA and subtract it from the total
+# power on the circuit.
+  - platform: homeassistant
+    name: Projector Power
+    id: projector_power
+    entity_id: sensor.projector_plug_power
+    state_class: measurement
+    device_class: power
+    unit_of_measurement: W
+  
+  - platform: template
+    name: Utility Misc Corrected Power
+    id: utility_misc_corrected_power
+    lambda: return id(ct6Watts).state - id(projector_power).state ;
+    accuracy_decimals: 2
+    unit_of_measurement: W
+    device_class: power
+    update_interval: ${update_interval}
+
+#=============================#
+#     HA Energy Dashboard     #
+#=============================#
+  
   - platform: total_daily_energy
-    name: ${friendly_name} Air Handler kWh
+    name: Bed/Bath Energy
+    power_id: ct1Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+  
+  - platform: total_daily_energy
+    name: Theater/Hall Energy
+    power_id: ct2Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+  
+  - platform: total_daily_energy
+    name: Snack Bar Energy
+    power_id: ct3Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+  
+  - platform: total_daily_energy
+    name: Air Handler Energy
     power_id: ct4Watts
     filters:
       - multiply: 0.001
     unit_of_measurement: kWh
     device_class: energy
-    state_class: total_increasing 
+    state_class: total_increasing
   
   - platform: total_daily_energy
-    name: ${friendly_name} Total kWh
+    name: Utility Rack Energy
+    power_id: ct5Watts
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+  
+  - platform: total_daily_energy
+    name: Utility Misc Energy
+    power_id: utility_misc_corrected_power
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+  
+  - platform: total_daily_energy
+    name: Total Energy
     power_id: totalWatts
     filters:
       - multiply: 0.001
     unit_of_measurement: kWh
     device_class: energy
-    state_class: total_increasing 
+    state_class: total_increasing
 
 # This is needed for the Home Assistant energy dashboard.
 time:
@@ -199,4 +267,4 @@ time:
 # Restart switch
 switch:
   - platform: restart
-    name: ${friendly_name} Restart
+    name: Restart

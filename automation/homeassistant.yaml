@@ -5,65 +5,24 @@
 - alias: Perform Startup Chores
   id: perform_startup_chores
   
-  trigger:
-    - platform: homeassistant
+  triggers:
+    - trigger: homeassistant
       event: start
   
-  action:
-    
-    # For some reason, we need to recreate dynamic light groups. Without this, they still show up in the list of entities,
-    # but don't show up in templates. Probably a bug, but for now make sure we do this as soon as possible.
-    - service: group.set
-      data:
-        name: Family Room Lights
-        object_id: family_room_lights
-        entities:
-          - light.family_room_lamp
-          - light.stairway_light
-          - light.family_room_fan
-    
-    - service: group.set
-      data:
-        name: Kitchen Lights
-        object_id: kitchen_lights
-        entities:
-          - light.island_light
-          - light.sink_light
-          - light.kitchen_light
-    
-    - service: group.set
-      data:
-        name: Downstairs Common Lights
-        object_id: downstairs_common_lights
-        entities:
-          - light.foyer_hutch
-          - light.dining_room_hutch
-          - light.dining_room_lamps
-          - light.laundry_room_light
-    
-    - service: group.set
-      data:
-        name: Outdoor Lights
-        object_id: outdoor_lights
-        entities:
-          - light.porch_light
-          - light.front_floodlight
-          - light.driveway_light
-          - light.back_floodlight
-          - light.back_yard_light
+  actions:
     
     # Reinitialize beacon device tracker.
     - if:
-        - "{{ states('sensor.ble_house_blue_charm_distance') not in ['unknown', 'unavailable'] }}"
+        - "{{ states('sensor.ble_house_sensor_blue_charm_distance') not in ['unknown', 'unavailable'] }}"
         
       then:          
-        - service: mqtt.publish
+        - action: mqtt.publish
           data:
             topic: homeassistant/device_tracker/bluecharm_beacon
             payload: home
         
       else:          
-        - service: mqtt.publish
+        - action: mqtt.publish
           data:
             topic: homeassistant/device_tracker/bluecharm_beacon
             payload: not_home
@@ -91,19 +50,19 @@
               - "{{ states(repeat.item) == 'on' }}"
             
             then:          
-              - service: mqtt.publish
+              - action: mqtt.publish
                 data:
                   topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
                   payload: home
             
             else:          
-              - service: mqtt.publish
+              - action: mqtt.publish
                 data:
                   topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
                   payload: not_home
     
     # Delete junk log files left over from backing up the logs on shutdown.
-    - service: shell_command.delete_junk_log_files  
+    - action: shell_command.delete_junk_log_files  
     
     # Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
     - variables:
@@ -115,14 +74,12 @@
           - "{{ 'treadmill_' ~ suffix }}"
           - "{{ 'washer_' ~ suffix }}"
           - "{{ 'workout_' ~ suffix }}"
-          - "{{ 'yard_work_' ~ suffix }}"
-          - "{{ 'steps_' ~ suffix }}"
     
     - repeat:
         count: "{{ items | length }}"
         
         sequence:
-          - service: script.set_up_mqtt_automated_config
+          - action: script.set_up_mqtt_automated_config
             data:
               domain: sensor
               unique_id: "{{ items[repeat.index - 1] }}"
@@ -137,12 +94,12 @@
     
     # Turn on a flag to prevent any other automations or scripts mucking with the feature movie name until
     # restoration is complete.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
     
     # Call a pyscript module to restore the movie list.
-    - service: pyscript.restore_input_select_options
+    - action: pyscript.restore_input_select_options
       data:
         entity: input_select.kodi_movies
         file: '/config/all_movies_backup'
@@ -152,20 +109,20 @@
       timeout: '00:00:10'
     
     # Set the current feature movie as the selected option in the list.
-    - service: input_select.select_option
+    - action: input_select.select_option
       data:
         entity_id: input_select.kodi_movies
         option: "{{ states('input_text.current_feature') }}"
     
     # Turn off the restoration flag.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
     
     # TEMPORARY until Alexa Media Player startup problem is fixed.
     - delay: '00:00:30'
     
-    - service: homeassistant.reload_config_entry
+    - action: homeassistant.reload_config_entry
       target:
         entity_id: media_player.office_echo
 
@@ -193,11 +150,11 @@
 - alias: Perform Daily Chores
   id: 'perform_daily_chores'
   
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: '01:01:01'
   
-  action:
+  actions:
     - variables:
         day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%w') | int(0) }}"
         day_of_month: "{{ now().day }}"
@@ -234,7 +191,6 @@
         - automation.open_house
         - automation.run_studio_motion_based_light
         - automation.run_master_bath_motion_based_light
-        - automation.turn_on_christmas_lights
         - automation.turn_on_guest_lights_sunset
         - automation.control_office_lamp
     
@@ -282,6 +238,26 @@
         entity_id: input_number.f150_mileage
       data:
         value: "{{ states('input_number.f150_mileage') | int(0) + 32 }}"
+    
+    # In rare situations the theater open toggle can be left on. Reset it if adults are not home and the Harmony remote
+    # is in power off state.
+    - if:
+        - condition: state
+          entity_id: input_boolean.theater_open
+          state: 'on'
+        
+        - condition: state
+          entity_id: binary_sensor.adults_home
+          state: 'off'
+        
+        - condition: state
+          entity_id: sensor.harmony_hub
+          state: 'PowerOff'
+      
+      then:   
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.theater_open
     
     # Perform weekly chores at the start of a new week (Sunday).
     - if:
@@ -359,23 +335,19 @@
   max: 200
   
   # We trigger on all state changes, then weed out unnecessary events in the condition.
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: state_changed
   
   # Weed out non-automations and some we want to skip (including this one!).
-  condition:
+  conditions:
     - condition: template
       value_template: >
         {% set skip_list = [
-                            'backup_log_to_pc',
                             'initialize_turn_on_volume', 
                             'log_automations',
-                            'log_blue_charm_debug',
-                            'log_dryer_trend_sensors', 
                             'log_notifications', 
                             'log_scripts',
-                            'log_unifi_changes',
                             'modify_beacon_device_tracker',
                             'perform_daily_chores',
                             'remove_saved_notifications_on_dismiss',
@@ -393,10 +365,10 @@
         {{ trigger.event.data.entity_id.startswith('automation.') and
            trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
-  action:
+  actions:
     
     # Log it.
-    - service: notify.send_message
+    - action: notify.send_message
       target:
         entity_id: notify.automations_scripts
       data:
@@ -454,22 +426,6 @@
         message: >
          {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: (S) {{ trigger.event.data.name }}
 
-#============================#
-#     Backup To PC Share     #
-#============================#
-
-# Take a log snapshot every few minutes. Hopefully this will help narrow down the occasional HA meltdowns
-# I've seen. When this happens I lose logs so can't see what was going on.
-- alias: Backup Log To PC
-  id: backup_log_to_pc
-  
-  trigger:
-    - platform: time_pattern
-      minutes: '/5'
-  
-  action:
-    - service: shell_command.backup_log_to_pc
-
 #==================================#
 #     Persistent Notifications     #
 #==================================#
@@ -479,19 +435,20 @@
 
 # Save notifications to MQTT when they are created.
 - alias: Save Notifications On Create
-  id: save_notifications_on_create
+  id: save_notifications_on_create  
+  mode: queued
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: call_service
       event_data:
         domain: persistent_notification
         service: create
   
-  condition: "{{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}"
+  conditions: "{{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}"
   
-  action:
-    - service: mqtt.publish
+  actions:
+    - action: mqtt.publish
       data_template:
         topic: "home-assistant/notifications/{{ trigger.event.data.service_data.notification_id }}"
         payload: >-
@@ -575,28 +532,28 @@
   id: publish_mqtt_automated_states
   mode: parallel
   
-  trigger:
+  triggers:
     
     # Device triggers
-    - platform: state
+    - trigger: state
       entity_id: sensor.cyber1_status_data
       to: 'OB DISCHRG'
       for: '00:01:00'
       id: ups
     
-    - platform: state
+    - trigger: state
       entity_id: cover.garage_door_north
       from: 'closed'
       to: 'open'
       id: garage_door_north
     
-    - platform: state
+    - trigger: state
       entity_id: cover.garage_door_south
       from: 'closed'
       to: 'open'
       id: garage_door_south
     
-    - platform: state
+    - trigger: state
       entity_id: input_select.washer_state
       from: 'Off'
       not_to:
@@ -606,27 +563,16 @@
       id: washer
     
     # Exercise triggers
-    - platform: state
+    - trigger: state
       entity_id: input_boolean.treadmill_triggered
       from: 'off'
       to: 'on'
       id: treadmill
     
-    - platform: numeric_state
+    - trigger: numeric_state
       entity_id: input_number.workout_daily_time
       above: 0
       id: workout
-    
-    - platform: numeric_state
-      entity_id: input_number.yard_work_daily_time
-      above: 0
-      id: yard_work
-    
-    - platform: numeric_state
-      entity_id: input_number.steps_daily
-      value_template: "{{ state.state | int(0) - state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) }}"
-      above: 0
-      id: steps
   
   variables:
     valid: >
@@ -638,10 +584,10 @@
     unique_id: >
       {{ trigger.id }}_last_changed
   
-  condition: "{{ valid }}"
+  conditions: "{{ valid }}"
 
-  action:
-    - service: script.publish_mqtt_automated_states
+  actions:
+    - action: script.publish_mqtt_automated_states
       data:
         domain: sensor
         unique_id: "{{ unique_id }}"
@@ -687,28 +633,32 @@
 - alias: Enable Hockey Hobby
   id: enable_hockey_hobby
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_boolean.hockey_season
       from: 'off'
       to: 'on'
   
-  action:
-    - service: automation.turn_on
-      entity_id: automation.notify_next_canes_game
+  actions:
+    - action: automation.turn_on
+      entity_id:
+        - automation.notify_next_canes_game
+        - automation.notify_next_flyers_game
 
 - alias: Disable Hockey Hobby
   id: disable_hockey_hobby
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_boolean.hockey_season
       from: 'on'
       to: 'off'
   
-  action:
-    - service: automation.turn_off
-      entity_id: automation.notify_next_canes_game
+  actions:
+    - action: automation.turn_off
+      entity_id:
+        - automation.notify_next_canes_game
+        - automation.notify_next_flyers_game
 
 #==================================#
 #     Riemann Sum Integrations     #
@@ -907,11 +857,11 @@
 - alias: Create Daily Mini ToDo List
   id: create_daily_mini_todo_list
   
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: '05:00:00'
   
-  action:
+  actions:
     
     # If for some reason any of the weekly lists are unknown or unavailable, regenerate them, starting with the most recent Sunday,
     # which can be in the past, or today.
@@ -933,14 +883,14 @@
               - variables:
                   type: "{{ repeat.item.split('sensor.mini_todo_weekly_')[-1] | replace('_list', '') }}"
               
-              - service: script.generate_periodic_lists
+              - action: script.generate_periodic_lists
                 data:
                   type: "{{ type }}"
                   start_date: "{{ start_date }}"
     
     # Get the weather metrics, which are then input to the Outdoor Work Friendly binary sensor. This in turn is needed so we can know
     # whether or not to add outdoor tasks.
-    - service: script.get_weather_metrics
+    - action: script.get_weather_metrics
     
     # Clear the todo list for today.
     - event: reset_mini_todo_items
@@ -955,7 +905,7 @@
         total_minutes: "{{ (((as_timestamp(end_time) - as_timestamp(start_time)) / 60) - state_attr('sensor.variables', 'variables').mini_todo_downtime_minutes) | int(0) }}"
         
     # Initialize the available minutes using the daily start and end times, minus down time (for lunch and breaks).
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.mini_todo_available_minutes
       data:
@@ -963,18 +913,18 @@
         
     # Initialize the number of tasks in the list. I tried to just use the length of the list but for some odd reason
     # that sometimes produces the wrong number.
-    - service: counter.reset
+    - action: counter.reset
       target:
         entity_id: counter.mini_todo_tasks
     
     # Initialize the major item added toggle. We only allow one major item per day.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       data:
         entity_id: input_boolean.mini_todo_major_item_added
     
     # Add any calendar items for today first. These are important to know about, and the amount of time they consume must be
     # accounted for before we do anything else.
-    - service: script.add_mini_todo_calendar_items
+    - action: script.add_mini_todo_calendar_items
       data:
         window_lower_bound: "{{ window_lower_bound }}"
         window_upper_bound: "{{ window_upper_bound }}"
@@ -986,7 +936,7 @@
         - "{{ states('input_select.mini_todo_all_day_calendar_type') != 'trip' }}"
       
       then:
-        - service: script.add_mini_todo_exercise_item
+        - action: script.add_mini_todo_exercise_item
     
     # If this is a free time day, just add that to the list and go away. Weekly Free Time Days is a bitmask, where the 
     # least significant bit is Sunday.
@@ -999,7 +949,7 @@
             value: 'ft:FREE TIME'
                     
         # Bump the tasks counter.
-        - service: counter.increment
+        - action: counter.increment
           target:
             entity_id: counter.mini_todo_tasks
         
@@ -1008,7 +958,7 @@
     # Initialize the attempts count. Since we're checking within the called scripts if the task to be added fits within the remaining
     # available time, we might not find anything that works, which could lead to a large or infinite loop. To avoid this, we only attempt
     # to find tasks a small finite number of times.
-    - service: counter.reset
+    - action: counter.reset
       target:
         entity_id: counter.mini_todo_attempts
     
@@ -1016,16 +966,21 @@
     # but is also subject to coin tosses.
     - variables:
         task_count: "{{ 5 - states('counter.mini_todo_tasks') | int(0) }}"
-        avail_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) }}"
-        accum_tasks: "{{ states('counter.mini_todo_tasks') | int(0) }}"
-        accum_attempts: "{{ states('counter.mini_todo_attempts') | int(0) }}"
     
     - repeat:
-        while: "{{ avail_minutes > 0 and accum_tasks < task_count and accum_attempts <= 10 }}"
+        while: "{{ states('input_number.mini_todo_available_minutes') | int(total_minutes) > 0 and 
+                   states('counter.mini_todo_tasks') | int(0) < task_count and
+                   states('counter.mini_todo_attempts') | int(0) <= 10 }}"
         
         sequence:
           - variables:
               type: "{{ ['cleaning', 'other', 'yard_work', 'major', 'minor'] | random }}"
+          
+          # Log diagnostics.
+          - action: system_log.write
+            data:
+              message: "{{ 'iteration ' ~ repeat.index ~ ': type=' ~ type ~ ', avail=' ~ states('input_number.mini_todo_available_minutes') ~ ', tasks=' ~ states('counter.mini_todo_tasks') ~ ', attempts=' ~ states('counter.mini_todo_attempts') }}"
+              level: info
           
           - choose:
           
@@ -1036,7 +991,7 @@
                 - if: "{{ range(2) | random > 0 }}"
                 
                   then:
-                    - service: script.add_mini_todo_periodic_item
+                    - action: script.add_mini_todo_periodic_item
                       data:
                         type: "{{ type }}"
             
@@ -1047,7 +1002,7 @@
                 - if: "{{ range(2) | random > 0 }}"
                 
                   then:
-                    - service: script.add_mini_todo_project_item
+                    - action: script.add_mini_todo_project_item
                       data:
                         type: "{{ type }}"
 
@@ -1089,15 +1044,24 @@
           target:
             entity_id: counter.unifi_integration_errors
 
+# Reload Ecovacs if it goes unavailable. Also check at HA start because it might already be unavailable.
 - alias: Reload Ecovacs Integration
   id: reload_ecovacs_integration
   
-  trigger:
-    - platform: state
-      entity_id: vacuum.ecovacs_deebot
+  triggers:
+    - trigger: state
+      entity_id: vacuum.ecovacs_deebot_none
       to: unavailable
+    
+    - trigger: homeassistant
+      event: start
   
-  action:    
+  conditions:
+    - condition: state
+      entity_id: vacuum.ecovacs_deebot_none
+      state: unavailable
+  
+  actions:    
     - action: homeassistant.reload_config_entry
       target:
-        entity_id: vacuum.ecovacs_deebot
+        entity_id: vacuum.ecovacs_deebot_none

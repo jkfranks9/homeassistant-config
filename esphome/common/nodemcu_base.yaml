@@ -1,6 +1,7 @@
 # Core configuration for a NodeMCU board
 esphome:
   name: $device_name
+  friendly_name: $friendly_name
   platform: ESP8266
   board: nodemcuv2
 
