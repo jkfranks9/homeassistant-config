@@ -11,79 +11,8 @@
   
   actions:
     
-    # Reinitialize beacon device tracker.
-    - if:
-        - "{{ states('sensor.ble_house_sensor_blue_charm_distance') not in ['unknown', 'unavailable'] }}"
-        
-      then:          
-        - action: mqtt.publish
-          data:
-            topic: homeassistant/device_tracker/bluecharm_beacon
-            payload: home
-        
-      else:          
-        - action: mqtt.publish
-          data:
-            topic: homeassistant/device_tracker/bluecharm_beacon
-            payload: not_home
-    
-    # Reinitialize virtual device trackers.
-    - variables:
-        vtrack_entities: >
-          {% set var = namespace(vtrack = []) %}
-          {% for state in states.input_boolean %}
-            {% if 'Virtual' in state.name %}
-              {% set var.vtrack = var.vtrack + [state.entity_id] %}
-            {% endif %}
-          {% endfor %}
-          
-          {{ var.vtrack }}
-    
-    - repeat:
-        for_each: "{{ vtrack_entities }}"
-        
-        sequence:
-          - variables:
-              topic_suffix: "{{ repeat.item | replace('input_boolean.', '') }}"
-          
-          - if:
-              - "{{ states(repeat.item) == 'on' }}"
-            
-            then:          
-              - action: mqtt.publish
-                data:
-                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
-                  payload: home
-            
-            else:          
-              - action: mqtt.publish
-                data:
-                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
-                  payload: not_home
-    
     # Delete junk log files left over from backing up the logs on shutdown.
-    - action: shell_command.delete_junk_log_files  
-    
-    # Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
-    - variables:
-        suffix: 'last_changed'    
-        items:
-          - "{{ 'ups_' ~ suffix }}"
-          - "{{ 'garage_door_north_' ~ suffix }}"
-          - "{{ 'garage_door_south_' ~ suffix }}"
-          - "{{ 'treadmill_' ~ suffix }}"
-          - "{{ 'washer_' ~ suffix }}"
-          - "{{ 'workout_' ~ suffix }}"
-    
-    - repeat:
-        count: "{{ items | length }}"
-        
-        sequence:
-          - action: script.set_up_mqtt_automated_config
-            data:
-              domain: sensor
-              unique_id: "{{ items[repeat.index - 1] }}"
-              device_class: timestamp
+    - action: shell_command.delete_junk_log_files 
     
     # We have an input select that represents the list of Kodi movies. This is dynamically set using the 
     # Process All Kodi Movies Result script. However, when HA restarts, the input select gets restored to the yaml value
@@ -126,6 +55,77 @@
       target:
         entity_id: media_player.office_echo
 
+#=====================#
+#     MQTT Chores     #
+#=====================#
+
+# We need to wait until the MQTT broker is active after a restart to perform various MQTT chores. This may take
+# a little time after HA startup.
+- alias: Perform MQTT Chores
+  id: perform_mqtt_chores
+  
+  triggers:
+    - trigger: mqtt
+      topic: homeassistant/status
+      payload: 'online'
+  
+  actions:
+    
+    # Reinitialize virtual device trackers.
+    - variables:
+        vtrack_entities: >
+          {% set var = namespace(vtrack = []) %}
+          {% for state in states.input_boolean %}
+            {% if 'Virtual' in state.name %}
+              {% set var.vtrack = var.vtrack + [state.entity_id] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ var.vtrack }}
+    
+    - repeat:
+        for_each: "{{ vtrack_entities }}"
+        
+        sequence:
+          - variables:
+              topic_suffix: "{{ repeat.item | replace('input_boolean.', '') }}"
+          
+          - if:
+              - "{{ states(repeat.item) == 'on' }}"
+            
+            then:          
+              - action: mqtt.publish
+                data:
+                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+                  payload: home
+            
+            else:          
+              - action: mqtt.publish
+                data:
+                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+                  payload: not_home 
+    
+    # Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
+    - variables:
+        suffix: 'last_changed'    
+        items:
+          - "{{ 'ups_' ~ suffix }}"
+          - "{{ 'garage_door_north_' ~ suffix }}"
+          - "{{ 'garage_door_south_' ~ suffix }}"
+          - "{{ 'treadmill_' ~ suffix }}"
+          - "{{ 'washer_' ~ suffix }}"
+          - "{{ 'workout_' ~ suffix }}"
+    
+    - repeat:
+        count: "{{ items | length }}"
+        
+        sequence:
+          - action: script.set_up_mqtt_automated_config
+            data:
+              domain: sensor
+              unique_id: "{{ items[repeat.index - 1] }}"
+              device_class: timestamp
+
 #=========================#
 #     Shutdown Chores     #
 #=========================#
@@ -158,6 +158,8 @@
     - variables:
         day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%w') | int(0) }}"
         day_of_month: "{{ now().day }}"
+        echo_list: "{{ expand(integration_entities('alexa_media') | select('search', 'media_player')) |
+                       rejectattr('attributes.friendly_name', 'in', ['This Device', 'Everywhere']) | map(attribute = 'entity_id') | list }}"
     
     # Reset daily exercise values.
     - action: input_number.set_value
@@ -259,6 +261,22 @@
           target:
             entity_id: input_boolean.theater_open
     
+    # Normalize the volume on all echo devices.
+    - repeat:
+        for_each: "{{ echo_list }}"
+        
+        sequence:
+          - action: media_player.volume_set
+            target:
+              entity_id: "{{ repeat.item }}"
+            data:
+              volume_level: 0.5
+    
+    # Reset the sunset light sensor trip toggle.  
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.sunset_light_sensor_trip
+    
     # Perform weekly chores at the start of a new week (Sunday).
     - if:
         - "{{ day_of_week == 0 }}"
@@ -334,12 +352,15 @@
   mode: queued
   max: 200
   
-  # We trigger on all state changes, then weed out unnecessary events in the condition.
+  trace:
+    stored_traces: 20
+  
+  # We trigger on all automation triggers.
   triggers:
     - trigger: event
-      event_type: state_changed
+      event_type: automation_triggered
   
-  # Weed out non-automations and some we want to skip (including this one!).
+  # Weed out automations we want to skip (including this one!).
   conditions:
     - condition: template
       value_template: >
@@ -360,10 +381,10 @@
                             'set_minimum_attic_temperature', 
                             'set_minimum_garage_temperature', 
                             'set_minimum_outdoor_temperature',
-                            'set_washer_operation'
+                            'set_washer_operation',
+                            'test_automation_trigger'
                            ] %}
-        {{ trigger.event.data.entity_id.startswith('automation.') and
-           trigger.event.data.entity_id.split('.')[1] not in skip_list }}
+        {{ trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
   actions:
     
@@ -373,7 +394,7 @@
         entity_id: notify.automations_scripts
       data:
         message: >
-         {{ as_timestamp(trigger.event.data.new_state.last_updated) | timestamp_custom('%b %d: %X') }}: (A) {{ trigger.event.data.new_state.name }}
+         {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: (A) {{ trigger.event.data.name }}
 
 #=====================#
 #     Scripts Log     #
@@ -385,13 +406,16 @@
   mode: queued
   max: 200
   
+  trace:
+    stored_traces: 20
+  
   # We trigger on all started scripts.
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: script_started
   
-  # Weed out non-scripts and some we want to skip.
-  condition:
+  # Weed out scripts we want to skip.
+  conditions:
     - condition: template
       value_template: >
         {% set skip_list = [
@@ -413,13 +437,12 @@
                             'set_theater_dim',
                             'set_theater_idle'
                            ] %}
-        {{ trigger.event.data.entity_id.startswith('script.') and
-           trigger.event.data.entity_id.split('.')[1] not in skip_list }}
+        {{ trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
-  action:
+  actions:
     
     # Log it.
-    - service: notify.send_message
+    - action: notify.send_message
       target:
         entity_id: notify.automations_scripts
       data:
@@ -677,28 +700,24 @@
   trigger:
     - platform: state
       entity_id:
-        - sensor.attic_light_energy
         - sensor.back_floodlight_energy
         - sensor.back_yard_light_energy
         - sensor.dining_room_hutch_energy
         - sensor.dining_room_lamps_energy
-        - sensor.driveway_lights_energy
-        - sensor.family_room_av_energy
+        - sensor.driveway_light_energy
         - sensor.family_room_fan_energy
         - sensor.family_room_lamp_energy
-        - sensor.fire_tv_energy
         - sensor.foyer_hutch_energy
         - sensor.front_floodlight_energy
-        - sensor.garage_lights_energy
         - sensor.hallway_lamp_energy
-        - sensor.hallway_lights_energy
+        - sensor.hallway_light_energy
         - sensor.island_light_energy
         - sensor.kitchen_light_energy
         - sensor.laundry_room_light_energy
         - sensor.master_bath_fan_energy
         - sensor.master_bath_light_energy
         - sensor.master_bedroom_lamp_energy
-        - sensor.office_bookcase_light_energy
+        - sensor.office_bookcase_energy
         - sensor.office_fan_energy
         - sensor.office_lamp_energy
         - sensor.penthouse_fan_energy
@@ -707,24 +726,18 @@
         - sensor.penthouse_tub_light_energy
         - sensor.penthouse_vanity_light_energy
         - sensor.porch_light_energy
-        - sensor.projector_energy
-        - sensor.refrigerator_energy
         - sensor.sink_light_energy
         - sensor.snack_light_energy
-        - sensor.sonoff_microwave_energy
         - sensor.stairway_light_energy
         - sensor.studio_fan_energy
         - sensor.studio_lamp_1_energy
         - sensor.studio_lamp_2_energy
         - sensor.studio_light_energy
-        - sensor.theater_av_energy
         - sensor.theater_ceiling_energy
         - sensor.theater_fan_energy
         - sensor.theater_sconces_energy
-        - sensor.treadmill_energy
         - sensor.treadmill_fan_energy
         - sensor.utility_light_energy
-        - sensor.washer_energy
       to: 'unavailable'
       for: '00:00:05'
   
@@ -819,30 +832,93 @@
 
 # Assist an ESPHome update all operation by temporarily turning off deep sleep for a battery device so the new firmware
 # can be uploaded. This must be done in advance, because deep sleep can only be turned off at the device when it wakes
-# from the previous deep sleep. The deep sleep time is 10 minutes, so this automation is triggered when the update all 
-# operation is 2 devices before the battery device.
-#
-# See the ESPHome Update Sensor List and ESPHome Update Deep Sleep Trigger template sensors for more information.
+# from the previous deep sleep. The deep sleep time is 10 minutes, so this automation attempts to suspend the one
+# battery powered device a bit before we try to update the firmware.
+
+# Obviously, this is timing dependent, relies on matching the names and order of ESPHome devices, and won't work
+# as-is if more battery devices are added. Such is (programming) life.
 - alias: Assist ESPHome Update All
   id: assist_esphome_update_all
   
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.esphome_update_deep_sleep_trigger
-      below: 1
+  trace:
+    stored_traces: 20
   
-  condition: "{{ trigger.from_state and trigger.from_state.state != 'unavailable' }}"
+  triggers:
+    
+    # Trigger on various devices being updated after new firmware has been installed.
+    - trigger: state
+      entity_id: update.attic_sensor_firmware
+      from: 'on'
+      to: 'off'
+      id: first_device
+    
+    - trigger: state
+      entity_id:
+        - update.dryer_sensor_firmware
+        - update.energy_mon_2_firmware
+      from: 'on'
+      to: 'off'
+      id: intermediate_device
+    
+    - trigger: state
+      entity_id: update.family_room_box3_firmware
+      from: 'on'
+      to: 'off'
+      id: trigger_device
+    
+    - trigger: state
+      entity_id: update.tag_reader_firmware
+      from: 'on'
+      to: 'off'
+      id: last_device
   
-  action:
-    - service: script.suspend_deep_sleep
-      data:
-        topic: 'porch-sensor/ota_mode'
+  actions:
+    - variables:
+        target_device_count: 3
+        battery_device: 'porch-sensor'
     
-    - delay: '00:09:00'
-    
-    - service: script.resume_deep_sleep
-      data:
-        topic: 'porch-sensor/ota_mode'
+    # React to different devices being updated.
+    - choose:
+        
+        # Set the count to 1 for the first device. The count is just a sanity check to help ensure we're actually
+        # doing an update all.
+        - conditions: "{{ trigger.id == 'first_device' }}"
+          
+          sequence:
+            - action: counter.set_value
+              target:
+                entity_id: counter.esphome_update_all
+              data:
+                value: 1
+        
+        # Bump the count for intermediate devices before the trigger device.
+        - conditions: "{{ trigger.id == 'intermediate_device' }}"
+          
+          sequence:
+            - action: counter.increment
+              target:
+                entity_id: counter.esphome_update_all
+        
+        # When the trigger device is updated we should have about 10 minutes or so before we do the battery device, so 
+        # suspend deep sleep when the next time that device wakes up.
+        - conditions: "{{ trigger.id == 'trigger_device' }}"
+          
+          sequence:
+            - if:
+                - "{{ states('counter.esphome_update_all') | int(0) == target_device_count }}"
+              
+              then:
+                - action: script.suspend_deep_sleep
+                  data:
+                    topic: "{{ battery_device ~ '/ota_mode' }}"
+        
+        # The last device has been updated, resume deep sleep.
+        - conditions: "{{ trigger.id == 'last_device' }}"
+          
+          sequence:
+            - action: script.resume_deep_sleep
+              data:
+                topic: "{{ battery_device ~ '/ota_mode' }}"
 
 #========================#
 #     Mini ToDo List     #

@@ -1,0 +1,13 @@
+#=============================#
+#     Dashboard Assistance    #
+#=============================#
+
+# These provide a single entity to use on a tile card to link to a subview.
+  
+# Miscellaneous devices
+miscellaneous_devices:
+  entities:
+    - cover.master_br_vent_1
+    - cover.master_br_vent_2
+    - binary_sensor.back_door_sensor_contact
+    - binary_sensor.studio_window_sensor_contact

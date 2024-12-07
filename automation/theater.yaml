@@ -85,117 +85,136 @@
 - alias: Handle Projector Error
   id: handle_projector_error
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         name: 'custom_components.epson_projector_link.projector.projector'
         level: 'ERROR'
   
-  condition: "{{ 'Lamp ON failure' in trigger.event.data.message[0] }}"
+  conditions: "{{ 'Lamp ON failure' in trigger.event.data.message[0] }}"
   
-  action:
+  actions:
     
     - variables:
         delay_time: '00:02:30'
     
-    # We try to fix the problem a maximum of 2 times.
-    - repeat:
-        sequence:
-    
-          - variables:
-              message1: "Projector lamp error detected. Please wait a few minutes while I try to fix it."
-              message2: "That didn't work. Let's try it one more time."
-          
-          - service: notify.alexa_media
-            data:
-              message: "{{ iif(repeat.index == 1, message1, message2) }}"
-              target:
-                - media_player.family_room_echo
-                - media_player.theater_echo
-              data:
-                type: tts
-        
-          # Wait a bit for the projector to turn itself off.
-          - wait_template: "{{ state_attr('media_player.epson_projector', 'off') }}"
-            timeout: "{{ delay_time }}"
-        
-          - service: notify.alexa_media
-            data:
-              message: "I'm resetting the projector."
-              target:
-                - media_player.family_room_echo
-                - media_player.theater_echo
-              data:
-                type: tts
-        
-          # Set the expected powered off flag. This prevents the Check Projector Off automation from turning the plug
-          # back on.
-          - service: input_boolean.turn_on
-            entity_id: input_boolean.projector_plug_powered_off
-        
-          # Turn off the power for a bit.
-          - service: switch.turn_off
-            entity_id: switch.projector_plug
-        
-          - delay: '00:00:30'
-        
-          # Turn the power back on.
-          - service: switch.turn_on
-            entity_id: switch.projector_plug
-        
-          # Reset the expected powered off flag.
-          - delay: '00:00:01'
-          - service: input_boolean.turn_off
-            entity_id: input_boolean.projector_plug_powered_off
-        
-          - service: notify.alexa_media
-            data:
-              message: "I'm turning the projector back on. Keep your fingers crossed!"
-              target:
-                - media_player.family_room_echo
-                - media_player.theater_echo
-              data:
-                type: tts
-        
-          - delay: '00:00:05'
-        
-          # Finally, power on the projector.
-          - service: remote.send_command
-            entity_id: remote.harmony_hub
-            data:
-              command: 'PowerOn'
-              device: Epson Projector
+    # Indicate we're trying to handle the error. This prevents the Activate Cinema script from doing post-processing until
+    # we reset the flag, which only happens if we're successful.
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.projector_error_handling
       
-          # Delay for a bit to let the projector turn on. I'm assuming if it's on it's warmed up.
-          - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
-            timeout: "{{ delay_time }}"
-          
-          - service: system_log.write
-            data:
-              message: "{{ 'projector state: ' ~ states('media_player.epson_projector') }}"
-              level: info
-        
-        until: "{{ repeat.index == 2 or states('media_player.epson_projector') in ['warmup', 'on'] }}"
-
-# This is hopefully temporary, to help debug timing problems between the Handle Projector Error automation and the
-# Activate Cinema script. I need to know the exact timing of projector media player state changes.
-- alias: Log Projector states
-  id: log_projector_states
-  
-  mode: queued
-  
-  # Trigger on just media player state changes, but not attributes.
-  trigger:
-    - platform: state
-      entity_id: media_player.epson_projector
-      from:
-  
-  action:
-    - service: system_log.write
+    - action: notify.alexa_media
       data:
-        message: "Projector changed to '{{ trigger.to_state.state }}' state."
-        level: info
+        message: "Projector lamp error detected. Please wait a few minutes while I try to fix it."
+        target:
+          - media_player.family_room_echo
+          - media_player.theater_echo
+        data:
+          type: tts
+    
+    # Wait a bit for the projector to turn itself off. We can't check the state to determine this because for this error
+    # the state never changes from off.
+    - delay: "{{ delay_time }}"
+    
+    - action: notify.alexa_media
+      data:
+        message: "I'm resetting the projector."
+        target:
+          - media_player.family_room_echo
+          - media_player.theater_echo
+        data:
+          type: tts
+    
+    # Set the expected powered off flag. This prevents the Check Projector Off automation from turning the plug
+    # back on.
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.projector_plug_powered_off
+    
+    # Turn off the power for a bit.
+    - action: switch.turn_off
+      entity_id: switch.projector
+    
+    - delay: '00:00:30'
+    
+    # Turn the power back on.
+    - action: switch.turn_on
+      entity_id: switch.projector
+    
+    # Reset the expected powered off flag.
+    - delay: '00:00:01'
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.projector_plug_powered_off
+    
+    - action: notify.alexa_media
+      data:
+        message: "I'm turning the projector back on. Keep your fingers crossed!"
+        target:
+          - media_player.family_room_echo
+          - media_player.theater_echo
+        data:
+          type: tts
+    
+    - delay: '00:00:05'
+    
+    # Finally, power on the projector.
+    - action: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'PowerOn'
+        device: Epson Projector
+  
+    # Delay for a bit to let the projector turn on.
+    - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
+      timeout: "{{ delay_time }}"
+        
+    # If all is well, reset the projector error handling flag. This tells the Activate Cinema script that it's OK to perform
+    # post-processing.
+    - if:
+        - "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
+      
+      then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.projector_error_handling
+
+#=========================#
+#     Projector State     #
+#=========================#
+
+# It seems we can't rely on the projector media player state - I've seen cases where the state is off but the projector is
+# working fine. So these automations turn a toggle on or off based on the amount of power being drawn. Just lovely.
+
+- alias: Turn On Projector Active
+  id: turn_on_projector_active
+  
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.projector_power
+      above: 250
+      for:
+        seconds: 10
+  
+  actions:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.projector_active
+
+- alias: Turn Off Projector Active
+  id: turn_off_projector_active
+  
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.projector_power
+      below: 250
+      for:
+        seconds: 10
+  
+  actions:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.projector_active
 
 #==================================#
 #     Automatic Volume Control     #

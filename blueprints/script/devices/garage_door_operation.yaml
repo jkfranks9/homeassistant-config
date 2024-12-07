@@ -34,7 +34,9 @@ blueprint:
           domain: switch
 
 mode: parallel
-
+  
+# NOTE: these are variables passed through scripts that use this blueprint. They are not referenced at all in those
+# scripts, but instead are specified by any automations/scripts that call those scripts.
 fields:
   use_info_message:
     name: Use Informational Message

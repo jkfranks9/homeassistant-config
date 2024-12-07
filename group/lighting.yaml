@@ -1,0 +1,15 @@
+#=================#
+#     Lighting    #
+#=================#
+
+# These provide a single entity to use on a tile card to link to a subview.
+  
+# All potential Christmas light plugs.
+christmas_lights:
+  entities:
+    - input_boolean.christmas_tree_family_room
+    - input_boolean.christmas_tree_kitchen
+    - input_boolean.christmas_mantle
+    - input_boolean.christmas_outdoor
+    - input_boolean.christmas_stair_railing
+    - input_boolean.christmas_village

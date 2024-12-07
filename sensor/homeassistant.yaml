@@ -36,17 +36,6 @@
       {{ as_timestamp(now().today() + timedelta(days = 5)) | timestamp_custom('%b %d %I:%M%p') }}
     {% endif %}
 
-#=======================#
-#     Unifi Counter     #
-#=======================#
-
-- platform: unifics
-  name: Unifi Counter
-  host: !secret unifi_host
-  username: !secret unifi_username
-  password: !secret unifi_password
-  udm: True
-
 #====================#
 #     Gas Prices     #
 #====================#

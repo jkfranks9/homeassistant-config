@@ -1,0 +1,96 @@
+#=====================#
+#     SQL Sensors     #
+#=====================#
+
+- name: Total Cooking Energy L30d
+  unique_id: total_cooking_energy_l30d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.all_cooking_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+        LIMIT 1)
+    AS `change`
+  <<: &base_anchor
+    unit_of_measurement: kWh
+    column: change
+    value_template: "{{(value/30)|round(2)}}"
+
+- name: Total Cleaning Energy L30d
+  unique_id: total_cleaning_energy_l30d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.all_cleaning_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor
+
+- name: Total Entertainment Energy L30d
+  unique_id: total_entertainment_energy_l30d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.all_entertainment_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor
+
+- name: Total Lights Energy L30d
+  unique_id: total_lights_energy_l30d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.all_lights_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor
+
+- name: Total Fans Energy L30d
+  unique_id: total_fans_energy_l30d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.all_fans_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor

@@ -116,24 +116,23 @@ restart_shield_tv:
 # Turn on family room AV.
 enable_family_room_av:
   alias: Enable Family Room AV
+  
   sequence:
     
-    - service: switch.turn_on
-      entity_id: switch.fire_tv_plug
-    
-    - service: switch.turn_on
-      entity_id: switch.family_room_av
+    - action: switch.turn_on
+      entity_id:
+        - switch.fire_tv_plug
+        - switch.family_room_av
 
 # Turn off family room AV.
 disable_family_room_av:
   alias: Disable Family Room AV
   sequence:
     
-    - service: switch.turn_off
-      entity_id: switch.fire_tv_plug
-    
-    - service: switch.turn_off
-      entity_id: switch.family_room_av
+    - action: switch.turn_off
+      entity_id:
+        - switch.fire_tv_plug
+        - switch.family_room_av
 
 #================#
 #     Vacuum     #

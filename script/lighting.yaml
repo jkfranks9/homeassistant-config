@@ -63,9 +63,24 @@ sleeptime:
     - action: input_boolean.turn_on
       entity_id: input_boolean.sleeptime
     
-    # Also, turn off the master suite lights.
+    # If we just had a bathroom break, the bathroom light can turn back on after we turn off the 
+    # master suite lights, so temporarily disable the motion based automation.
+    - action: automation.turn_off
+      entity_id: automation.run_master_bath_motion_based_light
+    
+    # Turn off the master suite lights.
     - action: light.turn_off
       entity_id: light.master_suite_lights
+    
+    # Wait for the bathroom motion sensor to turn off, then turn the associated automation back on.
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.master_bath_motion_detector_occupancy
+          to: 'off'
+      timeout: '00:01:00'
+    
+    - action: automation.turn_on
+      entity_id: automation.run_master_bath_motion_based_light
 
 # Turn on the bathroom light during the night.
 turn_on_bathroom_light:
@@ -109,10 +124,9 @@ awake:
       entity_id: input_boolean.sleeptime
       
     # Turn on master bedroom lamp if needed.
-    - service: script.change_lighting_per_weather
+    - service: script.turn_on_lights_per_conditions
       data:
         light_entity: light.master_bedroom_lamp
-        wakeup: true
 
 # I have awoken.
 wakeup:
@@ -129,10 +143,9 @@ wakeup:
         - input_boolean.sleeptime
     
     # Turn on island light if needed. Other wakeup lights handled by lux sensor.
-    - action: script.change_lighting_per_weather
+    - action: script.turn_on_lights_per_conditions
       data:
         light_entity: light.island_light
-        wakeup: true
     
     # Turn off the island light when I'm in the office, or after a few minutes (lets me get breakfast).
     - wait_for_trigger:
@@ -144,17 +157,6 @@ wakeup:
     
     - action: light.turn_off
       entity_id: light.island_light
-
-# Toggle master suite lights. Mostly used after Awake (at least master lamp is on), but Wakeup not needed or desired
-# because the sun is up and it's bright enough. Basically I want to turn the master lamp off in an easy way because
-# I'm lazy. I also sometimes need to turn the lights on outside of bedtime.
-toggle_master_lights:
-  alias: Toggle Master Lights
-  
-  sequence:
-    - service: homeassistant.toggle
-      target:
-        entity_id: light.master_suite_lights
 
 #===========================================#
 #     Children-Only Bedtime Environment     #
@@ -601,227 +603,74 @@ reset_bedtime_environment:
     
     # Note that the bedroom echo devices automatically unmute at 9 AM.
     
-    # Turn off the upstairs night light if we turned it on at bedtime, and it's light enough.
+    # Turn off the upstairs night light if we turned it on at bedtime.
     # The downstairs night lights (aka daytime lights) are turned off by an automation.
     # Note that if it's still dark, we don't check this light again anywhere. Oh well.
     - if:
         - "{{ states('input_select.occupied_bedrooms') in ['ChildUp', 'ChildUpPlus'] }}"
       
       then:    
-        - service: script.change_lighting_per_weather_simple
-          data:
-            light_entity: light.penthouse_vanity_light
-            turn_on: false  
+        - action: light.turn_off
+          target:
+            entity_id: light.penthouse_vanity_light
   
     # Turn on all automations that were turned off.
-    - service: automation.turn_on
+    - action: automation.turn_on
       entity_id:
         - automation.run_master_bath_motion_based_light
     
     # Remove downstairs thermostat hold.
-    - service: script.remove_thermostat_hold
+    - action: script.remove_thermostat_hold
       data:
         thermostat_entity: climate.downstairs
         extended: false
     
     # Turn off the master suite lights. This is redundant if the Wakeup script was called, but is useful
     # if the nighttime flag was turned off as a failsafe by the Reset Bedtime Environment automation.
-    - service: homeassistant.turn_off
+    - action: homeassistant.turn_off
       target:
         entity_id: light.master_suite_lights
 
-#================================================#
-#     Modify Lighting Per Weather Conditions     #
-#================================================#
+#=======================================#
+#     Turn On Lights Per Conditions     #
+#=======================================#
 
-# The following scripts turn lights on or off near sunrise or sunset based on weather conditions, 
-# which obviously affect indoor lighting levels. See the comments for the change_daytime_lights
-# automation for more details.
-#
-# This script contains the overall logic:
-#
-# - If the sun is rising, handle sunrise tasks:
-#   - If called from the wakeup script, turn lights on if needed
-#   - Else, turn lights off as needed
-# - Else handle sunset tasks:
-#   - Turn lights on as needed
-change_lighting_per_weather:
-  alias: Change Lighting Per Weather
+# This determines if it's dark enough to need light based on various conditions, such as weather, sun elevation,
+# or an ambient light level sensor.
+turn_on_lights_per_conditions:
+  alias: Turn On Lights Per Conditions
   
   fields:
     light_entity:
-      description: 'The entity ID of the target lights.'
-    
-    wakeup:
-      description: 'Whether or not the caller is the wakeup script.'
-      example: false
+      description: The entity ID of the target lights.
     
   sequence:
     
     # Evaluate the weather condition and set the result in an input_select.
-    - service: script.evaluate_weather_condition   
+    - action: script.evaluate_weather_condition  
         
     - variables:
         sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
         min_elevation: "{{ states('sensor.min_elevation') }}"
         med_elevation: "{{ states('sensor.med_elevation') }}"
         max_elevation: "{{ states('sensor.max_elevation') }}"
-        
-        # I only have a few smart bulbs, but want to provide the brightness for those sometimes. So rather than
-        # defining another input field, I just use the brightness value if it's passed as data. Note that
-        # non-smart lights (for example switches) just ignore the brightness value.
-        brightness: "{{ brightness_pct if brightness_pct is defined else 100 }}"
     
-    # Perform the appropriate actions based on the caller, sun rising state and weather.
+    # Verify sun elevation and weather conditions.
     - if:
-        
-        # Sun rising
-        - "{{ state_attr('sun.sun', 'rising') == true }}"
+        - "{{ (sun_elevation <= max_elevation | float(max_elevation) and
+               states('input_select.weather_condition') == 'gloomy') or
+              (sun_elevation <= med_elevation | float(med_elevation) and
+               states('input_select.weather_condition') != 'clear') or
+               sun_elevation <= min_elevation | float(min_elevation) }}"
         
       then:
-          
-        - if:
-                
-            # Called for wakeup
-            - "{{ wakeup == true }}"
-              
-          then:
-                
-            - condition: template
-              value_template: >
-                {{  sun_elevation <= min_elevation | float(min_elevation) or 
-                   (sun_elevation > min_elevation | float(min_elevation) and
-                    sun_elevation <= med_elevation | float(med_elevation) and
-                    states('input_select.weather_condition') != 'clear') or
-                   (sun_elevation > med_elevation | float(med_elevation) and
-                    sun_elevation < max_elevation | float(max_elevation) and
-                    states('input_select.weather_condition') == 'gloomy') }}
-                
-            - service: light.turn_on
-              target:
-                entity_id: "{{ light_entity }}"
-              data:
-                brightness_pct: "{{ brightness }}"
-              
-          # Not called for wakeup
-          else:
-              
-            - condition: template
-              value_template: >
-                {{ (sun_elevation > min_elevation | float(min_elevation) and
-                    states('input_select.weather_condition') == 'clear') or
-                   (sun_elevation > med_elevation | float(med_elevation) and
-                    states('input_select.weather_condition') == 'hazy') or
-                    sun_elevation > max_elevation | float(max_elevation) }}
-              
-            - service: light.turn_off
-              target:
-                entity_id: "{{ light_entity }}"
-      
-      # Sun setting
-      else:
-        
-        - condition: template
-          value_template: >
-            {{ (sun_elevation < max_elevation | float(max_elevation) and
-                states('input_select.weather_condition') == 'gloomy') or
-               (sun_elevation < med_elevation | float(med_elevation) and
-                states('input_select.weather_condition') == 'hazy') or
-                sun_elevation < min_elevation | float(min_elevation) }}
-        
-        - service: system_log.write
-          data:
-            message: "{{ 'Turning on ' ~ state_attr(light_entity, 'friendly_name') }}"
-            level: info
-        
-        - service: light.turn_on
+        - action: light.turn_on
           target:
             entity_id: "{{ light_entity }}"
-          data:
-            brightness_pct: "{{ brightness }}"
-
-#===================================================#
-#     Turn On/Off Lights Per Weather Conditions     #
-#===================================================#
-
-# This is similar to the above script, but simpler. The idea is to modify 
-# lights only if needed based on sun elevation and weather conditions.
-change_lighting_per_weather_simple:
-  alias: Change Lighting Per Weather Simple
-  
-  fields:
-    light_entity:
-      description: 'The entity ID of the target lights.'
-    
-    turn_on:
-      description: 'True if the lights should be turned on.'
-      example: false
-    
-  sequence:
-    
-    # Evaluate the weather condition and set the result in an input_select.
-    - service: script.evaluate_weather_condition  
-        
-    - variables:
-        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-        min_elevation: "{{ states('sensor.min_elevation') }}"
-        med_elevation: "{{ states('sensor.med_elevation') }}"
-        max_elevation: "{{ states('sensor.max_elevation') }}"
-    
-    # Perform the appropriate action based on turning on or off, sun rising state and weather.
-    - if:
-      
-        # Turn on lighting.
-        - "{{ turn_on == true }}"
-        
-      then:
-          
-        - condition: template
-          value_template: >
-            {{ (sun_elevation < max_elevation | float(max_elevation) and
-                states('input_select.weather_condition') == 'gloomy') or
-               (sun_elevation < med_elevation | float(med_elevation) and
-                states('input_select.weather_condition') == 'hazy') or
-                sun_elevation < min_elevation | float(min_elevation) }}
-          
-        - service: homeassistant.turn_on
-          data_template:
-            entity_id: "{{ light_entity }}"
-      
-      # Turn off lighting.
-      else:
-          
-        - condition: template
-          value_template: >
-            {{ (sun_elevation > min_elevation | float(min_elevation) and
-                states('input_select.weather_condition') == 'clear') or
-               (sun_elevation > med_elevation | float(med_elevation) and
-                states('input_select.weather_condition') == 'hazy') or
-                sun_elevation > max_elevation | float(max_elevation) }}
-          
-        - service: homeassistant.turn_off
-          data_template:
-            entity_id: "{{ light_entity }}"  
 
 #=====================#
 #     Smart Bulbs     #
 #=====================#
-
-# Reset (turn off) all smart bulbs after a power outage if the conditions are right.
-# This is called by the Reset Smart Bulbs On Power Glitch automation.
-reset_smart_bulbs:
-  alias: Reset Smart Bulbs
-  
-  sequence:
-    - action: script.reset_smart_bulb_nighttime
-      data:
-        light_entity: light.master_bedroom_lamp
-    
-    - action: script.reset_smart_bulb_lux_sensor
-      data:
-        light_entity: light.office_lamp
-        lux_entity: sensor.office_sensor_ambient_light
-        lux_value: 300
 
 # Reset a smart bulb based on the sky conditions (sun angle and weather).
 reset_smart_bulb_sky_conditions:
@@ -928,35 +777,19 @@ reset_smart_bulb_lux_sensor:
 
 turn_on_christmas_lights:
   alias: Turn On Christmas Lights
-  
-  sequence:
-    
-    - condition: state
-      entity_id: input_boolean.christmas_mode
-      state: 'on'
-    
-    - if:
-      - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
-    
-      then:    
-        - service: light.turn_on
-          entity_id: light.all_christmas_lights
-    
-      else:    
-        - service: light.turn_on
-          entity_id: light.indoor_christmas_lights
+
+  use_blueprint:
+    path: lighting/christmas_lights_operation.yaml
+    input:
+      operation: 'on'
 
 turn_off_christmas_lights:
   alias: Turn Off Christmas Lights
-  
-  sequence:
-    
-    - condition: state
-      entity_id: input_boolean.christmas_mode
-      state: 'on'
-    
-    - service: light.turn_off
-      entity_id: light.all_christmas_lights
+
+  use_blueprint:
+    path: lighting/christmas_lights_operation.yaml
+    input:
+      operation: 'off'
 
 #===================#
 #     Bath Time     #
@@ -1010,10 +843,7 @@ turn_on_bright_kitchen_lights:
   sequence:
     
     - service: light.turn_on
-      entity_id:
-        - light.island_light
-        - light.sink_light
-        - light.kitchen_light
+      entity_id: light.kitchen_lights
 
 turn_off_kitchen_lights:
   alias: Turn Off Kitchen Lights
@@ -1021,7 +851,4 @@ turn_off_kitchen_lights:
   sequence:
     
     - service: light.turn_off
-      entity_id:
-        - light.island_light
-        - light.sink_light
-        - light.kitchen_light
+      entity_id: light.kitchen_lights

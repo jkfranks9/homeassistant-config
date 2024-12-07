@@ -25,6 +25,7 @@ recorder:       !include database/recorder.yaml
 script:         !include_dir_merge_named script
 scene:          !include scenes.yaml
 sensor:         !include_dir_merge_list sensor
+sql:            !include sql.yaml
 template:       !include_dir_merge_list template
 
 #======================#
@@ -65,13 +66,6 @@ variable:
 mqtt:
   
   device_tracker:
-    
-    # Manual device tracker for the Blue Charm beacon.
-    - name: Blue Charm Beacon
-      state_topic: "homeassistant/device_tracker/bluecharm_beacon"
-      source_type: bluetooth_le
-      payload_home: "home"
-      payload_not_home: "not_home"
     
     # Test device trackers, so I can simulate various family members arriving and leaving.
     - name: Virtual David
@@ -169,6 +163,10 @@ lutron_caseta:
 #=======================#
 #     Miscellaneous     #
 #=======================#
+
+# Powercalc
+powercalc:
+  energy_sensor_precision: 2
 
 # System log error detection
 system_log:

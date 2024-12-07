@@ -100,7 +100,7 @@
           state: 'idle'
       
       then:        
-        - action: vacuum.return_to_base
+        - action: vacuum.stop
           entity_id: vacuum.ecovacs_deebot_none 
 
 # Shut down the host if UPS runtime reaches critical level.
@@ -218,9 +218,6 @@
     - delay: '00:02:00'
     - action: recorder.enable
     
-    # Reset smart bulbs if needed.
-    - action: script.reset_smart_bulbs
-    
     # Instruct the vacuum to return home.
     - action: vacuum.return_to_base
       entity_id: vacuum.ecovacs_deebot_none
@@ -297,12 +294,24 @@
     
     # Turn on appropriate lights if it's dark-ish.
     - if:
-        - "{{ states('sensor.foyer_sensor_ambient_light') | float(0) < 450 }}"
+        - "{{ states('sensor.foyer_sensor_ambient_light') | float(0) < states('input_number.family_room_ambient_min') | float(0) }}"
       
       then:
-        - action: light.turn_on
-          target:
-            entity_id: "{{ iif(states('input_boolean.christmas_mode') == 'off', ['light.daytime_lights', 'light.office_lamp'], ['light.all_christmas_lights', 'light.hallway_lamp', 'light.office_lamp']) }}"
+        - if:
+            - condition: state
+              entity_id: input_boolean.christmas_mode
+              state: 'off'
+          
+          then:        
+            - action: light.turn_on
+              target:
+                entity_id: light.daytime_lights
+          
+          else:
+            - action: script.turn_on_christmas_lights
+              data:
+                variables:
+                  additional_lights: daytime
 
 # Close up the house when needed.
 - alias: Close House
@@ -387,17 +396,12 @@
       # Must be sunset.
       else:
          
--        # Turn off certain light domains. However, make sure not to turn off outdoor christmas lights at sunset.
--        - variables:
--            targets: >
--              {% set storage_lights = expand('light.storage_lights') | map(attribute='entity_id') | list %}
--              {% set outdoor_lights = expand('group.outdoor_lights') | rejectattr('entity_id', 'in', ['light.outdoor_christmas']) | map(attribute='entity_id') | list %}
--              
--              {{ storage_lights + outdoor_lights }}
--        
--        - action: light.turn_off
+         # Turn off certain light domains.
+         - action: light.turn_off
            target:
--            entity_id: "{{ targets }}"
+             entity_id:
+               - light.storage_lights
+               - light.outdoor_lights
 
 #=======================#
 #     House: Family     #
@@ -529,10 +533,9 @@
       then:
         
         # Turn on bedroom light if needed.
-        - service: script.change_lighting_per_weather_simple
+        - service: script.turn_on_lights_per_conditions
           data:
             light_entity: light.studio_lamp_2
-            turn_on: true
 
 # Close house when all family members leave.
 - alias: Close House For Family
@@ -591,6 +594,34 @@
     - service: input_boolean.turn_off
       target:
         entity_id: input_boolean.child_alone
+
+#===================================#
+#     Family Presence Detection     #
+#===================================#
+  
+- alias: Handle Child Tag Scan
+  id: handle_child_tag_scan
+  
+  triggers:
+    - trigger: tag
+      tag_id: 0c6d2dfd-4ad7-4281-9ec0-54756ed2d539
+      id: skylar
+        
+  actions:
+    - variables:
+        tracker_entity: "{{ 'device_tracker.virtual_' ~ trigger.id }}"
+        new_state: >
+          {% if states(tracker_entity) != 'home' %}
+            home
+          {% else %}
+            not_home
+          {% endif %}
+        topic_suffix: "{{ tracker_entity.split('.')[1] }}"
+    
+    - action: mqtt.publish
+      data:
+        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+        payload: "{{ new_state }}"
 
 #=============================#
 #     Penthouse Occupancy     #
@@ -762,7 +793,7 @@
 #     Family Room AV     #
 #========================#
 
-# Turn on the Family Room AV and box 3 backlight during the day, depending on the presence of a grandchild.
+# Turn on the Family Room AV and box 3 screen during the day, depending on the presence of a grandchild.
 - alias: Enable Family Room AV
   id: 'enable_family_room_av'
   
@@ -794,7 +825,7 @@
     - service: script.enable_family_room_av
     
     - service: light.turn_on
-      entity_id: light.family_room_box3_lcd_backlight
+      entity_id: light.family_room_box3_screen
 
 #================================#
 #     Human Presence Sensors     #
@@ -1149,7 +1180,7 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.sonoff_microwave
+      device_entity: switch.microwave
       component_name: tplink
       device_name: Microwave
 
@@ -1158,7 +1189,7 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.projector_plug
+      device_entity: switch.projector
       component_name: sonoff
       device_name: Projector
       conditional_processing: "{{ states('input_boolean.projector_plug_powered_off') }}"
@@ -1816,39 +1847,6 @@
       data:
         topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
         payload: "{{ new_state }}"
-
-# Modify Blue Charm beacon device tracker.
-- alias: Modify Beacon Device Tracker
-  id: 'modify_beacon_device_tracker'
-  
-  triggers:
-    - trigger: state
-      entity_id: sensor.ble_house_sensor_blue_charm_distance
-      to:
-  
-  # So we have a possible timing problem: during startup, the distance sensor might be invalid if ESPHome has not had 
-  # time to initialize the BLE reader. We don't want to modify the tracker in this case. So we verify that the 
-  # wifi sensor in the reader is in a good state before continuing. Yeah, I know.
-  variables:
-    house_wifi: "{{ states('sensor.ble_house_sensor_wifi_signal') }}"
-  
-  conditions: "{{ house_wifi not in ['unknown', 'unavailable'] }}"
-  
-  actions:
-    - if:
-        - "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
-      
-      then:    
-        - action: mqtt.publish
-          data:
-            topic: "homeassistant/device_tracker/bluecharm_beacon"
-            payload: "home"
-      
-      else:   
-        - action: mqtt.publish
-          data:
-            topic: "homeassistant/device_tracker/bluecharm_beacon"
-            payload: "not_home"
 
 #======================#
 #     Echo Devices     #

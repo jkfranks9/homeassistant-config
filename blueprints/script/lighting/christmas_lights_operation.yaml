@@ -1,0 +1,96 @@
+# Turn Christmas lights on or off.
+
+blueprint:
+  name: Christmas Lights Operation
+  description: Turn Christmas lights on or off.
+  domain: script
+  
+  input:
+    operation:
+      name: Operation
+      description: Whether to turn the lights on or off.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+    
+# NOTE: these are variables passed through scripts that use this blueprint. They are not referenced at all in those
+# scripts, but instead are specified by any automations/scripts that call those scripts.
+fields:    
+  additional_lights:
+    description: (Optional) Additional lights to turn on. This is a select, so we can adjust such lights as needed in one place.
+    default: 'none'
+    selector:
+      select:
+        options:
+          - daytime
+          - none
+
+variables:
+  
+  # The !input tag cannot be used in templates.
+  input_operation: !input operation
+  
+  # Group of toggles configured using the UI that indicate what lights are in use this season.
+  all_lights: "{{ expand('group.christmas_lights') | map(attribute='entity_id') | list }}"
+  
+  # Is the Christmas village being used?
+  village_in_use: "{{ states('input_boolean.christmas_village') == 'on' }}"
+  
+  # Set of normal lights that double as Christmas lights. If the village is in use we take over the dining room lamps plug.
+  normal_lights: >
+    {% set ns = namespace(lights = ['light.dining_room_hutch', 'light.foyer_hutch']) %}
+    {% if village_in_use %}
+      {% set ns.lights = ns.lights + ['light.dining_room_lamps'] %}
+    {% endif %}
+    
+    {{ ns.lights }}
+  
+  # Additional lights for 'daytime'.
+  additional_daytime_lights: "{{ ['light.office_lamp', 'light.hallway_lamp'] }}"
+
+sequence:
+    
+  # Sanity check.
+  - condition: state
+    entity_id: input_boolean.christmas_mode
+    state: 'on'
+    
+  # The Christmas Lights group consists of toggles for each possible light plug. We only want to take action for
+  # lights whose toggles are on (configured using the UI).
+  - repeat:
+      for_each: "{{ all_lights }}"
+        
+      sequence:
+        - variables:
+            base_name: "{{ repeat.item.split('.')[1] }}"
+          
+        # Check if the toggle is on.
+        - if:
+            - "{{ states(repeat.item) == 'on' }}"
+            
+          then:
+              
+            # Skip outdoor lights; they are handled by an automation.
+            - if:
+                - "{{ 'outdoor' not in base_name }}"
+                
+              then:
+                - action: light.turn_{{ input_operation }}
+                  data:
+                    entity_id: "{{ 'light.' ~ base_name }}"
+    
+  # Operate normal lights that double as Christmas lights.
+  - action: light.turn_{{ input_operation }}
+    target:
+      entity_id: "{{ normal_lights }}"
+    
+  # Operate any requested additional lights.
+  - choose:
+    - conditions: "{{ additional_lights == 'daytime' }}"
+        
+      sequence:
+        - action: light.turn_{{ input_operation }}
+          target:
+            entity_id: "{{ additional_daytime_lights }}"

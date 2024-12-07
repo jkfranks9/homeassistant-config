@@ -60,9 +60,17 @@ blueprint:
     
     windowed:
       name: Window Existence
-      description: Does a window exist? This helps to determine if the light needs to be turned on at all.
+      description: (Optional) Does a window exist? This helps to determine if the light needs to be turned on at all.
+      default: false
       selector:
         boolean:
+    
+    action_template:
+      name: Action Template
+      description: (Optional) Template to help decide if the light needs to be turned on. The default is to always turn on.
+      default: "{{ 1 == 1 }}"
+      selector:
+        template:
 
 # If motion is detected within a delay, we restart.
 mode: restart
@@ -71,12 +79,13 @@ max_exceeded: silent
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
   input_windowed: !input windowed
+  input_action_template: !input action_template
 
-trigger:
-  platform: state
-  entity_id: !input motion_entity
-  from: "off"
-  to: "on"
+triggers:
+  - trigger: state
+    entity_id: !input motion_entity
+    from: "off"
+    to: "on"
 
 action:
 
@@ -92,12 +101,23 @@ action:
       - service: light.turn_on
         entity_id: !input light_entity
     
-    # The room has a window, so use the sun elevation and weather conditions to decide.
+    # The room has a window, so first use the action template to decide.
     else:
-      - service: script.change_lighting_per_weather_simple
-        data:
-          light_entity: !input light_entity
-          turn_on: true
+      - if:
+          - "{{ input_action_template }}"
+          
+        then:
+          
+          # Turn on the light.
+          - action: light.turn_on
+            entity_id: !input light_entity
+        
+        # The action template is false. However, there could be situations where that is expected but we still want to turn on
+        # the light, so use the sun elevation and weather conditions to decide.
+        else:
+          - service: script.turn_on_lights_per_conditions
+            data:
+              light_entity: !input light_entity
   
   # Wait for no motion detected.
   - wait_for_trigger:
@@ -117,17 +137,17 @@ action:
     then:
       - delay: !input no_motion_wait_fan_on
         
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: !input light_entity
         
       - delay: !input additional_fan_wait
         
-      - service: homeassistant.turn_off
+      - action: homeassistant.turn_off
         entity_id: !input fan_entity
     
     # The fan is off.
     else:
       - delay: !input no_motion_wait_fan_off
       
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: !input light_entity

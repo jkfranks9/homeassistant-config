@@ -487,45 +487,6 @@
           
           {{ vars.name }}
 
-    #---------------------------#
-    #   -- ESPHome Updates --   #
-    #---------------------------#  
-    
-    # When ESPHome is updated I usually use the update all button to update all devices. However, if a device is battery
-    # powered it lives in deep sleep most of the time, which means the window to upload the new firmware to the device is very small. 
-    # The updates are handled alphabetically, so when we're getting fairly close to (at this time) my only battery device 
-    # (2 devices prior to it) I want to disable deep sleep so the updated firmware can be uploaded. The Assist ESPHome Update All automation 
-    # uses these sensors to detect when it's time to turn off deep sleep.
-    
-    # This sensor contains the list and count of devices that are 2 before the battery device.
-    - name: ESPHome Update Sensor List
-      unique_id: esphome_update_sensor_list
-      state: "{{ this.attributes.sensor_list | length }}"
-      
-      attributes:
-        sensor_list: >
-          {% set sensor_list = ['attic_sensor', 'ble_house_sensor', 'dryer_sensor', 'energy_mon_2', 'family_room_box3', 'foyer_sensor'] %}
-          
-          {{ sensor_list }}
-    
-    # This sensor contains the list and count of devices needing an update.
-    - name: ESPHome Update Deep Sleep Trigger
-      unique_id: esphome_update_deep_sleep_trigger
-      state: "{{ this.attributes.trigger_list | length }}"
-      
-      attributes:
-        trigger_list: >
-          {% set var = namespace(list = []) %}
-          {% if states('sensor.esphome_update_sensor_list') != 'unavailable' %}
-            {% for sensor in state_attr('sensor.esphome_update_sensor_list', 'sensor_list') %}
-              {% if states('update.' ~ sensor ~ '_firmware') == 'on' %}
-                {% set var.list = var.list + [sensor] %}
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-          
-          {{ var.list }}
-
 #---------- Miscellaneous ----------#
 
 # Template select that is used on the UI, containing the current mobile tag registry keys. When an option is selected,

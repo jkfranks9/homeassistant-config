@@ -44,7 +44,7 @@ activate_cinema:
         - "{{ cinema_off_upon_entry }}"
     
       then:
-        - service: script.check_cinema_usage_control
+        - action: script.check_cinema_usage_control
           data:
             opening: true
         
@@ -56,6 +56,20 @@ activate_cinema:
           then:
             - stop: "Cinema usage is denied."
   
+    # Turn off the projector error handling flag, in case it was left on from a previous unsuccessful attempt to fix it 
+    # automatically.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.projector_error_handling
+        
+    # Make sure power monitoring plugs are on.
+    - action: switch.turn_on
+      target:
+        entity_id:
+          - switch.projector
+          - switch.subwoofer_front
+          - switch.subwoofer_back
+    
     # Start the input Harmony activity, which ensures the correct devices are on.
     # However, if Enable Streaming is requested but the cinema is currently on, then use the Stream Player
     # activity instead. The only difference between those activities is the receiver input (CD for 
@@ -67,13 +81,13 @@ activate_cinema:
     
       then:
     
-        - service: remote.turn_on
+        - action: remote.turn_on
           entity_id: remote.harmony_hub
           data:
             activity: Stream Player
       
       else:
-        - service: remote.turn_on
+        - action: remote.turn_on
           entity_id: remote.harmony_hub
           data:
             activity: "{{ activity }}"
@@ -85,14 +99,14 @@ activate_cinema:
       then:
         
         # Indicate the cinema is open.
-        - service: input_boolean.turn_on
+        - action: input_boolean.turn_on
           entity_id: input_boolean.theater_open
     
         # Turn on some lights.
-        - service: script.set_theater_idle
+        - action: script.set_theater_idle
     
         # Announce the grand opening.
-        - service: notify.alexa_media
+        - action: notify.alexa_media
           data:
             message: >
               <speak>
@@ -116,20 +130,34 @@ activate_cinema:
             data:
               type: tts
       
-        # Delay for a bit to let the projector turn on. I'm assuming if it's on it's warmed up.
-        - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
-          timeout: '00:03:00'
+        # Delay for a while to make sure the projector is on and any error that may have been detected has been fixed.
+        - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] and states('input_boolean.projector_error_handling') == 'off' }}"
+          timeout: '00:07:30'
     
-        # Perform post-open tasks.
-        - service: script.turn_on
-          entity_id: script.perform_post_open_tasks
+        # Perform post-open tasks if the projector is functioning.
+        - if:
+            - "{{ wait.completed }}"
+          
+          then:        
+            - action: script.turn_on
+              entity_id: script.perform_post_open_tasks
+          
+          else:
+            - action: notify.alexa_media
+              data:
+                message: "I'm sorry, but I failed to fix a projector lamp error."
+                target:
+                  - media_player.family_room_echo
+                  - media_player.theater_echo
+                data:
+                  type: tts
   
     # Activate Kodi if requested.
     - if:
         - "{{ need_kodi }}"
     
       then:        
-        - service: script.activate_kodi
+        - action: script.activate_kodi
 
 #==========================================#
 #     1) Open Cinema For General Usage     #
@@ -417,7 +445,7 @@ close_cinema:
   sequence:
     
     # Ensure the cinema is not already closed, and has not been opened recently.
-    - service: script.check_cinema_usage_control
+    - action: script.check_cinema_usage_control
       data:
         opening: false
     
@@ -430,25 +458,30 @@ close_cinema:
         - stop: "Cinema usage is denied."
         
     # Indicate the cinema is closed.    
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.theater_open
     
     # Set the usage control timestamp.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.cinema_usage_control
       data_template:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Turn on some lights. This also turns on automations/lights that were possibly turned off by the open cinema script.
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.set_theater_idle
     
     # Turn off all devices.
     - delay: '00:00:02'
     
-    - service: remote.turn_off
+    - action: remote.turn_off
       entity_id: remote.harmony_hub
+    
+    # The front subwoofer appears to always be on, so turn off the plug.
+    - action: switch.turn_off
+      target:
+        entity_id: switch.subwoofer_front
     
     # Set the upstairs Ecobee to away or sleep mode, depending on the time of day.
     - if:
@@ -458,21 +491,21 @@ close_cinema:
         
       then:
           
-        - service: script.set_thermostat_preset
+        - action: script.set_thermostat_preset
           data:
             thermostat_entity: climate.upstairs
             preset: 'sleep'
       
       else:
         
-        - service: script.set_thermostat_preset
+        - action: script.set_thermostat_preset
           data:
             thermostat_entity: climate.upstairs
             preset: 'away'
     
     # Turn on the upstairs ecobee minimum fan time.
     # NOTE: The time amount should be coordinated with the ecobee system settings, using the app or the thermostat.
-    - service: ecobee.set_fan_min_on_time
+    - action: ecobee.set_fan_min_on_time
       data:
         entity_id: climate.upstairs
         fan_min_on_time: 5
@@ -480,7 +513,7 @@ close_cinema:
     # Turn off all lights.
     - delay: '00:05:00'
     
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.set_theater_dark
 
 #====================================#
@@ -620,7 +653,7 @@ perform_post_open_tasks:
         turn_on: false
         christmas: true
     
-    # Turn off the family room AV system and box 3 backlight if it's late enough and no one else is home.
+    # Turn off the family room AV system and box 3 screen if it's late enough and no one else is home.
     - condition:
         - condition: state
           entity_id: 
@@ -635,7 +668,7 @@ perform_post_open_tasks:
     - service: script.disable_family_room_av
     
     - service: light.turn_off
-      entity_id: light.family_room_box3_lcd_backlight
+      entity_id: light.family_room_box3_screen
 
 #=========================#
 #     Volume Control      #
@@ -831,10 +864,10 @@ set_theater_idle:
 # Turn on some downstairs lights if it's dark enough, or conditionally turn them off. This is used as follows,
 # either directly or via the Set Theater Idle script:
 #
-# - The Open Cinema script (turn on, delay, turn off)
-# - The Close Cinema script (turn on)
+# - Cinema open (turn on, delay, turn off)
+# - Cinema close (turn on)
 # - The Alexa Break Time routine, which calls Set Theater Idle (turn on)
-# - The Restore Lighting On Resume script (turn off)
+# - Cinema Resume (turn off)
 change_downstairs_lighting:
   alias: Change Downstairs Lighting
   fields:
@@ -852,42 +885,34 @@ change_downstairs_lighting:
         
       then:
           
-        # Turn on lights if needed.
-        - if:
-            - "{{ states('sensor.foyer_sensor_ambient_light') | int(0) <= 300 }}"
-          
-          then:    
-            - action: light.turn_on
-              data_template:
-                entity_id: >
-                  {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
-                    {{ 'light.daytime_lights' }}
-                  {% else %}
-                    {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
-                  {% endif %}
+        # Turn on lights if needed. Note that we don't need to consider Christmas lights because we never 
+        # turn those on.
+        - condition: numeric_state
+          entity_id: sensor.foyer_sensor_ambient_light
+          below: input_number.family_room_ambient_min
             
-            - action: light.turn_on
-              entity_id:
-                - light.stairway_light
-                - light.island_light
+        - action: light.turn_on
+          entity_id:
+            - light.daytime_lights
+            - light.stairway_light
+            - light.island_light
         
-      # Turn off lights, but only if no family members present.
       else:
+        
+        # Turn off lights, but only if no family members present.
         - condition: state
           entity_id: binary_sensor.adults_home
           state: 'off'
         
-        - action: light.turn_off
-          data_template:
-            entity_id: >
-              {% if states('input_boolean.christmas_mode') == 'off' or (christmas == false) %}
-                {{ 'light.daytime_lights' }}
-              {% else %}
-                {{ ['light.hallway_lamp', 'light.indoor_christmas_lights'] }}
-              {% endif %}
+        - if:
+            - "{{ states('input_boolean.christmas_mode') == 'on' and (christmas == true) }}"
+          
+          then: 
+            - action: script.turn_off_christmas_lights
         
         - action: light.turn_off
-          entity_id: 
+          entity_id:
+            - light.daytime_lights
             - light.stairway_light
             - light.island_light
 

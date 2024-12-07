@@ -29,14 +29,15 @@ exclude:
     - light
     - media_player
     - number
-    - proximity
     - remote
     - scene
     - script
     - select
     - sensor 
     - switch
+    - tag
     - timer
+    - todo
     - update
     - vacuum
     - weather
@@ -44,7 +45,6 @@ exclude:
   
   entities:
     - device_tracker.international_space_station_iss
-    - input_number.variables_workout_time
 
 #==== Inclusions
 
@@ -60,6 +60,10 @@ include:
 
   entities:
     
+    # TEMPORARY
+    - sensor.projector_power
+    - input_boolean.projector_active
+    
     - binary_sensor.adults_home
     - binary_sensor.children_home
     - input_boolean.office_occupied
@@ -68,7 +72,6 @@ include:
     - input_select.washer_load_size
     - input_select.washer_state
     - sensor.ahi_average
-    - sensor.ble_house_sensor_blue_charm_distance
     - sensor.cpap_ahi_events_per_hour
     - sensor.cpap_average
     - sensor.cpap_usage_hours
@@ -78,17 +81,8 @@ include:
     - sensor.dryer_sensor_humidity
     - sensor.jon_galaxy_detected_activity
     - sensor.memory_use_percent
-    - sensor.nighttime
     - sensor.porch_sensor_humidity
     - sensor.processor_use_percent
-    - sensor.projector_energy
-    - sensor.projector_plug_power
-    - sensor.refrigerator_energy
-    - sensor.sonoff_microwave_energy
-    - sensor.total_daily_energy
-    - sensor.total_power
-    - sensor.treadmill_energy
-    - sensor.washer_energy
     - sensor.washer_power_state
     - weather.astroweather_white_rabbit_gardens
   
@@ -102,13 +96,10 @@ include:
     - input_number.*_calories
     - input_number.*_time
     - sensor.*_ambient_light
-    - sensor.*_av_energy
     - sensor.*_current_consumption
+    - sensor.*_energy
     - sensor.*_temperature
     - sensor.best_price_gas_*
-    - sensor.energy_mon_2_*_amps
-    - sensor.energy_mon_2_*_energy
-    - sensor.energy_mon_2_*_watts
     - sensor.home_*_distance
     - sensor.total_*_calories
     - sensor.total_*_time

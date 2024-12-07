@@ -96,6 +96,70 @@
 #     Lux Sensors      #
 #======================#
 
+# I hope this is short term: at least during Christmas time, when the foyer light sensor trips near sunset, it turns
+# on the Christmas lights. However, light leakage then causes the sensor to rise above its max value, turning off the
+# lights. Until I have a better solution, this toggle prevents that from happening.
+- alias: Set Sunset Light Sensor Trip Toggle
+  id: set_sunset_light_sensor_trip_toggle
+
+  triggers:
+    
+    # Trigger when the foyer light sensor trips. That event runs the Lux Light blueprint to turn on the appropriate lights using a 2 minute
+    # 'for' time. So we need a slightly longer time here to make sure the lights actually get turned on before we set the toggle.
+    - trigger: numeric_state
+      entity_id: sensor.foyer_sensor_ambient_light
+      below: input_number.family_room_ambient_min
+      for: '00:02:02'
+    
+  conditions:  
+    
+    # This must happen within an hour of dusk. What a kludge, but should work.
+    - condition: template
+      value_template: >
+        {% set dusk = as_timestamp(state_attr('sun.sun', 'next_dusk')) %}
+        {% set now = as_timestamp(now()) %}
+        {{ (dusk - now) / 60 <= 60 }}
+  
+  actions:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.sunset_light_sensor_trip
+
+# This enables the correct automation to light up the family room, based on the Christmas Mode toggle.
+- alias: Control Family Room Light Automations
+  id: control_family_room_light_automations
+
+  triggers:
+    - trigger: state
+      entity_id: input_boolean.christmas_mode
+      from: 'off'
+      to: 'on'
+      id: christmas_on
+    
+    - trigger: state
+      entity_id: input_boolean.christmas_mode
+      from: 'on'
+      to: 'off'
+      id: christmas_off
+  
+  actions:
+    - if:
+        - "{{ trigger.id == 'christmas_on' }}"
+      
+      then:
+        - action: automation.turn_off
+          entity_id: automation.control_family_room_lamp
+        
+        - action: automation.turn_on
+          entity_id: automation.control_christmas_lights
+      
+      else:
+        - action: automation.turn_on
+          entity_id: automation.control_family_room_lamp
+        
+        - action: automation.turn_off
+          entity_id: automation.control_christmas_lights
+
 # Control the office lamp based on ambient lux level.
 - alias: Control Office Lamp
   id: control_office_lamp
@@ -105,22 +169,10 @@
     input:
       lux_sensor: sensor.office_sensor_ambient_light
       light_target: light.office_lamp
-      min_lux_level: 150
-      max_lux_level: 300
+      min_lux_level: input_number.office_ambient_min
+      max_lux_level: input_number.office_ambient_max
       check_theater: false
-
-# Control the family room lamp based on ambient lux level.
-- alias: Control Family Room Lamp
-  id: control_family_room_lamp
-
-  use_blueprint:
-    path: lighting/lux_light.yaml
-    input:
-      lux_sensor: sensor.foyer_sensor_ambient_light
-      light_target: light.family_room_lamp
-      min_lux_level: 250
-      max_lux_level: 650
-      check_theater: true
+      check_christmas: false
 
 # Control the hallway lamp based on ambient lux level.
 - alias: Control Hallway Lamp
@@ -131,9 +183,40 @@
     input:
       lux_sensor: sensor.foyer_sensor_ambient_light
       light_target: light.hallway_lamp
-      min_lux_level: 400
-      max_lux_level: 900
+      min_lux_level: input_number.hallway_ambient_min
+      max_lux_level: input_number.hallway_ambient_max
       check_theater: true
+      check_christmas: false
+
+# Control the family room lamp based on ambient lux level.
+# NOTE: This is disabled when the Christmas Mode toggle is on.
+- alias: Control Family Room Lamp
+  id: control_family_room_lamp
+
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      lux_sensor: sensor.foyer_sensor_ambient_light
+      light_target: light.family_room_lamp
+      min_lux_level: input_number.family_room_ambient_min
+      max_lux_level: input_number.family_room_ambient_max
+      check_theater: true
+      check_christmas: false
+
+# Control Christmas lights based on ambient lux level.
+# NOTE: This is disabled when the Christmas Mode toggle is off.
+- alias: Control Christmas Lights
+  id: control_christmas_lights
+
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      lux_sensor: sensor.foyer_sensor_ambient_light
+      light_target: light.family_room_lamp
+      min_lux_level: input_number.family_room_ambient_min
+      max_lux_level: input_number.family_room_ambient_max
+      check_theater: true
+      check_christmas: true
 
 #============================#
 #     Extended Away Mode     #
@@ -336,7 +419,6 @@
       no_motion_wait_fan_off: 120
       no_motion_wait_fan_on:  420
       additional_fan_wait:    300
-      windowed: false
 
 - alias: Run Laundry Room Motion Based Light
   id: 'run_laundry_room_motion_based_light'
@@ -368,6 +450,7 @@
       no_motion_wait_fan_on:  420
       additional_fan_wait:    300
       windowed: true
+      action_template: "{{ states('sensor.foyer_sensor_ambient_light') | float(0) <= states('input_number.family_room_ambient_min') | float(0) }}"
 
 #===========================#
 #     Guest Lights/Fans     #
@@ -447,6 +530,19 @@
 #==========================#
 #     Christmas Lights     #
 #==========================#
+
+# Turn on outdoor Christmas lights. We don't need a turn off automation; they are turned off at bedtime.
+- alias: Turn On Outdoor Christmas Lights
+  id: 'turn_on_outdoor_christmas_lights'
+  
+  triggers:
+    - trigger: template
+      value_template: "{{ states('input_boolean.christmas_mode') == 'on' and states('input_boolean.christmas_outdoor') == 'on' and states('sun.sun') == 'below_horizon' }}"
+    
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.christmas_outdoor
 
 # Turn on Christmas lights in the morning on certain Christmas-y days.
 - alias: Turn On Christmas Lights
@@ -544,8 +640,7 @@
 #=====================#
     
 # We have power glitches occasionally, which cause all TP-Link smart bulbs to turn on. This sensor
-# attempts to catch such a glitch by detecting when all bulbs turn on within a short time. This 
-# should never happen normally. 
+# attempts to catch such a glitch by detecting when these bulbs turn on when they shouldn't.
 #
 # Call the Reset Smart Bulbs script to reset all smart bulbs based on various conditions, so we don't turn 
 # them off if they're supposed to be on at the moment.
@@ -557,53 +652,36 @@
   
   # The 'for' option in the triggers should eliminate very quick multiple glitches. But of course this isn't perfect.
   # Oh well.
-  trigger:
-    - platform: state
-      entity_id: light.office_lamp
+  triggers:
+    - trigger: state
+      entity_id:
+        - light.office_lamp
+        - light.master_bedroom_lamp
       from: 'off'
       to: 'on'
-      for: '00:00:03'
-      id: office
-    
-    - platform: state
-      entity_id: light.master_bedroom_lamp
-      from: 'off'
-      to: 'on'
-      for: '00:00:03'
-      id: bedroom
+      for: '00:00:01'
   
-  variables:
+  actions:
+    - variables:
+        light_id: "{{ trigger.from_state.attributes.friendly_name.split(' ')[0] | lower }}"
     
-    # Get the last changed time of all smart bulbs as a UNIX timestamp, for easy arithmetic.
-    office_last_changed: "{{ as_timestamp(as_datetime(states.light.office_lamp.last_changed.isoformat())) }}"
-    bedroom_last_changed: "{{ as_timestamp(as_datetime(states.light.master_bedroom_lamp.last_changed.isoformat())) }}"
-    
-    # The number of seconds we consider 'recent'. Since this automation runs queued, this should be slightly greater than
-    # the sum of the 'for' options in the triggers.
-    recent_seconds: 7
-  
-  action:
-    
-    # Take action based on the trigger id. We then check if the last changed of all the other bulbs is within the recent seconds,
-    # but not negative. Only one of these choices should ever be true. I hope.
+    # Take action based on the triggered light entity.
     - choose:
-      - conditions: "{{ trigger.id == 'office' }}"
+      - conditions: "{{ light_id == 'office' }}"
         
         sequence:
-          - if:
-              - "{{ 0 < office_last_changed - bedroom_last_changed < recent_seconds }}"
-            
-            then:
-              - service: script.reset_smart_bulbs
+          - action: script.reset_smart_bulb_lux_sensor
+            data:
+              light_entity: light.office_lamp
+              lux_entity: sensor.office_sensor_ambient_light
+              lux_value: "{{ states('input_number.office_ambient_max') | int(0) }}"
       
-      - conditions: "{{ trigger.id == 'bedroom' }}"
+      - conditions: "{{ light_id == 'master' }}"
         
         sequence:
-          - if:
-              - "{{ 0 < bedroom_last_changed - office_last_changed < recent_seconds }}"
-            
-            then:
-              - service: script.reset_smart_bulbs
+          - action: script.reset_smart_bulb_nighttime
+            data:
+              light_entity: light.master_bedroom_lamp
 
 #===================#
 #     Bath Time     #

@@ -15,7 +15,7 @@ blueprint:
     
     light_target:
       name: Light Target
-      description: The target light to be controlled.
+      description: The target light to be controlled. This is not used if check_christmas is true.
       selector:
         target:
           entity:
@@ -44,35 +44,43 @@ blueprint:
       description: True if theater usage should be considered, false if not.
       selector:
         boolean:
+    
+    check_christmas:
+      name: Check Christmas
+      description: True if Christmas lights are to be used, false if not.
+      selector:
+        boolean:
 
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
+  input_light_target: !input light_target
   input_lux_sensor: !input lux_sensor
   input_min_lux_level: !input min_lux_level
   input_check_theater: !input check_theater
+  input_check_christmas: !input check_christmas
 
 # Trigger on falling below the minimum threshold, rising above the maximum, or when nighttime mode
 # ends (meaning it's morning but it might still be dark).
-trigger:
-  - platform: numeric_state
+triggers:
+  - trigger: numeric_state
     entity_id: !input lux_sensor
     below: !input min_lux_level
     for: '00:02:00'
     id: turn_on_1
   
-  - platform: numeric_state
+  - trigger: numeric_state
     entity_id: !input lux_sensor
     above: !input max_lux_level
     for: '00:02:00'
     id: turn_off
     
-  - platform: state
+  - trigger: state
     entity_id: input_boolean.nighttime
     from: 'on'
     to: 'off'
     id: turn_on_2
 
-action:  
+actions:
   
   # Turn the light on or off based on which trigger hit.
   - if:
@@ -84,19 +92,38 @@ action:
     # 2) I must be home.
     # 3) If I just got out of bed the lux sensor must be below the minimum.
     # 4) If requested, verify the theater is not in use when it's just me home (some lights are turned off in this case while others remain on).
+    # 5) (TEMPORARY) The sunset light sensor trip toggle must be off.
     then:
       - if:
           - "{{ is_state('input_boolean.nighttime', 'off') and
                 is_state('person.jon', 'home') and
-                iif(trigger.id == 'turn_on_2', states(input_lux_sensor) | float(0) < input_min_lux_level, true) and
+                iif(trigger.id == 'turn_on_2', states(input_lux_sensor) | float(0) < states(input_min_lux_level) | float(0), true) and
                 iif(input_check_theater, is_state('binary_sensor.adults_home', 'on') or is_state('input_boolean.theater_open', 'off'), true)
              }}"
         
         then:
-          - service: light.turn_on
-            entity_id: !input light_target
+          - if:
+              - "{{ input_check_christmas == false}}" 
+            
+            then:
+              - action: light.turn_on
+                entity_id: !input light_target
+            
+            else:
+              - action: script.turn_on_christmas_lights
     
-    # Just turn off the light without any conditions.
-    else:  
-      - service: light.turn_off
-        entity_id: !input light_target
+    # Just turn off the light without any conditions. Except the stupid light sensor trip toggle check.
+    else:
+      - if:
+          - "{{ states('input_boolean.sunset_light_sensor_trip') == 'off' or state_attr(input_light_target, 'friendly_name') != 'Family Room Lamp' }}"
+        
+        then:
+          - if:
+              - "{{ input_check_christmas == false}}" 
+            
+            then:
+              - action: light.turn_off
+                entity_id: !input light_target
+                
+            else:
+              - action: script.turn_off_christmas_lights

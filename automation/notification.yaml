@@ -2,7 +2,7 @@
 #     Maintenance Notifications     #
 #===================================#
 
-# Projector lamp is getting old.
+# Projector lamp is getting old (used only as a reminder to buy a new lamp).
 - alias: Notify Projector Lamp Aging
   id: 'notify_projector_lamp_aging'
   
@@ -11,11 +11,8 @@
     input:
       trigger_type: numeric_state_above
       entity: sensor.epson_lamp_hours
-      numeric_notify_threshold: 1999
-      numeric_clear_threshold: 1999
-      enable_clear_trigger: true
-      clear_type: auto
-      timer_entity: timer.projector_lamp_notification
+      numeric_notify_threshold: 2499
+      clear_type: manual
       message: 'Epson projector lamp might need replacing soon.'
       channel: standard
       tag: 'projector_lamp'
@@ -511,9 +508,7 @@
       date_entities: [
                       'input_datetime.reminder_medication_eliquis', 
                       'input_datetime.reminder_medication_metoprolol', 
-                      'input_datetime.reminder_medication_rosuvastatin', 
-                      'input_datetime.reminder_medication_bloodbuilder', 
-                      'input_datetime.reminder_medication_methylb12'
+                      'input_datetime.reminder_medication_rosuvastatin'
                      ]
       message_prefix: Medication due for reorder
       channel: standard
@@ -757,7 +752,7 @@
       channel: standard
       tag: 'next_canes_game'
 
-# Next Flyers game
+# Next Flyers game (bypass the notification if the opponent is the Hurricanes, because we already have the notification above for that)
 - alias: Notify Next Flyers Game
   id: 'notify_next_flyers_game'
   
@@ -773,6 +768,7 @@
         {% else %}
           false
         {% endif %}
+      conditions: "{{ state_attr('sensor.flyers_opponent', 'friendly_opponent') != 'Hurricanes' }}"
       clear_type: assisted
       title: attention
       message: >
@@ -1093,7 +1089,7 @@
         for_each: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         sequence:
           - if:
-              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next_canes_game', 'next_flyers_game'] }}"
+              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next_canes_game', 'next_flyers_game', 'astronomy_friendly'] }}"
             
             then:
         

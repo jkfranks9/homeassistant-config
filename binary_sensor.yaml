@@ -8,7 +8,7 @@
     # Measures humidity falling by 30 over 25 minutes.
     # NOTE: The drop amount here must be kept in sync with the Register Dryer Event automation.
     dryer_humidity_falling:
-      entity_id: sensor.dryer_humidity
+      entity_id: sensor.dryer_sensor_humidity
       friendly_name: Dryer Humidity Falling
       sample_duration: 1500   # 25m * 60s
       max_samples: 330        # 1500 / 5 (sampling interval) + 10%
@@ -16,7 +16,7 @@
 
     # Measures temperature falling by 20 over 10 minutes.
     dryer_temperature_falling:
-      entity_id: sensor.dryer_temperature
+      entity_id: sensor.dryer_sensor_temperature
       friendly_name: Dryer Temperature Falling
       sample_duration: 600    # 10m * 60s
       max_samples: 132        # 600 / 5 (sampling interval) + 10%
