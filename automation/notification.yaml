@@ -297,6 +297,60 @@
       channel: standard
       tag: 'studio_window_sensor_battery'
 
+# Master closet sensor battery is too low.
+- alias: Notify Master Closet Sensor Battery Low
+  id: 'notify_master_closet_sensor_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.master_closet_sensor_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      timer_entity: timer.master_closet_sensor_battery_notification
+      message: 'Master closet sensor battery needs replacing.'
+      channel: standard
+      tag: 'master_closet_sensor_battery'
+
+# Attic door sensor battery is too low.
+- alias: Notify Attic Door Sensor Battery Low
+  id: 'notify_attic_door_sensor_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.attic_door_sensor_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      timer_entity: timer.attic_door_sensor_battery_notification
+      message: 'Attic door sensor battery needs replacing.'
+      channel: standard
+      tag: 'attic_door_sensor_battery'
+
+# Upstairs entry sensor battery is too low.
+- alias: Notify Upstairs Entry Sensor Battery Low
+  id: 'notify_upstairs_entry_sensor_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.upstairs_entry_sensor_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      timer_entity: timer.upstairs_entry_sensor_battery_notification
+      message: 'Upstairs entry sensor battery needs replacing.'
+      channel: standard
+      tag: 'upstairs_entry_sensor_battery'
+
 # Porch battery powered sensor needs recharging.
 - alias: Notify Porch Sensor Battery Low
   id: 'notify_porch_sensor_battery_low'
@@ -487,7 +541,6 @@
       date_entities: [
                       'input_datetime.reminder_payment_amazon', 
                       'input_datetime.reminder_payment_creditunion', 
-                      'input_datetime.reminder_payment_johndeere',
                       'input_datetime.reminder_payment_mortgage', 
                       'input_datetime.reminder_payment_randolph', 
                       'input_datetime.reminder_payment_wellsfargo'

@@ -166,13 +166,13 @@
         device: Epson Projector
   
     # Delay for a bit to let the projector turn on.
-    - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
+    - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] or is_state('input_boolean.projector_active', 'on') }}"
       timeout: "{{ delay_time }}"
         
     # If all is well, reset the projector error handling flag. This tells the Activate Cinema script that it's OK to perform
     # post-processing.
     - if:
-        - "{{ states('media_player.epson_projector') in ['warmup', 'on'] }}"
+        - "{{ states('media_player.epson_projector') in ['warmup', 'on'] or is_state('input_boolean.projector_active', 'on') }}"
       
       then:
         - action: input_boolean.turn_off
@@ -184,10 +184,10 @@
 #=========================#
 
 # It seems we can't rely on the projector media player state - I've seen cases where the state is off but the projector is
-# working fine. So these automations turn a toggle on or off based on the amount of power being drawn. Just lovely.
+# working fine. So here we turn a toggle on or off based on the amount of power being drawn. Just lovely.
 
-- alias: Turn On Projector Active
-  id: turn_on_projector_active
+- alias: Toggle Projector Active
+  id: toggle_projector_active
   
   triggers:
     - trigger: numeric_state
@@ -195,24 +195,17 @@
       above: 250
       for:
         seconds: 10
+      id: 'on'
   
-  actions:
-    - action: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.projector_active
-
-- alias: Turn Off Projector Active
-  id: turn_off_projector_active
-  
-  triggers:
     - trigger: numeric_state
       entity_id: sensor.projector_power
       below: 250
       for:
         seconds: 10
+      id: 'off'
   
   actions:
-    - action: input_boolean.turn_off
+    - action: input_boolean.turn_{{ trigger.id }}
       target:
         entity_id: input_boolean.projector_active
 

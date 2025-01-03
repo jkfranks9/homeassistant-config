@@ -56,7 +56,10 @@
                                 ['binary_sensor.office_human_sensor_presence', 'sensor.office_human_sensor_last_seen'],
                                 ['switch.hall_light', 'sensor.hall_light_last_seen'],
                                 ['switch.dining_table_light', 'sensor.dining_table_light_last_seen'],
-                                ['switch.master_vanity_light', 'sensor.master_vanity_light_last_seen']
+                                ['switch.master_vanity_light', 'sensor.master_vanity_light_last_seen'],
+                                ['binary_sensor.master_closet_sensor_contact', 'sensor.master_closet_sensor_last_seen'],
+                                ['binary_sensor.attic_door_sensor_contact', 'sensor.attic_door_sensor_last_seen'],
+                                ['binary_sensor.upstairs_entry_sensor_contact', 'sensor.upstairs_entry_sensor_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -101,7 +104,10 @@
                                 'input_number.office_human_sensor_presence',
                                 'input_number.hall_light',
                                 'input_number.dining_table_light',
-                                'input_number.master_vanity_light'
+                                'input_number.master_vanity_light',
+                                'input_number.master_closet_sensor_door',
+                                'input_number.attic_door_sensor_door',
+                                'input_number.upstairs_entry_sensor_door'
                                ] %}
                                
           {# --Create an empty list to start-- #}

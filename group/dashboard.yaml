@@ -11,3 +11,31 @@ miscellaneous_devices:
     - cover.master_br_vent_2
     - binary_sensor.back_door_sensor_contact
     - binary_sensor.studio_window_sensor_contact
+  
+# Christmas plugs
+christmas_plugs:
+  entities:
+    - input_boolean.christmas_tree_family_room
+    - input_boolean.christmas_tree_kitchen
+    - input_boolean.christmas_mantle
+    - input_boolean.christmas_outdoor
+    - input_boolean.christmas_stair_railing
+    - input_boolean.christmas_village
+  
+# Virtual device trackers
+virtual_device_trackers:
+  entities:
+    - input_boolean.virtual_mike
+    - input_boolean.virtual_maryam
+    - input_boolean.virtual_sarah
+    - input_boolean.virtual_david
+    - input_boolean.virtual_skylar
+  
+# Energy
+energy_sensors:
+  entities:
+    - sensor.total_cooking_energy_l30d
+    - sensor.total_cleaning_energy_l30d
+    - sensor.total_entertainment_energy_l30d
+    - sensor.total_lights_energy_l30d
+    - sensor.total_fans_energy_l30d

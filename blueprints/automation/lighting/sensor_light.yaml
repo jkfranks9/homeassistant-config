@@ -1,0 +1,82 @@
+# Control a sensor-activated light.
+
+blueprint:
+  name: Sensor-activated Light
+  description: Control a light based on a sensor.
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Sensor Entity
+      description: The sensor that controls the light, for example a door sensor.
+      selector:
+        entity:
+          domain: binary_sensor
+    
+    light_target:
+      name: Light Target
+      description: The target light to be controlled.
+      selector:
+        target:
+          entity:
+            domain: light
+    
+    close_toggle:
+      name: Close Toggle
+      description: >
+        (Optional) Toggle to ignore alternate door closes. In this case the operation proceeds like this:
+        
+        open door  -> turn on light
+        close door -> do nothing
+        open door  -> turn on light (which actually does nothing since it's on)
+        close door -> turn off light
+        
+        The idea is that you want to open and close the door but leave the light on. Then turn it off for the next open/close.
+      default: {}
+      selector:
+        target:
+          entity:
+            domain: input_boolean
+
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
+variables:
+  input_close_toggle: !input close_toggle
+
+triggers:
+  
+  # Trigger when the sensor indicates the light is to be turned on.
+  - trigger: state
+    entity_id: !input sensor_entity
+    from: 'off'
+    to: 'on'
+    id: 'on'
+    
+  # Trigger when the sensor indicates the light is to be turned off.
+  - trigger: state
+    entity_id: !input sensor_entity
+    from: 'on'
+    to: 'off'
+    id: 'off'
+
+actions:
+  - variables:
+      toggle_specified: "{{ input_close_toggle | length > 0 }}"
+      toggle_state: "{{ states(input_close_toggle) if toggle_specified == true }}"
+  
+  # Toggle the input toggle if the light is to be turned on and the toggle was specified.
+  - if:
+      - "{{ trigger.id == 'on' and toggle_specified == true }}"
+    
+    then:
+      - action: input_boolean.toggle
+        target:
+          entity_id: !input close_toggle
+  
+  # Continue if the light is to be turned on, the toggle was not specified or the toggle was specified and is currently off.
+  - condition: template
+    value_template: "{{ iif(trigger.id == 'on', true, toggle_specified == false or (toggle_specified == true and toggle_state == 'off')) }}"
+  
+  # Control the light, using a templated action.
+  - action: light.turn_{{ trigger.id }}
+    target:
+      entity_id: !input light_target

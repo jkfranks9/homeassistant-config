@@ -42,7 +42,7 @@ bedtime:
       
     - delay: '00:00:07'
       
-    # Establish the proper bedtime environment (lights, thermostats, echo devices, smart vents, vacuum).
+    # Establish the proper bedtime environment (lights, thermostats, echo devices).
     - service: script.establish_bedtime_environment
     
     # Turn off all fans.
@@ -282,6 +282,9 @@ establish_bedtime_environment:
   alias: Establish Bedtime Environment
   
   sequence:
+    
+    # Always perform some tasks.
+    - action: script.open_hvac_vents
           
     # Just me home: turn off everything except the master bedroom lamp, and put the thermostat in sleep mode.
     # There's no need to bother with any devices.
@@ -293,7 +296,7 @@ establish_bedtime_environment:
       then:
         - scene: scene.non_master_lights_out
 
-        - service: script.set_thermostat_preset
+        - action: script.set_thermostat_preset
           data:
             thermostat_entity: climate.downstairs
             preset: 'sleep'
@@ -312,7 +315,7 @@ establish_bedtime_environment:
               state: 'off'
           
           then:
-            - service: scene.apply
+            - action: scene.apply
               data:
                 entities:
                   light.upstairs_lights:                 'off'
@@ -329,7 +332,7 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off downstairs guest lights and turn on night lights.
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'on'
@@ -338,12 +341,12 @@ establish_bedtime_environment:
                     light.studio_lamp_2:                 'off'
               
               # Set up all the bedtime devices.
-              - service: script.set_up_bedroom_devices
+              - action: script.set_up_bedroom_devices
                 data:
                   bedrooms: 'downstairs'
 
               # Enter sleep mode upstairs.
-              - service: script.set_thermostat_preset
+              - action: script.set_thermostat_preset
                 data:
                   thermostat_entity: climate.upstairs
                   preset: 'sleep'
@@ -357,7 +360,7 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off guest lights and turn on upstairs night lights.
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'off'
@@ -368,7 +371,7 @@ establish_bedtime_environment:
                     light.penthouse_lamp:                'off'
               
               # Set up all the bedtime devices.
-              - service: script.set_up_bedroom_devices
+              - action: script.set_up_bedroom_devices
                 data:
                   bedrooms: 'upstairs'
           
@@ -381,14 +384,14 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off guest lights and night lights (we turn on the master bath light later as a night light).
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'off'
                     light.studio_lights:                 'off'
         
               # Set a temporary temperature hold downstairs.
-              - service: script.set_temporary_thermostat_hold
+              - action: script.set_temporary_thermostat_hold
                 data:
                   thermostat_entity: climate.downstairs
                   heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
@@ -396,22 +399,22 @@ establish_bedtime_environment:
                   days: 1
 
               # Enter sleep mode upstairs.
-              - service: script.set_thermostat_preset
+              - action: script.set_thermostat_preset
                 data:
                   thermostat_entity: climate.upstairs
                   preset: 'sleep'
 
               # Mute master bedroom echo device.
-              - service: script.turn_on
+              - action: script.turn_on
                 entity_id: script.mute_master_bedroom_echo
                 
               # Turn on the master bath light as a night light, after a delay.
               - delay: '00:20:00'
-              - service: light.turn_on
+              - action: light.turn_on
                 entity_id: light.master_bath_light
                   
               # Disable the motion sensor automation, so the light remains on all night.
-              - service: automation.turn_off
+              - action: automation.turn_off
                 entity_id: automation.run_master_bath_motion_based_light
           
           # Adults only, downstairs.
@@ -423,18 +426,18 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off downstairs night lights.
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'off'
               
               # Set up all the bedtime devices.
-              - service: script.set_up_bedroom_devices
+              - action: script.set_up_bedroom_devices
                 data:
                   bedrooms: 'downstairs'
 
               # Enter sleep mode upstairs.
-              - service: script.set_thermostat_preset
+              - action: script.set_thermostat_preset
                 data:
                   thermostat_entity: climate.upstairs
                   preset: 'sleep'
@@ -448,14 +451,14 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off downstairs guest lights and night lights.
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'off'
                     light.studio_lights:                 'off'
               
               # Set up all the bedtime devices.
-              - service: script.set_up_bedroom_devices
+              - action: script.set_up_bedroom_devices
                 data:
                   bedrooms: 'upstairs'
           
@@ -468,13 +471,13 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off downstairs night lights.
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'off'
               
               # Set up all the bedtime devices.
-              - service: script.set_up_bedroom_devices
+              - action: script.set_up_bedroom_devices
                 data:
                   bedrooms: 'both'
           
@@ -487,7 +490,7 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off downstairs guest lights and turn on night lights.
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'on'
@@ -496,7 +499,7 @@ establish_bedtime_environment:
                     light.studio_lamp_2:                 'off'
               
               # Set up all the bedtime devices.
-              - service: script.set_up_bedroom_devices
+              - action: script.set_up_bedroom_devices
                 data:
                   bedrooms: 'both'
           
@@ -509,7 +512,7 @@ establish_bedtime_environment:
             sequence:
                     
               # Turn off upstairs guest lights and turn on night lights.
-              - service: scene.apply
+              - action: scene.apply
                 data:
                   entities:
                     light.daytime_lights:                'off'
@@ -519,7 +522,7 @@ establish_bedtime_environment:
                     light.penthouse_lamp:                'off'
               
               # Set up all the bedtime devices.
-              - service: script.set_up_bedroom_devices
+              - action: script.set_up_bedroom_devices
                 data:
                   bedrooms: 'both'
 
@@ -527,8 +530,6 @@ establish_bedtime_environment:
 #
 # - set thermostat settings for guest comfort
 # - mute appropriate echo devices
-# - open or close the upstairs bedroom vents
-# - turn off the vacuum automation if needed, so as to not frighten upstairs guests
 set_up_bedroom_devices:
   alias: Set Up Bedroom Devices
   
@@ -563,7 +564,7 @@ set_up_bedroom_devices:
           - service: script.turn_on
             entity_id: script.mute_studio_echo
       
-      # Upstairs bedroom occupied. We don't change the upstairs thermostat, vents or vacuum here. 
+      # Upstairs bedroom occupied. We don't change the upstairs thermostat here. 
       # That's done once when family members arrive.
       - conditions: "{{ bedrooms == 'upstairs' }}"
       
@@ -573,7 +574,7 @@ set_up_bedroom_devices:
           - service: script.turn_on
             entity_id: script.mute_penthouse_echo
         
-      # Both bedrooms occupied. We don't change the upstairs thermostat, vents or vacuum here. 
+      # Both bedrooms occupied. We don't change the upstairs thermostat here. 
       # That's done once when family members arrive.
       - conditions: "{{ bedrooms == 'both' }}"
       
@@ -630,6 +631,9 @@ reset_bedtime_environment:
     - action: homeassistant.turn_off
       target:
         entity_id: light.master_suite_lights
+    
+    # Close the HVAC vents.
+    - action: script.close_hvac_vents
 
 #=======================================#
 #     Turn On Lights Per Conditions     #

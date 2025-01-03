@@ -104,6 +104,8 @@ activate_cinema:
     
         # Turn on some lights.
         - action: script.set_theater_idle
+          data:
+            operation: activation
     
         # Announce the grand opening.
         - action: notify.alexa_media
@@ -130,9 +132,10 @@ activate_cinema:
             data:
               type: tts
       
-        # Delay for a while to make sure the projector is on and any error that may have been detected has been fixed.
-        - wait_template: "{{ states('media_player.epson_projector') in ['warmup', 'on'] and states('input_boolean.projector_error_handling') == 'off' }}"
-          timeout: '00:07:30'
+        # Delay for a while to make sure the projector is on and any error that may have been detected has been fixed, or the projector is active.
+        - wait_template: "{{ (states('media_player.epson_projector') in ['warmup', 'on'] and states('input_boolean.projector_error_handling') == 'off') or
+                              states('input_boolean.projector_active') == 'on' }}"
+          timeout: '00:10:00'
     
         # Perform post-open tasks if the projector is functioning.
         - if:
@@ -469,8 +472,9 @@ close_cinema:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Turn on some lights. This also turns on automations/lights that were possibly turned off by the open cinema script.
-    - action: script.turn_on
-      entity_id: script.set_theater_idle
+    - action: script.set_theater_idle
+      data:
+        operation: close
     
     # Turn off all devices.
     - delay: '00:00:02'
@@ -650,8 +654,7 @@ perform_post_open_tasks:
     
     - service: script.change_downstairs_lighting
       data:
-        turn_on: false
-        christmas: true
+        operation: post_open
     
     # Turn off the family room AV system and box 3 screen if it's late enough and no one else is home.
     - condition:
@@ -835,27 +838,38 @@ set_theater_dim:
     - scene: scene.theater_aux_dark
     - scene: scene.lutron_dim
 
-# Make the theater bright.
-set_theater_bright:
-  alias: Set Theater Bright
-  sequence:
-    - scene: scene.theater_aux_partial
-    - service: script.change_downstairs_lighting
-      data:
-        turn_on: true
-        christmas: false
-    - scene: scene.lutron_bright
-
 # Make the theater idle, meaning it's on but we need lights to see.
 set_theater_idle:
   alias: Set Theater Idle
-  sequence:
+  
+  fields:
+    operation:
+      description: The reason for calling this script (operation in progress). The break operation is called by voice assistant, so is the default since it's not always possible to pass data.
+      default: break
+      selector:
+        select:
+          options:
+            - 'activation'
+            - 'break'
+            - 'close'
+  
+  sequence:    
     - scene: scene.theater_aux_partial
+    
     - scene: scene.lutron_idle
-    - service: script.change_downstairs_lighting
-      data:
-        turn_on: true
-        christmas: false
+    
+    - if:
+        - "{{ not operation is defined }}"
+      
+      then:
+        - action: script.change_downstairs_lighting
+          data:
+            operation: break
+        
+      else:
+        - action: script.change_downstairs_lighting
+          data:
+            operation: "{{ operation }}"
 
 #============================#
 #     Downstairs Lights      #
@@ -864,57 +878,86 @@ set_theater_idle:
 # Turn on some downstairs lights if it's dark enough, or conditionally turn them off. This is used as follows,
 # either directly or via the Set Theater Idle script:
 #
-# - Cinema open (turn on, delay, turn off)
-# - Cinema close (turn on)
-# - The Alexa Break Time routine, which calls Set Theater Idle (turn on)
-# - Cinema Resume (turn off)
+# - Cinema open, via Set Theater Idle (operation = activation: turn on)
+# - Cinema open after delay (operation = post_open: turn off)
+# - Alexa Break Time routine, via Set Theater Idle (operation = break: turn on)
+# - Cinema Resume (operation = resume: turn off)
+# - Cinema close, via Set Theater Idle (operation = close: turn on)
 change_downstairs_lighting:
   alias: Change Downstairs Lighting
+  
+  trace:
+    stored_traces: 20
+  
   fields:
-    turn_on:
-      description: Whether to turn the lights on (true) or off (false).
-    
-    christmas:
-      description: Whether to change the Christmas lights (true) or not (false).
+    operation:
+      description: The reason for calling this script (operation in progress).
+      selector:
+        select:
+          options:
+            - 'activation'
+            - 'post_open'
+            - 'break'
+            - 'resume'
+            - 'close'
   
   sequence:
+    - variables:
+        turn_on: "{{ operation in ['activation', 'break', 'close'] }}"
+        test_lights: "{{ iif(is_state('input_boolean.christmas_mode', 'off'), 'light.family_room_lamp', 'light.all_christmas_lights') }}"
+        ambient_min: "{{ iif(is_state('input_boolean.christmas_mode', 'off'), states('input_number.family_room_ambient_min') | float(0), states('input_number.christmas_ambient_min') | float(0)) }}"
+        ambient_value: "{{ states('sensor.foyer_sensor_ambient_light') | float(0) }}"
+        all_day: "{{ is_state('binary_sensor.all_day_christmas_lights', 'on') }}"
+        activation_lights: "{{ ['light.stairway_light', 'light.island_light'] }}"
+        non_activation_lights: "{{ ['light.daytime_lights', 'light.stairway_light', 'light.island_light'] }}"
+    
     - if:
-      
-        # Turn on lights.
         - "{{ turn_on == true }}"
         
+      # Turn on lights.
       then:
           
-        # Turn on lights if needed. Note that we don't need to consider Christmas lights because we never 
-        # turn those on.
-        - condition: numeric_state
-          entity_id: sensor.foyer_sensor_ambient_light
-          below: input_number.family_room_ambient_min
-            
-        - action: light.turn_on
-          entity_id:
-            - light.daytime_lights
-            - light.stairway_light
-            - light.island_light
+        - if:
+            - "{{ operation == 'activation' }}"
+          
+          # At activation time downstairs lights might be on or off, or we could be in a window where the ambient light is below the minimum
+          # but the lights haven't turned on yet. So we need to test both conditions. However, for the few days around Christmas and New Year's,
+          # the Christmas lights are on all day, so we always want to turn on the lights.
+          #
+          # Also, the lights we turn on at activation time don't include the daytime lights, because at Christmas time we don't need them, 
+          # and otherwise they should already be on.
+          then:
+            - if:
+                - "{{ iif(all_day == false, is_state(test_lights, 'on') or ambient_value < ambient_min, true) }}"
+              
+              then:
+                - action: light.turn_on
+                  target:
+                    entity_id: "{{ activation_lights }}"
+          
+          # For break time and theater close include the daytime lights.
+          else:
+            - action: light.turn_on
+              target:
+                entity_id: "{{ non_activation_lights }}"
         
+      # Turn off lights, but only if no family members are present.
       else:
-        
-        # Turn off lights, but only if no family members present.
         - condition: state
           entity_id: binary_sensor.adults_home
           state: 'off'
         
+        # At post open time, turn off the Christmas lights if Christmas mode is on.
         - if:
-            - "{{ states('input_boolean.christmas_mode') == 'on' and (christmas == true) }}"
+            - "{{ states('input_boolean.christmas_mode') == 'on' and (operation == 'post_open') }}"
           
           then: 
             - action: script.turn_off_christmas_lights
         
+        # Turn off non-Christmas lights.
         - action: light.turn_off
-          entity_id:
-            - light.daytime_lights
-            - light.stairway_light
-            - light.island_light
+          target:
+            entity_id: "{{ non_activation_lights }}"
 
 #========================#
 #     Cinema Resume      #
@@ -995,8 +1038,7 @@ restore_lighting_on_resume:
     # Turn off some downstairs lights.
     - service: script.change_downstairs_lighting
       data:
-        turn_on: false
-        christmas: false
+        operation: resume
 
 #=======================#
 #     Activate Kodi     #

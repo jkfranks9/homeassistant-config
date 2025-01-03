@@ -66,8 +66,12 @@ include:
     
     - binary_sensor.adults_home
     - binary_sensor.children_home
+    - binary_sensor.jon_devices_charging
+    - binary_sensor.jon_sleeping
+    - binary_sensor.office_human_sensor_presence
     - input_boolean.office_occupied
     - input_boolean.washer_fabric_softener
+    - input_number.sleep_duration
     - input_number.washer_fill_seconds
     - input_select.washer_load_size
     - input_select.washer_state

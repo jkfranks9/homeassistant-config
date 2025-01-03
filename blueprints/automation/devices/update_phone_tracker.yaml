@@ -1,0 +1,56 @@
+# Update a stationary mobile phone device tracker, based on the connected WiFi SSID.
+
+blueprint:
+  name: Update Phone Tracker
+  description: Update a stationary mobile phone device tracker, based on the connected WiFi SSID.
+  domain: automation
+  
+  input:
+    wifi_entity:
+      name: WiFi Entity
+      description: The WiFi connection entity on which to trigger.
+      selector:
+        entity:
+          domain: sensor
+    
+    ssid:
+      name: SSID
+      description: The WiFi SSID (or prefix) that identifies a device as being home.
+    
+    topic_suffix:
+      name: Topic Suffix
+      description: The MQTT topic suffix that the associated MQTT sensor is subsribed to.
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_ssid: !input ssid
+  input_topic_suffix: !input topic_suffix
+
+# Trigger on any change to the WiFi entity.
+triggers:
+  - trigger: state
+    entity_id: !input wifi_entity
+    to:
+
+conditions:
+  
+  # Weed out junk.
+  - "{{ trigger.from_state.state not in ['unavailable', 'unknown'] and trigger.to_state.state not in ['unavailable', 'unknown'] }}"
+  
+  # Weed out changes within a short period of time.
+  - "{{ as_timestamp(as_datetime(trigger.to_state.last_updated)) - as_timestamp(as_datetime(trigger.from_state.last_updated)) > (5 * 60) }}"
+
+actions:
+  - variables:
+      new_state: >
+        {% if input_ssid in trigger.to_state.state %}
+          home
+        {% else %}
+          not_home
+        {% endif %}
+          
+  - action: mqtt.publish
+    data:
+      topic: "{{ 'homeassistant/device_tracker/' ~ input_topic_suffix }}"
+      payload: "{{ new_state }}"
+      retain: true

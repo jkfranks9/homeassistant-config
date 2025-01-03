@@ -1521,7 +1521,6 @@ gather_upcoming_reminders:
                                'input_datetime.reminder_payment_amazon',
                                'input_datetime.reminder_payment_creditunion',
                                'input_datetime.reminder_payment_disney',
-                               'input_datetime.reminder_payment_johndeere',
                                'input_datetime.reminder_payment_mortgage',
                                'input_datetime.reminder_payment_randolph',
                                'input_datetime.reminder_payment_wellsfargo',
@@ -1535,7 +1534,7 @@ gather_upcoming_reminders:
   sequence:
           
     # Set the appropriate items in the result dropdown.
-    - service: input_select.set_options
+    - action: input_select.set_options
       target:
         entity_id: input_select.reminder_lookahead_items
       data:

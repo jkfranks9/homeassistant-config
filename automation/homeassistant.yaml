@@ -272,10 +272,14 @@
             data:
               volume_level: 0.5
     
-    # Reset the sunset light sensor trip toggle.  
-    - action: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.sunset_light_sensor_trip
+    # Reset the automations that control family room lighting, so that the family room lamp will be
+    # used at wakeup time. Control Family Room Light Automations will flip them back to Christmas lights
+    # if Christmas mode is on, when the sun stops rising.
+    - action: automation.turn_on
+      entity_id: automation.control_family_room_lamp
+    
+    - action: automation.turn_off
+      entity_id: automation.control_christmas_lights
     
     # Perform weekly chores at the start of a new week (Sunday).
     - if:
@@ -367,14 +371,10 @@
         {% set skip_list = [
                             'initialize_turn_on_volume', 
                             'log_automations',
-                            'log_notifications', 
                             'log_scripts',
                             'modify_beacon_device_tracker',
                             'perform_daily_chores',
-                            'remove_saved_notifications_on_dismiss',
-                            'restore_notifications',
                             'resume_cinema', 
-                            'save_notifications_on_create', 
                             'set_maximum_attic_temperature', 
                             'set_maximum_garage_temperature', 
                             'set_maximum_outdoor_temperature',
@@ -453,32 +453,30 @@
 #     Persistent Notifications     #
 #==================================#
 
-# NOTE: This was originally obtained as a package (I forget where). But I've had to debug it and
-#       make changes, so it's now just included with all the other automations instead of a package.
-
-# Save notifications to MQTT when they are created.
+# Save notifications to MQTT when they are created. Since they are retained messages, they get reloaded by the MQTT 
+# broker when HA restarts.
 - alias: Save Notifications On Create
   id: save_notifications_on_create  
   mode: queued
   
   triggers:
-    - trigger: event
-      event_type: call_service
-      event_data:
-        domain: persistent_notification
-        service: create
+    - trigger: persistent_notification
+      update_type:
+        - added
+        - updated
+        - current
   
-  conditions: "{{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}"
+  conditions: "{{ trigger.notification.notification_id != 'config_entry_discovery' }}"
   
   actions:
     - action: mqtt.publish
       data_template:
-        topic: "home-assistant/notifications/{{ trigger.event.data.service_data.notification_id }}"
+        topic: "homeassistant/notifications/{{ trigger.notification.notification_id }}"
         payload: >-
           {
-            'notification_id' : "{{ trigger.event.data.service_data.notification_id }}",
-            'title' : "{{ trigger.event.data.service_data.title }}",
-            'message' : "{{ trigger.event.data.service_data.message }}"
+            'notification_id' : "{{ trigger.notification.notification_id }}",
+            'title' : "{{ trigger.notification.title }}",
+            'message' : "{{ trigger.notification.message }}"
           }
         retain: true
 
@@ -487,64 +485,17 @@
   id: remove_saved_notifications_on_dismiss
   
   trigger:
-    - platform: event
-      event_type: call_service
-      event_data:
-        domain: persistent_notification
-        service: dismiss
+    - trigger: persistent_notification
+      update_type:
+        - removed
   
-  condition: "{{ trigger.event.data.service_data.notification_id != 'config_entry_discovery' }}"
+  condition: "{{ trigger.notification.notification_id != 'config_entry_discovery' }}"
   
   action:
     - service: mqtt.publish
       data_template:
-        topic: "home-assistant/notifications/{{ trigger.event.data.service_data.notification_id }}"
+        topic: "homeassistant/notifications/{{ trigger.notification.notification_id }}"
         retain: true
-
-# Restore persistent notifications (the whole point).
-#
-# This one is tricky:
-#   - It's triggered by the above save_notifications_on_create automation, since that one publishes an MQTT message.
-#   - The condition compares the triggered message with the entity ID 'persistent_notification.[notification ID]':
-#       - This entity is created to represent the retained MQTT message
-#       - This sometimes creates an error in the log indicating the MQTT message has no payload_json attribute.
-#         I've used the log_notifications automation below to try and debug, but it shows the payload_json attribute is
-#         present. Not really sure what is going on, since all this stuff does indeed work - I suspect some sort of timing
-#         problem.
-#   - If the comparison is true then the message has changed since it was originally issued, and the action then creates
-#     a new persistent notification to replace the original, thus driving save_notifications_on_create, which in turn re-drives
-#     this, but the condition should be false on the redrive.
-#   - Note that dashes in the notification ID are changed to underscores, presumably to prevent some problem.
-- alias: Restore Notifications
-  id: restore_notifications
-  
-  trigger:
-    - platform: mqtt
-      topic: home-assistant/notifications/+
-  
-  condition: "{{ trigger.payload != '' and state_attr('persistent_notification.' + trigger.payload_json.notification_id | replace('-','_'),'message') != trigger.payload_json.message }}"
-  
-  action:
-    - service: persistent_notification.create
-      data_template:
-        title: >-
-          {{ trigger.payload_json.title }}
-        message: >-
-          {{ trigger.payload_json.message }}
-        notification_id: >-
-          {{ trigger.payload_json.notification_id }}
-
-# Log the published MQTT message for debugging purposes (normally turned off).
-- id: log_notifications
-  alias: Log Notifications
-  trigger:
-    - platform: mqtt
-      topic: home-assistant/notifications/+
-  action:
-    - service: system_log.write
-      data:
-        message: "notification: '{{ trigger.payload }}'"
-        level: info
 
 #========================#
 #     MQTT Discovery     #
@@ -682,69 +633,6 @@
       entity_id:
         - automation.notify_next_canes_game
         - automation.notify_next_flyers_game
-
-#==================================#
-#     Riemann Sum Integrations     #
-#==================================#
-
-# Riemann sum integrations become unavailable if their source sensors are zero for long periods. This then causes
-# the associated utility meter sensors to also become unavailable. This automation updates the Riemann sum integration
-# when that happens, which restores the sensor to its previous value. And all is well again.
-- alias: Restore Riemann Integration
-  id: restore_riemann_integration
-  
-  # We want to catch all such events, and there are a lot. Update the max value as needed.
-  mode: parallel
-  max: 50
-  
-  trigger:
-    - platform: state
-      entity_id:
-        - sensor.back_floodlight_energy
-        - sensor.back_yard_light_energy
-        - sensor.dining_room_hutch_energy
-        - sensor.dining_room_lamps_energy
-        - sensor.driveway_light_energy
-        - sensor.family_room_fan_energy
-        - sensor.family_room_lamp_energy
-        - sensor.foyer_hutch_energy
-        - sensor.front_floodlight_energy
-        - sensor.hallway_lamp_energy
-        - sensor.hallway_light_energy
-        - sensor.island_light_energy
-        - sensor.kitchen_light_energy
-        - sensor.laundry_room_light_energy
-        - sensor.master_bath_fan_energy
-        - sensor.master_bath_light_energy
-        - sensor.master_bedroom_lamp_energy
-        - sensor.office_bookcase_energy
-        - sensor.office_fan_energy
-        - sensor.office_lamp_energy
-        - sensor.penthouse_fan_energy
-        - sensor.penthouse_lamp_energy
-        - sensor.penthouse_light_energy
-        - sensor.penthouse_tub_light_energy
-        - sensor.penthouse_vanity_light_energy
-        - sensor.porch_light_energy
-        - sensor.sink_light_energy
-        - sensor.snack_light_energy
-        - sensor.stairway_light_energy
-        - sensor.studio_fan_energy
-        - sensor.studio_lamp_1_energy
-        - sensor.studio_lamp_2_energy
-        - sensor.studio_light_energy
-        - sensor.theater_ceiling_energy
-        - sensor.theater_fan_energy
-        - sensor.theater_sconces_energy
-        - sensor.treadmill_fan_energy
-        - sensor.utility_light_energy
-      to: 'unavailable'
-      for: '00:00:05'
-  
-  action:
-    - service: homeassistant.update_entity
-      target:
-        entity_id: "{{ trigger.entity_id }}"
 
 #======================#
 #     Mobile Texts     #

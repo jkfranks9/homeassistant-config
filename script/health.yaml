@@ -69,8 +69,12 @@ register_exercise_metrics:
     monthly_time_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_time' }}"
     monthly_calories_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_calories' }}"
     daily_time: "{{ states('input_number.' ~ exercise_type ~ '_daily_time') | int(0) }}"
+    daily_steps: "{{ states('sensor.steps_daily') | int(0) }}"
     daily_calories: "{{ states('input_number.' ~ exercise_type ~ '_daily_calories') | int(0) }}"
     recordable_exercise_minimum_time: "{{ state_attr('sensor.variables', 'variables').recordable_exercise_minimum_time | int(0) }}"
+    type_str: "{{ exercise_type ~ (' ' * (9 - exercise_type|length)) ~ ',' }}"
+    metric_str: "{{ iif(exercise_type == 'steps', 'steps:', 'time :') }}"
+    metric_val: "{{ iif(exercise_type == 'steps', daily_steps, daily_time) }}"
   
   sequence:
     
@@ -81,13 +85,13 @@ register_exercise_metrics:
       then:
         
         # Update the calorie metrics.        
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: "{{ weekly_calories_entity }}"
           data:
             value: "{{ states(weekly_calories_entity) | int(0) + daily_calories }}"
         
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: "{{ monthly_calories_entity }}"
           data:
@@ -98,13 +102,13 @@ register_exercise_metrics:
             - "{{ exercise_type != 'steps' }}"
           
           then:
-            - service: input_number.set_value
+            - action: input_number.set_value
               target:
                 entity_id: "{{ weekly_time_entity }}"
               data:
                 value: "{{ states(weekly_time_entity) | int(0) + daily_time }}"
             
-            - service: input_number.set_value
+            - action: input_number.set_value
               target:
                 entity_id: "{{ monthly_time_entity }}"
               data:
@@ -112,17 +116,17 @@ register_exercise_metrics:
           
           # Update the steps metrics.
           else:
-            - service: input_number.set_value
+            - action: input_number.set_value
               target:
                 entity_id: input_number.steps_weekly
               data:
-                value: "{{ states('input_number.steps_weekly') | int(0) + states('sensor.steps_daily') | int(0) }}"
+                value: "{{ states('input_number.steps_weekly') | int(0) + daily_steps }}"
             
-            - service: input_number.set_value
+            - action: input_number.set_value
               target:
                 entity_id: input_number.steps_monthly
               data:
-                value: "{{ states('input_number.steps_monthly') | int(0) + states('sensor.steps_daily') | int(0) }}"
+                value: "{{ states('input_number.steps_monthly') | int(0) + daily_steps }}"
         
         # Bump the recordable exercise counter if the time meets or exceeds the daily threshold. This is mainly used
         # for insurance purposes (if I exercise at least n minutes a day for n days a month I get a benefit).
@@ -136,15 +140,15 @@ register_exercise_metrics:
         
         # Log the metrics, so I have a record of activity for each month (the log is backed up on the first of each
         # month, which starts a new log file).
-        - service: notify.send_message
+        - action: notify.send_message
           target:
             entity_id: notify.exercise_activity
           data:
-            message: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') ~ ': Exercise type: ' ~ exercise_type ~ ', time: ' ~ daily_time ~ ', calories: ' ~ daily_calories }}"
+            message: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') ~ ': Exercise type: ' ~ type_str ~ ' ' ~ metric_str ~ ' ' ~ metric_val ~ ', calories: ' ~ daily_calories }}"
       
       # Invalid exercise type, log it.
       else:
-        - service: system_log.write
+        - action: system_log.write
           data:
             message: "Invalid exercise type '{{ exercise_type }}' specified"
             level: error

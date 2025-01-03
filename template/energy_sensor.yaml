@@ -100,26 +100,20 @@
       name: All Entertainment Energy
       unique_id: all_entertainment_energy
 
-# Lights group
+# Downstairs Lights group
 - trigger:
     - <<: *cumulator_trigger
     
       entity_id:
-        - sensor.attic_light_energy
-        - sensor.back_floodlight_energy
-        - sensor.back_yard_light_energy
         - sensor.dining_room_hutch_energy
         - sensor.dining_room_lamps_energy
         - sensor.dining_table_light_energy
-        - sensor.driveway_light_energy
         - sensor.family_room_fan_light_energy
         - sensor.family_room_lamp_energy
         - sensor.foyer_hutch_energy
-        - sensor.front_floodlight_energy
         - sensor.garage_light_energy
         - sensor.hall_light_energy
         - sensor.hallway_lamp_energy
-        - sensor.hallway_light_energy
         - sensor.island_light_energy
         - sensor.kitchen_light_energy
         - sensor.laundry_room_light_energy
@@ -129,22 +123,66 @@
         - sensor.office_bookcase_energy
         - sensor.office_fan_light_energy
         - sensor.office_lamp_energy
-        - sensor.penthouse_lamp_energy
-        - sensor.penthouse_light_energy
-        - sensor.penthouse_tub_light_energy
-        - sensor.penthouse_vanity_light_energy
-        - sensor.porch_light_energy
         - sensor.sink_light_energy
-        - sensor.snack_light_energy
         - sensor.stairway_light_energy
         - sensor.studio_lamp_1_energy
         - sensor.studio_lamp_2_energy
         - sensor.studio_light_energy
+  
+  sensor:
+    - <<: *cumulator_sensor
+    
+      name: Downstairs Lights Energy
+      unique_id: downstairs_lights_energy
+
+# Outdoor Lights group
+- trigger:
+    - <<: *cumulator_trigger
+    
+      entity_id:
+        - sensor.back_floodlight_energy
+        - sensor.back_yard_light_energy
+        - sensor.driveway_light_energy
+        - sensor.front_floodlight_energy
+        - sensor.porch_light_energy
+  
+  sensor:
+    - <<: *cumulator_sensor
+    
+      name: Outdoor Lights Energy
+      unique_id: outdoor_lights_energy
+
+# Upstairs Lights group
+- trigger:
+    - <<: *cumulator_trigger
+    
+      entity_id:
+        - sensor.attic_light_energy
+        - sensor.hallway_light_energy
+        - sensor.penthouse_lamp_energy
+        - sensor.penthouse_light_energy
+        - sensor.penthouse_tub_light_energy
+        - sensor.penthouse_vanity_light_energy
+        - sensor.snack_light_energy
         - sensor.theater_ceiling_energy
         - sensor.theater_fan_light_energy
         - sensor.theater_sconces_energy
         - sensor.utility_light_energy
   
+  sensor:
+    - <<: *cumulator_sensor
+    
+      name: Upstairs Lights Energy
+      unique_id: upstairs_lights_energy
+
+# Lights group
+- trigger:
+    - <<: *cumulator_trigger
+    
+      entity_id:
+        - sensor.downstairs_lights_energy
+        - sensor.outdoor_lights_energy
+        - sensor.upstairs_lights_energy
   sensor:
     - <<: *cumulator_sensor
     

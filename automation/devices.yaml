@@ -297,6 +297,10 @@
         - "{{ states('sensor.foyer_sensor_ambient_light') | float(0) < states('input_number.family_room_ambient_min') | float(0) }}"
       
       then:
+        - action: light.turn_on
+          target:
+            entity_id: light.office_lamp
+        
         - if:
             - condition: state
               entity_id: input_boolean.christmas_mode
@@ -324,16 +328,19 @@
       entity_id: person.jon
       from: 'home'
       to: 'not_home'
+      id: jon_left
     
     # The sun goes to bed.
     - trigger: state
       entity_id: sun.sun
       from: 'above_horizon'
       to: 'below_horizon'
+      id: sunset
     
     # In case HA was rebooting when one of the above triggers would have happened.
     - trigger: homeassistant
       event: start
+      id: start
   
   # These conditions cover the HA start trigger.
   conditions:
@@ -367,8 +374,8 @@
     
     - if:
       
-        # I'm not home.
-        - "{{ not is_state('person.jon', 'home') }}"
+        # I just left home.
+        - "{{ trigger.id != 'sunset' }}"
         
       then:
     
@@ -393,8 +400,12 @@
             # Turn off all fans.
             - scene: scene.fans_off
       
-      # Must be sunset.
-      else:
+    - if:
+      
+        # Must be sunset.
+        - "{{ trigger.id != 'jon_left' }}"
+        
+      then:
          
          # Turn off certain light domains.
          - action: light.turn_off
@@ -622,6 +633,18 @@
       data:
         topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
         payload: "{{ new_state }}"
+    
+    - action: notify.alexa_media
+      data:
+        message: >
+          <speak>
+            <amazon:emotion name="excited" intensity="medium">
+            {{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Slylar! Come visit again soon!') }}
+            </amazon:emotion>
+          </speak>
+        target: media_player.office_echo
+        data:
+          type: tts
 
 #=============================#
 #     Penthouse Occupancy     #
@@ -1848,6 +1871,27 @@
         topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
         payload: "{{ new_state }}"
 
+# Toggle phone stationary device trackers, based on the wifi SSID.
+- alias: Toggle Jon Phone Stationary Tracker
+  id: toggle_jon_phone_stationary_tracker
+  
+  use_blueprint:
+    path: devices/update_phone_tracker.yaml
+    input:
+      wifi_entity: sensor.jon_galaxy_wifi_connection
+      ssid: White Rabbit
+      topic_suffix: jon_phone_stationary
+
+- alias: Toggle Mike Phone Stationary Tracker
+  id: toggle_mike_phone_stationary_tracker
+  
+  use_blueprint:
+    path: devices/update_phone_tracker.yaml
+    input:
+      wifi_entity: sensor.mike_galaxy_wifi_connection
+      ssid: White Rabbit
+      topic_suffix: mike_phone_stationary
+
 #======================#
 #     Echo Devices     #
 #======================#
@@ -1894,34 +1938,6 @@
       entity_id:
         - switch.studio_echo_do_not_disturb_switch
         - switch.penthouse_echo_do_not_disturb_switch
-
-#====================#
-#     HVAC Vents     #
-#====================#
-
-# Open the HVAC vents near bedtime.
-- alias: Open HVAC Vents
-  id: open_hvac_vents
-  
-  trigger:
-    - platform: time
-      at: '21:30:00'
-  
-  action:
-    - service: script.open_hvac_vents
-
-# Close the HVAC vents at wakeup.
-- alias: Close HVAC Vents
-  id: close_hvac_vents
-  
-  trigger:
-    - platform: state
-      entity_id: input_boolean.nighttime
-      from: 'on'
-      to: 'off'
-  
-  action:
-    - service: script.close_hvac_vents
 
 #========================#
 #     Legion T530 PC     #
