@@ -11,7 +11,7 @@ bedtime:
     - service: light.turn_on
       entity_id: light.master_bedroom_lamp
       data:
-        kelvin: 2700
+        color_temp_kelvin: 2700
         brightness_pct: 100
     
     # Turn on nighttime mode.
@@ -101,7 +101,7 @@ turn_on_bathroom_light:
     - action: light.turn_on
       entity_id: light.master_bedroom_lamp
       data:
-        kelvin: 2700
+        color_temp_kelvin: 2700
         brightness_pct: 20
     
     # Turn on bath light.
@@ -127,6 +127,8 @@ awake:
     - service: script.turn_on_lights_per_conditions
       data:
         light_entity: light.master_bedroom_lamp
+        lux_entity: sensor.downstairs_sensor_ambient_light
+        min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
 
 # I have awoken.
 wakeup:
@@ -146,6 +148,8 @@ wakeup:
     - action: script.turn_on_lights_per_conditions
       data:
         light_entity: light.island_light
+        lux_entity: sensor.downstairs_sensor_ambient_light
+        min_lux_value: "{{ states('input_number.kitchen_ambient_min') | float(0) }}"
     
     # Turn off the island light when I'm in the office, or after a few minutes (lets me get breakfast).
     - wait_for_trigger:
@@ -153,7 +157,7 @@ wakeup:
           entity_id: binary_sensor.office_human_sensor_presence
           to: 'on'
           for: 120
-      timeout: '00:10:00'
+      timeout: '00:13:00'
     
     - action: light.turn_off
       entity_id: light.island_light
@@ -601,8 +605,21 @@ reset_bedtime_environment:
   alias: Reset Bedtime Environment
   
   sequence:
+    - variables:
+        echo_list: "{{ expand(integration_entities('alexa_media') | select('search', 'media_player')) |
+                       rejectattr('attributes.friendly_name', 'in', ['This Device', 'Everywhere']) | map(attribute = 'entity_id') | list }}"
     
-    # Note that the bedroom echo devices automatically unmute at 9 AM.
+    # Note that the bedroom echo devices automatically unmute at 9 AM. However, normalize the volume on all echoes
+    # in case they were modified yesterday.
+    - repeat:
+        for_each: "{{ echo_list }}"
+        
+        sequence:
+          - action: media_player.volume_set
+            target:
+              entity_id: "{{ repeat.item }}"
+            data:
+              volume_level: 0.5
     
     # Turn off the upstairs night light if we turned it on at bedtime.
     # The downstairs night lights (aka daytime lights) are turned off by an automation.
@@ -639,34 +656,32 @@ reset_bedtime_environment:
 #     Turn On Lights Per Conditions     #
 #=======================================#
 
-# This determines if it's dark enough to need light based on various conditions, such as weather, sun elevation,
-# or an ambient light level sensor.
+# This determines if it's dark enough to need light based on an ambient light level sensor.
 turn_on_lights_per_conditions:
   alias: Turn On Lights Per Conditions
   
   fields:
     light_entity:
       description: The entity ID of the target lights.
+      selector:
+        entity:
+          domain: light
     
-  sequence:
+    lux_entity:
+      description: The ambient light level sensor entity.
+      selector:
+        entity:
+          domain: sensor
     
-    # Evaluate the weather condition and set the result in an input_select.
-    - action: script.evaluate_weather_condition  
-        
-    - variables:
-        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-        min_elevation: "{{ states('sensor.min_elevation') }}"
-        med_elevation: "{{ states('sensor.med_elevation') }}"
-        max_elevation: "{{ states('sensor.max_elevation') }}"
+    min_lux_value:
+      description: The minimum ambient light level value.
     
-    # Verify sun elevation and weather conditions.
+  sequence: 
+    
+    # Turn on the light if the ambient light sensor is at or below the minimum.
     - if:
-        - "{{ (sun_elevation <= max_elevation | float(max_elevation) and
-               states('input_select.weather_condition') == 'gloomy') or
-              (sun_elevation <= med_elevation | float(med_elevation) and
-               states('input_select.weather_condition') != 'clear') or
-               sun_elevation <= min_elevation | float(min_elevation) }}"
-        
+        - "{{ states(lux_entity) | float(0) <= min_lux_value | float(0) }}"
+    
       then:
         - action: light.turn_on
           target:
@@ -675,39 +690,24 @@ turn_on_lights_per_conditions:
 #=====================#
 #     Smart Bulbs     #
 #=====================#
-
-# Reset a smart bulb based on the sky conditions (sun angle and weather).
-reset_smart_bulb_sky_conditions:
-  alias: Reset Smart Bulb Sky Conditions
+    
+# We have power glitches occasionally, which cause all TP-Link smart bulbs to turn on. Here we attempt to
+# turn them off if they're not supposed to be on at the moment. This is intended to be called by a voice
+# assistant.
+reset_smart_bulbs:
+  alias: Reset Smart Bulbs
   
-  fields:
-    light_entity:
-      description: 'The light entity to turn off.'
-
   sequence:
-        
-    # Evaluate the weather condition and set the result in an input_select.
-    - service: script.evaluate_weather_condition  
-        
-    - variables:
-        sun_elevation: "{{ state_attr('sun.sun', 'elevation') }}"
-        min_elevation: "{{ states('sensor.min_elevation') }}"
-        med_elevation: "{{ states('sensor.med_elevation') }}"
-        max_elevation: "{{ states('sensor.max_elevation') }}"
-    
-    # Use the evaluated weather conditions and sun elevation.
-    - condition: template
-      value_template: >
-        {{ (sun_elevation > min_elevation | float(min_elevation) and
-            states('input_select.weather_condition') == 'clear') or
-           (sun_elevation > med_elevation | float(med_elevation) and
-            states('input_select.weather_condition') == 'hazy') or
-            sun_elevation > max_elevation | float(max_elevation) }}
-    
-    - service: homeassistant.turn_off
-      target:
-        entity_id: "{{ light_entity }}"
+    - action: script.reset_smart_bulb_nighttime
+      data:
+        light_entity: light.master_bedroom_lamp
 
+    - action: script.reset_smart_bulb_lux_sensor
+      data:
+        light_entity: light.office_lamp
+        lux_entity: sensor.office_sensor_ambient_light
+        lux_value: "{{ states('input_number.office_ambient_max') | int(0) }}"
+          
 # Reset a smart bulb based on various sleep/wake modes.
 reset_smart_bulb_nighttime:
   alias: Reset Smart Bulb Nighttime
@@ -732,7 +732,7 @@ reset_smart_bulb_nighttime:
           entity_id: input_boolean.bathroom
           state: 'off'
     
-    - service: homeassistant.turn_off
+    - action: light.turn_off
       target:
         entity_id: "{{ light_entity }}"
 
@@ -758,22 +758,16 @@ reset_smart_bulb_lux_sensor:
     - wait_template: "{{ is_number(states(lux_entity)) }}"
       timeout: '00:11:00'
     
-    # If the wait completed, check the lux sensor. Otherwise, revert to the next best thing by performing
-    # the sky conditions check.
+    # If the wait completed, check the lux sensor.
     - if:
         - "{{ wait.completed }}"
       
       then:
         - condition: "{{ states(lux_entity) | int(0) > lux_value }}"
         
-        - service: homeassistant.turn_off
+        - action: light.turn_off
           target:
             entity_id: "{{ light_entity }}"
-      
-      else:
-        - service: script.reset_smart_bulb_sky_conditions
-          data:
-            light_entity: "{{ light_entity }}"
 
 #==========================#
 #     Christmas Lights     #

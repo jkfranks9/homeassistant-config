@@ -1,9 +1,9 @@
 # Device specific information
 substitutions:
-  friendly_name:   Foyer Sensor
+  friendly_name:   Downstairs Sensor
   
   # Used by boards
-  device_name:     foyer-sensor
+  device_name:     downstairs-sensor
   loglevel:        DEBUG
   
   # Used by WiFi

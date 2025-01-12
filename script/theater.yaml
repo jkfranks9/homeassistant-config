@@ -905,8 +905,8 @@ change_downstairs_lighting:
     - variables:
         turn_on: "{{ operation in ['activation', 'break', 'close'] }}"
         test_lights: "{{ iif(is_state('input_boolean.christmas_mode', 'off'), 'light.family_room_lamp', 'light.all_christmas_lights') }}"
-        ambient_min: "{{ iif(is_state('input_boolean.christmas_mode', 'off'), states('input_number.family_room_ambient_min') | float(0), states('input_number.christmas_ambient_min') | float(0)) }}"
-        ambient_value: "{{ states('sensor.foyer_sensor_ambient_light') | float(0) }}"
+        ambient_min: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
+        ambient_value: "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) }}"
         all_day: "{{ is_state('binary_sensor.all_day_christmas_lights', 'on') }}"
         activation_lights: "{{ ['light.stairway_light', 'light.island_light'] }}"
         non_activation_lights: "{{ ['light.daytime_lights', 'light.stairway_light', 'light.island_light'] }}"

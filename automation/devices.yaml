@@ -294,7 +294,7 @@
     
     # Turn on appropriate lights if it's dark-ish.
     - if:
-        - "{{ states('sensor.foyer_sensor_ambient_light') | float(0) < states('input_number.family_room_ambient_min') | float(0) }}"
+        - "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) < states('input_number.family_room_ambient_min') | float(0) }}"
       
       then:
         - action: light.turn_on
@@ -547,6 +547,8 @@
         - service: script.turn_on_lights_per_conditions
           data:
             light_entity: light.studio_lamp_2
+            lux_entity: sensor.downstairs_sensor_ambient_light
+            min_lux_value: "{{ states('input_number.studio_bedroom_ambient_min') | float(0) }}"
 
 # Close house when all family members leave.
 - alias: Close House For Family
@@ -1143,7 +1145,7 @@
         entity_id: input_number.treadmill_daily_calories
       data:
         value: >
-          {% set weight  = states('input_number.user_weight') | int(0) %}
+          {% set weight  = states('sensor.smart_scale_p1_weight') | float(0) %}
           {% set speed   = states('input_number.treadmill_speed') | float(0) %}
           {% set incline = states('input_number.treadmill_incline') | int(0) %}
           {% set time    = states('input_number.treadmill_daily_time') | int(0) / 60 %}

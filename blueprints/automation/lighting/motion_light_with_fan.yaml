@@ -58,19 +58,16 @@ blueprint:
           max: 3600
           unit_of_measurement: seconds
     
-    windowed:
-      name: Window Existence
-      description: (Optional) Does a window exist? This helps to determine if the light needs to be turned on at all.
-      default: false
+    lux_entity:
+      description: (Optional) The ambient light level sensor entity.
+      default: {}
       selector:
-        boolean:
+        entity:
+          domain: sensor
     
-    action_template:
-      name: Action Template
-      description: (Optional) Template to help decide if the light needs to be turned on. The default is to always turn on.
-      default: "{{ 1 == 1 }}"
-      selector:
-        template:
+    min_lux_value:
+      description: (Optional) The minimum ambient light level sensor value.
+      default: 0
 
 # If motion is detected within a delay, we restart.
 mode: restart
@@ -78,8 +75,7 @@ max_exceeded: silent
 
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
-  input_windowed: !input windowed
-  input_action_template: !input action_template
+  input_lux_entity: !input lux_entity
 
 triggers:
   - trigger: state
@@ -87,37 +83,23 @@ triggers:
     from: "off"
     to: "on"
 
-action:
+actions:
 
-  # Determine if the light needs to be turned on.
+  # If no ambient light sensor was input, always turn on the light.
   - if:
-    
-      # The room is windowless, so always turn on the light.
-      - "{{ input_windowed == false }}"
+      - "{{ iif(input_lux_entity, false, true) }}"
       
     then:
-      
-      # Turn on the light.
-      - service: light.turn_on
+      - action: light.turn_on
         entity_id: !input light_entity
     
-    # The room has a window, so first use the action template to decide.
+    # Turn on the light based on the ambient light sensor.
     else:
-      - if:
-          - "{{ input_action_template }}"
-          
-        then:
-          
-          # Turn on the light.
-          - action: light.turn_on
-            entity_id: !input light_entity
-        
-        # The action template is false. However, there could be situations where that is expected but we still want to turn on
-        # the light, so use the sun elevation and weather conditions to decide.
-        else:
-          - service: script.turn_on_lights_per_conditions
-            data:
-              light_entity: !input light_entity
+      - action: script.turn_on_lights_per_conditions
+        data:
+          light_entity: !input light_entity
+          lux_entity: !input lux_entity
+          min_lux_value: !input min_lux_value
   
   # Wait for no motion detected.
   - wait_for_trigger:

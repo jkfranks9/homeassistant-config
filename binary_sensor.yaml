@@ -69,24 +69,6 @@
       prob_given_false: 0.25
     
     - platform: state
-      entity_id: binary_sensor.laundry_room_motion_detector_occupancy
-      to_state: 'on'
-      prob_given_true: 0.05
-      prob_given_false: 0.1
-
-    - platform: state
-      entity_id: binary_sensor.studio_motion_detector_occupancy
-      to_state: 'on'
-      prob_given_true: 0.05
-      prob_given_false: 0.1
-    
-    - platform: state
-      entity_id: binary_sensor.master_bath_motion_detector_occupancy
-      to_state: 'on'
-      prob_given_true: 0.9
-      prob_given_false: 0.2
-    
-    - platform: state
       entity_id: binary_sensor.jon_devices_charging
       to_state: 'on'
       prob_given_true: 0.95

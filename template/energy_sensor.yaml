@@ -119,6 +119,7 @@
         - sensor.laundry_room_light_energy
         - sensor.master_bath_light_energy
         - sensor.master_bedroom_lamp_energy
+        - sensor.master_closet_light_energy
         - sensor.master_vanity_light_energy
         - sensor.office_bookcase_energy
         - sensor.office_fan_light_energy

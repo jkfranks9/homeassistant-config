@@ -19,22 +19,27 @@ initialize_global_variables:
       event_data:
         key: downstairs_home_heat_temp
         value: 68
+    
     - event: set_variable
       event_data:
         key: downstairs_home_cool_temp
         value: 77
+    
     - event: set_variable
       event_data:
         key: upstairs_home_heat_temp
         value: 67
+    
     - event: set_variable
       event_data:
         key: upstairs_home_cool_temp
         value: 76
+    
     - event: set_variable
       event_data:
         key: extended_hold_heat_temp
         value: 59
+    
     - event: set_variable
       event_data:
         key: extended_hold_cool_temp
@@ -46,6 +51,7 @@ initialize_global_variables:
       event_data:
         key: light_rooms
         value: ['family_room', 'master_bedroom', 'office', 'penthouse', 'studio', 'theater']
+    
     - event: set_variable
       event_data:
         key: light_rooms_lights
@@ -1523,7 +1529,6 @@ gather_upcoming_reminders:
                                'input_datetime.reminder_payment_disney',
                                'input_datetime.reminder_payment_mortgage',
                                'input_datetime.reminder_payment_randolph',
-                               'input_datetime.reminder_payment_wellsfargo',
                                'input_datetime.reminder_medication_eliquis',
                                'input_datetime.reminder_medication_metoprolol',
                                'input_datetime.reminder_medication_rosuvastatin'

@@ -261,17 +261,6 @@
           target:
             entity_id: input_boolean.theater_open
     
-    # Normalize the volume on all echo devices.
-    - repeat:
-        for_each: "{{ echo_list }}"
-        
-        sequence:
-          - action: media_player.volume_set
-            target:
-              entity_id: "{{ repeat.item }}"
-            data:
-              volume_level: 0.5
-    
     # Reset the automations that control family room lighting, so that the family room lamp will be
     # used at wakeup time. Control Family Room Light Automations will flip them back to Christmas lights
     # if Christmas mode is on, when the sun stops rising.
@@ -369,20 +358,15 @@
     - condition: template
       value_template: >
         {% set skip_list = [
-                            'initialize_turn_on_volume', 
                             'log_automations',
                             'log_scripts',
-                            'modify_beacon_device_tracker',
-                            'perform_daily_chores',
-                            'resume_cinema', 
                             'set_maximum_attic_temperature', 
                             'set_maximum_garage_temperature', 
                             'set_maximum_outdoor_temperature',
                             'set_minimum_attic_temperature', 
                             'set_minimum_garage_temperature', 
                             'set_minimum_outdoor_temperature',
-                            'set_washer_operation',
-                            'test_automation_trigger'
+                            'set_washer_operation'
                            ] %}
         {{ trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
@@ -419,9 +403,6 @@
     - condition: template
       value_template: >
         {% set skip_list = [
-                            'concat_auto_scripts_log_files', 
-                            'concat_log_files',
-                            'evaluate_weather_condition', 
                             'log_laundry_event',
                             'mobile_notification_worker',
                             'restore_lighting_on_resume',

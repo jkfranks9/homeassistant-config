@@ -483,6 +483,40 @@
       channel: standard
       tag_prefix: cpap_maintenance_
       category_uppercase: true
+      
+# For the CPAP filter, we want to change twice a month but only on specific days of the month.
+# So we run each time the target date is changed automatically (by long pressing the appropriate button on the
+# Life dashboard). We have a mechanism to specify a target day of the month when long pressing on the dashboard,
+# but only for a single day of the month. To provide for dynamic day of month determination using the dashboard
+# would require using templates on the conditional card, which isn't supported. Thus this automation.
+- alias: Determine CPAP Filter Target Day
+  id: determine_cpap_filter_target_day
+  
+  # Trigger when the filter datetime is changed, which should only happen from the dashboard.
+  triggers:
+    - trigger: state
+      entity_id: input_datetime.reminder_cpap_filter
+      to:
+  
+  actions:
+    - variables:
+        
+        # The current day of month, from the old state.
+        current_day_of_month: "{{ as_timestamp(trigger.from_state.state) | timestamp_custom('%d') }}"
+        
+        # The target day of month. We expect this to be either 8 or 22 (our specific half-month days). But this template
+        # tolerates other days if they somehow exist.
+        next_day_of_month: "{{ iif(current_day_of_month | int(0) <= 15, 22, 8) }}"
+        
+        # The next target as a datetime, which is the target as determined by the dashboard, with the day replaced.
+        next_target: "{{ as_datetime(trigger.to_state.state).replace(day = next_day_of_month) }}"
+    
+    # Replace the datetime with the target as determined above.
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.reminder_cpap_filter
+      data:
+        timestamp: "{{ next_target.timestamp() }}"
 
 # HVAC maintenance
 - alias: Notify HVAC Reminder
@@ -542,8 +576,7 @@
                       'input_datetime.reminder_payment_amazon', 
                       'input_datetime.reminder_payment_creditunion', 
                       'input_datetime.reminder_payment_mortgage', 
-                      'input_datetime.reminder_payment_randolph', 
-                      'input_datetime.reminder_payment_wellsfargo'
+                      'input_datetime.reminder_payment_randolph'
                      ]
       message_prefix: Payment due
       channel: standard

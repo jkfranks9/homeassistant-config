@@ -40,7 +40,7 @@
       attributes:
         device_list: >
           {# --List of devices that don't make contact for many hours-- #}
-          {% set skip_time_check_entities = ['switch.hall_light', 'switch.dining_table_light', 'switch.master_vanity_light'] %}
+          {% set skip_time_check_entities = ['switch.hall_light', 'switch.dining_table_light', 'switch.master_closet_light', 'switch.master_vanity_light'] %}
           
           {# --List of device entities, associated last seen sensors-- #}
           {% set device_list = [
@@ -59,7 +59,8 @@
                                 ['switch.master_vanity_light', 'sensor.master_vanity_light_last_seen'],
                                 ['binary_sensor.master_closet_sensor_contact', 'sensor.master_closet_sensor_last_seen'],
                                 ['binary_sensor.attic_door_sensor_contact', 'sensor.attic_door_sensor_last_seen'],
-                                ['binary_sensor.upstairs_entry_sensor_contact', 'sensor.upstairs_entry_sensor_last_seen']
+                                ['binary_sensor.upstairs_entry_sensor_contact', 'sensor.upstairs_entry_sensor_last_seen'],
+                                ['switch.master_closet_light', 'sensor.master_closet_light_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -107,7 +108,8 @@
                                 'input_number.master_vanity_light',
                                 'input_number.master_closet_sensor_door',
                                 'input_number.attic_door_sensor_door',
-                                'input_number.upstairs_entry_sensor_door'
+                                'input_number.upstairs_entry_sensor_door',
+                                'input_number.master_closet_light'
                                ] %}
                                
           {# --Create an empty list to start-- #}

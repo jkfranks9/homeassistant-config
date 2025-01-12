@@ -2,83 +2,6 @@
 #     Nighttime / Sleeptime Modes     #
 #=====================================#
 
-# The Nighttime flag indicates I've gone to bed. The main usage is to prevent certain automations 
-# (like turning on lights) from running at an inappropriate time.
-#
-# The Sleeptime flag covers the period from going to bed and going to sleep. Normally I'm reading,
-# so don't want the bedroom light turning off unexpectedly.
-#
-# These flags are usually managed by the bedtime, sleeptime, awake and wakeup scripts. But if those
-# are not used for some reason, also manage the flags here using failsafe times.
-
-# Set Nighttime true at a failsafe time (should be in bed).
-- alias: Enable Nighttime Mode
-  id: 'enable_nighttime_mode'
-  trigger:
-    - platform: time
-      at: '00:30:00'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: time
-      after: '00:30:00'
-      before: '07:30:00'
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-
-# Set Sleeptime true at a failsafe time (should be asleep).
-- alias: Enable Sleeptime Mode
-  id: 'enable_sleeptime_mode'
-  trigger:
-    - platform: time
-      at: '01:30:00'
-    - platform: homeassistant
-      event: start
-  condition:
-    - condition: time
-      after: '01:30:00'
-      before: '07:30:00'
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.sleeptime
-
-# Set Nighttime and Sleeptime false at a failsafe time (should be out of bed).
-- alias: Disable Nighttime & Sleeptime Modes
-  id: 'disable_nighttime_sleeptime_modes'
-  
-  trigger:
-    - platform: time
-      at: '07:30:00'
-    
-    - platform: template
-      value_template: "{{ state_attr('sun.sun', 'elevation') | float(0) >= states('sensor.min_elevation') | float(0) }}"
-    
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - or:
-      - condition: time
-        after: '07:30:00'
-        before: '23:00:00'
-      
-      - "{{ state_attr('sun.sun', 'elevation') | float(0) >= states('sensor.min_elevation') | float(0) }}"
-  
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.nighttime
-    
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.sleeptime
-
 # Reset Nighttime and Sleeptime when I'm no longer sleeping, and the office becomes occupied (I always use the office
 # in the morning). I don't want to use wait_for_trigger because I would need a long timeout, which could be lost if
 # HA reboots (very unlikely since I'd need to be in the office to kick off a reboot, but still). So I'm using several
@@ -273,7 +196,7 @@
   use_blueprint:
     path: lighting/lux_light.yaml
     input:
-      lux_sensor: sensor.foyer_sensor_ambient_light
+      lux_sensor: sensor.downstairs_sensor_ambient_light
       light_target: light.hallway_lamp
       min_lux_level: input_number.hallway_ambient_min
       max_lux_level: input_number.hallway_ambient_max
@@ -288,7 +211,7 @@
   use_blueprint:
     path: lighting/lux_light.yaml
     input:
-      lux_sensor: sensor.foyer_sensor_ambient_light
+      lux_sensor: sensor.downstairs_sensor_ambient_light
       light_target: light.family_room_lamp
       min_lux_level: input_number.family_room_ambient_min
       max_lux_level: input_number.family_room_ambient_max
@@ -303,10 +226,10 @@
   use_blueprint:
     path: lighting/lux_light.yaml
     input:
-      lux_sensor: sensor.foyer_sensor_ambient_light
+      lux_sensor: sensor.downstairs_sensor_ambient_light
       light_target: light.family_room_lamp
-      min_lux_level: input_number.christmas_ambient_min
-      max_lux_level: input_number.christmas_ambient_max
+      min_lux_level: input_number.family_room_ambient_min
+      max_lux_level: input_number.family_room_ambient_max
       check_theater: true
       check_christmas: true
 
@@ -541,8 +464,8 @@
       no_motion_wait_fan_off: 240
       no_motion_wait_fan_on:  420
       additional_fan_wait:    300
-      windowed: true
-      action_template: "{{ states('sensor.foyer_sensor_ambient_light') | float(0) <= states('input_number.family_room_ambient_min') | float(0) }}"
+      lux_entity: sensor.downstairs_sensor_ambient_light
+      min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
 
 #=======================#
 #     Door Sensors      #
@@ -568,6 +491,15 @@
       sensor_entity: binary_sensor.upstairs_entry_sensor_contact
       light_target: light.hallway_light
       close_toggle: input_boolean.upstairs_entry_close_toggle
+
+- alias: Control Master Closet Light
+  id: control_master_closet_light
+
+  use_blueprint:
+    path: lighting/sensor_light.yaml
+    input:
+      sensor_entity: binary_sensor.master_closet_sensor_contact
+      light_target: light.master_closet_light
 
 # For lights above that use the close toggle, turn the toggle off when the light turns off. This allows a case where the user
 # opens the door (light turns on) but manually turns the light off before closing the door. For example a quick trip in and out
@@ -616,12 +548,12 @@
   
   trigger:
     
-    # Trigger near sunset.
+    # Trigger near dusk.
     - platform: template
-      value_template: "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
-    
-    - platform: time
-      at: '19:30:00'
+      value_template: >
+        {% set dusk = as_timestamp(state_attr('sun.sun', 'next_dusk')) %}
+        {% set now = as_timestamp(now()) %}
+        {{ (dusk - now) / 60 <= 60 }}
     
     - platform: homeassistant
       event: start
@@ -630,19 +562,20 @@
     - condition: state
       entity_id: binary_sensor.children_home
       state: 'on'
-    
-    - "{{ state_attr('sun.sun', 'elevation') | float(0) <= states('sensor.min_elevation') | float(0) }}"
-    
-    - condition: time
-      after: '19:30:00'
-    
-    - condition: state
-      entity_id: input_boolean.nighttime
-      state: 'off'
   
     - condition: state
       entity_id: person.jon
       state: 'home'
+    
+    - condition: state
+      entity_id: input_boolean.nighttime
+      state: 'off'
+    
+    - condition: template
+      value_template: >
+        {% set dusk = as_timestamp(state_attr('sun.sun', 'next_dusk')) %}
+        {% set now = as_timestamp(now()) %}
+        {{ (dusk - now) / 60 <= 60 }}
     
   action:
     - delay: 
@@ -782,6 +715,27 @@
 
         - action: automation.turn_on
           entity_id: automation.control_christmas_lights
+
+# Reset all Christmas plugs to off when Christmas mode is turned off.
+- alias: Reset Christmas Plugs
+  id: 'reset_christmas_plugs'
+  
+  triggers:
+    - trigger: state
+      entity_id: input_boolean.christmas_mode
+      to: 'off'
+  
+  actions:
+    - variables:
+        christmas_plugs: "{{ expand(state_attr('group.christmas_plugs', 'entity_id')) | map(attribute = 'entity_id') | list }}"
+    
+    - repeat:
+        for_each: "{{ christmas_plugs }}"
+        
+        sequence:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ repeat.item }}"
         
 #===================================#
 #     Amazon Smart Plug Control     #
@@ -822,54 +776,6 @@
         media_content_id: HA Office Bookcase Off
         media_content_type: routine
       metadata: {}
-
-#=====================#
-#     Smart Bulbs     #
-#=====================#
-    
-# We have power glitches occasionally, which cause all TP-Link smart bulbs to turn on. This sensor
-# attempts to catch such a glitch by detecting when these bulbs turn on when they shouldn't.
-#
-# Call the Reset Smart Bulbs script to reset all smart bulbs based on various conditions, so we don't turn 
-# them off if they're supposed to be on at the moment.
-- alias: Reset Smart Bulbs On Power Glitch
-  id: 'reset_smart_bulbs_on_power_glitch'
-  
-  # Queue all potential triggers.
-  mode: queued
-  
-  # The 'for' option in the triggers should eliminate very quick multiple glitches. But of course this isn't perfect.
-  # Oh well.
-  triggers:
-    - trigger: state
-      entity_id:
-        - light.office_lamp
-        - light.master_bedroom_lamp
-      from: 'off'
-      to: 'on'
-      for: '00:00:01'
-  
-  actions:
-    - variables:
-        light_id: "{{ trigger.from_state.attributes.friendly_name.split(' ')[0] | lower }}"
-    
-    # Take action based on the triggered light entity.
-    - choose:
-      - conditions: "{{ light_id == 'office' }}"
-        
-        sequence:
-          - action: script.reset_smart_bulb_lux_sensor
-            data:
-              light_entity: light.office_lamp
-              lux_entity: sensor.office_sensor_ambient_light
-              lux_value: "{{ states('input_number.office_ambient_max') | int(0) }}"
-      
-      - conditions: "{{ light_id == 'master' }}"
-        
-        sequence:
-          - action: script.reset_smart_bulb_nighttime
-            data:
-              light_entity: light.master_bedroom_lamp
 
 #===================#
 #     Bath Time     #

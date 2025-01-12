@@ -11,34 +11,8 @@ logs:
   homeassistant.setup:  warning
 
   # HA automations
-  homeassistant.components.automation.initialize_amazon_prime_volume:         warning
-  homeassistant.components.automation.initialize_bluray_volume:               warning
-  homeassistant.components.automation.initialize_disney_plus_volume:          warning
-  homeassistant.components.automation.initialize_hbo_max_volume:              warning
-  homeassistant.components.automation.initialize_hulu_volume:                 warning
-  homeassistant.components.automation.initialize_kodi_volume:                 warning
-  homeassistant.components.automation.initialize_laserdisc_volume:            warning
-  homeassistant.components.automation.initialize_netflix_volume:              warning
-  homeassistant.components.automation.initialize_paramount_plus_volume:       warning
-  homeassistant.components.automation.initialize_peacock_volume:              warning
-  homeassistant.components.automation.initialize_turn_on_volume:              warning
-  homeassistant.components.automation.initialize_youtube_tv_volume:           warning
   homeassistant.components.automation.log_automations:                        warning
   homeassistant.components.automation.log_scripts:                            warning
-  homeassistant.components.automation.notify_zigbee_device_unavailable:       warning
-  homeassistant.components.automation.operate_family_room_fan:                warning
-  homeassistant.components.automation.operate_office_fan:                     warning
-  homeassistant.components.automation.operate_theater_fan:                    warning
-  homeassistant.components.automation.perform_daily_chores:                   warning
-  homeassistant.components.automation.perform_startup_chores:                 warning
-  homeassistant.components.automation.publish_mqtt_automated_states:          warning
-  homeassistant.components.automation.remove_saved_notifications_on_dismiss:  warning
-  homeassistant.components.automation.restore_riemann_integration:            warning
-  homeassistant.components.automation.resume_cinema:                          warning
-  homeassistant.components.automation.run_studio_motion_based_light:          warning
-  homeassistant.components.automation.run_laundry_room_motion_based_light:    warning
-  homeassistant.components.automation.run_master_bath_motion_based_light:     warning
-  homeassistant.components.automation.save_notifications_on_create:           warning
   homeassistant.components.automation.set_maximum_attic_temperature:          warning
   homeassistant.components.automation.set_maximum_garage_temperature:         warning
   homeassistant.components.automation.set_maximum_outdoor_temperature:        warning
@@ -46,18 +20,12 @@ logs:
   homeassistant.components.automation.set_minimum_garage_temperature:         warning
   homeassistant.components.automation.set_minimum_outdoor_temperature:        warning
   homeassistant.components.automation.set_washer_operation:                   warning
-  homeassistant.components.automation.turn_on_office_occupied:                warning
 
   # HA scripts
   homeassistant.components.script.calculate_weather_metrics:          warning
   homeassistant.components.script.change_downstairs_lighting:         warning
-  homeassistant.components.script.close_hvac_vents:                   warning
-  homeassistant.components.script.control_fan_for_temperature:        warning
-  homeassistant.components.script.evaluate_weather_condition:         warning
   homeassistant.components.script.log_laundry_event:                  warning
   homeassistant.components.script.mobile_notification_worker:         warning
-  homeassistant.components.script.open_hvac_vents:                    warning
-  homeassistant.components.script.publish_mqtt_automated_states:      warning
   homeassistant.components.script.restore_lighting_on_resume:         warning
   homeassistant.components.script.resume_cinema:                      warning
   homeassistant.components.script.resume_worker:                      warning
@@ -70,23 +38,11 @@ logs:
   homeassistant.components.script.set_theater_dark_delay:             warning
   homeassistant.components.script.set_theater_dim:                    warning
   homeassistant.components.script.set_theater_idle:                   warning
-  homeassistant.components.script.set_up_mqtt_automated_config:       warning
-  homeassistant.components.script.start_activity:                     warning
-  homeassistant.components.script.watch_app:                          warning
 
   # HA misc components
   homeassistant.components.analytics:                     warning
-  # homeassistant.components.alexa:                         info
-  # homeassistant.components.androidtv.media_player:        info
-  # homeassistant.components.device_tracker:                info
-  # homeassistant.components.ecovacs:                       info
-  # homeassistant.components.esphome:                       info
-  # homeassistant.components.kodi.media_player:             info
-  # homeassistant.components.media_player:                  info
   homeassistant.components.mqtt.discovery:                warning
   homeassistant.components.system_log.external:           info # This is for logs in automations and scripts.
-  # homeassistant.components.tplink:                        info
-  # homeassistant.components.unifi:                         info
   homeassistant.components.websocket_api.http.connection: warning
 
   # Custom components
@@ -96,7 +52,6 @@ logs:
   # custom_components.sonoff.sonoff_cloud:             info
 
   # Other
-  #aioesphomeapi:                           info
   aiounifi:                                warning
   alexapy.alexaapi:                        warning
   androidtv.adb_manager.adb_manager_async: warning
@@ -121,6 +76,7 @@ filters:
   alexapy.helpers:
     - ".*AlexapyTooManyRequestsError.*"
     - ".*Too Many Requests.*"
+    - ".*Timeout error occurred accessing AlexaAPI: An exception of type CancelledError occurred.*"
   
   androidtv.adb_manager.adb_manager_async:
     - "Couldn't connect to .*  TcpTimeoutException: Reading from .*:5555 timed out"  
@@ -163,9 +119,6 @@ filters:
 
   homeassistant.components.androidtv.entity:
     - ".* ADB connection re-establishing attempt in the next update. .*"
-  
-  homeassistant.components.automation:
-    - "Error evaluating condition in 'Restore Notifications':"
 
   homeassistant.components.binary_sensor:
     - "Setup of binary_sensor platform .* is taking over 10 seconds"
@@ -206,6 +159,9 @@ filters:
   
   homeassistant.components.switch:
     - "Updating .* switch took longer than the scheduled update interval .*"
+  
+  homeassistant.components.todo:
+    - "Setup of todo platform .* is taking over 10 seconds"
   
   homeassistant.components.tplink.entity:
     - "Device feature: Reboot (reboot) needs an entity description defined in HA"
