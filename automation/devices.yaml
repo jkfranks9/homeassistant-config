@@ -375,7 +375,7 @@
     - if:
       
         # I just left home.
-        - "{{ trigger.id != 'sunset' }}"
+        - "{{ trigger.id != 'sunset' and not is_state('person.jon', 'home') }}"
         
       then:
     
@@ -403,7 +403,7 @@
     - if:
       
         # Must be sunset.
-        - "{{ trigger.id != 'jon_left' }}"
+        - "{{ trigger.id != 'jon_left' and states('sun.sun') == 'below_horizon' }}"
         
       then:
          
@@ -822,16 +822,16 @@
 - alias: Enable Family Room AV
   id: 'enable_family_room_av'
   
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: '07:00:00'
       id: 'morning'
     
-    - platform: time
+    - trigger: time
       at: '16:00:00'
       id: 'afternoon'
   
-  condition:
+  conditions:
     - or:
       - and:
         - condition: state
@@ -842,15 +842,12 @@
       - condition: trigger
         id: 'afternoon'
   
-  action:
+  actions:
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'off'
     
-    - service: script.enable_family_room_av
-    
-    - service: light.turn_on
-      entity_id: light.family_room_box3_screen
+    - action: script.enable_family_room_av
 
 #================================#
 #     Human Presence Sensors     #
@@ -1338,18 +1335,18 @@
 - alias: Set Washer Load Size
   id: 'set_washer_load_size'
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.washer_power_state
       from: 'fill'
       to: 'raise'
   
-  condition:
+  conditions:
     - condition: state
       entity_id: input_select.washer_state
       state: 'Wash Fill'
   
-  action:
+  actions:
     - variables:
         washer_fill_seconds: >
           {% set start = as_timestamp(strptime(states('input_datetime.washer_start'), '%Y-%m-%d %H:%M:%S')) %}
@@ -1357,30 +1354,30 @@
           {{ seconds }}
     
     # Set the washer load size. Default to medium if the calculation for seconds is unreasonably small.
-    - service: input_select.select_option
+    - action: input_select.select_option
       target:
         entity_id: input_select.washer_load_size
       data:
         option: >
-          {% if   washer_fill_seconds >= 180 and washer_fill_seconds < 350 %}
+          {% if   washer_fill_seconds >= 180 and washer_fill_seconds < 450 %}
             Small
-          {% elif washer_fill_seconds >= 350 and washer_fill_seconds < 500 %}
+          {% elif washer_fill_seconds >= 450 and washer_fill_seconds < 650 %}
             Medium
-          {% elif washer_fill_seconds >= 500  %}
+          {% elif washer_fill_seconds >= 650  %}
             Large
           {% else %}
             Medium
           {% endif %}
     
     # Save the washer fill seconds for diagnosis/tweaking.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.washer_fill_seconds
       data:
         value: "{{ washer_fill_seconds }}"
     
     # Log the event in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: fill_plus_load
         prefix: Washer

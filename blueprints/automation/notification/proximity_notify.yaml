@@ -68,4 +68,4 @@ action:
       destination:
         - echo
       message: "{{ input_person_name }} will be arriving soon"
-      media_player_entity: media_player.everywhere
+      voice_entity: media_player.everywhere

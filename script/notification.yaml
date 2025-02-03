@@ -100,6 +100,7 @@ send_notification:
           options:
             - mobile
             - echo
+            - nabu
             - persistent
     
     message:
@@ -134,11 +135,10 @@ send_notification:
     tag:
       description: 'The tag to use for replacing a notification.'
     
-    media_player_entity:
-      description: 'The target entity used for echo destinations.'
+    voice_entity:
+      description: 'The target entity used for echo and nabu destinations.'
       selector:
         entity:
-          domain: media_player
     
     notification_id:
       description: 'The ID used for persistent notification destinations.'
@@ -171,7 +171,7 @@ send_notification:
                     # Only continue if the input timer is idle.
                     - condition: "{{ is_state(timer_entity, 'idle') }}"
                     
-                    - service: script.mobile_notification_worker
+                    - action: script.mobile_notification_worker
                       data:
                         title: "{{ title }}"
                         message: "{{ message }}"
@@ -180,7 +180,7 @@ send_notification:
                         tag: "{{ tag }}"
     
                     # Start the timer, using a duration that ends tomorrow at 7 AM.
-                    - service: timer.start
+                    - action: timer.start
                       data:
                         entity_id: "{{ timer_entity }}"
                         duration: >
@@ -189,7 +189,7 @@ send_notification:
                 
                   # Handle non-throttled notifications.
                   else:
-                    - service: script.mobile_notification_worker
+                    - action: script.mobile_notification_worker
                       data:
                         title: "{{ title }}"
                         message: "{{ message }}"
@@ -201,18 +201,28 @@ send_notification:
             - conditions: "{{ repeat.item == 'echo' }}"
             
               sequence:
-                - service: notify.alexa_media
+                - action: notify.alexa_media
                   data:
-                    target: "{{ media_player_entity }}"
+                    target: "{{ voice_entity }}"
                     data:
                       type: announce
+                    message: "{{ message }}"
+          
+            # Handle the nabu destination.
+            - conditions: "{{ repeat.item == 'nabu' }}"
+            
+              sequence:
+                - action: assist_satellite.announce
+                  target:
+                    entity_id: "{{ voice_entity }}"
+                  data:
                     message: "{{ message }}"
           
             # Handle the persistent destination.
             - conditions: "{{ repeat.item == 'persistent' }}"
             
               sequence:
-                - service: persistent_notification.create
+                - action: persistent_notification.create
                   data_template:
                     title: "{{ title }}"
                     notification_id: "{{ notification_id }}"
@@ -220,7 +230,7 @@ send_notification:
           
             # Invalid destination, log it.
             default:
-              - service: system_log.write
+              - action: system_log.write
                 data:
                   message: "Invalid destination '{{ destination }}' specified"
                   level: error
@@ -364,23 +374,22 @@ unregister_mobile_notification:
       event_data:
         key: "{{ tag }}"
 
-# Remove one or more mobile notifications that can only be cleared manually. This is intended to be called by an Alexa routine.
+# Remove one or more mobile notifications that can only be cleared manually. This is intended to be called using a voice assistant.
 remove_manual_mobile_notification:
   alias: Remove Manual Mobile Notification
   
+  fields:
+    voice_device:
+      description: The voice device most recently spoken to.
+      selector:
+        entity:
+  
   sequence:
     
-    # Get the room containing the echo device that was used.
-    - service: script.get_echo_room
-      response_variable: result
-    
     - variables:
-        
-        # Extract the room from the response variable.
-        room: "{{ result.room }}"
-        
-        echo_device: "{{ 'media_player.' ~ room ~ '_echo' }}"
         num_manual: "{{ states('sensor.mobile_tag_registry_manual_clear') }}"
+        device_domain: "{{ voice_device.split('.')[0] }}"
+        destination: "{{ iif(device_domain == 'media_player', 'echo', iif(device_domain == 'assist_satellite', 'nabu', 'unknown')) }}"
     
     - choose:
       
@@ -388,12 +397,12 @@ remove_manual_mobile_notification:
       - conditions: "{{ num_manual == 0 }}"
       
         sequence:
-          - service: script.send_notification
+          - action: script.send_notification
             data:
               destination:
-                - echo
+                - "{{ destination }}"
               message: "There are no notifications that need to be manually removed."
-              media_player_entity: "{{ echo_device }}"
+              voice_entity: "{{ voice_device }}"
       
       # There is only one manual clear notification, so remove it and inform the user.
       - conditions: "{{ num_manual == 1 }}"
@@ -402,27 +411,27 @@ remove_manual_mobile_notification:
           - variables:
               tag: "{{ state_attr('sensor.mobile_tag_registry_manual_clear', 'tags')[0] }}"
           
-          - service: script.remove_mobile_notification
+          - action: script.remove_mobile_notification
             data:
               tag: "{{ tag }}"
           
-          - service: script.send_notification
+          - action: script.send_notification
             data:
               destination:
-                - echo
+                - "{{ destination }}"
               message: "{{ 'I unregistered tag ' ~ tag | replace('_', ' ') }}"
-              media_player_entity: "{{ echo_device }}"
+              voice_entity: "{{ voice_device }}"
       
       # There are multiple manual clear notifications.
       default:
           
         # Inform the user.
-        - service: script.send_notification
+        - action: script.send_notification
           data:
             destination:
-              - echo
+              - "{{ destination }}"
             message: "{{ 'There are ' ~ num_manual ~ ' manual notifications. Check your phone for additional instructions.' }}"
-            media_player_entity: "{{ echo_device }}"
+            voice_entity: "{{ voice_device }}"
         
         # Handle all notifications.
         - repeat:
@@ -436,7 +445,7 @@ remove_manual_mobile_notification:
                   action_no: "{{ 'No_' ~ tag }}"
     
               # Send a notification with response buttons for this tag.
-              - service: notify.mobile_app_jon_galaxy
+              - action: notify.mobile_app_jon_galaxy
                 data:
                   message: "{{ 'Remove notification ' ~ tag ~ '?' }}"
                   data:
@@ -470,7 +479,7 @@ remove_manual_mobile_notification:
                   - "{{ wait.trigger.event.data.action in [action_yes, action_yes_quit] }}"
               
                 then:          
-                  - service: script.remove_mobile_notification
+                  - action: script.remove_mobile_notification
                     data:
                       tag: "{{ tag }}"
               
@@ -501,12 +510,15 @@ extract_notification_tag_from_entity:
         select:
           options:
             - delivery
+            - sonoff_power
   
   sequence:
     - variables:
         tag: >
           {% if type == 'delivery' %}
-            {{ state_attr(entity, 'friendly_name') | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | lower ~ '_package_delivered' }}
+            {{ state_attr(entity, 'friendly_name') | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | replace('USPS', 'US_PS') | lower ~ '_package_delivered' }}
+          {% elif type == 'sonoff_power' %}
+            {{ entity.split('.')[1] }}
           {% else %}
             unknown
           {% endif %}

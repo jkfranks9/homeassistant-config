@@ -33,6 +33,7 @@ blueprint:
         
     Input notes:
     
+    - The delay input is intended to only be used with conditions, and indicates how long to delay before checking the conditions.
     - The conditions input provides one or more conditions that must be true in order to proceed.
     - The extract_tag_type input is a special case. It's only used for automations that provide a list of entities on which to trigger. Since the
       triggered entity is not known until run time, we need to dynamically extract the tag then. We only have one automation so far that uses this.
@@ -158,6 +159,11 @@ blueprint:
       default: 'sensor.mobile_notify_time_default'
       selector:
         entity:
+    
+    delay:
+      name: Delay
+      description: (Optional) How long in seconds to delay before checking the conditions.
+      default: 0
     
     conditions:
       name: Conditions
@@ -374,6 +380,9 @@ condition:
 
 action:
   
+  # Delay before checking the input conditions.
+  - delay: !input delay
+  
   # Ensure the input conditions are met.
   - if: !input conditions
     
@@ -421,7 +430,7 @@ action:
               notification_data: >
                 {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout, 'throttled': throttle, 'timer_entity': input_timer_entity} %}
                 {% if input_enable_echo_destination %}
-                  {% set additional = {'media_player_entity': 'media_player.everywhere', 'tag': tag} %}
+                  {% set additional = {'voice_entity': 'media_player.everywhere', 'tag': tag} %}
                 {% else %}
                   {% set additional = {'tag': tag} %}
                 {% endif %}

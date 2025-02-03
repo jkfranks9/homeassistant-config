@@ -4,8 +4,27 @@
 
 intents:
   
-  # Register exercise
-  RegisterExercise:
+  ExerciseTrack:
     data:
       - sentences:
-          - "exercise track"
+          - "(exercise | workout) track"
+  
+  PauseYardWork:
+    data:
+      - sentences:
+          - "yard work (break | pause | paws)"
+  
+  ResumeYardWork:
+    data:
+      - sentences:
+          - "yard work resume"
+  
+  StartYardWork:
+    data:
+      - sentences:
+          - "start yard work"
+  
+  StopYardWork:
+    data:
+      - sentences:
+          - "stop yard work"

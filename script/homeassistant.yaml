@@ -205,23 +205,22 @@ get_weather_metrics:
     - variables:
         
         # The first and last hours of the daily time span. We use the normal time span but slide the window back one hour, so I can start earlier 
-        # than the normal start during the hot summer, while also avoiding a bit of the late afternoon. For example if the normal span is from 10 AM 
-        # to 4 PM, we pick 9 as the start and 14 (2 PM) as the end (since the last hour of the normal span is the hour from 3 to 4 PM, which is a 
-        # value of 15).
+        # than the normal start during the hot summer, while also avoiding a bit of the late afternoon.
         first_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_start_time.split(':')[0] | int(0) - 1 }}"
-        last_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_end_time.split(':')[0] | int(0) - 2 }}"
+        last_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_end_time.split(':')[0] | int(0) - 1 }}"
     
     # Calculate the weather metrics for the daily time span.
     - action: script.calculate_weather_metrics
       data:
         weather_entity: weather.openweathermap
+        forecast_type: hourly
         first_hour: "{{ first_hour }}"
         last_hour: "{{ last_hour }}"
         metrics_list:
-          - ['input_number.average_outdoor_temperature', 'temperature', 75]
-          - ['input_number.average_outdoor_humidity', 'humidity', 50]
-          - ['input_number.average_outdoor_precipitation_probability', 'precipitation_probability', 50]
-          - ['input_number.maximum_outdoor_uv_index', 'uv_index', 3]
+          - ['input_number.average_outdoor_temperature', 'temperature', 75, 0]
+          - ['input_number.average_outdoor_humidity', 'humidity', 50, 0]
+          - ['input_number.average_outdoor_precipitation_probability', 'precipitation_probability', 50, 0]
+          - ['input_number.maximum_outdoor_uv_index', 'uv_index', 3, 0]
     
     - variables:
         average_temperature: "{{ states('input_number.average_outdoor_temperature') | float(75) }}"

@@ -1,0 +1,69 @@
+#==========================#
+#     Voice Assistants     #
+#==========================#
+
+# Update the Last Alexa sensor, which contains the most recently spoken to echo device.
+# NOTES:
+# 1) Amazon (or maybe Alexa Media Player) does seem to update the last called attribute of echo devices automatically, but the delay
+#    can be rather long.
+# 2) For scripts called via voice where we need to know the device spoken to, the Update Last Alexa Device script is run, which forces
+#    the last called to be updated immediately.
+# 3) In either case, this automation should ensure that the Last Alexa sensor always contains the media player with valid last called
+#    data, including the last called timestamp.
+- alias: Update Last Alexa Device
+  id: update_last_alexa_device
+  
+  triggers:
+    - trigger: state
+      entity_id:
+        - media_player.family_room_echo
+        - media_player.master_bedroom_echo
+        - media_player.office_echo
+        - media_player.penthouse_echo
+        - media_player.studio_echo
+        - media_player.theater_echo
+      attribute: last_called
+      to: true
+  
+  actions:
+    - event: update_last_alexa_sensor
+
+# Update the Last Nabu Device text, which contains the most recently spoken to nabu assist satellite.
+# NOTE: For Alexa devices this is handled by the Update Last Alexa Device script.
+- alias: Update Last Nabu Device
+  id: update_last_nabu_device
+  
+  triggers:
+    - trigger: state
+      entity_id:
+        - assist_satellite.family_room_nabu_assist_satellite
+        - assist_satellite.office_nabu_assist_satellite
+      from: 'idle'
+      to: 'listening'
+      id: listen
+    
+    - trigger: state
+      entity_id:
+        - assist_satellite.family_room_nabu_assist_satellite
+        - assist_satellite.office_nabu_assist_satellite
+      from: 'listening'
+      to: 'processing'
+      id: process
+  
+  actions:
+    - if:
+        - "{{ trigger.id == 'listen' }}"
+      
+      then:
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.last_nabu_device
+          data:
+            value: initial
+      
+      else:    
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.last_nabu_device
+          data:
+            value: "{{ trigger.entity_id }}"

@@ -72,6 +72,13 @@
         entity_id: input_datetime.sleep_start
       data:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    - action: notify.alexa_media
+      data:
+        message: 'Good night.'
+        target: media_player.master_bedroom_echo
+        data:
+          type: tts
 
 # Set the sleep duration in hours.
 - alias: Set Sleep Duration
@@ -83,11 +90,40 @@
       to: 'off'
   
   actions:
+    - variables:
+        duration: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.sleep_start'))) / 3600) | round(2) }}"
+    
     - action: input_number.set_value
       target:
         entity_id: input_number.sleep_duration
       data:
-        value: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.sleep_start'))) / 3600) | round(2) }}"
+        value: "{{ duration }}"
+    
+    - delay:
+        milliseconds: 500
+    
+    - variables:
+        hours: "{{ states('sensor.sleep_duration_display').split(' ')[0].replace('h', '') }}"
+        minutes: "{{ states('sensor.sleep_duration_display').split(' ')[1].replace('m', '') }}"
+    
+    - action: notify.alexa_media
+      data:
+        message: "{{ 'Good morning. You slept ' ~ hours ~ ' hours' ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' minutes.', '.') }}"
+        target: media_player.master_bedroom_echo
+        data:
+          type: tts
+    
+    # Turn on voice assistant screens.
+    - if:
+        - condition: numeric_state
+          entity_id: sensor.downstairs_sensor_ambient_light
+          below: input_number.family_room_ambient_max
+      
+      then:    
+        - scene: scene.voice_assistants_on_dim
+      
+      else:    
+        - scene: scene.voice_assistants_on_bright
 
 #======================#
 #     Lux Sensors      #
@@ -232,6 +268,31 @@
       max_lux_level: input_number.family_room_ambient_max
       check_theater: true
       check_christmas: true
+
+# Control voice assistant screens based on ambient lux level.
+- alias: Control Voice Assistant Screens
+  id: control_voice_assistant_screens
+  
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.downstairs_sensor_ambient_light
+      below: input_number.family_room_ambient_min
+      id: dim
+  
+    - trigger: numeric_state
+      entity_id: sensor.downstairs_sensor_ambient_light
+      above: input_number.family_room_ambient_max
+      id: bright
+    
+  actions:
+    - if:
+        - "{{ trigger.id == 'dim' }}"
+      
+      then:    
+        - scene: scene.voice_assistants_on_dim
+      
+      else:    
+        - scene: scene.voice_assistants_on_bright
 
 #============================#
 #     Extended Away Mode     #
@@ -538,9 +599,9 @@
       target:
         entity_id: input_boolean.upstairs_entry_close_toggle
 
-#===========================#
-#     Guest Lights/Fans     #
-#===========================#
+#======================#
+#     Guest Lights     #
+#======================#
 
 # Turn on guest lights near sunset or in the evening when children are home.
 - alias: Turn On Guest Lights Sunset

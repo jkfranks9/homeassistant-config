@@ -8,28 +8,28 @@ bedtime:
   sequence:
     
     # Turn on the master bedroom lamp.
-    - service: light.turn_on
+    - action: light.turn_on
       entity_id: light.master_bedroom_lamp
       data:
         color_temp_kelvin: 2700
         brightness_pct: 100
     
     # Turn on nighttime mode.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.nighttime
 
     # Turn off the Family Room AV system.
-    - service: script.disable_family_room_av
+    - action: script.disable_family_room_av
     
     # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
-    - service: script.turn_on
+    - action: script.turn_on
       target:
         entity_id: script.close_garage_door_north
       data:
         variables:
           use_info_message: true
     
-    - service:  script.turn_on
+    - action:  script.turn_on
       target:
         entity_id: script.close_garage_door_south
       data:
@@ -37,16 +37,19 @@ bedtime:
           use_info_message: true
     
     # Lock the PC.
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.lock_pc
       
     - delay: '00:00:07'
       
     # Establish the proper bedtime environment (lights, thermostats, echo devices).
-    - service: script.establish_bedtime_environment
+    - action: script.establish_bedtime_environment
     
     # Turn off all fans.
     - scene: scene.fans_off
+    
+    # Turn off voice assistant screens.
+    - scene: scene.voice_assistants_off
   
 # Going to sleep now.
 sleeptime:
@@ -157,7 +160,7 @@ wakeup:
           entity_id: binary_sensor.office_human_sensor_presence
           to: 'on'
           for: 120
-      timeout: '00:13:00'
+      timeout: '00:15:00'
     
     - action: light.turn_off
       entity_id: light.island_light
@@ -610,16 +613,20 @@ reset_bedtime_environment:
                        rejectattr('attributes.friendly_name', 'in', ['This Device', 'Everywhere']) | map(attribute = 'entity_id') | list }}"
     
     # Note that the bedroom echo devices automatically unmute at 9 AM. However, normalize the volume on all echoes
-    # in case they were modified yesterday.
+    # in case they have been modified.
     - repeat:
         for_each: "{{ echo_list }}"
         
         sequence:
-          - action: media_player.volume_set
-            target:
-              entity_id: "{{ repeat.item }}"
-            data:
-              volume_level: 0.5
+          - if:
+              - "{{ not is_state_attr(repeat.item, 'volume_level', 0.5) }}"
+            
+            then:          
+              - action: media_player.volume_set
+                target:
+                  entity_id: "{{ repeat.item }}"
+                data:
+                  volume_level: 0.5
     
     # Turn off the upstairs night light if we turned it on at bedtime.
     # The downstairs night lights (aka daytime lights) are turned off by an automation.

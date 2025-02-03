@@ -4,17 +4,20 @@
 
 intents:
   
-  # Bedtime routine
+  Awake:
+    data:
+      - sentences:
+          - "awake"
+  
+  Bathroom:
+    data:
+      - sentences:
+          - "bathroom"
+  
   Bedtime:
     data:
       - sentences:
           - "bedtime"
-  
-  # Kitchen lights
-  KitchenOn:
-    data:
-      - sentences:
-          - "kitchen on"
   
   KitchenBright:
     data:
@@ -26,28 +29,42 @@ intents:
       - sentences:
           - "kitchen off"
   
-  # Master bedroom lights
-  ToggleMaster:
+  KitchenOn:
     data:
       - sentences:
-          - "turn (on | off) [the] master light[s]"
-          - "master light[s] (on | off)"
+          - "kitchen on"
   
-  # Christmas lights
-  ChristmasOn:
+  LightsOut:
     data:
       - sentences:
-          - "turn on [the] Christmas lights"
-          - "Christmas lights on"
+          - "lights out"
   
-  ChristmasOff:
+  SleepTime:
     data:
       - sentences:
-          - "turn off [the] Christmas lights"
-          - "Christmas lights off"
+          - "(sleep time | sleepy)"
   
-  # Christmas lights
   StartBathTime:
     data:
       - sentences:
           - "start bath time"
+  
+  SwitchStudioLamps:
+    data:
+      - sentences:
+          - "switch [studio] lamps"
+  
+  TurnOffChristmasLights:
+    data:
+      - sentences:
+          - "(turn off Christmas lights | Christmas lights off)"
+  
+  TurnOnChristmasLights:
+    data:
+      - sentences:
+          - "(turn on Christmas lights | Christmas lights on)"
+  
+  WakeUp:
+    data:
+      - sentences:
+          - "wake up"

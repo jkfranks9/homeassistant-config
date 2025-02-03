@@ -1,0 +1,7 @@
+#================#
+#     Health     #
+#================#
+
+RegisterExercise:
+  action:
+    service: script.set_workout_daily_time

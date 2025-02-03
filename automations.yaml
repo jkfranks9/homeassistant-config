@@ -23,3 +23,18 @@
       entity_id: scene.lutron_dark
     metadata: {}
   mode: single
+- id: '1737827992080'
+  alias: New automation
+  description: ''
+  triggers:
+  - trigger: conversation
+    command: testing
+  conditions: []
+  actions:
+  - action: assist_satellite.announce
+    metadata: {}
+    data:
+      message: Test is successful!
+    target:
+      entity_id: assist_satellite.home_assistant_voice_office_assist_satellite
+  mode: single

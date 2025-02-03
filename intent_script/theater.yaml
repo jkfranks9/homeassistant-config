@@ -1,0 +1,95 @@
+#=================#
+#     Theater     #
+#=================#
+
+BreakTime:
+  action:
+    service: script.set_theater_idle
+
+CloseCinema:
+  action:
+    service: script.close_cinema
+
+LowerVolume:
+  action:
+    service: script.lower_theater_volume
+
+OpenCinema:
+  action:
+    service: script.open_cinema
+
+PlayFeature:
+  action:
+    service: script.play_feature_movie
+
+RaiseVolume:
+  action:
+    service: script.raise_theater_volume
+
+RestartShieldTV:
+  action:
+    service: script.restart_shield_tv
+
+ResumeCinema:
+  action:
+    service: script.resume_cinema
+
+StartBluray:
+  action:
+    service: script.start_bluray
+
+StartLaserdisc:
+  action:
+    service: script.start_laserdisc
+
+StartStreaming:
+  action:
+    service: script.start_streaming
+
+StartTurntable:
+  action:
+    service: script.start_turntable
+
+WatchAmazonPrime:
+  action:
+    service: script.watch_amazon_prime
+
+WatchAMCPlus:
+  action:
+    service: script.watch_amc_plus
+
+WatchDisneyPlus:
+  action:
+    service: script.watch_disney_plus
+
+WatchHulu:
+  action:
+    service: script.watch_hulu
+
+WatchKodi:
+  action:
+    service: script.watch_kodi
+
+WatchMax:
+  action:
+    service: script.watch_max
+
+WatchNetflix:
+  action:
+    service: script.watch_netflix
+
+WatchParamountPlus:
+  action:
+    service: script.watch_paramount_plus
+
+WatchPeacock:
+  action:
+    service: script.watch_peacock
+
+WatchVideos:
+  action:
+    service: script.play_random_kodi_videos
+
+WatchYoutubeTV:
+  action:
+    service: script.watch_youtube_tv

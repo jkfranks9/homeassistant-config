@@ -490,7 +490,7 @@
 #---------- Miscellaneous ----------#
 
 # Template select that is used on the UI, containing the current mobile tag registry keys. When an option is selected,
-# that tag is removed from my phome and the tag registry. This is only used if a non-manual tag somehow gets stuck, as
+# that tag is removed from my phone and the tag registry. This is only used if a non-manual tag somehow gets stuck, as
 # there is no other easy way to remove such a thing.
 - select:
     - name: Mobile Tag Keys

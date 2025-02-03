@@ -183,11 +183,11 @@
 - alias: Calculate Astronomical Condition
   id: calculate_astronomical_condition
   
-  trigger:
-    - platform: sun
+  triggers:
+    - trigger: sun
       event: sunset
 
-  action:   
+  actions:   
     - variables:
         
         # The first hour of the target time span is the end of astronomical twilight. The last hour is hardcoded as 11 PM.
@@ -197,10 +197,130 @@
     - action: script.calculate_weather_metrics
       data:
         weather_entity: weather.astroweather_white_rabbit_gardens
+        forecast_type: hourly
         first_hour: "{{ first_hour }}"
         last_hour: 23
         metrics_list:
-          - ['input_number.average_astro_condition', 'condition', 50]
-          - ['input_number.average_astro_cloudless_percentage', 'cloudless_percentage', 50]
-          - ['input_number.average_astro_seeing_percentage', 'seeing_percentage', 50]
-          - ['input_number.average_astro_transparency_percentage', 'transparency_percentage', 50]
+          - ['input_number.average_astro_condition', 'condition', 50, 0]
+          - ['input_number.average_astro_cloudless_percentage', 'cloudless_percentage', 50, 0]
+          - ['input_number.average_astro_seeing_percentage', 'seeing_percentage', 50, 0]
+          - ['input_number.average_astro_transparency_percentage', 'transparency_percentage', 50, 0]
+
+#======================#
+#     Temperatures     #
+#======================#
+
+# Check for freezing temperature, which can cause a water pipe to freeze. I want to be notified of such before it happens.
+- alias: Check Freezing Temperature
+  id: check_freezing_temperature
+  
+  triggers:
+    
+    # Trigger if the temperature falls below a threshold. Note that the threshold here is a bit above the 
+    # value we actually check for freezing, just to have a little wiggle room. Also note that we honor this trigger
+    # only when I'm awake, using the condition.
+    - trigger: numeric_state
+      entity_id:
+        - sensor.openweathermap_temperature
+        - sensor.porch_sensor_temperature
+      below: 30
+      id: awake
+    
+    # Trigger at bedtime.
+    - trigger: state
+      entity_id: input_boolean.nighttime
+      from: 'off'
+      to: 'on'
+      id: asleep
+  
+  conditions: "{{ is_state('input_boolean.nighttime', 'off') or trigger.id == 'asleep' }}"
+  
+  actions:
+    - variables:
+        
+        # Start with the next hour. However, if we're already close to the next hour skip 2 hours ahead
+        # (for example it's 10:58, skip to midnight).
+        next_hour: >
+          {% set curr_hour = as_local(as_datetime(now())).hour %}
+          {% set curr_minute = as_local(as_datetime(now())).minute %}
+          {{ iif(curr_minute <= 55, curr_hour + 1, curr_hour + 2) }}
+        
+        # The last hour is either midnight (if we triggered while awake) or noon (if we triggered at bedtime).
+        last_hour: "{{ iif(trigger.id == 'awake', 0, 12) }}"
+    
+    # Calculate the minimum outdoor temperature for the time span and set it in a number. The notification automation
+    # triggers on the low temperature number being below a threshold.
+    - action: script.calculate_weather_metrics
+      data:
+        weather_entity: weather.openweathermap
+        forecast_type: hourly
+        first_hour: "{{ next_hour }}"
+        last_hour: "{{ last_hour }}"
+        metrics_list:
+          - ['input_number.minimum_outdoor_temperature', 'temperature', 33, 120]
+    
+    # Flip the freezing temperature toggle on if the minimum temperature we just calculated is below the threshold.
+    - if:
+        - condition: numeric_state
+          entity_id: input_number.minimum_outdoor_temperature
+          below: 25
+      
+      then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.freezing_temperature
+
+# Reset the freezing temperature toggle if the temp rises above a threshold, so it's guaranteed to trigger again if the temp falls.
+- alias: Reset Freezing Temperature
+  id: reset_freezing_temperature
+  
+  triggers:
+    - trigger: numeric_state
+      entity_id:
+        - sensor.openweathermap_temperature
+        - sensor.porch_sensor_temperature
+      above: 33
+  
+  actions:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.freezing_temperature
+
+# Check for temperatures too low for the pool salt system to function. I want to be notified of such before it happens so I can
+# add chlorine tabs to the pool.
+- alias: Check Salt System Low Temperature
+  id: check_salt_system_low_temperature
+  
+  triggers:
+    - trigger: time
+      at: '06:00:00'
+  
+  actions:
+    
+    # Initialize the notification toggle.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.salt_system_low_temperature
+    
+    # Calculate the lowest low and highest high temperatures for the next 3 days.
+    - action: script.calculate_weather_metrics
+      data:
+        weather_entity: weather.openweathermap
+        forecast_type: daily
+        num_days: 3
+        metrics_list:
+          - ['input_number.minimum_daily_temperature', 'templow', 60, 100]
+          - ['input_number.maximum_daily_temperature', 'temperature', 60, 0]
+    
+    # If all such temps are below the threshold then set a toggle for the notification.
+    - if:
+        - condition: numeric_state
+          entity_id:
+            - input_number.minimum_daily_temperature
+            - input_number.maximum_daily_temperature
+          below: 55
+      
+      then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.salt_system_low_temperature

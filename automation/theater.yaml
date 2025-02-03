@@ -302,6 +302,15 @@
     input:
       appl_name: Amazon Prime
 
+# AMC Plus
+- alias: Initialize AMC Plus Volume
+  id: initialize_amc_plus_volume
+  
+  use_blueprint:
+    path: theater/shield_app_volume.yaml
+    input:
+      appl_name: AMC+
+
 # Disney Plus
 - alias: Initialize Disney Plus Volume
   id: initialize_disney_plus_volume

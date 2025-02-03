@@ -41,31 +41,15 @@
   
   # Trigger if the high/low temperatures in the next 3 days forecast are below 55 degrees. Below this the salt
   # generator stops producing chlorine, so we need to add tabs.
-  #
-  # Note that the template below is tricky. The idea is to skip the first day of the forecast, because that's today.
-  # Then bump the count if both temps are below the minimum for the next 3 days.
   use_blueprint:
     path: notification/mobile_notify.yaml
     input:
-      trigger_type: template
-      template: >
-        {% set forecast = state_attr('weather.openweathermap', 'forecast') %}
-        {% set num_cold_days = namespace(count = []) %}
-        {% if forecast != None %}
-        
-          {% for fc in forecast %}
-            {% if loop.index0 > 0 and loop.index0 < 4 %}
-              {% if fc.temperature < 55 and fc.templow < 55 %}
-                {% set num_cold_days.count = num_cold_days.count + [1] %}
-              {% endif %}
-            {% endif %}            
-          {% endfor %}
-        {% endif %}
-        
-        {{ (num_cold_days.count) | length == 3 }}
-      
-      clear_type: manual
-      timer_entity: timer.pool_chlorine_notification
+      trigger_type: state
+      entity: input_boolean.salt_system_low_temperature
+      from_state: 'off'
+      to_state: 'on'
+      enable_clear_trigger: true
+      clear_type: auto
       message: 'Pool might need chlorine tablets.'
       channel: standard
       tag: 'pool_chlorine'
@@ -166,6 +150,26 @@
       message: 'Vacuum needs maintenance.'
       channel: standard
       tag: 'vacuum_maintenance'
+
+# Some Sonoff devices can be turned off but still reporting power usage. For the one case I know about, the plug could still be turned 
+# on/off by HA, but was not able to update its power usage (so HA continued to use the last value from when it was on). The plug was not 
+# connected to wifi at the time.
+- alias: Notify Sonoff Device Needs Maintenance
+  id: 'notify_sonoff_device_needs_maintenance'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: state
+      entity: [switch.kitchen_appliance_1, switch.kitchen_appliance_2, switch.kitchen_appliance_3, switch.microwave, switch.projector, switch.subwoofer_back, switch.subwoofer_front]
+      from_state: 'on'
+      to_state: 'off'
+      delay: 15
+      conditions: "{{ states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_power') | float(0) > 0 }}"
+      extract_tag_type: sonoff_power
+      clear_type: manual
+      message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' plug is off but reporting power usage.' }}"
+      channel: standard
 
 #===============================#
 #     Battery Notifications     #
@@ -405,30 +409,6 @@
       channel: standard
       tag: 'master_br_vent_2_battery'
 
-#===============================#
-#     Health Notifications      #
-#===============================#
-
-# Send a notification for overdue exercise.
-- alias: Notify Exercise Due
-  id: 'notify_exercise_due'
-  
-  use_blueprint:
-    path: notification/mobile_notify.yaml
-    input:
-      trigger_type: numeric_state_above
-      entity: sensor.exercise_overdue
-      numeric_notify_threshold: 3
-      numeric_notify_template: "{{ state.attributes.overdue | length }}"
-      numeric_clear_threshold: 3.5
-      numeric_clear_template: "{{ state.attributes.overdue | length }}"
-      enable_clear_trigger: true
-      clear_type: auto
-      title: attention
-      message: 'Exercise is overdue.'
-      channel: standard
-      tag: 'exercise_overdue'
-
 #=================================#
 #     Proximity Notifications     #
 #=================================#
@@ -611,6 +591,7 @@
       trigger_time: '06:05:00'
       date_entities: [
                       'input_datetime.reminder_financial_creditreports', 
+                      'input_datetime.reminder_financial_budgetreconciliation', 
                       'input_datetime.reminder_financial_budgettracking', 
                       'input_datetime.reminder_financial_debttracking', 
                       'input_datetime.reminder_financial_monthlytransfer'
@@ -962,10 +943,11 @@
     input:
       current_sensor_entity: sensor.current_echo_unavailable_devices
 
-#==============================#
-#     Temperature Extremes     #
-#==============================#
+#======================#
+#     Temperatures     #
+#======================#
 
+# New temperature extremes.
 - alias: Notify Min Attic Temp Extreme
   id: 'notify_min_attic_temp_extreme'
   
@@ -1013,6 +995,27 @@
     path: notification/temperature_extremes_notify.yaml
     input:
       temperature_entity: input_number.max_outdoor_temp
+
+# Notify about freezing temperatures so I can leave a faucet on trickle.
+# NOTE: The trigger entity is set at bedtime by the Check Overnight Freezing automation. It's also reset 
+# to a high value at each morning.
+- alias: Notify Freezing Temperature
+  id: notify_freezing_temperature
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: state
+      entity: input_boolean.freezing_temperature
+      from_state: 'off'
+      to_state: 'on'
+      enable_clear_trigger: true
+      enable_echo_destination: true
+      clear_type: auto
+      title: attention
+      message: "{{ 'Pipes might freeze tonight, (low temp = ' ~ states(input_number.minimum_outdoor_temperature) ~ ').' }}"
+      channel: standard
+      tag: 'freezing_temperature'
 
 #=====================================#
 #     Notification Tag Management     #

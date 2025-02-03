@@ -4,8 +4,117 @@
 
 intents:
   
-  # Open theater
+  BreakTime:
+    data:
+      - sentences:
+          - "take a break"
+  
+  CloseCinema:
+    data:
+      - sentences:
+          - "close (theater | cinema)"
+  
+  LowerVolume:
+    data:
+      - sentences:
+          - "(loudness down | [it's] too loud)"
+  
   OpenCinema:
     data:
       - sentences:
-          - "open [the] (theater | cinema)"
+          - "open (theater | cinema)"
+  
+  PlayFeature:
+    data:
+      - sentences:
+          - "play feature [movie]"
+  
+  RaiseVolume:
+    data:
+      - sentences:
+          - "(loudness up | [it's] too quiet)"
+  
+  RestartShieldTV:
+    data:
+      - sentences:
+          - "restart Shield TV"
+  
+  ResumeCinema:
+    data:
+      - sentences:
+          - "resume (theater | cinema)"
+  
+  StartBluray:
+    data:
+      - sentences:
+          - "start bluray"
+  
+  StartLaserdisc:
+    data:
+      - sentences:
+          - "start laserdisc"
+  
+  StartStreaming:
+    data:
+      - sentences:
+          - "start streaming"
+  
+  StartTurntable:
+    data:
+      - sentences:
+          - "start turntable"
+  
+  WatchAmazonPrime:
+    data:
+      - sentences:
+          - "[watch] Amazon Prime"
+  
+  WatchAMCPlus:
+    data:
+      - sentences:
+          - "[watch] AMC Plus"
+  
+  WatchDisneyPlus:
+    data:
+      - sentences:
+          - "[watch] Disney Plus"
+  
+  WatchHulu:
+    data:
+      - sentences:
+          - "[watch] Hulu"
+  
+  WatchKodi:
+    data:
+      - sentences:
+          - "[watch] Kodi"
+  
+  WatchMax:
+    data:
+      - sentences:
+          - "[watch] (Max | HBO)"
+  
+  WatchNetflix:
+    data:
+      - sentences:
+          - "[watch] Netflix"
+  
+  WatchParamountPlus:
+    data:
+      - sentences:
+          - "[watch] Paramount Plus"
+  
+  WatchPeacock:
+    data:
+      - sentences:
+          - "[watch] Peacock"
+  
+  WatchVideos:
+    data:
+      - sentences:
+          - "(watch | play) videos"
+  
+  WatchYoutubeTV:
+    data:
+      - sentences:
+          - "[watch] Youtube TV"

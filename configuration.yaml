@@ -23,7 +23,7 @@ automation:     !include_dir_merge_list automation
 binary_sensor:  !include binary_sensor.yaml
 cover:          !include covers.yaml
 group:          !include_dir_merge_named group
-intent_script:  !include intents.yaml
+intent_script:  !include_dir_merge_named intent_script
 logger:         !include database/logger.yaml
 panel_custom:   !include panel_custom.yaml
 recorder:       !include database/recorder.yaml
@@ -36,6 +36,7 @@ template:       !include_dir_merge_list template
 #======================#
 #     Conversation     #
 #======================#
+
 conversation:
 
 #==============#

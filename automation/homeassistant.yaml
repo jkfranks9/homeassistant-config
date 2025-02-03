@@ -261,6 +261,11 @@
           target:
             entity_id: input_boolean.theater_open
     
+    # Reset the pool salt system low temperature notification toggle.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.salt_system_low_temperature
+    
     # Reset the automations that control family room lighting, so that the family room lamp will be
     # used at wakeup time. Control Family Room Light Automations will flip them back to Christmas lights
     # if Christmas mode is on, when the sun stops rising.
@@ -626,8 +631,8 @@
   id: respond_to_mobile_text
   
   # Trigger on any state change to the last notification sensor.
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.jon_galaxy_last_notification
       to:
   
@@ -644,7 +649,7 @@
     sleeping: "{{ states('input_boolean.sleeptime') == 'on' }}"
     driving: "{{ states('binary_sensor.jon_driving') == 'on' }}"
   
-  condition:
+  conditions:
     - and:
     
       # Text must be from family member
@@ -662,7 +667,7 @@
         # I'm driving.
         - "{{ driving }}"
   
-  action:
+  actions:
     - variables:
         number: >
           {% if from_michael %}
@@ -679,17 +684,17 @@
         
         activity: >
           {% if on_treadmill %}
-            'on the treadmill'
+            on the treadmill
           {% elif sleeping %}
-            'asleep, and dreaming of sugarplums'
+            asleep, and dreaming of sugarplums
           {% elif driving %}
-            'driving, or at least in a vehicle'
+            driving, or at least in a vehicle
           {% else %}
-            'unavailable for some unknown reason'
+            unavailable for some unknown reason
           {% endif %}
     
     # Send the response via gmail to the mobile number.
-    - service: notify.gmail
+    - action: notify.gmail
       data:
         title: ' '
         target: "{{ number ~ '@vtext.com' }}"
@@ -723,14 +728,15 @@
     
     - trigger: state
       entity_id:
+        - update.bluetooth_proxy_1_firmware
+        - update.downstairs_sensor_firmware
         - update.dryer_sensor_firmware
-        - update.energy_mon_2_firmware
       from: 'on'
       to: 'off'
       id: intermediate_device
     
     - trigger: state
-      entity_id: update.family_room_box3_firmware
+      entity_id: update.energy_mon_2_firmware
       from: 'on'
       to: 'off'
       id: trigger_device
@@ -743,7 +749,7 @@
   
   actions:
     - variables:
-        target_device_count: 3
+        target_device_count: 4
         battery_device: 'porch-sensor'
     
     # React to different devices being updated.

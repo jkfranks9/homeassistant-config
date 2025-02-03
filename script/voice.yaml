@@ -1,0 +1,209 @@
+#==========================#
+#     Alexa Front Ends     #
+#==========================#
+
+# There is no way to pass variables from Alexa routines, so these are front ends used for those routines.  
+
+alexa_set_fan_off:
+  alias: Alexa Set Fan Off
+  
+  sequence:
+    - action: script.voice_modify_fan
+      data:
+        speed: 'off'
+
+alexa_set_fan_low:
+  alias: Alexa Set Fan Low
+  
+  sequence:
+    - action: script.voice_modify_fan
+      data:
+        speed: 'low'
+
+alexa_set_fan_medium:
+  alias: Alexa Set Fan Medium
+  
+  sequence:
+    - action: script.voice_modify_fan
+      data:
+        speed: 'medium'
+
+alexa_set_fan_high:
+  alias: Alexa Set Fan High
+  
+  sequence:
+    - action: script.voice_modify_fan
+      data:
+        speed: 'high'
+
+#======================#
+#     Ceiling Fans     #
+#======================#
+
+# Modify a fan that lives in a room with a voice assistant device.
+voice_modify_fan:
+  alias: Voice Modify Fan
+  
+  fields:
+    speed:
+      name: Speed
+      description: Fan speed to be used (see fan_settings variable).
+      selector:
+        select:
+  
+  sequence:
+    
+    # Get the room containing the voice assistant device that was used.
+    - action: script.get_voice_device_data
+      response_variable: result
+    
+    - variables:
+        
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
+        
+        # This defines the rooms with ceiling fans.
+        fan_rooms: "{{ state_attr('sensor.variables', 'variables').fan_rooms }}"
+        
+        # These are the input speed settings. They are used to index the numerical (percentage)
+        # settings below.
+        fan_settings: ['off', 'low', 'medium', 'high']
+        
+        # This is the fan speed for each fan setting.
+        fan_speeds: ['0', '33', '66', '99']
+    
+    # Silently ignore any rooms we don't know about.
+    - if:
+        - "{{ room in fan_rooms }}"
+      
+      then:
+        
+        # Set the fan to the requested speed.
+        - action: script.set_fan_to_speed
+          data:
+            entity_id: "{{ 'fan.' ~ room ~ '_fan' }}"
+            speed: "{{ fan_speeds[fan_settings.index(speed)] }}"
+
+#=====================#
+#     Room Lights     #
+#=====================#
+
+# Toggle a light that lives in a room with a voice assistant device.
+voice_toggle_room_light:
+  alias: Voice Toggle Room Light
+  
+  sequence:
+    
+    # Get the room containing the voice assistant device that was used.
+    - action: script.get_voice_device_data
+      response_variable: result
+    
+    - variables:
+        
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
+        
+        # These define the rooms and the lights in those rooms.
+        light_rooms: "{{ state_attr('sensor.variables', 'variables').light_rooms }}"
+        light_rooms_lights: "{{ state_attr('sensor.variables', 'variables').light_rooms_lights }}"
+    
+    # Silently ignore any rooms we don't know about.
+    - if:
+        - "{{ room in light_rooms }}"
+      
+      then:
+        
+        # Toggle the light.
+        - action: light.toggle
+          target:
+            entity_id: "{{ light_rooms_lights[light_rooms.index(room)] }}"
+
+#=======================#
+#     Notifications     #
+#=======================#
+
+# Remove one or more mobile notifications that can only be cleared manually.
+voice_mobile_notification:
+  alias: Voice Mobile Notification
+  
+  sequence:
+    
+    # Get the room containing the voice assistant device that was used.
+    - action: script.get_voice_device_data
+      response_variable: result
+    
+    # Remove manual mobile notification(s) using the output device from the response variable.
+    - action: script.remove_manual_mobile_notification
+      data:
+        voice_device: "{{ result.output }}"
+        
+
+#===================#
+#     Utilities     #
+#===================#
+
+# Update the Last Alexa sensor, which contains the most recently spoken to echo media player.
+# NOTE: For Nabu devices this is handled by the Update Last Nabu Device automation.
+update_last_alexa_device:
+  alias: Update Last Alexa Device
+  
+  sequence:
+    - delay: 
+        milliseconds: 250
+        #milliseconds: "{{ state_attr('sensor.variables', 'variables').last_called_delay }}"
+    
+    # We need to ask Alexa to update the last called echo device, because this information is not pushed to us by Amazon.
+    - action: alexa_media.update_last_called
+    
+    # Next update the Last Alexa sensor, using an event trigger.
+    - event: update_last_alexa_sensor
+    
+    # Then we need to wait a bit.
+    - delay: 
+        milliseconds: 250
+
+# Get information about the most recently spoken to voice device.
+get_voice_device_data:
+  alias: Get Voice Device Data
+  
+  sequence:
+    
+    # We don't know what family of voice assistant (Alexa or Nabu) was used to drive this script. But in order to figure
+    # that out, we first need to update the Last Alexa sensor. If in fact we were called for an Alexa device this will
+    # get us the information we need to pick Alexa as the family. But if we were called for a Nabu device, this will not
+    # change the previous timestamp of the last Alexa device that was used. So we should be good. However, since the
+    # Last Alexa sensor can be updated randomly for usage outside of the scripts in this file, turn off the 
+    # Update Last Alexa Device automation so any pending random updates are ignored while we do our thing.    
+    - action: automation.turn_off
+      entity_id: automation.update_last_alexa_device
+    
+    - action: script.update_last_alexa_device
+    
+    - variables:
+        
+        # The family of voice assistant is either alexa (for echo devices) or nabu (for HA voice devices). We use the following
+        # to get the most recent family spoken to:
+        #
+        # Alexa: the Last Alexa sensor contains the echo media player entity that was last updated. We get the last called timestamp
+        #        from that, which is in milliseconds.
+        # Nabu : the Last Nabu Device text contains the assist satellite entity that was last updated. We get the last updated timestamp
+        #        from that, which is in seconds.
+        family: >
+          {% set last_alexa_ts = state_attr(states('sensor.last_alexa'), 'last_called_timestamp') / 1000 %}
+          {% set last_nabu_ts = as_timestamp(states.input_text.last_nabu_device.last_updated) %}
+          {{ iif(last_alexa_ts > last_nabu_ts, 'alexa', 'nabu') }}
+        last_device_entity: "{{ iif(family == 'alexa', states('sensor.last_alexa'), states('input_text.last_nabu_device')) }}"
+        last_device_suffix: "{{ iif(family == 'alexa', '_echo', '_nabu_assist_satellite') }}"
+        
+        # Some nabu devices don't support TTS announcements. If such a device was used, set the output device to the echo in the same room.
+        output_device_entity: "{{ iif(family == 'nabu', iif(state_attr(last_device_entity, 'supported_features') | bitwise_and(1) == 0, 'media_player.' ~ result.room ~ '_echo', last_device_entity), last_device_entity) }}"
+        
+        # Returned data.
+        data: "{{ {'device': last_device_entity, 'output': output_device_entity, 'room': (last_device_entity.split('.')[1]).split(last_device_suffix)[0]} }}"   
+    
+    # Turn the Update Last Alexa Device automation back on.
+    - action: automation.turn_on
+      entity_id: automation.update_last_alexa_device
+        
+    - stop: "Returning device data"
+      response_variable: data

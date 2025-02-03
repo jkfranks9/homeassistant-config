@@ -362,6 +362,15 @@ watch_amazon_prime:
     input:
       appl_name: Amazon Prime
 
+# AMC Plus
+watch_amc_plus:
+  alias: Watch AMC Plus
+  
+  use_blueprint:
+    path: theater/watch_shield_tv_app.yaml
+    input:
+      appl_name: AMC+
+
 # Disney Plus
 watch_disney_plus:
   alias: Watch Disney Plus
@@ -669,9 +678,6 @@ perform_post_open_tasks:
           before: '23:30:00'
     
     - service: script.disable_family_room_av
-    
-    - service: light.turn_off
-      entity_id: light.family_room_box3_screen
 
 #=========================#
 #     Volume Control      #

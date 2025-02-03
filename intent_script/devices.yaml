@@ -1,0 +1,15 @@
+#=================#
+#     Devices     #
+#=================#
+
+RestartFireTV:
+  action:
+    service: script.restart_fire_tv
+
+TVOff:
+  action:
+    service: script.disable_family_room_av
+
+TVOn:
+  action:
+    service: script.enable_family_room_av

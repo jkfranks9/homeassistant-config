@@ -33,6 +33,7 @@
 !esphome/common/
 
 !group
+!intent_script
 !pyscript
 !python
 !script
@@ -40,10 +41,10 @@
 !template
 
 # Ensure these files are ignored.
+automation/test.yaml
+custom_templates/easy_time.jinja
 google_calendars.yaml
 ip_bans.yaml
 known_devices.yaml
 secrets.yaml
-automation/test.yaml
 script/test.yaml
-custom_templates/easy_time.jinja

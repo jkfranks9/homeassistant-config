@@ -3,40 +3,23 @@
 #=================#
 
 intents:
-
-  # Family room AV
-  TVOn:
-    data:
-      - sentences:
-          - "TV on"
   
-  TVOff:
+  ResetSmartBulbs:
     data:
       - sentences:
-          - "TV off"
+        - "reset [smart] bulbs"
   
   RestartFireTV:
     data:
       - sentences:
           - "Restart fire TV"
-
-  # Ceiling fans
-  FanLow:
+  
+  TVOff:
     data:
       - sentences:
-          - "fan low"
+          - "TV off"
 
-  FanMedium:
+  TVOn:
     data:
       - sentences:
-          - "fan medium"
-
-  FanHigh:
-    data:
-      - sentences:
-          - "fan high"
-
-  FanOff:
-    data:
-      - sentences:
-          - "fan off"
+          - "TV on"

@@ -1,22 +1,3 @@
-#===========================#
-#     Weather Condition     #
-#===========================#
-
-# This is here as a reference for the Weather Condition template sensor, which distills the code into an 
-# approximation of the light level.
-#
-# OpenWeatherMap Codes:
-#   2xx - Thunderstorm
-#   3xx - Drizzle
-#   5xx - Rain
-#   6xx - Snow
-#   7xx - Atmosphere
-#   800 - Clear
-#   801 - 11% to 25% clouds
-#   802 - 26% to 50% clouds
-#   803 - 51% to 84% clouds
-#   804 - 85% to 100% clouds
-
 #=============================#
 #     Thermostat Settings     #
 #=============================#
@@ -156,11 +137,11 @@ remove_thermostat_hold:
 
 # Calculate a set of weather metrics, for example temperature and humidity. The calculations are performed on the
 # weather forecast, for a time span defined by the input hours (24 hour clock, zero origin). The method of 
-# calculation is embedded in the name of each metric. Currently we support 'average' and 'maximum'.
+# calculation is embedded in the name of each metric.
 #
 # NOTES:
 #
-# 1) This is always called BEFORE the start of the first hour of the range. It is not designed to work otherwise.
+# 1) This is always called BEFORE the start of the first hour of an hourly forecast. It is not designed to work otherwise.
 # 2) Hours may cross midnight if needed.
 calculate_weather_metrics:
   alias: Calculate Weather Metrics
@@ -172,80 +153,110 @@ calculate_weather_metrics:
         entity:
           domain: weather
     
+    forecast_type:
+      description: The type of forecast to retrieve.
+      selector:
+        select:
+          options:
+            - hourly
+            - daily
+    
     first_hour:
-      description: The first hour of the time span to be interrogated.
+      description: (Optional) The first hour of the time span to be interrogated for an hourly forecast.
       selector:
         number:
           min: 0
           max: 23
     
     last_hour:
-      description: The last hour of the time span to be interrogated. If less than first_hour the span crosses midnight.
+      description: (Optional) The last hour of the time span to be interrogated for an hourly forecast. If less than first_hour the span crosses midnight.
       selector:
         number:
           min: 0
           max: 23
     
+    num_days:
+      description: (Optional) The number of days to be interrogated for a daily forecast.
+    
     metrics_list:
-      description: A list of metrics; each entry contains a number entity, weather forecast variable and default numeric value.
+      description: A list of metrics; each entry contains a number entity, weather forecast variable, default numeric value and initialization value.
       selector:
         object:
   
   sequence:
     
     # Get the hourly weather forecast data.
-    - service: weather.get_forecasts
+    - action: weather.get_forecasts
       data:
-        type: hourly
+        type: "{{ forecast_type }}"
       target:
         entity_id: "{{ weather_entity }}"
       response_variable: result
     
     - variables:
-        midnight_cross: "{{ iif(first_hour > last_hour, true, false) }}"
-        num_hours: "{{ iif(midnight_cross == false, last_hour - first_hour + 1, last_hour + 24 - first_hour + 1) }}"
+        midnight_cross: "{{ iif(forecast_type == 'hourly' and first_hour >= last_hour, true, false) }}"
+        num_hours: >
+          {% if forecast_type == 'hourly' %}
+            {{ iif(midnight_cross == false, last_hour - first_hour, last_hour + 24 - first_hour) }}
+          {% endif %}
         
         # The list of hourly weather data for the input time span.
-        forecast_list: >
-          {% set var = namespace(list = [], day = 0) %}
-          {% for i in result[weather_entity].forecast %}
-            {% set hour = as_local(as_datetime(i.datetime)).strftime('%H') | int(0) %}
-            {% set day = as_local(as_datetime(i.datetime)).strftime('%d') | int(0) %}
-            {% if loop.first %}
-              {% set var.day = day %}
-            {% endif %}
-            {% if day == var.day %}
-              {% if first_hour <= hour <= (iif(midnight_cross == false, last_hour, last_hour + 24)) %}
-                {% set var.list = var.list + [i] %}
+        forecast_list_hourly: >
+          {% if forecast_type == 'hourly' %}
+            {% set var = namespace(list = [], day = 0) %}
+            {% for i in result[weather_entity].forecast %}
+              {% set hour = as_local(as_datetime(i.datetime)).strftime('%H') | int(0) %}
+              {% set day = as_local(as_datetime(i.datetime)).strftime('%d') | int(0) %}
+              {% if loop.first %}
+                {% set var.day = day %}
               {% endif %}
-            {% else %}
-              {% if (iif(midnight_cross == false, first_hour, first_hour - 24)) <= hour <= last_hour %}
-                {% set var.list = var.list + [i] %}
+              {% if day == var.day %}
+                {% if first_hour <= hour <= (iif(midnight_cross == false, last_hour, last_hour + 24)) %}
+                  {% set var.list = var.list + [i] %}
+                {% endif %}
+              {% else %}
+                {% if (iif(midnight_cross == false, first_hour, first_hour - 24)) <= hour <= last_hour %}
+                  {% set var.list = var.list + [i] %}
+                {% endif %}
               {% endif %}
-            {% endif %}
-            {% if var.list | length == num_hours %}
-              {% break %}
-            {% endif %}
-          {% endfor %}
-          {{ var.list }}
+              {% if var.list | length == num_hours %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+            {{ var.list }}
+          {% endif %}
+        
+        # The list of daily weather data for the input number of days.
+        forecast_list_daily: >
+          {% if forecast_type == 'daily' %}
+            {% set var = namespace(list = []) %}
+            {% for i in result[weather_entity].forecast %}
+              {% set var.list = var.list + [i] %}
+              {% if var.list | length == num_days %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+            {{ var.list }}
+          {% endif %}
     
-    # Clear the metrics we're about to collect during the loop.
+    # Initialize the metrics we're about to collect during the loop.
     - repeat:
         for_each: "{{ metrics_list }}"
       
         sequence:
           - variables:
               number_entity: "{{ repeat.item[0] }}"
+              init_val: "{{ repeat.item[3] }}"
           
-          - service: input_number.set_value
+          - action: input_number.set_value
             target:
               entity_id: "{{ number_entity }}"
             data:
-              value: 0
+              value: "{{ init_val }}"
     
     # Walk through the hourly weather data list.
     - repeat:
-        for_each: "{{ forecast_list }}"
+        for_each: "{{ iif(forecast_type == 'hourly', forecast_list_hourly, forecast_list_daily) }}"
       
         sequence:
           - variables:
@@ -262,25 +273,21 @@ calculate_weather_metrics:
                     default_val: "{{ repeat.item[2] }}"
                     method: "{{ number_entity.split('.')[1].split('_')[0] }}"
                     forecast_data: "{{ forecast.get(forecast_var) }}"
+                    value_data: >
+                      {% if method == 'average' %}
+                        {{ states(number_entity) | float(default_val) + forecast_data }}
+                      {% elif method == 'minimum' %}
+                        {{ min(states(number_entity) | float(default_val), forecast_data) }}
+                      {% elif method == 'maximum' %}
+                        {{ max(states(number_entity) | float(default_val), forecast_data) }}
+                      {% endif %}
                 
-                # Perform an intermediate or final calculation according to the method. For an average, we sum the values here
-                # so we can average them below. For a maximum, we collect the largest value here.
-                - if:
-                    - "{{ method == 'average' }}"
-                  
-                  then:
-                    - service: input_number.set_value
-                      target:
-                        entity_id: "{{ number_entity }}"
-                      data:
-                        value: "{{ states(number_entity) | float(default_val) + forecast_data }}"
-                  
-                  else:
-                    - service: input_number.set_value
-                      target:
-                        entity_id: "{{ number_entity }}"
-                      data:
-                        value: "{{ max(states(number_entity) | float(default_val), forecast_data) }}"
+                # Perform an intermediate or final calculation according to the method
+                - action: input_number.set_value
+                  target:
+                    entity_id: "{{ number_entity }}"
+                  data:
+                    value: "{{ value_data }}"
     
     # Now perform the average calculation for all averaged metrics.
     - repeat:
@@ -291,12 +298,13 @@ calculate_weather_metrics:
               number_entity: "{{ repeat.item[0] }}"
               default_val: "{{ repeat.item[2] }}"
               method: "{{ number_entity.split('.')[1].split('_')[0] }}"
+              forecast_list: "{{ iif(forecast_type == 'hourly', forecast_list_hourly, forecast_list_daily) }}"
                 
           - if:
               - "{{ method == 'average' }}"
               
             then:
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: "{{ number_entity }}"
                 data:

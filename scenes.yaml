@@ -138,4 +138,25 @@
     switch.master_bath_fan: 'off'
     switch.studio_fan:      'off'
     switch.penthouse_fan:   'off'
-    
+
+#=================================#
+#     Voice Assistant Screens     #
+#=================================#
+- id: 'voice_assistants_off'
+  name: Voice Assistants Off
+  entities:  
+    light.family_room_nabu_screen: 'off'  
+
+- id: 'voice_assistants_on_bright'
+  name: Voice Assistants On Bright
+  entities:  
+    light.family_room_nabu_screen:
+      state: 'on'
+      brightness_pct: 100
+
+- id: 'voice_assistants_on_dim'
+  name: Voice Assistants On Dim
+  entities:  
+    light.family_room_nabu_screen:
+      state: 'on'
+      brightness_pct: 25
