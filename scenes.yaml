@@ -152,11 +152,11 @@
   entities:  
     light.family_room_nabu_screen:
       state: 'on'
-      brightness_pct: 100
+      brightness: 255
 
 - id: 'voice_assistants_on_dim'
   name: Voice Assistants On Dim
   entities:  
     light.family_room_nabu_screen:
       state: 'on'
-      brightness_pct: 25
+      brightness: 64
