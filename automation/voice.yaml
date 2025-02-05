@@ -38,32 +38,13 @@
       entity_id:
         - assist_satellite.family_room_nabu_assist_satellite
         - assist_satellite.office_nabu_assist_satellite
-      from: 'idle'
-      to: 'listening'
-      id: listen
-    
-    - trigger: state
-      entity_id:
-        - assist_satellite.family_room_nabu_assist_satellite
-        - assist_satellite.office_nabu_assist_satellite
       from: 'listening'
       to: 'processing'
       id: process
   
-  actions:
-    - if:
-        - "{{ trigger.id == 'listen' }}"
-      
-      then:
-        - action: input_text.set_value
-          target:
-            entity_id: input_text.last_nabu_device
-          data:
-            value: initial
-      
-      else:    
-        - action: input_text.set_value
-          target:
-            entity_id: input_text.last_nabu_device
-          data:
-            value: "{{ trigger.entity_id }}"
+  actions: 
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.last_nabu_device
+      data:
+        value: "{{ trigger.entity_id }}"

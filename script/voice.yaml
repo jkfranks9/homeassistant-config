@@ -195,11 +195,14 @@ get_voice_device_data:
         last_device_entity: "{{ iif(family == 'alexa', states('sensor.last_alexa'), states('input_text.last_nabu_device')) }}"
         last_device_suffix: "{{ iif(family == 'alexa', '_echo', '_nabu_assist_satellite') }}"
         
+        # Pull the room out of the voice device entity name.
+        room: "{{ (last_device_entity.split('.')[1]).split(last_device_suffix)[0] }}"
+        
         # Some nabu devices don't support TTS announcements. If such a device was used, set the output device to the echo in the same room.
-        output_device_entity: "{{ iif(family == 'nabu', iif(state_attr(last_device_entity, 'supported_features') | bitwise_and(1) == 0, 'media_player.' ~ result.room ~ '_echo', last_device_entity), last_device_entity) }}"
+        output_device_entity: "{{ iif(family == 'nabu', iif(state_attr(last_device_entity, 'supported_features') | bitwise_and(1) == 0, 'media_player.' ~ room ~ '_echo', last_device_entity), last_device_entity) }}"
         
         # Returned data.
-        data: "{{ {'device': last_device_entity, 'output': output_device_entity, 'room': (last_device_entity.split('.')[1]).split(last_device_suffix)[0]} }}"   
+        data: "{{ {'device': last_device_entity, 'output': output_device_entity, 'room': room} }}"   
     
     # Turn the Update Last Alexa Device automation back on.
     - action: automation.turn_on
