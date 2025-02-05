@@ -1164,7 +1164,7 @@ handle_completed_reminder_or_periodic_item:
             base_entity: "{{ base_entity }}"
             amount: "{{ interval }}"
     
-    # If the input is a periodic item, remove it from the appropriate weekly sensor.
+    # If the input is a periodic item, remove it from the appropriate weekly sensor if it exists.
     - if:
         - "{{ iif(entity_name.split('_')[0] == 'periodic', true, false) }}"
       
@@ -1184,11 +1184,15 @@ handle_completed_reminder_or_periodic_item:
               {% endif %}
             item_name: "{{ icon_tag ~ state_attr(entity, 'friendly_name') | replace('Periodic ' ~ name_type | title ~ ' ', '') }}"
         
-        - service: script.send_mini_todo_event
-          data:
-            event_type: remove
-            item_type: "{{ type }}"
-            value: "{{ item_name }}"
+        - if:
+            - "{{ item_name in state_attr(list_entity, 'items') }}"
+          
+          then:        
+            - service: script.send_mini_todo_event
+              data:
+                event_type: remove
+                item_type: "{{ type }}"
+                value: "{{ item_name }}"
     
 # Set an input datetime entity with an offset in days.
 set_datetime_offset_days:
