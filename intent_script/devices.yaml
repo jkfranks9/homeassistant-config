@@ -2,6 +2,10 @@
 #     Devices     #
 #=================#
 
+ResetSmartBulbs:
+  action:
+    service: script.reset_smart_bulbs
+
 RestartFireTV:
   action:
     service: script.restart_fire_tv

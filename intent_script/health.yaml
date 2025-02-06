@@ -2,6 +2,22 @@
 #     Health     #
 #================#
 
-RegisterExercise:
+ExerciseTrack:
   action:
     service: script.set_workout_daily_time
+    
+PauseYardWork:
+  action:
+    service: script.pause_yard_work
+
+ResumeYardWork:
+  action:
+    service: script.resume_yard_work
+
+StartYardWork:
+  action:
+    service: script.start_yard_work
+
+StopYardWork:
+  action:
+    service: script.stop_yard_work
