@@ -185,9 +185,7 @@ initialize_global_variables:
         key: mini_todo_other_times
         value: { "{{ state_attr('input_datetime.periodic_other_ear_drops', 'friendly_name').split('Periodic Other ')[-1] }}": 10, 
                  "{{ state_attr('input_datetime.periodic_other_haircut', 'friendly_name').split('Periodic Other ')[-1] }}": 15,
-                 "{{ state_attr('input_datetime.periodic_other_trash', 'friendly_name').split('Periodic Other ')[-1] }}": 40,
-                 "{{ state_attr('input_datetime.periodic_other_groceries', 'friendly_name').split('Periodic Other ')[-1] }}": 80,
-                 "{{ state_attr('input_datetime.periodic_other_laundry', 'friendly_name').split('Periodic Other ')[-1] }}": 30
+                 "{{ state_attr('input_datetime.periodic_other_trash', 'friendly_name').split('Periodic Other ')[-1] }}": 40
                }
 
 #========================#
@@ -321,9 +319,7 @@ generate_periodic_lists:
             date_entities: [
                             'input_datetime.periodic_other_ear_drops',
                             'input_datetime.periodic_other_haircut',
-                            'input_datetime.periodic_other_trash',
-                            'input_datetime.periodic_other_groceries',
-                            'input_datetime.periodic_other_laundry'
+                            'input_datetime.periodic_other_trash'
                            ]
     
     # NOTE: The following is temporarily removed; add back when needed.
