@@ -205,14 +205,6 @@ blueprint:
             - assisted
             - manual
     
-    timer_entity:
-      name: Timer Entity
-      description: (Optional) Timer entity associated with the notification, used for throttling. If not specified then no throttling is done.
-      default: {}
-      selector:
-        entity:
-          domain: timer
-    
     title:
       name: Title
       description: (Optional) Title for the notification.
@@ -255,7 +247,6 @@ variables:
   input_calendar_tag: !input calendar_tag
   input_enable_echo_destination: !input enable_echo_destination
   input_extract_tag_type: !input extract_tag_type
-  input_timer_entity: !input timer_entity
   input_clear_type: !input clear_type
   input_title: !input title
   input_message: !input message
@@ -418,17 +409,9 @@ action:
           - variables:
               destination: "{{ iif(input_enable_echo_destination, ['mobile', 'echo'], ['mobile']) }}"
               message: !input message
-              throttle: "{{ iif(input_timer_entity, true, false) }}"
-              tag_registry_value: >
-                {% set ns = namespace(val = {'tag': tag, 'clear_type': input_clear_type, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} )  %}
-                {% if input_timer_entity | length > 0 %}
-                  {% set timer = {'timer_entity': input_timer_entity} %}
-                  {{ dict(ns.val, **timer) }}
-                {% else %}
-                  {{ ns.val }}
-                {% endif %}
+              tag_registry_value: "{{ {'tag': tag, 'clear_type': input_clear_type, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} }}"
               notification_data: >
-                {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout, 'throttled': throttle, 'timer_entity': input_timer_entity} %}
+                {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} %}
                 {% if input_enable_echo_destination %}
                   {% set additional = {'voice_entity': 'media_player.everywhere', 'tag': tag} %}
                 {% else %}

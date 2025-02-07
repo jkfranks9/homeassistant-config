@@ -37,17 +37,17 @@ variables:
   power_off_tag: "{{ input_device_name | lower }}_power_problem"
 
 # Trigger on any change to the device entity, or when the component is loaded.
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: !input device_entity
     to:
   
-  - platform: event
+  - trigger: event
     event_type: component_loaded
     event_data:
       component: !input component_name
 
-condition: 
+conditions: 
   
   # Only continue if the optional conditional processing flag is true.
   - "{{ input_conditional_processing }}"
@@ -55,7 +55,7 @@ condition:
   # Continue if the device is not on. Weed out changing to unavailable or unknown states.
   - "{{ trigger.to_state.state not in ['unavailable', 'unknown'] and not is_state(input_device_entity, 'on') }}"
 
-action:
+actions:
     
   # Wait a few seconds, then verify that the device is still not on. We don't need to worry about short transients.
   - delay: 5
@@ -63,7 +63,7 @@ action:
   - condition: "{{ not is_state(input_device_entity, 'on') }}"
           
   # Register the tag.
-  - service: script.register_mobile_notification
+  - action: script.register_mobile_notification
     data:
       tag: "{{ message_tag }}"
       clear_type: assisted
@@ -73,19 +73,18 @@ action:
       timeout: 0
   
   # Send a warning notification that the device is being turned on.
-  - service: script.send_notification
+  - action: script.send_notification
     data:
       destination:
         - mobile
       title: 'Warning:'
       message: '{{ input_device_name }} off, turning it back on.'
       channel: critical
-      throttled: false
       tag: "{{ message_tag }}"
       timeout: 0
   
   # Turn the device back on.
-  - service: homeassistant.turn_on
+  - action: homeassistant.turn_on
     target:
       entity_id: !input device_entity
     
@@ -103,7 +102,7 @@ action:
     else:
           
       # Register the tag.
-      - service: script.register_mobile_notification
+      - action: script.register_mobile_notification
         data:
           tag: "{{ power_off_tag }}"
           clear_type: manual
@@ -113,18 +112,17 @@ action:
           timeout: 0
     
       # Send the new notification.
-      - service: script.send_notification
+      - action: script.send_notification
         data:
           destination:
             - mobile
           title: 'Warning:'
           message: '{{ input_device_name }} did not turn on.'
           channel: critical
-          throttled: false
           tag: "{{ power_off_tag }}"
           timeout: 0
 
   # Remove the first notification and unregister the tag.
-  - service: script.remove_mobile_notification
+  - action: script.remove_mobile_notification
     data:
       tag: "{{ message_tag }}"

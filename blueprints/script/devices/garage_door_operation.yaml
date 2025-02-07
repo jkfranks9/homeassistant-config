@@ -71,7 +71,7 @@ sequence:
     then:
           
       # Register the tag.
-      - service: script.register_mobile_notification
+      - action: script.register_mobile_notification
         data:
           tag: "{{ message_tag }}"
           clear_type: auto
@@ -81,19 +81,18 @@ sequence:
           timeout: 0
       
       # Send the informational notification.
-      - service: script.send_notification
+      - action: script.send_notification
         data:
           destination:
             - mobile
           title: 'Attention:'
           message: '{{ msg_operation }} garage door {{ input_name }}.'
           channel: standard
-          throttled: false
           tag: "{{ message_tag }}"
           timeout: 0
     
   # Operate the door.
-  - service: switch.turn_on
+  - action: switch.turn_on
     target:
       entity_id: !input switch
     
@@ -111,7 +110,7 @@ sequence:
     else:
           
       # Register the tag.
-      - service: script.register_mobile_notification
+      - action: script.register_mobile_notification
         data:
           tag: "{{ error_tag }}"
           clear_type: manual
@@ -121,14 +120,13 @@ sequence:
           timeout: 0
       
       # Send the new notification.
-      - service: script.send_notification
+      - action: script.send_notification
         data:
           destination:
             - mobile
           title: 'Warning:'
           message: 'Garage door {{ input_name }} operation did not succeed.'
           channel: critical
-          throttled: false
           tag: "{{ error_tag }}"
           timeout: 0
   
@@ -138,6 +136,6 @@ sequence:
     then:
 
       # Remove the first notification and unregister the tag.
-      - service: script.remove_mobile_notification
+      - action: script.remove_mobile_notification
         data:
           tag: "{{ message_tag }}"

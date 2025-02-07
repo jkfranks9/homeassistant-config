@@ -55,16 +55,16 @@ blueprint:
 # Allow for multiple simultaneous changes. Might be unnecessary, but it doesn't hurt.
 mode: queued
   
-trigger:
+triggers:
   
   # Trigger daily at the specified time.
-  - platform: time
+  - trigger: time
     at: !input trigger_time
     id: notify
   
   # Trigger when the state of any of the date entities change. This should normally happen only when changed via the UI.
   # I'm assuming that only one of these at a time can change.
-  - platform: state
+  - trigger: state
     entity_id: !input date_entities
     to:
     id: clear
@@ -86,13 +86,13 @@ variables:
     {% endfor %}    
     {{ actionable_list.list }}
   
-condition:
+conditions:
   
   # Continue if we have anything to do.
   - condition: template
     value_template: "{{ actionable_entities | length > 0 or trigger.id == 'clear'}}"
 
-action:
+actions:
   
   # Notification trigger.
   - if:
@@ -116,7 +116,7 @@ action:
                 friendly_short_name: "{{ friendly_name.split('Reminder ' ~ friendly_category ~ ' ')[-1] }}"
           
             # Register the tag.
-            - service: script.register_mobile_notification
+            - action: script.register_mobile_notification
               data:
                 tag: "{{ input_tag_prefix ~ entity_suffix }}"
                 clear_type: auto
@@ -124,9 +124,8 @@ action:
                 message: "{{ input_message_prefix ~ ' (' ~ friendly_short_name ~ ').' }}"
                 channel: !input channel
                 timeout: !input timeout
-                timer_entity: "{{ 'timer.reminder_' ~ entity_category ~ '_' ~ entity_suffix }}"
             
-            - service: script.send_notification
+            - action: script.send_notification
               data:
                 destination:
                   - mobile
@@ -134,8 +133,6 @@ action:
                 message: "{{ input_message_prefix ~ ' (' ~ friendly_short_name ~ ').' }}"
                 channel: !input channel
                 timeout: !input timeout
-                throttled: true
-                timer_entity: "{{ 'timer.reminder_' ~ entity_category ~ '_' ~ entity_suffix }}"
                 tag: "{{ input_tag_prefix ~ entity_suffix }}"
     
     # Clear trigger.
@@ -144,6 +141,6 @@ action:
           entity_suffix: "{{ (trigger.entity_id).split('_')[-1] }}"
     
       # Remove the notification and unregister the tag.
-      - service: script.remove_mobile_notification
+      - action: script.remove_mobile_notification
         data:
           tag: "{{ input_tag_prefix ~ entity_suffix }}"

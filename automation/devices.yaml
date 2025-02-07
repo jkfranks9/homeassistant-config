@@ -70,7 +70,7 @@
         message: Power is out, shutting down PC.
         channel: critical
         tag_registry_value: "{{ {'tag': tag, 'clear_type': 'auto', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
-        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'throttled': false, 'tag': tag} }}"
+        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'tag': tag} }}"
     
     # Save a timestamp for this event.
     - action: input_datetime.set_datetime
@@ -129,7 +129,7 @@
         message: UPS battery is critical, shutting down RPi.
         channel: critical
         tag_registry_value: "{{ {'tag': tag, 'clear_type': 'auto', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
-        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'throttled': false, 'tag': tag} }}"
+        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'tag': tag} }}"
     
     # Save a timestamp for this event.
     - action: input_datetime.set_datetime
@@ -189,7 +189,7 @@
         
         channel: standard
         tag_registry_value: "{{ {'tag': tag, 'clear_type': 'manual', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
-        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'throttled': false, 'tag': tag} }}"
+        notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'tag': tag} }}"
     
     # Register the tag.
     - action: script.register_mobile_notification
