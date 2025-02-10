@@ -984,15 +984,19 @@ change_downstairs_lighting:
                 - "{{ iif(all_day == false, is_state(test_lights, 'on') or ambient_value < ambient_min, true) }}"
               
               then:
-                - action: light.turn_on
-                  target:
-                    entity_id: "{{ activation_lights }}"
+                - action: script.turn_on_lights_per_conditions
+                  data:
+                    light_entity: "{{ activation_lights }}"
+                    lux_entity: sensor.downstairs_sensor_ambient_light
+                    min_lux_value: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
           
           # For break time and theater close include the daytime lights.
           else:
-            - action: light.turn_on
-              target:
-                entity_id: "{{ non_activation_lights }}"
+            - action: script.turn_on_lights_per_conditions
+              data:
+                light_entity: "{{ non_activation_lights }}"
+                lux_entity: sensor.downstairs_sensor_ambient_light
+                min_lux_value: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
         
       # Turn off lights, but only if no family members are present.
       else:
