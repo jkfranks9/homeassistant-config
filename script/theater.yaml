@@ -237,30 +237,60 @@ process_single_kodi_movie_result:
         movieid: "{{ result.movies.0.movieid }}"
     
     # Build a set of random music videos as a preamble to the movie. These are added to a playlist.
-    - service: script.get_all_kodi_videos
-          
-    # Add the movie to the playlist.
-    - service: kodi.call_method
-      target:
-        entity_id: media_player.kodi
-      data:
-        method: Playlist.Add
-        playlistid: 1
-        item:
-          movieid: "{{ movieid }}"
+    # There is a chance this could fail, in which case we just play the movie.
+    - action: script.get_all_kodi_videos
+      response_variable: result
+    
+    - variables:
+        include_videos: "{{ result.result == 'success' }}"
+    
+    # If success then add the movie to the end of the playlist.
+    - if:
+        - "{{ include_videos }}"
+      
+      then:
+              
+        # Add the movie to the playlist.
+        - action: kodi.call_method
+          target:
+            entity_id: media_player.kodi
+          data:
+            method: Playlist.Add
+            playlistid: 1
+            item:
+              movieid: "{{ movieid }}"
+      
+      # Just log an error.
+      else:
+        - action: system_log.write
+          data:
+            message: 'Kodi videos could not be retrieved.'
+            level: warning
   
     # Now switch the receiver to the proper input so Kodi can be viewed on screen.
-    - service: remote.send_command
+    - action: remote.send_command
       entity_id: remote.harmony_hub
       data:
         command: 'InputCbl/Sat'
         device: Marantz Receiver
   
-    # Play the playlist.
-    - service: script.play_kodi_playlist
+    # Play either the playlist or the single movie.
+    - if:
+        - "{{ include_videos }}"
+      
+      then:
+        - action: script.play_kodi_playlist
+      
+      else:
+        - action: kodi.call_method
+          data_template:
+            entity_id: media_player.kodi
+            method: Player.Open
+            item:
+              movieid: "{{ movieid }}"
   
     # Darken the theater.
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.set_theater_dark_delay
 
 #=====================================#
@@ -275,7 +305,7 @@ play_random_kodi_videos:
   sequence:
     
     # Activate the cinema.
-    - service: script.activate_cinema
+    - action: script.activate_cinema
       data:
         activity: Enable Streaming
         need_kodi: true
@@ -289,20 +319,37 @@ play_random_kodi_videos:
         - stop: "Cinema usage is denied."
 
     # Build a set of random music videos. These are added to a playlist.
-    - service: script.get_all_kodi_videos
+    - action: script.get_all_kodi_videos
+      response_variable: result
+    
+    # If we failed, announce it and quit.
+    - if:
+        - "{{ result.result == 'failure' }}"
+      
+      then:
+        - action: notify.alexa_media
+          data:
+            message: "I'm sorry, but Kodi videos could not be retrieved."
+            target:
+              - media_player.family_room_echo
+              - media_player.theater_echo
+            data:
+              type: tts
+    
+        - stop: 'Kodi videos could not be retrieved'
   
     # Now switch the receiver to the proper input so Kodi can be viewed on screen.
-    - service: remote.send_command
+    - action: remote.send_command
       entity_id: remote.harmony_hub
       data:
         command: 'InputCbl/Sat'
         device: Marantz Receiver
         
     # Play the playlist.
-    - service: script.play_kodi_playlist
+    - action: script.play_kodi_playlist
   
     # Darken the theater.
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.set_theater_dark_delay
 
 #====================================#
@@ -1190,16 +1237,112 @@ get_all_kodi_videos:
   alias: Get All Kodi Videos
   
   sequence:
+    - variables:
+        
+        # We don't want to retry endlessly.
+        max_retries: 3
+        
+        # Wait timeout.
+        timeout_secs: 5
     
-    # Send the command to Kodi to get all available videos.
-    - service: kodi.call_method
-      target:
-        entity_id: media_player.kodi
+    # This is a flag to know when we're done.
+    - action: input_boolean.turn_off
       data:
-        method: VideoLibrary.GetMusicVideos
-        properties:
-          - artist
-          - streamdetails
+        entity_id: input_boolean.music_video_playlist_built
+    
+    # Initialize the retry count.
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.kodi_video_retry_count
+      data:
+        value: 0
+    
+    # This loop is to handle a potential error from the Kodi call. If everything is OK we don't loop.
+    - repeat:
+        
+        # Loop until the video playlist is built.
+        until:
+          - condition: state
+            entity_id: input_boolean.music_video_playlist_built
+            state: 'on'
+        
+        sequence:
+    
+          # Reset the error toggle before we call Kodi.
+          - action: input_boolean.turn_off
+            data:
+              entity_id: input_boolean.kodi_video_call_error
+    
+          # Send the command to Kodi to get all available videos. If all is well this drives the
+          # Process Kodi Video Result automation, which selects random videos from the result and 
+          # builds a Kodi playlist.
+          - service: kodi.call_method
+            target:
+              entity_id: media_player.kodi
+            data:
+              method: VideoLibrary.GetMusicVideos
+              properties:
+                - artist
+                - streamdetails
+        
+          # Wait for the playlist to be built or an error to be detected. These are mutually exclusive.
+          - wait_for_trigger:
+              - trigger: state
+                entity_id: input_boolean.music_video_playlist_built
+                to: 'on'
+              
+              - trigger: state
+                entity_id: input_boolean.kodi_video_call_error
+                to: 'on'
+            timeout:
+              seconds: "{{ timeout_secs }}"
+        
+          # Handle the result.
+          - choose:
+              
+            # If the playlist has been built then we're done.
+            - conditions: "{{ states('input_boolean.music_video_playlist_built') == 'on' }}"
+              
+              sequence:
+                - variables:
+                    result: "{{ {'result': 'success'} }}"
+                
+                - stop: 'Kodi playlist has been completed'
+                  response_variable: result
+              
+            # If an error was detected then retry the Kodi call.
+            - conditions: "{{ states('input_boolean.kodi_video_call_error') == 'on' }}"
+              
+              sequence:
+                - variables:
+                    result: "{{ {'result': 'failure'} }}"
+                    retry_count: "{{ states('input_number.kodi_video_retry_count') | int(0) }}"
+                
+                # If we've hit the retry count, we've failed miserably.
+                - if:
+                    - "{{ retry_count >= max_retries }}"
+                  
+                  then:
+                    - stop: "{{{ 'Kodi call failed ' ~ retry_count ~ ' times' }}"
+                      response_variable: result
+                
+                # Bump the retry count.
+                - action: input_number.increment
+                  target:
+                    entity_id: input_number.kodi_video_retry_count
+              
+            # If we timed out then I don't know what's wrong. Log it.
+            default:
+              - variables:
+                  result: "{{ {'result': 'failure'} }}"
+            
+              - action: system_log.write
+                data:
+                  message: "{{ 'Kodi GetMusicVideos call did not complete after ' ~ timeout_secs ~ ' seconds.' }}"
+                  level: warning
+            
+              - stop: 'Kodi playlist was not built but no error was detected'
+                response_variable: result
 
 # Build a playlist of selected music videos.
 build_kodi_video_playlist:
