@@ -570,11 +570,12 @@ close_cinema:
         entity_id: climate.upstairs
         fan_min_on_time: 5
     
-    # Turn off all lights.
+    # Turn off some downstairs lights after a delay, if appropriate.
     - delay: '00:05:00'
     
-    - action: script.turn_on
-      entity_id: script.set_theater_dark
+    - service: script.change_downstairs_lighting
+      data:
+        operation: post_close
 
 #====================================#
 #     Cinema Open/Close Control      #
@@ -933,9 +934,10 @@ set_theater_idle:
 #
 # - Cinema open, via Set Theater Idle (operation = activation: turn on)
 # - Cinema open after delay (operation = post_open: turn off)
-# - Alexa Break Time routine, via Set Theater Idle (operation = break: turn on)
+# - Voice assistant break time, via Set Theater Idle (operation = break: turn on)
 # - Cinema Resume (operation = resume: turn off)
 # - Cinema close, via Set Theater Idle (operation = close: turn on)
+# - Cinema close after delay (operation = post_close: turn off)
 change_downstairs_lighting:
   alias: Change Downstairs Lighting
   
@@ -953,6 +955,7 @@ change_downstairs_lighting:
             - 'break'
             - 'resume'
             - 'close'
+            - 'post_close'
   
   sequence:
     - variables:
