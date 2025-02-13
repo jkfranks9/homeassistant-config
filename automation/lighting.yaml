@@ -105,10 +105,18 @@
     - variables:
         hours: "{{ states('sensor.sleep_duration_display').split(' ')[0].replace('h', '') }}"
         minutes: "{{ states('sensor.sleep_duration_display').split(' ')[1].replace('m', '') }}"
+        keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
+        calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
     
     - action: notify.alexa_media
       data:
-        message: "{{ 'Good morning. You slept ' ~ hours ~ ' hours' ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' minutes.', '.') }}"
+        message: >
+          {% set msg = 'Good morning. You slept ' ~ hours ~ ' hours' ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' minutes.', '.') %}
+          {% if calendar == true %}
+            {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
+          {% endif %}
+          
+          {{ msg }}
         target: media_player.master_bedroom_echo
         data:
           type: tts
