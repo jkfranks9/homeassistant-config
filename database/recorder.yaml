@@ -87,6 +87,8 @@ include:
     - sensor.memory_use_percent
     - sensor.porch_sensor_humidity
     - sensor.processor_use_percent
+    - sensor.sleep_average
+    - sensor.sleep_duration
     - sensor.washer_power_state
     - weather.astroweather_white_rabbit_gardens
   
