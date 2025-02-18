@@ -1100,6 +1100,10 @@
       not_from: docked
       to: docked
   
+    - trigger: numeric_state
+      entity_id: sensor.ecovacs_battery
+      above: 90
+  
   conditions:
     - condition: numeric_state
       entity_id: input_number.vacuum_problems

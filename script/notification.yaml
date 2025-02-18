@@ -292,6 +292,9 @@ register_mobile_notification:
     # in the morning, which we interpret as being stuck. So what we do here is accumulate one or both problems in an
     # input number for the Unregister Vacuum Problem Notifications automation to use to know which tag(s) to unregister. 
     # Note that we treat the number as a bitmask: the lowest order bit for stuck and the next lowest for error.
+    # Also note that a low battery in the morning might be OK, since we check at 7:01 AM and perhaps the vacuum is
+    # already docked and charging but hasn't reached 90% yet. We cover that by also including a trigger on the
+    # Unregister Vacuum Problem Notifications automation for the battery rising above 90%.
     - variables:
         problem: "{{ iif(tag == 'vacuum_stuck', 1, iif(tag == 'vacuum_maintenance', 2, 0)) }}"
     
