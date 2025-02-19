@@ -640,20 +640,30 @@
     title: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.title') }}"
     text: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.text') }}"
     
-    from_michael: "{{ iif ('Michael' in title or 'Michael' in text, true, false) }}"
-    from_maryam: "{{ iif ('Maryam' in title or 'Maryam' in text, true, false) }}"
-    from_sarah: "{{ iif ('Sarah' in title or 'Sarah' in text, true, false) }}"
-    from_david: "{{ iif ('David' in title or 'David' in text, true, false) }}"
+    person: >
+      {% if 'Michael' in title or 'Michael' in text %}
+        Michael
+      {% elif 'Maryam' in title or 'Maryam' in text %}
+        Maryam
+      {% elif 'Sarah' in title or 'Sarah' in text %}
+        Sarah
+      {% elif 'David' in title or 'David' in text %}
+        David
+      {% else %}
+        Stranger
+      {% endif %}
     
     on_treadmill: "{{ states('input_boolean.treadmill_triggered') == 'on' }}"
     sleeping: "{{ states('input_boolean.sleeptime') == 'on' }}"
     driving: "{{ states('binary_sensor.jon_driving') == 'on' }}"
+    
+    timer_entity: "{{ 'timer.text_response_delay_' ~ person | lower }}"
   
   conditions:
     - and:
     
-      # Text must be from family member
-      - "{{ from_michael or from_maryam or from_sarah or from_david }}"
+      # Text must be from family member.
+      - "{{ person != 'Stranger' }}"
       
       # And any of the following. These are all mutually exclusive.
       - or:
@@ -666,17 +676,20 @@
     
         # I'm driving.
         - "{{ driving }}"
+      
+      # The response delay timer must not be running.
+      - "{{ states(timer_entity) == 'idle' }}"
   
   actions:
     - variables:
         number: >
-          {% if from_michael %}
+          {% if person == 'Michael' %}
             9199246845
-          {% elif from_maryam %}
+          {% elif person == 'Maryam' %}
             9197571974
-          {% elif from_sarah %}
+          {% elif person == 'Sarah' %}
             2522302146
-          {% elif from_david %}
+          {% elif person == 'David' %}
             2522991689
           {% else %}
             0000000000
@@ -699,6 +712,12 @@
         title: ' '
         target: "{{ number ~ '@vtext.com' }}"
         message: "{{ 'Sorry, I am ' ~ activity ~ '. I will respond when available.' }}"
+        
+    # Start the response delay timer.
+    - action: timer.start
+      data:
+        entity_id: "{{ timer_entity }}"
+        duration: 300
 
 #=========================#
 #     ESPHome Updates     #
