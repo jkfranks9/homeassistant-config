@@ -662,18 +662,18 @@
   id: 'prepare_calendar_astronomy_event_notification'
   mode: queued
   
-  trigger:
-    - platform: calendar
+  triggers:
+    - trigger: calendar
       event: start
       entity_id: calendar.calendar
       offset: -14:00:00
   
-  condition: "{{ '(astro)' in trigger.calendar_event.summary }}"
+  conditions: "{{ '(astro)' in trigger.calendar_event.summary }}"
   
-  action:
+  actions:
     - variables:
         event_time_string: "{{ as_datetime(as_timestamp(trigger.calendar_event.start, now()) | timestamp_local(now())).strftime('%H:%M') }}"
-        event_hour: "{{ event_time_string.split(':')[0] }}"
+        event_hour: "{{ event_time_string.split(':')[0] | int(0) }}"
         text: "{{ trigger.calendar_event.summary | replace(' (astro)', '') }} at {{ event_time_string }}"
         suffix: "{{ iif(states('timer.calendar_astronomy_notification_1') == 'idle', '_1', '_2') }}"
         text_entity: "{{ 'input_text.calendar_astronomy_notification_message' ~ suffix }}"
@@ -682,20 +682,46 @@
         # For an event time outside the hours of 10 PM to 7 AM (meaning 5:00 PM to 9:59 PM), we want a timer 15 minutes before the event
         # (meaning 15 minutes less than the offset in the trigger). For an event between 10 PM and 7 AM, we want the timer at 10 PM.
         seconds: >
-          {{ iif(event_hour | int(0) >= 17 and event_hour | int(0) < 22, 
+          {{ iif(event_hour >= 17 and event_hour < 22, 
                 (13 * 3600) + (45 * 60), 
                 as_timestamp(now().replace(hour = 22, minute = 0, second = 0, microsecond = 0)) - as_timestamp(now().replace(microsecond = 0))) }}
     
-    - service: input_text.set_value
-      target:
-        entity_id: "{{ text_entity }}"
+    # Before we schedule a notification, determine if the skies are astronomy friendly ...
+    
+    # First, calculate the weather metrics for 2 hours starting at the event time. We only need 1 hour, but specifying the same hour
+    # for first & last is interpreted as needing 24 hours. The calculations will result in updating the astronomy friendly binary sensor.
+    - action: script.calculate_weather_metrics
       data:
-        value: "{{ text }}"
-        
-    - service: timer.start
-      data:
-        entity_id: "{{ timer_entity }}"
-        duration: "{{ seconds }}"
+        weather_entity: weather.astroweather_white_rabbit_gardens
+        forecast_type: hourly
+        first_hour: "{{ event_hour }}"
+        last_hour: "{{ event_hour + 1 }}"
+        metrics_list:
+          - ['input_number.average_astro_condition', 'condition', 50, 0]
+          - ['input_number.average_astro_cloudless_percentage', 'cloudless_percentage', 50, 0]
+          - ['input_number.average_astro_seeing_percentage', 'seeing_percentage', 50, 0]
+          - ['input_number.average_astro_transparency_percentage', 'transparency_percentage', 50, 0]
+    
+    # Next, schedule the notification if conditions are friendly.
+    - delay:
+        milliseconds: 100
+    
+    - if:
+        - condition: state
+          entity_id: binary_sensor.astronomy_friendly
+          state: 'on'
+      
+      then:    
+        - action: input_text.set_value
+          target:
+            entity_id: "{{ text_entity }}"
+          data:
+            value: "{{ text }}"
+            
+        - action: timer.start
+          data:
+            entity_id: "{{ timer_entity }}"
+            duration: "{{ seconds }}"
 
 # These 2 automations handle the timer expiration and send the notification.
 - alias: Notify Calendar Astronomy Event 1
