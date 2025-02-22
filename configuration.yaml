@@ -60,6 +60,12 @@ mqtt:
       payload_home: "home"
       payload_not_home: "not_home"
     
+    - name: Sarah Phone Stationary
+      state_topic: "homeassistant/device_tracker/sarah_phone_stationary"
+      source_type: router
+      payload_home: "home"
+      payload_not_home: "not_home"
+    
     # Test device trackers, so I can simulate various family members arriving and leaving.
     - name: Virtual David
       state_topic: "homeassistant/device_tracker/virtual_david"

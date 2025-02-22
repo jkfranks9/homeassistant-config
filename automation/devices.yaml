@@ -1891,6 +1891,16 @@
       ssid: White Rabbit
       topic_suffix: mike_phone_stationary
 
+- alias: Toggle Sarah Phone Stationary Tracker
+  id: toggle_sarah_phone_stationary_tracker
+  
+  use_blueprint:
+    path: devices/update_phone_tracker.yaml
+    input:
+      wifi_entity: sensor.sarah_pixel_wifi_connection
+      ssid: White Rabbit
+      topic_suffix: sarah_phone_stationary
+
 #======================#
 #     Echo Devices     #
 #======================#
