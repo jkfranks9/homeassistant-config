@@ -103,8 +103,9 @@
         milliseconds: 500
     
     - variables:
-        hours: "{{ states('sensor.sleep_duration_display').split(' ')[0].replace('h', '') }}"
-        minutes: "{{ states('sensor.sleep_duration_display').split(' ')[1].replace('m', '') }}"
+        time: "{{ states('sensor.sleep_duration_display') }}"
+        hours: "{{ time.split(':')[0] }}"
+        minutes: "{{ time.split(':')[1] }}"
         keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
     
