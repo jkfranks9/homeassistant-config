@@ -148,9 +148,13 @@ update_last_alexa_device:
   alias: Update Last Alexa Device
   
   sequence:
+    - variables:
+        
+        # This can be twitchy; increase if the update sometimes doesn't work.
+        delay: 500
+    
     - delay: 
-        milliseconds: 250
-        #milliseconds: "{{ state_attr('sensor.variables', 'variables').last_called_delay }}"
+        milliseconds: "{{ delay }}"
     
     # We need to ask Alexa to update the last called echo device, because this information is not pushed to us by Amazon.
     - action: alexa_media.update_last_called
@@ -160,7 +164,7 @@ update_last_alexa_device:
     
     # Then we need to wait a bit.
     - delay: 
-        milliseconds: 250
+        milliseconds: "{{ delay }}"
 
 # Get information about the most recently spoken to voice device.
 get_voice_device_data:

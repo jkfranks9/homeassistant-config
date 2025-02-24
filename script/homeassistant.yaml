@@ -63,12 +63,6 @@ initialize_global_variables:
         key: fan_rooms
         value: ['family_room', 'office', 'theater']
     
-    # Delay in milliseconds to allow Alexa last called to be updated.
-    - event: set_variable
-      event_data:
-        key: last_called_delay
-        value: 1000
-    
     # Map of hockey team abbreviations to the full team name. I wish I could do this using the NHL API, but the JSON result
     # doesn't adhere to HA requirements (is not a dictionary or list with 0th element a dictionary). Lame.
     - event: set_variable
