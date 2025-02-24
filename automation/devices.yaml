@@ -1238,16 +1238,24 @@
       state: 'idle'
   
   actions:
+    
+    # Reset status toggles.
     - action: input_boolean.turn_off
-      entity_id: input_boolean.vacuum_kicked_off
+      entity_id:
+        - input_boolean.vacuum_kicked_off
+        - input_boolean.vacuum_finished
     
-    - action: vacuum.start
-      entity_id: vacuum.ecovacs_deebot_none
-    
+    # Start the timer before starting the vacuum: we use the timer running as a condition in Detect Vacuum Running.
     - action: timer.start
       data:
         entity_id: timer.vacuum
         duration: '01:30:00'
+    
+    - delay:
+        milliseconds: 100
+    
+    - action: vacuum.start
+      entity_id: vacuum.ecovacs_deebot_none
 
 # Land the vacuum.
 - alias: Stop Vacuum
@@ -1272,20 +1280,49 @@
     - action: vacuum.return_to_base
       entity_id: vacuum.ecovacs_deebot_none
 
-# Detect the vacuum running - we use the battery dropping below a threshold as the trigger.
+# Detect the vacuum running.
 - alias: Detect Vacuum Running
   id: 'detect_vacuum_running'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.ecovacs_battery
-      below: 90
-  condition:
+  
+  triggers:
+    - trigger: state
+      entity_id: vacuum.ecovacs_deebot_none
+      to: 'cleaning'
+  
+  conditions:
     - condition: time
       weekday:
         - mon
-  action:
-    - service: input_boolean.turn_on
+    
+    - condition: state
+      entity_id: timer.vacuum
+      state: 'active'
+  
+  actions:
+    - action: input_boolean.turn_on
       entity_id: input_boolean.vacuum_kicked_off
+
+# Detect the vacuum finished.
+- alias: Detect Vacuum Finished
+  id: 'detect_vacuum_finished'
+  
+  triggers:
+    - trigger: state
+      entity_id: vacuum.ecovacs_deebot_none
+      to: 'docked'
+  
+  conditions:
+    - condition: time
+      weekday:
+        - mon
+    
+    - condition: state
+      entity_id: input_boolean.vacuum_kicked_off
+      state: 'on'
+  
+  actions:
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.vacuum_finished
 
 #================#
 #     Washer     #
@@ -1897,7 +1934,7 @@
   use_blueprint:
     path: devices/update_phone_tracker.yaml
     input:
-      wifi_entity: sensor.sarah_pixel_wifi_connection
+      wifi_entity: sensor.sarah_pixel_wi_fi_connection
       ssid: White Rabbit
       topic_suffix: sarah_phone_stationary
 

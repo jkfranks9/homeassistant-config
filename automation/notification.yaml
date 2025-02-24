@@ -124,11 +124,11 @@
         - condition: time
           weekday:
             - mon        
-        - condition: numeric_state
-          entity_id: sensor.ecovacs_battery
-          below: 90
+        - condition: state
+          entity_id: input_boolean.vacuum_finished
+          state: 'off'
       clear_type: assisted
-      message: 'Vacuum appears to be stuck (or not charging).'
+      message: 'Vacuum appears to be stuck.'
       channel: standard
       tag: 'vacuum_stuck'
 
