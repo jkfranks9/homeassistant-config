@@ -508,15 +508,15 @@
     input:
       trigger_time: '06:02:00'
       date_entities: [
-                      'input_datetime.reminder_misc_smokedetectors', 
-                      'input_datetime.reminder_misc_9vbatteries',
-                      'input_datetime.reminder_misc_cleanfridge',
-                      'input_datetime.reminder_misc_cleanoven',
-                      'input_datetime.reminder_misc_cleanmicrowavefilter',
                       'input_datetime.reminder_misc_cleandishwasher',
-                      'input_datetime.reminder_misc_rechargeclipper',
+                      'input_datetime.reminder_misc_cleanfridge',
+                      'input_datetime.reminder_misc_cleanmicrowavegreasefilter',
+                      'input_datetime.reminder_misc_cleanoven',
                       'input_datetime.reminder_misc_lubegaragedoors',
-                      'input_datetime.reminder_misc_poolcleaning'
+                      'input_datetime.reminder_misc_poolcleaning',
+                      'input_datetime.reminder_misc_rechargeclipper',
+                      'input_datetime.reminder_misc_replacemicrowavecharcoalfilter',
+                      'input_datetime.reminder_misc_smokedetectors'
                      ]
       message_prefix: Misc maintenance due
       channel: standard
@@ -1084,27 +1084,36 @@
   id: unregister_calendar_tag  
   mode: queued
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.calendar_appointment
-    - platform: event
+    
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.calendar_home
-    - platform: event
+    
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.calendar_astronomy_1
-    - platform: event
+    
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.calendar_astronomy_2
-    - platform: event
+    
+    - trigger: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.next_iss_pass
+        entity_id: timer.next_iss_pass					
+    
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.astronomy_friendly
     
   action:
     - variables:
