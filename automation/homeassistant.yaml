@@ -728,7 +728,7 @@
 # from the previous deep sleep. The deep sleep time is 10 minutes, so this automation attempts to suspend the one
 # battery powered device a bit before we try to update the firmware.
 
-# Obviously, this is timing dependent, relies on matching the names and order of ESPHome devices, and won't work
+# Obviously, this is timing dependent, relies on matching the names of ESPHome devices, and won't work
 # as-is if more battery devices are added. Such is (programming) life.
 - alias: Assist ESPHome Update All
   id: assist_esphome_update_all
@@ -750,15 +750,12 @@
         - update.bluetooth_proxy_1_firmware
         - update.downstairs_sensor_firmware
         - update.dryer_sensor_firmware
+        - update.energy_mon_2_firmware
+        - update.garage_sensor_firmware
+        - update.office_sensor_firmware
       from: 'on'
       to: 'off'
       id: intermediate_device
-    
-    - trigger: state
-      entity_id: update.energy_mon_2_firmware
-      from: 'on'
-      to: 'off'
-      id: trigger_device
     
     - trigger: state
       entity_id: update.tag_reader_firmware
@@ -768,48 +765,67 @@
   
   actions:
     - variables:
-        target_device_count: 4
+        target_device_count: 5
         battery_device: 'porch-sensor'
     
     # React to different devices being updated.
     - choose:
         
-        # Set the count to 1 for the first device. The count is just a sanity check to help ensure we're actually
-        # doing an update all.
+        # Handle the first device.
         - conditions: "{{ trigger.id == 'first_device' }}"
           
           sequence:
+            
+            # Set the device count to 1.
             - action: counter.set_value
               target:
                 entity_id: counter.esphome_update_all
               data:
                 value: 1
+            
+            # To help ensure this is an update all, and not individual updates, start a timer. We expect the timer to
+            # still be active when we reach the target device count.
+            - action: timer.start
+              data:
+                entity_id: timer.esphome_update_all
+                duration: '00:20:00'
         
-        # Bump the count for intermediate devices before the trigger device.
+        # Handle intermediate devices.
         - conditions: "{{ trigger.id == 'intermediate_device' }}"
           
           sequence:
+            
+            # Bump the device count.
             - action: counter.increment
               target:
                 entity_id: counter.esphome_update_all
-        
-        # When the trigger device is updated we should have about 10 minutes or so before we do the battery device, so 
-        # suspend deep sleep when the next time that device wakes up.
-        - conditions: "{{ trigger.id == 'trigger_device' }}"
-          
-          sequence:
+            
+            # Have we reached the target device count?
             - if:
                 - "{{ states('counter.esphome_update_all') | int(0) == target_device_count }}"
               
               then:
-                - action: script.suspend_deep_sleep
-                  data:
-                    topic: "{{ battery_device ~ '/ota_mode' }}"
+                
+                # Make sure the timer we set earlier is still active.
+                - if:
+                    - condition: state
+                      entity_id: timer.esphome_update_all
+                      state: 'active'
+                  
+                  then:                
+                    
+                    # Suspend deep sleep on the battery device.
+                    - action: script.suspend_deep_sleep
+                      data:
+                        topic: "{{ battery_device ~ '/ota_mode' }}"
         
-        # The last device has been updated, resume deep sleep.
+        # Handle the last device.
         - conditions: "{{ trigger.id == 'last_device' }}"
           
           sequence:
+            
+            # The last device has been updated, resume deep sleep. I don't think it matters if we didn't suspend
+            # deep sleep above (he guesses optimistically).
             - action: script.resume_deep_sleep
               data:
                 topic: "{{ battery_device ~ '/ota_mode' }}"
