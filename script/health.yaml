@@ -283,24 +283,27 @@ set_up_yard_work_devices:
         - "{{ going_out == true }}"
       
       then:
-        - service: script.set_fan_to_speed
+        - action: script.set_fan_to_speed
           data:
             entity_id: fan.office_fan
             speed: 0
         
-        - service: light.turn_on
+        - action: light.turn_on
           target:
             entity_id: light.laundry_room_light
       
       # Handle the office fan and laundry room light when coming inside.
       else:
-    
-        - service: script.set_fan_to_speed
+        - action: script.turn_on
+          entity_id: script.control_fan_for_temperature
           data:
-            entity_id: fan.office_fan
-            speed: 99
+            variables:
+              fan_entity_id: fan.office_fan
+              temperature_entity_id: sensor.main_floor_temperature
+              thresholds: [76, 73, 71]
+              timeout: 600
         
-        - service: light.turn_off
+        - action: light.turn_off
           target:
             entity_id: light.laundry_room_light
     
@@ -309,7 +312,7 @@ set_up_yard_work_devices:
       - conditions: "{{ stage == 'initial' }}"
         
         sequence:
-          - service: script.turn_on
+          - action: script.turn_on
             target:
               entity_id: script.open_garage_door_north
             data:
@@ -319,7 +322,7 @@ set_up_yard_work_devices:
       - conditions: "{{ stage == 'final' }}"
         
         sequence:
-          - service: script.turn_on
+          - action: script.turn_on
             target:
               entity_id: script.close_garage_door_north
             data:
