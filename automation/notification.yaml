@@ -101,7 +101,7 @@
       conditions:
         - condition: time
           weekday:
-            - mon        
+            - mon
         - condition: state
           entity_id: input_boolean.vacuum_kicked_off
           state: 'off'
@@ -123,7 +123,10 @@
       conditions:
         - condition: time
           weekday:
-            - mon        
+            - mon      
+        - condition: state
+          entity_id: input_boolean.vacuum_kicked_off
+          state: 'on'
         - condition: state
           entity_id: input_boolean.vacuum_finished
           state: 'off'
