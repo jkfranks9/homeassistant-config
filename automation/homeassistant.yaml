@@ -469,6 +469,7 @@
 # Remove saved notifications from MQTT when they are dismissed.
 - alias: Remove Saved Notifications On Dismiss
   id: remove_saved_notifications_on_dismiss
+  mode: queued
   
   trigger:
     - trigger: persistent_notification
@@ -629,6 +630,7 @@
 # to send a response indicating I can't respond right now.
 - alias: Respond To Mobile Text
   id: respond_to_mobile_text
+  mode: queued
   
   # Trigger on any state change to the last notification sensor.
   triggers:

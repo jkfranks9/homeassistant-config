@@ -12,6 +12,7 @@
 #    data, including the last called timestamp.
 - alias: Update Last Alexa Device
   id: update_last_alexa_device
+  mode: queued
   
   triggers:
     - trigger: state

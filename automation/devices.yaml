@@ -320,6 +320,7 @@
 # Close up the house when needed.
 - alias: Close House
   id: 'close_house'
+  mode: queued
   
   triggers:
     
@@ -818,7 +819,7 @@
 #     Family Room AV     #
 #========================#
 
-# Turn on the Family Room AV and box 3 screen during the day, depending on the presence of a grandchild.
+# Turn on the Family Room AV during the day, depending on the presence of a grandchild.
 - alias: Enable Family Room AV
   id: 'enable_family_room_av'
   

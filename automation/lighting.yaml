@@ -472,7 +472,7 @@
             entity_id: "{{ group_lights_filtered_entities }}"
 
 # Turn off extended away mode when Jon is nearing home (proximity is somewhat unreliable, so if this doesn't trigger we have a failsafe 
-# below in Open House).
+# in Open House).
 - alias: Turn Off Extended Away Mode
   id: 'turn_off_extended_away_mode'
   
