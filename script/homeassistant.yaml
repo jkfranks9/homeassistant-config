@@ -956,10 +956,11 @@ add_mini_todo_periodic_item:
         
             value: "{{ item.split('-')[0] }}"
             est_minutes: "{{ item.split('-')[1] | int(0) }}"
+            outdoor_friendly: "{{ states('binary_sensor.outdoor_work_friendly') }}"
         
         # Insert the selected item, but skip yard work if it's not OK to work outside.
         - if:
-            - "{{ type != 'yard_work' or states('binary_sensor.outdoor_work_friendly') == 'on' }}"
+            - "{{ type != 'yard_work' or outdoor_friendly == 'on' }}"
           
           then:
             - action: script.insert_mini_todo_item
