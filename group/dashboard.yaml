@@ -39,3 +39,5 @@ energy_sensors:
     - sensor.total_entertainment_energy_l30d
     - sensor.total_lights_energy_l30d
     - sensor.total_fans_energy_l30d
+    - sensor.total_hvac_energy_l30d
+    - sensor.total_misc_energy_l30d

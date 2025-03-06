@@ -15,6 +15,8 @@
 # - Entertainment
 # - Lights
 # - Fans
+# - HVAC
+# - Misc
 #
 # Note the use of YAML anchors: the first sensor contains all the details; subsequent sensors only need the name, ID,
 # and list of source sensors for each group.
@@ -208,3 +210,33 @@
     
       name: All Fans Energy
       unique_id: all_fans_energy
+
+# HVAC group
+- trigger:
+    - <<: *cumulator_trigger
+    
+      entity_id:
+        - sensor.energy_mon_2_air_handler_energy
+  
+  sensor:
+    - <<: *cumulator_sensor
+    
+      name: All HVAC Energy
+      unique_id: all_hvac_energy
+
+# Misc group
+- trigger:
+    - <<: *cumulator_trigger
+    
+      entity_id:
+        - sensor.energy_mon_2_bed_bath_energy
+        - sensor.energy_mon_2_snack_bar_energy
+        - sensor.energy_mon_2_theater_hall_energy
+        - sensor.energy_mon_2_utility_misc_energy
+        - sensor.energy_mon_2_utility_rack_energy
+  
+  sensor:
+    - <<: *cumulator_sensor
+    
+      name: All Misc Energy
+      unique_id: all_misc_energy
