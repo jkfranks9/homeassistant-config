@@ -171,6 +171,24 @@
       message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' plug is off but reporting power usage.' }}"
       channel: standard
 
+# Let's do the same thing for TP Link devices that monitor power, just in case.
+- alias: Notify TPLink Device Needs Maintenance
+  id: 'notify_tplink_device_needs_maintenance'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: state
+      entity: [switch.family_room_av, switch.garage_chargers, switch.master_bedroom_lamp, switch.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
+      from_state: 'on'
+      to_state: 'off'
+      delay: 15
+      conditions: "{{ states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_current_consumption') | float(0) > 0 }}"
+      extract_tag_type: tplink_power
+      clear_type: manual
+      message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' plug is off but reporting power usage.' }}"
+      channel: standard
+
 #===============================#
 #     Battery Notifications     #
 #===============================#
