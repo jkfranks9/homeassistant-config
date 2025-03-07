@@ -179,7 +179,7 @@
     path: notification/mobile_notify.yaml
     input:
       trigger_type: state
-      entity: [switch.family_room_av, switch.garage_chargers, switch.master_bedroom_lamp, switch.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
+      entity: [switch.family_room_av, switch.garage_chargers, light.master_bedroom_lamp, light.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
       from_state: 'on'
       to_state: 'off'
       delay: 15
