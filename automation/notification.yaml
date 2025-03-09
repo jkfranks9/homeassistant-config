@@ -707,42 +707,16 @@
                 (13 * 3600) + (45 * 60), 
                 as_timestamp(now().replace(hour = 22, minute = 0, second = 0, microsecond = 0)) - as_timestamp(now().replace(microsecond = 0))) }}
     
-    # Before we schedule a notification, determine if the skies are astronomy friendly ...
-    
-    # First, calculate the weather metrics for 2 hours starting at the event time. We only need 1 hour, but specifying the same hour
-    # for first & last is interpreted as needing 24 hours. The calculations will result in updating the astronomy friendly binary sensor.
-    - action: script.calculate_weather_metrics
+    - action: input_text.set_value
+      target:
+        entity_id: "{{ text_entity }}"
       data:
-        weather_entity: weather.astroweather_white_rabbit_gardens
-        forecast_type: hourly
-        first_hour: "{{ event_hour }}"
-        last_hour: "{{ event_hour + 1 }}"
-        metrics_list:
-          - ['input_number.average_astro_condition', 'condition', 50, 0]
-          - ['input_number.average_astro_cloudless_percentage', 'cloudless_percentage', 50, 0]
-          - ['input_number.average_astro_seeing_percentage', 'seeing_percentage', 50, 0]
-          - ['input_number.average_astro_transparency_percentage', 'transparency_percentage', 50, 0]
-    
-    # Next, schedule the notification if conditions are friendly.
-    - delay:
-        milliseconds: 100
-    
-    - if:
-        - condition: state
-          entity_id: binary_sensor.astronomy_friendly
-          state: 'on'
-      
-      then:    
-        - action: input_text.set_value
-          target:
-            entity_id: "{{ text_entity }}"
-          data:
-            value: "{{ text }}"
-            
-        - action: timer.start
-          data:
-            entity_id: "{{ timer_entity }}"
-            duration: "{{ seconds }}"
+        value: "{{ text }}"
+        
+    - action: timer.start
+      data:
+        entity_id: "{{ timer_entity }}"
+        duration: "{{ seconds }}"
 
 # These 2 automations handle the timer expiration and send the notification.
 - alias: Notify Calendar Astronomy Event 1
@@ -893,8 +867,7 @@
         - condition: template
           value_template: >
             {{ states('sensor.international_space_station_iss_pass_0') | int(0) >= 300 and 
-               state_attr('sensor.international_space_station_iss_pass_0', 'max_elevation') | int(0) >= 35 and
-               states('sensor.astroweather_white_rabbit_gardens_cloudless') | int(0) >= 50 }}        
+               state_attr('sensor.international_space_station_iss_pass_0', 'max_elevation') | int(0) >= 35 }}        
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
