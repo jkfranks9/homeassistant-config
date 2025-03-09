@@ -112,8 +112,10 @@
     
     - variables:
         time: "{{ states('sensor.sleep_duration_display') }}"
-        hours: "{{ time.split(':')[0] }}"
-        minutes: "{{ time.split(':')[1] }}"
+        hours: "{{ time.split(':')[0] | int(0) }}"
+        minutes: "{{ time.split(':')[1] | int(0) }}"
+        hours_str: "{{ iif(hours == 1, ' hour', ' hours') }}"
+        minutes_str: "{{ iif(minutes == 1, ' minute', ' minutes') }}"
         keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
           
@@ -122,7 +124,7 @@
         destination:
           - voice_assistant
         message: >
-          {% set msg = 'Good morning. You slept ' ~ hours ~ ' hours' ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' minutes.', '.') %}
+          {% set msg = 'Good morning. You slept ' ~ hours ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ minutes_str ~ '.', '.') %}
           {% if calendar == true %}
             {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
           {% endif %}
