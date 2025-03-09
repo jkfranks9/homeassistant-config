@@ -72,13 +72,21 @@
         entity_id: input_datetime.sleep_start
       data:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-    
-    - action: notify.alexa_media
+          
+    - action: script.send_notification
       data:
+        destination:
+          - voice_assistant
         message: 'Good night.'
-        target: media_player.master_bedroom_echo
-        data:
-          type: tts
+        room: ['master_bedroom']
+        voice_type: tts
+    
+    # - action: notify.alexa_media
+      # data:
+        # message: 'Good night.'
+        # target: media_player.master_bedroom_echo
+        # data:
+          # type: tts
 
 # Set the sleep duration in hours.
 - alias: Set Sleep Duration
@@ -108,9 +116,11 @@
         minutes: "{{ time.split(':')[1] }}"
         keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
-    
-    - action: notify.alexa_media
+          
+    - action: script.send_notification
       data:
+        destination:
+          - voice_assistant
         message: >
           {% set msg = 'Good morning. You slept ' ~ hours ~ ' hours' ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' minutes.', '.') %}
           {% if calendar == true %}
@@ -118,9 +128,21 @@
           {% endif %}
           
           {{ msg }}
-        target: media_player.master_bedroom_echo
-        data:
-          type: tts
+        room: ['master_bedroom']
+        voice_type: tts
+    
+    # - action: notify.alexa_media
+      # data:
+        # message: >
+          # {% set msg = 'Good morning. You slept ' ~ hours ~ ' hours' ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' minutes.', '.') %}
+          # {% if calendar == true %}
+            # {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
+          # {% endif %}
+          
+          # {{ msg }}
+        # target: media_player.master_bedroom_echo
+        # data:
+          # type: tts
     
     # Turn on voice assistant screens.
     - if:

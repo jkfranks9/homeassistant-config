@@ -754,7 +754,7 @@
       trigger_type: event
       event_type: timer.finished
       event_data: {'entity_id': 'timer.calendar_astronomy_notification_1'}
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       clear_type: assisted
       title: attention
       message: "{{ states('input_text.calendar_astronomy_notification_message_1') }}"
@@ -771,7 +771,7 @@
       trigger_type: event
       event_type: timer.finished
       event_data: {'entity_id': 'timer.calendar_astronomy_notification_2'}
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       clear_type: assisted
       title: attention
       message: "{{ states('input_text.calendar_astronomy_notification_message_2') }}"
@@ -794,7 +794,7 @@
       entity: input_select.washer_state
       from_state: Rinse Drain
       to_state: 'Off'
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       clear_type: assisted
       title: attention
       message: 'Washer has finished.'
@@ -812,7 +812,7 @@
       entity: input_boolean.dryer_running
       from_state: 'on'
       to_state: 'off'
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       clear_type: assisted
       title: attention
       message: 'Dryer has probably finished.'
@@ -898,7 +898,7 @@
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       clear_type: assisted
       title: attention
       message: >
@@ -923,7 +923,7 @@
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       clear_type: assisted
       title: attention
       message: 'It looks like a good night for stargazing.'
@@ -945,7 +945,7 @@
       trigger_type: numeric_state_above
       entity: [sensor.mail_amazon_packages_delivered, sensor.mail_fedex_delivered, sensor.mail_ups_delivered, sensor.mail_usps_delivered]
       numeric_notify_threshold: 0
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       extract_tag_type: delivery
       clear_type: manual
       title: attention
@@ -1041,7 +1041,7 @@
       from_state: 'off'
       to_state: 'on'
       enable_clear_trigger: true
-      enable_echo_destination: true
+      enable_voice_assistant_destination: true
       clear_type: auto
       title: attention
       message: "{{ 'Pipes might freeze tonight, (low temp = ' ~ states(input_number.minimum_outdoor_temperature) ~ ').' }}"

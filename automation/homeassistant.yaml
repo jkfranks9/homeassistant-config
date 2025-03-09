@@ -158,8 +158,6 @@
     - variables:
         day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%w') | int(0) }}"
         day_of_month: "{{ now().day }}"
-        echo_list: "{{ expand(integration_entities('alexa_media') | select('search', 'media_player')) |
-                       rejectattr('attributes.friendly_name', 'in', ['This Device', 'Everywhere']) | map(attribute = 'entity_id') | list }}"
     
     # Reset daily exercise values.
     - action: input_number.set_value
@@ -413,7 +411,6 @@
                             'restore_lighting_on_resume',
                             'resume_cinema',
                             'resume_worker', 
-                            'send_notification',
                             'set_datetime_offset_days', 
                             'set_datetime_offset_months', 
                             'set_datetime_offset_weeks', 

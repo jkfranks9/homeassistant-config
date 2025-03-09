@@ -636,18 +636,27 @@
       data:
         topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
         payload: "{{ new_state }}"
-    
-    - action: notify.alexa_media
+          
+    - action: script.send_notification
       data:
-        message: >
-          <speak>
-            <amazon:emotion name="excited" intensity="medium">
-            {{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Slylar! Come visit again soon!') }}
-            </amazon:emotion>
-          </speak>
-        target: media_player.office_echo
-        data:
-          type: tts
+        destination:
+          - voice_assistant
+        message: "{{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Skylar! Come visit again soon!') }}"
+        speak: excited
+        room: ['office']
+        voice_type: tts
+    
+    # - action: notify.alexa_media
+      # data:
+        # message: >
+          # <speak>
+            # <amazon:emotion name="excited" intensity="medium">
+            # {{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Slylar! Come visit again soon!') }}
+            # </amazon:emotion>
+          # </speak>
+        # target: media_player.office_echo
+        # data:
+          # type: tts
 
 #=============================#
 #     Penthouse Occupancy     #

@@ -2,7 +2,7 @@ blueprint:
   name: Mobile Notification
   
   description: >
-    Send notifications to a mobile device and optionally Amazon Echo devices.
+    Send notifications to a mobile device and optionally voice assistant devices.
     
     Several different types of triggers are supported:
     
@@ -36,7 +36,7 @@ blueprint:
     - The delay input is intended to only be used with conditions, and indicates how long to delay before checking the conditions.
     - The conditions input provides one or more conditions that must be true in order to proceed.
     - The extract_tag_type input is a special case. It's only used for automations that provide a list of entities on which to trigger. Since the
-      triggered entity is not known until run time, we need to dynamically extract the tag then. We only have one automation so far that uses this.
+      triggered entity is not known until run time, we need to dynamically extract the tag then.
   
   domain: automation
   
@@ -179,9 +179,9 @@ blueprint:
       selector:
         boolean:
     
-    enable_echo_destination:
-      name: Enable Echo Destination
-      description: (Optional) Whether or not to send the notification to echo devices.
+    enable_voice_assistant_destination:
+      name: Enable Voice Assistant Destination
+      description: (Optional) Whether or not to send the notification to all rooms containing voice assistant devices.
       default: false
       selector:
         boolean:
@@ -245,7 +245,7 @@ trigger_variables:
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_calendar_tag: !input calendar_tag
-  input_enable_echo_destination: !input enable_echo_destination
+  input_enable_voice_assistant_destination: !input enable_voice_assistant_destination
   input_extract_tag_type: !input extract_tag_type
   input_clear_type: !input clear_type
   input_title: !input title
@@ -407,13 +407,13 @@ action:
         then:
             
           - variables:
-              destination: "{{ iif(input_enable_echo_destination, ['mobile', 'echo'], ['mobile']) }}"
+              destination: "{{ iif(input_enable_voice_assistant_destination, ['mobile', 'voice_assistant'], ['mobile']) }}"
               message: !input message
               tag_registry_value: "{{ {'tag': tag, 'clear_type': input_clear_type, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} }}"
               notification_data: >
                 {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} %}
-                {% if input_enable_echo_destination %}
-                  {% set additional = {'voice_entity': 'media_player.everywhere', 'tag': tag} %}
+                {% if input_enable_voice_assistant_destination %}
+                  {% set additional = {'room': ['everywhere'], 'voice_type': 'announce', 'tag': tag} %}
                 {% else %}
                   {% set additional = {'tag': tag} %}
                 {% endif %}

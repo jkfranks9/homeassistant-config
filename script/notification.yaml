@@ -94,23 +94,22 @@ send_notification:
   
   fields:
     destination:
-      description: 'Where to send the notification.'
+      description: Where to send the notification.
       selector:
         select:
           options:
             - mobile
-            - echo
-            - nabu
+            - voice_assistant
             - persistent
     
     message:
-      description: 'The message to be issued.'
+      description: The message to be issued.
     
     title:
-      description: 'The title of the message (not used for echo).'
+      description: The title of the message (not used for voice assistants).
     
     channel:
-      description: 'The channel to which a mobile notification is issued.'
+      description: The channel to which a mobile notification is issued.
       selector:
         select:
           options:
@@ -119,20 +118,38 @@ send_notification:
             - critical
     
     timeout:
-      description: 'The timeout for mobile destination channel "temporary".'
+      description: The timeout for the temporary mobile destination channel.
     
     tag:
-      description: 'The tag to use for replacing a notification.'
+      description: The tag to use for replacing a notification.
     
-    voice_entity:
-      description: 'The target entity used for echo and nabu destinations.'
+    room:
+      description: For the voice assistant destination, a list of one or more rooms containing voice devices, or 'everywhere'.
+    
+    speak:
+      description: (Optional) How to speak the message, for example using an emotion.
       selector:
-        entity:
+        select:
+          options:
+            - normal
+            - excited
+    
+    voice_type:
+      description: The type of voice assistant device output.
+      selector:
+        select:
+          options:
+            - tts
+            - announce
     
     notification_id:
-      description: 'The ID used for persistent notification destinations.'
+      description: The ID to use for persistent notification destinations.
   
   sequence:
+    - variables:
+        
+        # Use the default speak option if it isn't defined.
+        speak_option: "{{ iif(speak is defined, speak, 'normal') }}"
     
     # Loop through all specified destinations.
     - repeat:
@@ -153,26 +170,16 @@ send_notification:
                     timeout: "{{ timeout }}"
                     tag: "{{ tag }}"
           
-            # Handle the echo destination.
-            - conditions: "{{ repeat.item == 'echo' }}"
+            # Handle the voice assistant destination.
+            - conditions: "{{ repeat.item == 'voice_assistant' }}"
             
               sequence:
-                - action: notify.alexa_media
-                  data:
-                    target: "{{ voice_entity }}"
-                    data:
-                      type: announce
-                    message: "{{ message }}"
-          
-            # Handle the nabu destination.
-            - conditions: "{{ repeat.item == 'nabu' }}"
-            
-              sequence:
-                - action: assist_satellite.announce
-                  target:
-                    entity_id: "{{ voice_entity }}"
+                - action: script.send_message_to_room_voice_device
                   data:
                     message: "{{ message }}"
+                    speak: "{{ speak_option }}"
+                    room: "{{ room }}"
+                    voice_type: "{{ voice_type }}"
           
             # Handle the persistent destination.
             - conditions: "{{ repeat.item == 'persistent' }}"
@@ -338,7 +345,13 @@ remove_manual_mobile_notification:
     - variables:
         num_manual: "{{ states('sensor.mobile_tag_registry_manual_clear') }}"
         device_domain: "{{ voice_device.split('.')[0] }}"
-        destination: "{{ iif(device_domain == 'media_player', 'echo', iif(device_domain == 'assist_satellite', 'nabu', 'unknown')) }}"
+        device_name: "{{ voice_device.split('.')[1] }}"
+        room: >
+          {% if device_domain == 'media_player' %}
+            {{ [device_name.replace('_echo', '')] }}
+          {% else %}
+            {{ [device_name.replace('_nabu_assist_satellite', '')] }}
+          {% endif %}
     
     - choose:
       
@@ -349,9 +362,10 @@ remove_manual_mobile_notification:
           - action: script.send_notification
             data:
               destination:
-                - "{{ destination }}"
+                - voice_assistant
               message: "There are no notifications that need to be manually removed."
-              voice_entity: "{{ voice_device }}"
+              room: "{{ room }}"
+              voice_type: tts
       
       # There is only one manual clear notification, so remove it and inform the user.
       - conditions: "{{ num_manual == 1 }}"
@@ -367,9 +381,10 @@ remove_manual_mobile_notification:
           - action: script.send_notification
             data:
               destination:
-                - "{{ destination }}"
+                - voice_assistant
               message: "{{ 'I unregistered tag ' ~ tag | replace('_', ' ') }}"
-              voice_entity: "{{ voice_device }}"
+              room: "{{ room }}"
+              voice_type: tts
       
       # There are multiple manual clear notifications.
       default:
@@ -378,9 +393,10 @@ remove_manual_mobile_notification:
         - action: script.send_notification
           data:
             destination:
-              - "{{ destination }}"
+              - voice_assistant
             message: "{{ 'There are ' ~ num_manual ~ ' manual notifications. Check your phone for additional instructions.' }}"
-            voice_entity: "{{ voice_device }}"
+            room: "{{ room }}"
+            voice_type: tts
         
         # Handle all notifications.
         - repeat:
@@ -477,3 +493,99 @@ extract_notification_tag_from_entity:
     
     - stop: "Returning tag"
       response_variable: return_tag
+
+# Send a notification message destined for a voice assistant device to the correct device, for the given room(s).
+# NOTE: The Voice {Nabu | Echo} Rooms sensors contain a list of rooms that contain each type of device.
+send_message_to_room_voice_device:
+  alias: Send Message To Room Voice Device
+  
+  fields:
+    message:
+      description: The message to be sent.
+    
+    speak:
+      description: How to speak the message, for example using an emotion.
+      selector:
+        select:
+          options:
+            - normal
+            - excited
+  
+    room:
+      description: A list of one or more rooms containing voice devices, or 'everywhere'.
+    
+    voice_type:
+      description: The type of voice assistant device output.
+      selector:
+        select:
+          options:
+            - tts
+            - announce
+  
+  sequence:
+    - variables:
+        
+        # For the special case of the 'everywhere' room, we use the 'light_rooms' global variable. This is used for
+        # controlling a light in a room containing a voice assistant, so is equivalent to all applicable rooms.
+        room_list: >
+          {% set var = namespace(list = []) %}
+          {% if room[0] == 'everywhere' %}
+            {% set var.list = state_attr('sensor.variables', 'variables').light_rooms %}
+          {% else %}
+            {% set var.list = room %}
+          {% endif %}
+          
+          {{ var.list }}
+    
+    # Loop through all specified rooms.
+    - repeat:
+        for_each: "{{ room_list }}"
+      
+        sequence:
+    
+          # Pick the right type of device.
+          - choose:
+            
+            # First priority is an HA Assist (Nabu) device.
+            - conditions: "{{ repeat.item in states('sensor.voice_nabu_rooms') }}"
+            
+              sequence:
+                - variables:
+                    voice_entity: "{{ 'assist_satellite.' ~ repeat.item ~ '_nabu_assist_satellite' }}"
+                
+                - action: assist_satellite.announce
+                  target:
+                    entity_id: "{{ voice_entity }}"
+                  data:
+                    message: "{{ message }}"
+            
+            # Second priority is an Amazon Echo device.
+            - conditions: "{{ repeat.item in states('sensor.voice_echo_rooms') }}"
+            
+              sequence:
+                - variables:
+                    voice_entity: "{{ 'media_player.' ~ repeat.item ~ '_echo' }}"
+                    speak_message: >
+                      {% if speak == 'excited' %}
+                      <speak>
+                        <amazon:emotion name="excited" intensity="medium">
+                          {{ message }}
+                        </amazon:emotion>
+                      </speak>
+                      {% else %}
+                        {{ message }}
+                      {% endif %}
+                
+                - action: notify.alexa_media
+                  data:
+                    target: "{{ voice_entity }}"
+                    data:
+                      type: "{{ voice_type }}"
+                    message: "{{ speak_message }}"
+              
+            # We should never get here.
+            default:
+              - action: system_log.write
+                data:
+                  message: "Did not find any voice assistant device for: {{ repeat.item }} ."
+                  level: warning    

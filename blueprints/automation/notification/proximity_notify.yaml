@@ -66,6 +66,8 @@ action:
   - service: script.send_notification
     data:
       destination:
-        - echo
+        - voice_assistant
       message: "{{ input_person_name }} will be arriving soon"
-      voice_entity: media_player.everywhere
+      room:
+        - everywhere
+      voice_type: announce
