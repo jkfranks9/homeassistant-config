@@ -204,9 +204,11 @@ update_laundry_history_time_ranges:
     - variables:
         start_entity_prefix: "{{ iif(is_washer, 'input_datetime.history_washer_start_', 'input_datetime.history_dryer_start_') }}"
         stop_entity_prefix: "{{ iif(is_washer, 'input_datetime.history_washer_stop_', 'input_datetime.history_dryer_stop_') }}"
-        iterations: 4
+        
+        # This is the number of items in the stack minus 1.
+        iterations: 3
     
-    # Treat the existing start/stop times as a stack, and push items 1-4 into 2-5. This eliminates the oldest and
+    # Treat the existing start/stop times as a stack, and push items 1-n down. This eliminates the oldest and
     # lets us put the most recent times into item 1.
     - repeat:
         count: "{{ iterations }}"
