@@ -1724,6 +1724,26 @@
         - counter.dryer_temperature_count
         - counter.dryer_humidity_count
 
+# This is the basic dryer control. We trigger on 2 trend sensors, counting each of them: when they are both above 0 we indicate the
+# dryer is done. The trend sensors are defined in the UI, but here is the original YAML configuration for reference.
+# Note that the humidity drop amount in the sensor must coordinate with the humidity value in the first trigger.
+#
+#    # Measures humidity falling by 30 over 25 minutes.
+#    # NOTE: The drop amount here must be kept in sync with the Register Dryer Event automation.
+#    dryer_humidity_falling:
+#      entity_id: sensor.dryer_sensor_humidity
+#      friendly_name: Dryer Humidity Falling
+#      sample_duration: 1500   # 25m * 60s
+#      max_samples: 330        # 1500 / 5 (sampling interval) + 10%
+#      min_gradient: -0.02000  # -30 / 1500
+#
+#    # Measures temperature falling by 20 over 10 minutes.
+#    dryer_temperature_falling:
+#      entity_id: sensor.dryer_sensor_temperature
+#      friendly_name: Dryer Temperature Falling
+#      sample_duration: 600    # 10m * 60s
+#      max_samples: 132        # 600 / 5 (sampling interval) + 10%
+#      min_gradient: -0.03333  # -20 / 600
 - alias: Register Dryer Event
   id: register_dryer_event
 
