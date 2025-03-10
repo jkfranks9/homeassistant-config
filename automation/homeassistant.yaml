@@ -272,6 +272,12 @@
     
     - action: automation.turn_off
       entity_id: automation.control_christmas_lights
+      
+    # Run a daily Watchman report.
+    - action: watchman.report
+      data:
+        parse_config: false
+        create_file: true
     
     # Perform weekly chores at the start of a new week (Sunday).
     - if:
