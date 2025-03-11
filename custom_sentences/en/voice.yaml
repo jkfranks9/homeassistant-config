@@ -15,22 +15,22 @@ intents:
   FanHigh:
     data:
       - sentences:
-          - "(fan high | set [the] fan high | tea earl grey hot)"
+          - "([set] [the] fan high | tea earl grey hot)"
 
   FanLow:
     data:
       - sentences:
-          - "(fan low | set [the] fan low | tea earl grey cool)"
+          - "([set] [the] fan low | tea earl grey cool)"
 
   FanMedium:
     data:
       - sentences:
-          - "(fan medium | set [the] fan medium | tea earl grey lukewarm)"
+          - "([set] [the] fan medium | tea earl grey lukewarm)"
 
   FanOff:
     data:
       - sentences:
-          - "(fan off | turn [the] fan off)"
+          - "([turn] [the] fan off)"
 
   RemoveNotification:
     data:
