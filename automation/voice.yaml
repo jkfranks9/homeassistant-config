@@ -42,9 +42,23 @@
         - assist_satellite.theater_nabu_assist_satellite
       from: 'listening'
       to: 'processing'
-      id: process
   
   actions: 
+    
+    # The last_updated attribute won't get changed if we set the text to the same value. So in this case, reset it
+    # to a nonsense value first.
+    - if:
+        - condition: state
+          entity_id: input_text.last_nabu_device
+          state: "{{ trigger.entity_id }}"
+      
+      then:
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.last_nabu_device
+          data:
+            value: reset
+    
     - action: input_text.set_value
       target:
         entity_id: input_text.last_nabu_device
