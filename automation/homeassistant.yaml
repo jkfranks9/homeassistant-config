@@ -752,7 +752,6 @@
     
     - trigger: state
       entity_id:
-        - update.bluetooth_proxy_1_firmware
         - update.downstairs_sensor_firmware
         - update.dryer_sensor_firmware
         - update.energy_mon_2_firmware
@@ -770,7 +769,7 @@
   
   actions:
     - variables:
-        target_device_count: 5
+        target_device_count: 4
         battery_device: 'porch-sensor'
     
     # React to different devices being updated.
