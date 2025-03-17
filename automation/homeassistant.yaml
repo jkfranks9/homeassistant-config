@@ -841,9 +841,8 @@
 # Create today's mini todo list. We do this in several steps:
 #
 # 1) Add calendar tasks if any exist, and calculate the amount of time remaining for other tasks.
-# 2) Add an exercise task if needed, and reduce the remaining time accordingly.
-# 3) Add a free time task if needed - if so there is nothing else to do.
-# 4) Add other types of tasks as needed in a loop, to either fill up the remaining time, or until the maximum tasks have been added.
+# 2) Add a free time task if needed - if so there is nothing else to do.
+# 3) Add other types of tasks as needed in a loop, to either fill up the remaining time, or until the maximum tasks have been added.
 - alias: Create Daily Mini ToDo List
   id: create_daily_mini_todo_list
   
@@ -920,13 +919,6 @@
         window_upper_bound: "{{ window_upper_bound }}"
         start_time: "{{ start_time }}"
         end_time: "{{ end_time }}"
-                  
-    # Next, add an exercise task if needed. We skip this if all day trip is scheduled, since I won't be home.
-    - if:
-        - "{{ states('input_select.mini_todo_all_day_calendar_type') != 'trip' }}"
-      
-      then:
-        - action: script.add_mini_todo_exercise_item
     
     # If this is a free time day, just add that to the list and go away. Weekly Free Time Days is a bitmask, where the 
     # least significant bit is Sunday.

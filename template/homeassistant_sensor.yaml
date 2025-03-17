@@ -259,7 +259,7 @@
 #--------------------------#
 
 # Mini todo list. This contains a daily suggested list of items to work on, including calendar events, cleaning, yard work,
-# exercise, office tasks, major/minor projects, etc. Basically everything I need to help organize my life.
+# office tasks, major/minor projects, etc. Basically everything I need to help organize my life.
 - trigger:
     - platform: event
       event_type: add_mini_todo_item

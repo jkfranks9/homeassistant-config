@@ -121,16 +121,6 @@ initialize_global_variables:
         key: mini_todo_downtime_minutes
         value: 60
     
-    - event: set_variable
-      event_data:
-        key: mini_todo_treadmill_minutes
-        value: 60
-    
-    - event: set_variable
-      event_data:
-        key: mini_todo_workout_minutes
-        value: 40
-    
     # Mini todo list periodic cleaning time estimates.
     - event: set_variable
       event_data:
@@ -763,61 +753,6 @@ add_mini_todo_calendar_items:
                 - service: counter.increment
                   target:
                     entity_id: counter.mini_todo_tasks
-
-# Add an exercise task to the mini todo list. We rotate among the different types of exercise tasks as follows:
-#
-# 1) random:   pick a task according to a coin toss.
-# 2) opposite: pick the opposite of what we picked last time, based on the last changed sensor.
-# 3) skip:     do nothing.
-add_mini_todo_exercise_item:
-  alias: Add Mini ToDo Exercise Item
-  
-  sequence:
-    
-    # Select the next type.
-    - service: input_select.select_next
-      target:
-        entity_id: input_select.mini_todo_exercise_type
-      
-    # Proceed according to the type. There is no choice for the skip type, since we do nothing in that case.
-    - variables:
-        type: "{{ states('input_select.mini_todo_exercise_type') }}"
-        treadmill_minutes: "{{ state_attr('sensor.variables', 'variables').mini_todo_treadmill_minutes }}"
-        workout_minutes: "{{ state_attr('sensor.variables', 'variables').mini_todo_workout_minutes }}"
-    
-    - choose:
-        
-      # Random
-      - conditions: "{{ type == 'random' }}"
-          
-        sequence:
-          - variables:
-              heads_up: "{{ range(2) | random > 0 }}"
-              event_data_val: "{{ 'ex:' ~ iif(heads_up, 'Treadmill', 'Workout') }}"
-              minutes_var: "{{ iif(heads_up, treadmill_minutes, workout_minutes) }}"
-        
-          # Insert the selected item.
-          - service: script.insert_mini_todo_item
-            data:
-              value: "{{ event_data_val }}"
-              item_time: "{{ minutes_var }}"
-              major: false
-        
-      # Opposite
-      - conditions: "{{ type == 'opposite' }}"
-          
-        sequence:
-          - variables:
-              treadmill_older: "{{ as_timestamp(states('sensor.treadmill_last_changed')) < as_timestamp(states('sensor.workout_last_changed')) }}"
-              event_data_val: "{{ 'ex:' ~ iif(treadmill_older, 'Treadmill', 'Workout') }}"
-              minutes_var: "{{ iif(treadmill_older, treadmill_minutes, workout_minutes) }}"
-        
-          # Insert the selected item.
-          - service: script.insert_mini_todo_item
-            data:
-              value: "{{ event_data_val }}"
-              item_time: "{{ minutes_var }}"
-              major: false
 
 # Add a project from a (normal) todo list to the mini todo list.
 add_mini_todo_project_item:
