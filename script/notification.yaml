@@ -553,11 +553,15 @@ send_message_to_room_voice_device:
                 - variables:
                     voice_entity: "{{ 'assist_satellite.' ~ repeat.item ~ '_nabu_assist_satellite' }}"
                 
-                - action: assist_satellite.announce
+                - action: script.turn_on
                   target:
-                    entity_id: "{{ voice_entity }}"
+                    entity_id: script.send_voice_message
                   data:
-                    message: "{{ message }}"
+                    variables:
+                      message: "{{ message }}"
+                      voice_entity: "{{ voice_entity }}"
+                      voice_type: "{{ voice_type }}"
+                      family: nabu
             
             # Second priority is an Amazon Echo device.
             - conditions: "{{ repeat.item in states('sensor.voice_echo_rooms') }}"
@@ -576,16 +580,69 @@ send_message_to_room_voice_device:
                         {{ message }}
                       {% endif %}
                 
-                - action: notify.alexa_media
+                - action: script.turn_on
+                  target:
+                    entity_id: script.send_voice_message
                   data:
-                    target: "{{ voice_entity }}"
-                    data:
-                      type: "{{ voice_type }}"
-                    message: "{{ speak_message }}"
+                    variables:
+                      message: "{{ speak_message }}"
+                      voice_entity: "{{ voice_entity }}"
+                      voice_type: "{{ voice_type }}"
+                      family: echo
               
             # We should never get here.
             default:
               - action: system_log.write
                 data:
                   message: "Did not find any voice assistant device for: {{ repeat.item }} ."
-                  level: warning    
+                  level: warning
+
+# For some reason a message sent to certain voice devices can apparently not complete, so if we're sending to multiple devices
+# some don't receive the message. Not sure how to debug or fix this, so this script sends messages in parallel to each device.
+send_voice_message:
+  alias: Send Voice Message
+  mode: parallel
+  
+  fields:
+    message:
+      description: The message to be sent.
+    
+    voice_entity:
+      description: The voice device entity.
+    
+    voice_type:
+      description: The type of voice assistant device output.
+      selector:
+        select:
+          options:
+            - tts
+            - announce
+    
+    family:
+      description: The voice device family.
+      selector:
+        select:
+          options:
+            - nabu
+            - echo
+  
+  sequence:
+    - choose:
+      - conditions: "{{ family == 'nabu' }}"
+      
+        sequence:
+          - action: assist_satellite.announce
+            target:
+              entity_id: "{{ voice_entity }}"
+            data:
+              message: "{{ message }}"
+      
+      - conditions: "{{ family == 'echo' }}"
+      
+        sequence:
+          - action: notify.alexa_media
+            data:
+              target: "{{ voice_entity }}"
+              data:
+                type: "{{ voice_type }}"
+              message: "{{ message }}"
