@@ -807,9 +807,9 @@
       trigger_type: template
       template: >
         {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
-          {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), now()) %}
-          {% set now =  as_timestamp(now()) %}
-          {{ iif((next - now) > 0, (((next - now) / 3600) | round(0)) < 12, false) }}
+          {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), utcnow()) %}
+          {% set now =  as_timestamp(utcnow()) %}
+          {{ iif((next - now) > 0, (((next - now) / 3600)) <= 15, false) }}
         {% else %}
           false
         {% endif %}
@@ -834,9 +834,9 @@
       trigger_type: template
       template: >
         {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.startTimeUTC is defined %}
-          {% set next = as_timestamp(state_attr('sensor.next_flyers_game', 'startTimeUTC'), now()) %}
-          {% set now =  as_timestamp(now()) %}
-          {{ iif((next - now) > 0, (((next - now) / 3600) | round(0)) < 12, false) }}
+          {% set next = as_timestamp(state_attr('sensor.next_flyers_game', 'startTimeUTC'), utcnow()) %}
+          {% set now =  as_timestamp(utcnow()) %}
+          {{ iif((next - now) > 0, (((next - now) / 3600)) < 15, false) }}
         {% else %}
           false
         {% endif %}
