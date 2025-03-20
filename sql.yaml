@@ -652,3 +652,39 @@
         LIMIT 1)
     AS `change`
   <<: *base_anchor
+
+- name: Garage Chargers Energy L30d
+  unique_id: garage_chargers_energy_l30d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.garage_chargers_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor
+
+- name: Treadmill Energy L30d
+  unique_id: treadmill_energy_l30d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.treadmill_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor
