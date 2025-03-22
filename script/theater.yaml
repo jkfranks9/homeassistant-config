@@ -153,8 +153,12 @@ activate_cinema:
               # type: tts
       
         # Delay for a while to make sure the projector is on and any error that may have been detected has been fixed, or the projector is active.
-        - wait_template: "{{ (states('media_player.epson_projector') in ['warmup', 'on'] and states('input_boolean.projector_error_handling') == 'off') or
-                              states('input_boolean.projector_active') == 'on' }}"
+        - variables:
+            projector_state: "{{ states('media_player.epson_projector') }}"
+            projector_error: "{{ states('input_boolean.projector_error_handling') }}"
+            projector_active: "{{ states('input_boolean.projector_active') }}"
+        
+        - wait_template: "{{ (projector_state in ['warmup', 'on'] and projector_error == 'off') or projector_active == 'on' }}"
           timeout: '00:10:00'
     
         # Perform post-open tasks if the projector is functioning.

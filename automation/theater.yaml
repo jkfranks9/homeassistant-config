@@ -229,9 +229,21 @@
       id: 'off'
   
   actions:
+    - variables:
+        projector_state1: "{{ states('media_player.epson_projector') }}"
+        projector_error1: "{{ states('input_boolean.projector_error_handling') }}"
+        projector_active1: "{{ states('input_boolean.projector_active') }}"
+    
     - action: input_boolean.turn_{{ trigger.id }}
       target:
         entity_id: input_boolean.projector_active
+    
+    - delay: '00:00:01'
+    
+    - variables:
+        projector_state2: "{{ states('media_player.epson_projector') }}"
+        projector_error2: "{{ states('input_boolean.projector_error_handling') }}"
+        projector_active2: "{{ states('input_boolean.projector_active') }}"
 
 #==================================#
 #     Automatic Volume Control     #
