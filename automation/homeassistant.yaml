@@ -71,12 +71,17 @@
   
   actions:
     
-    # Reinitialize virtual device trackers.
+    # Reinitialize virtual and NFC tag device trackers.
     - variables:
         vtrack_entities: >
           {% set var = namespace(vtrack = []) %}
           {% for state in states.input_boolean %}
             {% if 'Virtual' in state.name %}
+              {% set var.vtrack = var.vtrack + [state.entity_id] %}
+            {% endif %}
+          {% endfor %}
+          {% for state in states.input_boolean %}
+            {% if 'NFC Tag' in state.name %}
               {% set var.vtrack = var.vtrack + [state.entity_id] %}
             {% endif %}
           {% endfor %}

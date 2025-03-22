@@ -609,55 +609,6 @@
       target:
         entity_id: input_boolean.child_alone
 
-#===================================#
-#     Family Presence Detection     #
-#===================================#
-  
-- alias: Handle Child Tag Scan
-  id: handle_child_tag_scan
-  
-  triggers:
-    - trigger: tag
-      tag_id: 0c6d2dfd-4ad7-4281-9ec0-54756ed2d539
-      id: skylar
-        
-  actions:
-    - variables:
-        tracker_entity: "{{ 'device_tracker.virtual_' ~ trigger.id }}"
-        new_state: >
-          {% if states(tracker_entity) != 'home' %}
-            home
-          {% else %}
-            not_home
-          {% endif %}
-        topic_suffix: "{{ tracker_entity.split('.')[1] }}"
-    
-    - action: mqtt.publish
-      data:
-        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
-        payload: "{{ new_state }}"
-          
-    - action: script.send_notification
-      data:
-        destination:
-          - voice_assistant
-        message: "{{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Skylar! Come visit again soon!') }}"
-        speak: excited
-        room: ['office']
-        voice_type: tts
-    
-    # - action: notify.alexa_media
-      # data:
-        # message: >
-          # <speak>
-            # <amazon:emotion name="excited" intensity="medium">
-            # {{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Slylar! Come visit again soon!') }}
-            # </amazon:emotion>
-          # </speak>
-        # target: media_player.office_echo
-        # data:
-          # type: tts
-
 #=============================#
 #     Penthouse Occupancy     #
 #=============================#
@@ -1967,6 +1918,46 @@
       wifi_entity: sensor.sarah_pixel_wi_fi_connection
       ssid: White Rabbit
       topic_suffix: sarah_phone_stationary
+  
+# Children without personal devices use NFC tags to scan in and out.
+- alias: Handle Child Tag Scan
+  id: handle_child_tag_scan
+  
+  triggers:
+    - trigger: tag
+      tag_id: 0c6d2dfd-4ad7-4281-9ec0-54756ed2d539
+      id: skylar
+        
+  actions:
+    - variables:
+        tracker_entity: "{{ 'device_tracker.' ~ trigger.id ~ '_nfc_tag' }}"
+        toggle_entity: "{{ 'input_boolean.' ~ trigger.id ~ '_nfc_tag' }}"
+        new_state: >
+          {% if states(tracker_entity) != 'home' %}
+            home
+          {% else %}
+            not_home
+          {% endif %}
+        topic_suffix: "{{ tracker_entity.split('.')[1] }}"
+        toggle_action: "{{ iif(new_state == 'home', 'on', 'off') }}"
+    
+    - action: mqtt.publish
+      data:
+        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+        payload: "{{ new_state }}"
+          
+    - action: input_boolean.turn_{{ toggle_action }}
+      target:
+        entity_id: "{{ toggle_entity }}"
+    
+    - action: script.send_notification
+      data:
+        destination:
+          - voice_assistant
+        message: "{{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Skylar! Come visit again soon!') }}"
+        speak: excited
+        room: ['office']
+        voice_type: tts
 
 #======================#
 #     Echo Devices     #

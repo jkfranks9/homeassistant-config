@@ -66,6 +66,13 @@ mqtt:
       payload_home: "home"
       payload_not_home: "not_home"
     
+    # Pseudo stationary device trackers based on NFC tags.
+    - name: Skylar NFC Tag
+      state_topic: "homeassistant/device_tracker/skylar_nfc_tag"
+      source_type: router
+      payload_home: "home"
+      payload_not_home: "not_home"
+    
     # Test device trackers, so I can simulate various family members arriving and leaving.
     - name: Virtual David
       state_topic: "homeassistant/device_tracker/virtual_david"
