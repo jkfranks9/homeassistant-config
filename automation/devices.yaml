@@ -266,20 +266,9 @@
       entity_id: person.jon
       from: 'not_home'
       to: 'home'
+      for: '00:00:05'
   
-  conditions:
-    
-    # Make sure the Jon Away flag is on. This turns on when I leave home, so should be on now.
-    - condition: state
-      entity_id: input_boolean.jon_away
-      state: 'on'
-  
-  actions:    
-    
-    # The Jon Away flag needs to get reset now that I'm home. Don't wait for the script, because it contains a several minute delay.
-    - action: script.turn_on
-      target:
-        entity_id: script.reset_jon_away
+  actions: 
     
     # Open garage door.
     - action: script.turn_on
@@ -329,6 +318,7 @@
       entity_id: person.jon
       from: 'home'
       to: 'not_home'
+      for: '00:00:05'
       id: jon_left
     
     # The sun goes to bed.
@@ -379,10 +369,6 @@
         - "{{ trigger.id != 'sunset' and not is_state('person.jon', 'home') }}"
         
       then:
-    
-        # Indicate I'm  away.
-        - action: input_boolean.turn_on
-          entity_id: input_boolean.jon_away
     
         # Lock the PC.
         - action: script.turn_on
@@ -679,79 +665,6 @@
     - service: input_boolean.turn_off
       target:
         entity_id: input_boolean.child_alone
-
-#=================================#
-#     House Open/Close Timing     #
-#=================================#
-
-# Deal with the open/close house timing issue. The problem is:
-# 
-# - One tracker changes to home or not_home state, which changes the person to home or not_home, driving Open House or Close House
-# - A second tracker gets an attribute updated (but NOT the state), which changes the person back to not_home or home, driving Close House or Open House
-# - The second tracker then changes to home or not_home state, which again drives Open House or Close House
-#
-# Note that nothing too terrible actually happens: I have seen the garage door get stuck partially open, and a notification that it can't be closed,
-# both due to the garage door opener being triggered twice within 1 second. I can live with that, but stuff like this drives me bonkers.
-
-# Handle the Open House variation.
-- alias: Handle Open House Timing Issue
-  id: 'handle_open_house_timing_issue'
-  
-  # Trigger on any of the GPS trackers changing from not_home to home.
-  trigger:
-    - platform: state
-      entity_id:
-        - device_tracker.jon_companion
-      from: 'not_home'
-      to: 'home'
-  
-  # We only need to trigger on one of the trackers, not all of them, so use the state of the Close House
-  # automation to weed out all but the first.
-  condition:
-    - condition: state
-      entity_id: automation.close_house
-      state: 'on'
-  
-  action:
-    
-    # Temporarily turn off the Close House automation, then turn it back on.
-    - service: automation.turn_off
-      entity_id: automation.close_house
-      
-    - delay: "00:02:00"
-    
-    - service: automation.turn_on
-      entity_id: automation.close_house
-
-# Handle the Close House variation.
-- alias: Handle Close House Timing Issue
-  id: 'handle_close_house_timing_issue'
-  
-  # Trigger on any of the GPS trackers changing from home to not_home.
-  trigger:
-    - platform: state
-      entity_id:
-        - device_tracker.jon_companion
-      from: 'home'
-      to: 'not_home'
-  
-  # We only need to trigger on one of the trackers, not all of them, so use the state of the Open House
-  # automation to weed out all but the first.
-  condition:
-    - condition: state
-      entity_id: automation.open_house
-      state: 'on'
-  
-  action:
-    
-    # Temporarily turn off the Open House automation, then turn it back on.
-    - service: automation.turn_off
-      entity_id: automation.open_house
-      
-    - delay: "00:02:00"
-    
-    - service: automation.turn_on
-      entity_id: automation.open_house
 
 #================#
 #     Garage     #
