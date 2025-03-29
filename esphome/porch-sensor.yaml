@@ -52,6 +52,7 @@ mqtt:
         - deep_sleep.enter: deep_sleep_control
 
 # Deep sleep
+# NOTE: the run & sleep durations together must match the esphome_update_all_battery_device_cycle_seconds global variable.
 deep_sleep:
   id: deep_sleep_control
   run_duration:   5s
