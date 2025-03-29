@@ -29,62 +29,40 @@ mobile_notification_worker:
       description: 'The tag for the notification.'
   
   sequence:
+    - variables:
     
-    # Handle the different channels. Note that we specify both sticky (notification not dismissed when tapped) and persistent 
-    # (can't be swiped away) for all channels. Every notification must be cleared by an automation/script when it makes sense.
-    # Some are cleared automatically, while others use the Remove Manual Mobile Notification script via voice control.
-    - choose:
-                
-      # Standard channel; used for most notifications.
-      - conditions: "{{ channel == 'standard' }}"
-        
-        sequence:
-          - action: notify.mobile_app_jon_galaxy
-            data:
-              title: "{{ title }}"
-              message: "{{ message }}"
-              data:
-                channel: "{{ channel }}"
-                sticky: true
-                persistent: true
-                tag: "{{ tag }}"
-        
-      # Temporary channel; specify a timeout in seconds.
-      - conditions: "{{ channel == 'temporary' }}"
-          
-        sequence:
-          - action: notify.mobile_app_jon_galaxy
-            data:
-              title: "{{ title }}"
-              message: "{{ message }}"
-              data:
-                channel: "{{ channel }}"
-                sticky: true
-                persistent: true
-                timeout: "{{ timeout }}"
-                tag: "{{ tag }}"
-        
-      # Critical channel; used for high priority notifications.
-      - conditions: "{{ channel == 'critical' }}"
-        
-        sequence:
-          - action: notify.mobile_app_jon_galaxy
-            data:
-              title: "{{ title }}"
-              message: "{{ message }}"
-              data:
-                channel: "{{ channel }}"
-                sticky: true
-                persistent: true
-                importance: high
-                tag: "{{ tag }}"
-          
-      # Invalid channel, log it.
-      default:
-        - action: system_log.write
+        # Build data for the different channels. Note that we specify both sticky (notification not dismissed when tapped) and persistent 
+        # (can't be swiped away) for all channels. Every notification must be cleared by an automation/script when it makes sense.
+        # Some are cleared automatically, while others use the Remove Manual Mobile Notification script via voice control.
+        notification_data: >
+          {% set vars = {'channel': channel, 'sticky': true, 'persistent': true} %}
+          {% if channel == 'temporary' %}
+            {% set additional = {'timeout': timeout, 'tag': tag} %}
+          {% elif channel == 'critical' %}
+            {% set additional = {'importance': 'high', 'tag': tag} %}
+          {% else %}
+            {% set additional = {'tag': tag} %}
+          {% endif %}
+            
+          {{ dict(vars, **additional) }}
+    
+    # Send notification to Jon.
+    - action: notify.mobile_app_jon_galaxy
+      data:
+        title: "{{ title }}"
+        message: "{{ message }}"
+        data: "{{ notification_data }}"
+    
+    # For some tags, we also notify Sarah.
+    - if:
+        - "{{ tag in state_attr('sensor.variables', 'variables').sarah_notification_tags }}"
+      
+      then:
+        - action: notify.mobile_app_pixel_9_pro_xl
           data:
-            message: "Invalid channel '{{ channel }}' specified"
-            level: error
+            title: "{{ title }}"
+            message: "{{ message }}"
+            data: "{{ notification_data }}"
 
 # Send a notification to one or more destinations.
 send_notification:
@@ -210,15 +188,26 @@ remove_mobile_notification:
   
   sequence:
       
-    # Clear the notification. In some cases it may have been cleared by the user, but it doesn't hurt to try again.
-    - service: notify.mobile_app_jon_galaxy
+    # Clear the notification.
+    - action: notify.mobile_app_jon_galaxy
       data:
         message: 'clear_notification'
         data:
           tag: "{{ tag }}"
     
+    # For some tags, we also notify Sarah.
+    - if:
+        - "{{ tag in state_attr('sensor.variables', 'variables').sarah_notification_tags }}"
+      
+      then:
+        - action: notify.mobile_app_pixel_9_pro_xl
+          data:
+            message: 'clear_notification'
+            data:
+              tag: "{{ tag }}"
+    
     # Unregister the tag.
-    - service: script.unregister_mobile_notification
+    - action: script.unregister_mobile_notification
       data:
         tag: "{{ tag }}"
 

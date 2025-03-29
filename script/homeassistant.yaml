@@ -191,6 +191,12 @@ initialize_global_variables:
       event_data:
         key: esphome_update_all_battery_device_cycle_seconds
         value: 600
+    
+    # Mobile notification tags to be sent to Sarah in addition to Jon.
+    - event: set_variable
+      event_data:
+        key: sarah_notification_tags
+        value: ['next_canes_game', 'test_notify_sarah']
 
 #========================#
 #     Mini ToDo List     #
