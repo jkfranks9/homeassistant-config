@@ -58,7 +58,7 @@ mobile_notification_worker:
         - "{{ tag in state_attr('sensor.variables', 'variables').sarah_notification_tags }}"
       
       then:
-        - action: notify.mobile_app_pixel_9_pro_xl
+        - action: notify.mobile_app_sarah_pixel
           data:
             title: "{{ title }}"
             message: "{{ message }}"
@@ -200,7 +200,7 @@ remove_mobile_notification:
         - "{{ tag in state_attr('sensor.variables', 'variables').sarah_notification_tags }}"
       
       then:
-        - action: notify.mobile_app_pixel_9_pro_xl
+        - action: notify.mobile_app_sarah_pixel
           data:
             message: 'clear_notification'
             data:
