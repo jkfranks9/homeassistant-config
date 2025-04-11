@@ -49,6 +49,7 @@
     light.kitchen_lights:                 'off'
     light.master_bath_light:              'off'
     light.master_vanity_light:            'off'
+    light.master_closet_light:            'off'
     light.office_lamp:                    'off'
     light.office_bookcase:                'off'
     light.studio_lights:                  'off'
@@ -88,6 +89,7 @@
     light.kitchen_lights:                 'off'
     light.master_bath_light:              'off'
     light.master_vanity_light:            'off'
+    light.master_closet_light:            'off'
     light.office_lamp:                    'off'
     light.office_bookcase:                'off'
     
