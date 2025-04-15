@@ -2,7 +2,7 @@
 #     SQL Sensors     #
 #=====================#
 
-# These sensors collect the last 30 days usage for energy categories, as well as individual devices within those
+# These sensors collect the last 90 days usage for energy categories, as well as individual devices within those
 # categories (there are a lot of lights, so those are collected into a few groups). They are displayed on the dashboard using the 
 # custom Apex Charts card.
 
@@ -10,8 +10,8 @@
 #   -- Categories --   #
 #----------------------#
 
-- name: Total Cooking Energy L30d
-  unique_id: total_cooking_energy_l30d
+- name: Total Cooking Energy L90d
+  unique_id: total_cooking_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -23,16 +23,16 @@
         WHERE 
           sm.statistic_id='sensor.all_cooking_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: &base_anchor
     unit_of_measurement: kWh
     column: change
-    value_template: "{{(value/30)|round(2)}}"
+    value_template: "{{(value/90)|round(2)}}"
 
-- name: Total Cleaning Energy L30d
-  unique_id: total_cleaning_energy_l30d
+- name: Total Cleaning Energy L90d
+  unique_id: total_cleaning_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -44,13 +44,13 @@
         WHERE 
           sm.statistic_id='sensor.all_cleaning_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Total Entertainment Energy L30d
-  unique_id: total_entertainment_energy_l30d
+- name: Total Entertainment Energy L90d
+  unique_id: total_entertainment_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -62,13 +62,13 @@
         WHERE 
           sm.statistic_id='sensor.all_entertainment_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Total Lights Energy L30d
-  unique_id: total_lights_energy_l30d
+- name: Total Lights Energy L90d
+  unique_id: total_lights_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -80,13 +80,13 @@
         WHERE 
           sm.statistic_id='sensor.all_lights_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Total Fans Energy L30d
-  unique_id: total_fans_energy_l30d
+- name: Total Fans Energy L90d
+  unique_id: total_fans_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -98,13 +98,13 @@
         WHERE 
           sm.statistic_id='sensor.all_fans_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Total HVAC Energy L30d
-  unique_id: total_hvac_energy_l30d
+- name: Total HVAC Energy L90d
+  unique_id: total_hvac_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -116,13 +116,13 @@
         WHERE 
           sm.statistic_id='sensor.all_hvac_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Total Misc Energy L30d
-  unique_id: total_misc_energy_l30d
+- name: Total Misc Energy L90d
+  unique_id: total_misc_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -134,7 +134,7 @@
         WHERE 
           sm.statistic_id='sensor.all_misc_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
@@ -143,8 +143,8 @@
 #   -- Cooking Devices --   #
 #---------------------------#
 
-- name: Kitchen Appliances Energy L30d
-  unique_id: kitchen_appliances_energy_l30d
+- name: Kitchen Appliances Energy L90d
+  unique_id: kitchen_appliances_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -156,13 +156,13 @@
         WHERE 
           sm.statistic_id='sensor.kitchen_appliances_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Microwave Energy L30d
-  unique_id: microwave_energy_l30d
+- name: Microwave Energy L90d
+  unique_id: microwave_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -174,13 +174,13 @@
         WHERE 
           sm.statistic_id='sensor.microwave_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Refrigerator Energy L30d
-  unique_id: refrigerator_energy_l30d
+- name: Refrigerator Energy L90d
+  unique_id: refrigerator_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -192,7 +192,7 @@
         WHERE 
           sm.statistic_id='sensor.refrigerator_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
@@ -201,8 +201,8 @@
 #   -- Cleaning Devices --   #
 #----------------------------#
 
-- name: Dishwasher Energy L30d
-  unique_id: dishwasher_energy_l30d
+- name: Dishwasher Energy L90d
+  unique_id: dishwasher_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -214,13 +214,13 @@
         WHERE 
           sm.statistic_id='sensor.dishwasher_monitor_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Washer Energy L30d
-  unique_id: washer_energy_l30d
+- name: Washer Energy L90d
+  unique_id: washer_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -232,7 +232,7 @@
         WHERE 
           sm.statistic_id='sensor.washer_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
@@ -241,8 +241,8 @@
 #   -- Entertainment Devices --   #
 #---------------------------------#
 
-- name: Family Room AV Energy L30d
-  unique_id: family_room_av_energy_l30d
+- name: Family Room AV Energy L90d
+  unique_id: family_room_av_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -254,13 +254,13 @@
         WHERE 
           sm.statistic_id='sensor.family_room_av_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Fire TV Energy L30d
-  unique_id: fire_tv_energy_l30d
+- name: Fire TV Energy L90d
+  unique_id: fire_tv_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -272,13 +272,13 @@
         WHERE 
           sm.statistic_id='sensor.fire_tv_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Projector Energy L30d
-  unique_id: projector_energy_l30d
+- name: Projector Energy L90d
+  unique_id: projector_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -290,13 +290,13 @@
         WHERE 
           sm.statistic_id='sensor.projector_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Subwoofer Back Energy L30d
-  unique_id: subwoofer_back_energy_l30d
+- name: Subwoofer Back Energy L90d
+  unique_id: subwoofer_back_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -308,13 +308,13 @@
         WHERE 
           sm.statistic_id='sensor.subwoofer_back_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Subwoofer Front Energy L30d
-  unique_id: subwoofer_front_energy_l30d
+- name: Subwoofer Front Energy L90d
+  unique_id: subwoofer_front_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -326,13 +326,13 @@
         WHERE 
           sm.statistic_id='sensor.subwoofer_front_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Theater AV Energy L30d
-  unique_id: theater_av_energy_l30d
+- name: Theater AV Energy L90d
+  unique_id: theater_av_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -344,7 +344,7 @@
         WHERE 
           sm.statistic_id='sensor.theater_av_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
@@ -353,8 +353,8 @@
 #   -- Lights --   #
 #------------------#
 
-- name: Downstairs Lights Energy L30d
-  unique_id: downstairs_lights_energy_l30d
+- name: Downstairs Lights Energy L90d
+  unique_id: downstairs_lights_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -366,13 +366,13 @@
         WHERE 
           sm.statistic_id='sensor.downstairs_lights_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Outdoor Lights Energy L30d
-  unique_id: outdoor_lights_energy_l30d
+- name: Outdoor Lights Energy L90d
+  unique_id: outdoor_lights_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -384,13 +384,13 @@
         WHERE 
           sm.statistic_id='sensor.outdoor_lights_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Upstairs Lights Energy L30d
-  unique_id: upstairs_lights_energy_l30d
+- name: Upstairs Lights Energy L90d
+  unique_id: upstairs_lights_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -402,7 +402,7 @@
         WHERE 
           sm.statistic_id='sensor.upstairs_lights_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
@@ -411,8 +411,8 @@
 #   -- Fans --   #
 #----------------#
 
-- name: Family Room Fan Energy L30d
-  unique_id: family_room_fan_energy_l30d
+- name: Family Room Fan Energy L90d
+  unique_id: family_room_fan_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -424,13 +424,13 @@
         WHERE 
           sm.statistic_id='sensor.family_room_fan_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Master Bath Fan Energy L30d
-  unique_id: master_bath_fan_energy_l30d
+- name: Master Bath Fan Energy L90d
+  unique_id: master_bath_fan_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -442,13 +442,13 @@
         WHERE 
           sm.statistic_id='sensor.master_bath_fan_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Office Fan Energy L30d
-  unique_id: office_fan_energy_l30d
+- name: Office Fan Energy L90d
+  unique_id: office_fan_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -460,13 +460,13 @@
         WHERE 
           sm.statistic_id='sensor.office_fan_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Penthouse Fan Energy L30d
-  unique_id: penthouse_fan_energy_l30d
+- name: Penthouse Fan Energy L90d
+  unique_id: penthouse_fan_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -478,13 +478,13 @@
         WHERE 
           sm.statistic_id='sensor.penthouse_fan_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Studio Fan Energy L30d
-  unique_id: studio_fan_energy_l30d
+- name: Studio Fan Energy L90d
+  unique_id: studio_fan_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -496,13 +496,13 @@
         WHERE 
           sm.statistic_id='sensor.studio_fan_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Theater Fan Energy L30d
-  unique_id: theater_fan_energy_l30d
+- name: Theater Fan Energy L90d
+  unique_id: theater_fan_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -514,13 +514,13 @@
         WHERE 
           sm.statistic_id='sensor.theater_fan_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Treadmill Fan Energy L30d
-  unique_id: treadmill_fan_energy_l30d
+- name: Treadmill Fan Energy L90d
+  unique_id: treadmill_fan_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -532,7 +532,7 @@
         WHERE 
           sm.statistic_id='sensor.treadmill_fan_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
@@ -541,8 +541,8 @@
 #   -- HVAC Devices --   #
 #------------------------#
 
-- name: Upstairs Air Handler Energy L30d
-  unique_id: upstairs_air_handler_energy_l30d
+- name: Upstairs Air Handler Energy L90d
+  unique_id: upstairs_air_handler_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -554,7 +554,7 @@
         WHERE 
           sm.statistic_id='sensor.energy_mon_2_air_handler_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
@@ -563,8 +563,8 @@
 #   -- Misc Devices --   #
 #------------------------#
 
-- name: Upstairs Bed/Bath Energy L30d
-  unique_id: upstairs_bed_bath_energy_l30d
+- name: Upstairs Bed/Bath Energy L90d
+  unique_id: upstairs_bed_bath_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -576,13 +576,13 @@
         WHERE 
           sm.statistic_id='sensor.energy_mon_2_bed_bath_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Upstairs Snack Bar Energy L30d
-  unique_id: upstairs_snack_bar_energy_l30d
+- name: Upstairs Snack Bar Energy L90d
+  unique_id: upstairs_snack_bar_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -594,13 +594,13 @@
         WHERE 
           sm.statistic_id='sensor.energy_mon_2_snack_bar_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Upstairs Theater/Hall Energy L30d
-  unique_id: upstairs_theater_hall_energy_l30d
+- name: Upstairs Theater/Hall Energy L90d
+  unique_id: upstairs_theater_hall_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -612,13 +612,13 @@
         WHERE 
           sm.statistic_id='sensor.energy_mon_2_theater_hall_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Upstairs Utility Misc Energy L30d
-  unique_id: upstairs_utility_misc_energy_l30d
+- name: Upstairs Utility Misc Energy L90d
+  unique_id: upstairs_utility_misc_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -630,13 +630,13 @@
         WHERE 
           sm.statistic_id='sensor.energy_mon_2_utility_misc_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Upstairs Utility Rack Energy L30d
-  unique_id: upstairs_utility_rack_energy_l30d
+- name: Upstairs Utility Rack Energy L90d
+  unique_id: upstairs_utility_rack_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -648,13 +648,13 @@
         WHERE 
           sm.statistic_id='sensor.energy_mon_2_utility_rack_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Garage Chargers Energy L30d
-  unique_id: garage_chargers_energy_l30d
+- name: Garage Chargers Energy L90d
+  unique_id: garage_chargers_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -666,13 +666,13 @@
         WHERE 
           sm.statistic_id='sensor.garage_chargers_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor
 
-- name: Treadmill Energy L30d
-  unique_id: treadmill_energy_l30d
+- name: Treadmill Energy L90d
+  unique_id: treadmill_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -684,7 +684,7 @@
         WHERE 
           sm.statistic_id='sensor.treadmill_energy' 
         AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*30)
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
     AS `change`
   <<: *base_anchor

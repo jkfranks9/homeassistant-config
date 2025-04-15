@@ -34,10 +34,10 @@ virtual_device_trackers:
 # Energy
 energy_sensors:
   entities:
-    - sensor.total_cooking_energy_l30d
-    - sensor.total_cleaning_energy_l30d
-    - sensor.total_entertainment_energy_l30d
-    - sensor.total_lights_energy_l30d
-    - sensor.total_fans_energy_l30d
-    - sensor.total_hvac_energy_l30d
-    - sensor.total_misc_energy_l30d
+    - sensor.total_cooking_energy_l90d
+    - sensor.total_cleaning_energy_l90d
+    - sensor.total_entertainment_energy_l90d
+    - sensor.total_lights_energy_l90d
+    - sensor.total_fans_energy_l90d
+    - sensor.total_hvac_energy_l90d
+    - sensor.total_misc_energy_l90d
