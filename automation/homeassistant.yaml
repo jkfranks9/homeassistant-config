@@ -853,7 +853,7 @@
             - action: timer.start
               data:
                 entity_id: timer.esphome_update_all_suspend
-                duration: suspend_duration_seconds
+                duration: "{{ suspend_duration_seconds }}"
         
         # Handle intermediate devices.
         - conditions: "{{ trigger.id == 'intermediate_device' }}"
@@ -880,8 +880,11 @@
           sequence:
             - variables:
                 
+                # First device timestamp.
+                first_device_timestamp: "{{ state_attr('input_datetime.esphome_update_all_first_device_timestamp', 'timestamp') | int(0) }}"
+                
                 # The number of seconds since the first device was updated.
-                seconds_since_first_update: "{{ as_timestamp(now()) - states('input_datetime.esphome_update_all_first_device_timestamp') | int(0) }}"
+                seconds_since_first_update: "{{ as_timestamp(now()) - first_device_timestamp }}"
                 
                 # The number of prior devices. This is one less than the variable holding the prior device count, since we start this whole process at 
                 # the end of the first device update.
