@@ -776,7 +776,7 @@
       sensor_off_state: 'off'
       temperature_entity: sensor.office_sensor_temperature
       fan_entity: fan.office_fan
-      thresholds: [80, 78, 75]
+      thresholds: [80, 78, 76]
 
 # Operate the family room fan when the AV system is on.
 - alias: Operate Family Room Fan
