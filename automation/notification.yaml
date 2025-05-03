@@ -816,11 +816,17 @@
       clear_type: assisted
       title: attention
       message: >
-          {% if states('sensor.canes_game_status') == 'Home' %}
-            {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }}
-          {% else %}
-            Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }}
-          {% endif %}
+        {% set vars = namespace(tv = '') %}
+        {% if states.sensor.canes_game_status.attributes.tv_networks is defined %}
+          {% for network in state_attr('sensor.canes_game_status', 'tv_networks') %}
+            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+          {% endfor %}
+        {% endif %}
+        {% if states('sensor.canes_game_status') == 'Home' %}
+          {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% else %}
+          Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% endif %}
       channel: standard
       tag: 'next_canes_game'
 

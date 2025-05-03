@@ -423,6 +423,27 @@
         {% else %}
           Unknown
         {% endif %}
+      
+      attributes:
+        tv_networks: >
+          {% set vars = namespace(tv = []) %}
+          {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.tvBroadcasts is defined %}
+            {% for network in state_attr('sensor.next_canes_game', 'tvBroadcasts') %}
+              {% if network['countryCode'] == 'US' and network['network'] == 'MAX' %}
+                {% set vars.tv = vars.tv + ['Max'] %}
+              {% elif network['countryCode'] == 'US' and network['network'] == 'ESPN' %}
+                {% set vars.tv = vars.tv + ['ESPN'] %}
+              {% elif network['countryCode'] == 'US' and network['network'] == 'ESPN+' %}
+                {% set vars.tv = vars.tv + ['ESPN+'] %}
+              {% elif network['countryCode'] == 'US' and network['network'] == 'FDSNSO' %}
+                {% set vars.tv = vars.tv + ['FanDuel'] %}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            {% set vars.tv = ['Unknown'] %}
+          {% endif %}
+          
+          {{ vars.tv }}
 
     - name: 'Canes Opponent'
       unique_id: canes_opponent

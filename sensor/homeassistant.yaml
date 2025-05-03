@@ -11,6 +11,7 @@
     - startTimeUTC
     - awayTeam
     - homeTeam
+    - tvBroadcasts
   resource_template: https://api-web.nhle.com/v1/club-schedule/CAR/week/{{ now().strftime('%Y-%m-%d') }}
   value_template: >
     {% if value_json is defined and value_json | length and value_json.games is defined and value_json.games | length and value_json.games[0].startTimeUTC is defined %}
