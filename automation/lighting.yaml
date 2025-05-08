@@ -72,21 +72,6 @@
         entity_id: input_datetime.sleep_start
       data:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-          
-    - action: script.send_notification
-      data:
-        destination:
-          - voice_assistant
-        message: 'Good night.'
-        room: ['master_bedroom']
-        voice_type: tts
-    
-    # - action: notify.alexa_media
-      # data:
-        # message: 'Good night.'
-        # target: media_player.master_bedroom_echo
-        # data:
-          # type: tts
 
 # Set the sleep duration in hours.
 - alias: Set Sleep Duration
