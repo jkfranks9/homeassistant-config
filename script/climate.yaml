@@ -123,7 +123,7 @@ remove_thermostat_hold:
     - variables:
         
         # For an extended vacation, use the extended away start date as the name. For a temporary vacation, use the hardcoded name.
-        vacation_name: "{{ iif (extended == true, states('input_datetime.extended_away_start').split(' ')[0], 'temporary') }}"
+        vacation_name: "{{ iif (extended == true, states('input_datetime.extended_away_start').split(' ')[0], 'Temporary') }}"
     
     # Remove the vacation on the thermostat.
     - service: ecobee.delete_vacation
