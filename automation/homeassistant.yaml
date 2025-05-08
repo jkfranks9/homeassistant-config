@@ -460,7 +460,7 @@
         - updated
         - current
   
-  conditions: "{{ trigger.notification.notification_id != 'config_entry_discovery' }}"
+  conditions: "{{ trigger.notification.notification_id != 'config_entry_discovered' }}"
   
   actions:
     - action: mqtt.publish
