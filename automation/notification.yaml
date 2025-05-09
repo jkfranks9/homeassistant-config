@@ -496,12 +496,25 @@
         # The next target as a datetime, which is the target as determined by the dashboard, with the day replaced.
         next_target: "{{ as_datetime(trigger.to_state.state).replace(day = next_day_of_month) }}"
     
+    # So this is tricky. We're about to update the entity upon which we trigger, so let's disable ourself before we
+    # do the update.
+    - action: automation.turn_off
+      data:
+        entity_id: automation.determine_cpap_filter_target_day
+        stop_actions: false
+    
     # Replace the datetime with the target as determined above.
     - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.reminder_cpap_filter
       data:
-        timestamp: "{{ next_target.timestamp() }}"
+        datetime: "{{ next_target }}"
+    
+    # Now re-enable after a short delay (to hopefully ensure the datetime update has completed).
+    - delay: 1
+    
+    - action: automation.turn_on
+      entity_id: automation.determine_cpap_filter_target_day
 
 # HVAC maintenance
 - alias: Notify HVAC Reminder
