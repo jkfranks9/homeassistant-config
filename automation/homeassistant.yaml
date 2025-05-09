@@ -192,12 +192,21 @@
     - action: automation.turn_on
       entity_id:
         - automation.close_house
-        - automation.notify_zigbee_device_unavailable
         - automation.open_house
         - automation.run_studio_motion_based_light
         - automation.run_master_bath_motion_based_light
         - automation.turn_on_guest_lights_sunset
         - automation.control_office_lamp
+    
+    # Some automations that could be off should only be turned back on conditionally.
+    - if:
+        - condition: state
+          entity_id: update.zigbee2mqtt_update
+          state: 'off'
+      
+      then:
+        - action: automation.turn_on
+          entity_id: automation.notify_zigbee_device_unavailable
     
     # Backup automations and scripts log files.
     - action: shell_command.backup_auto_scripts_log
