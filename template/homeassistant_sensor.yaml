@@ -30,230 +30,6 @@
             {{ dict(current.items() | rejectattr('0', 'eq', trigger.event.data.key)) }}
           {% endif %}
 
-#----------------------#
-#   -- Gas Prices --   #
-#----------------------#
-
-# Lowest price for all gas stations in Siler City.
-- trigger:
-    
-    # Trigger on the REST sensor changing.
-    - platform: state
-      entity_id: sensor.gas_search_siler_city
-    
-    # Trigger every hour.
-    - platform: time_pattern
-      minutes: 0
-  
-  sensor:
-    - name: Best Price Gas Siler City
-      unique_id: best_price_gas_siler_city
-      icon: mdi:gas-station
-      unit_of_measurement: USD
-      state_class: measurement
-      
-      # The state is the lowest cash or credit price among all the stations returned via the REST sensor.
-      state: >
-        {% set vars = namespace(price = None) %}
-        
-        {% for price_details in this.attributes.prices %}
-          {% set cash_price = price_details.get('cash') %}
-          {% set credit_price = price_details.get('credit') %}
-          
-          {% if cash_price != None and (vars.price == None or cash_price | float(0) < vars.price | float(0)) %}
-            {% set vars.price = cash_price %}
-          {% endif %}
-          {% if credit_price != None and (vars.price == None or credit_price | float(0) < vars.price | float(0)) %}
-            {% set vars.price = credit_price %}
-          {% endif %}
-        {% endfor %}
-        
-        {{ vars.price | float(0) }}
-      
-      attributes:
-        
-        # This is all the stations with a non-zero cash and/or credit price. We only care about regular gas.
-        prices: >
-          {% set vars = namespace(prices = []) %}
-          {% set stations = state_attr('sensor.gas_search_siler_city', 'stations') %}
-          
-          {% if stations != None and stations.results != None %}
-            {% for result in stations.results %}
-              {% for fuel in result.fuels %}
-                {% if fuel == "regular_gas" %}
-                  {% set fuel_vars = namespace(index = loop.index - 1, details = '') %}
-                  
-                  {% if fuel_vars.index < result.prices | length %}
-                    {% set fuel_price = result.prices[fuel_vars.index] %}
-                    
-                    {% if fuel_price.cash != None and fuel_price.cash.price > 0 %}
-                      {% set fuel_vars.details = fuel_vars.details + "\"cash\" : " + fuel_price.cash.price | string  %}
-                    {% endif %}
-                    {% if fuel_price.credit != None and fuel_price.credit.price > 0 %}
-                      {% if fuel_vars.details | length > 0 %}
-                        {% set fuel_vars.details = fuel_vars.details + "," %}
-                      {% endif %}
-                      {% set fuel_vars.details = fuel_vars.details + "\"credit\" : " + fuel_price.credit.price | string %}
-                    {% endif %}
-                    {% if fuel_vars.details | length > 0 %}
-                      {% set additional_details =
-                        "\"station\" : {" + 
-                          "\"id\" : " + result.id|string + "," + 
-                          "\"name\" : \"" + result.name + "\""
-                        "}," + 
-                        "\"address\" : {" + 
-                          "\"line1\" : \"" + result.address.line1 + "\"," + 
-                          "\"line2\" : \"" + result.address.line2 + "\"," + 
-                          "\"locality\" : \"" + result.address.locality + "\"," + 
-                          "\"postal_code\" : \"" + result.address.postalCode + "\"," +
-                          "\"region\" : \"" + result.address.region + "\"" +
-                        "}" %}
-                      {% set fuel_vars.details = additional_details + "," + fuel_vars.details %}
-                    {% endif %}
-                  {% endif %}
-                  {% if fuel_vars.details | length > 0 %}
-                    {% set vars.prices = vars.prices + [ ('{' + fuel_vars.details + '}') | from_json ]  %}
-                  {% endif %}
-                {% endif %}
-              {%endfor%}
-            {% endfor %}
-          {% endif %}
-          
-          {{ vars.prices }}
-        
-        # This is the station details for the lowest price found.
-        lowest_price_details: >
-          {% set vars = namespace(price = None, lowest_price_details = None) %}
-          
-          {% for price_details in this.attributes.prices %}
-            {% set cash_price = price_details.get('cash') %}
-            {% set credit_price = price_details.get('credit') %}
-            
-            {% if vars.lowest_price_details == None %}
-              {% set vars.lowest_price_details = price_details %}
-            {% endif %}
-            {% if cash_price != None and (vars.price == None or cash_price < vars.price) %}
-              {% set vars.price = cash_price %}
-              {% set vars.lowest_price_details = price_details %}
-            {% endif %}
-            {% if credit_price != None and (vars.price == None or credit_price < vars.price) %}
-              {% set vars.price = credit_price %}
-              {% set vars.lowest_price_details = price_details %}
-            {% endif %}
-          {% endfor %}
-          
-          {{ vars.lowest_price_details }}
-
-# Lowest price for all gas stations in Pittsboro.
-- trigger:
-    
-    # Trigger on the REST sensor changing.
-    - platform: state
-      entity_id: sensor.gas_search_pittsboro
-    
-    # Trigger every hour.
-    - platform: time_pattern
-      minutes: 0
-  
-  sensor:
-    - name: Best Price Gas Pittsboro
-      unique_id: best_price_gas_pittsboro
-      icon: mdi:gas-station
-      unit_of_measurement: USD
-      state_class: measurement
-      
-      # The state is the lowest cash or credit price among all the stations returned via the REST sensor.
-      state: >
-        {% set vars = namespace(price = None) %}
-        
-        {% for price_details in this.attributes.prices %}
-          {% set cash_price = price_details.get('cash') %}
-          {% set credit_price = price_details.get('credit') %}
-          
-          {% if cash_price != None and (vars.price == None or cash_price | float(0) < vars.price | float(0)) %}
-            {% set vars.price = cash_price %}
-          {% endif %}
-          {% if credit_price != None and (vars.price == None or credit_price | float(0) < vars.price | float(0)) %}
-            {% set vars.price = credit_price %}
-          {% endif %}
-        {% endfor %}
-        
-        {{ vars.price | float(0) }}
-      
-      attributes:
-        
-        # This is all the stations with a non-zero cash and/or credit price. We only care about regular gas.
-        prices: >
-          {% set vars = namespace(prices = []) %}
-          {% set stations = state_attr('sensor.gas_search_pittsboro', 'stations') %}
-          
-          {% if stations != None and stations.results != None %}
-            {% for result in stations.results %}
-              {% for fuel in result.fuels %}
-                {% if fuel == "regular_gas" %}
-                  {% set fuel_vars = namespace(index = loop.index - 1, details = '') %}
-                  
-                  {% if fuel_vars.index < result.prices | length %}
-                    {% set fuel_price = result.prices[fuel_vars.index] %}
-                    
-                    {% if fuel_price.cash != None and fuel_price.cash.price > 0 %}
-                      {% set fuel_vars.details = fuel_vars.details + "\"cash\" : " + fuel_price.cash.price | string  %}
-                    {% endif %}
-                    {% if fuel_price.credit != None and fuel_price.credit.price > 0 %}
-                      {% if fuel_vars.details | length > 0 %}
-                        {% set fuel_vars.details = fuel_vars.details + "," %}
-                      {% endif %}
-                      {% set fuel_vars.details = fuel_vars.details + "\"credit\" : " + fuel_price.credit.price | string %}
-                    {% endif %}
-                    {% if fuel_vars.details | length > 0 %}
-                      {% set additional_details =
-                        "\"station\" : {" + 
-                          "\"id\" : " + result.id|string + "," + 
-                          "\"name\" : \"" + result.name + "\""
-                        "}," + 
-                        "\"address\" : {" + 
-                          "\"line1\" : \"" + result.address.line1 + "\"," + 
-                          "\"line2\" : \"" + result.address.line2 + "\"," + 
-                          "\"locality\" : \"" + result.address.locality + "\"," + 
-                          "\"postal_code\" : \"" + result.address.postalCode + "\"," +
-                          "\"region\" : \"" + result.address.region + "\"" +
-                        "}" %}
-                      {% set fuel_vars.details = additional_details + "," + fuel_vars.details %}
-                    {% endif %}
-                  {% endif %}
-                  {% if fuel_vars.details | length > 0 %}
-                    {% set vars.prices = vars.prices + [ ('{' + fuel_vars.details + '}') | from_json ]  %}
-                  {% endif %}
-                {% endif %}
-              {%endfor%}
-            {% endfor %}
-          {% endif %}
-          
-          {{ vars.prices }}
-        
-        # This is the station details for the lowest price found.
-        lowest_price_details: >
-          {% set vars = namespace(price = None, lowest_price_details = None) %}
-          
-          {% for price_details in this.attributes.prices %}
-            {% set cash_price = price_details.get('cash') %}
-            {% set credit_price = price_details.get('credit') %}
-            
-            {% if vars.lowest_price_details == None %}
-              {% set vars.lowest_price_details = price_details %}
-            {% endif %}
-            {% if cash_price != None and (vars.price == None or cash_price < vars.price) %}
-              {% set vars.price = cash_price %}
-              {% set vars.lowest_price_details = price_details %}
-            {% endif %}
-            {% if credit_price != None and (vars.price == None or credit_price < vars.price) %}
-              {% set vars.price = credit_price %}
-              {% set vars.lowest_price_details = price_details %}
-            {% endif %}
-          {% endfor %}
-          
-          {{ vars.lowest_price_details }}
-
 #--------------------------#
 #   -- Mini ToDo List --   #
 #--------------------------#
@@ -411,9 +187,9 @@
 
 - sensor:
 
-    #----------------#
-    #   -- Misc --   #
-    #----------------#
+    #------------------#
+    #   -- Hockey --   #
+    #------------------#
 
     - name: 'Canes Game Status'
       unique_id: canes_game_status
@@ -507,6 +283,74 @@
           {% endif %}
           
           {{ vars.name }}
+
+    #--------------------#
+    #   -- GasBuddy --   #
+    #--------------------#
+    
+    - name: PB Gas Price
+      unique_id: pb_gas_price
+      state: >
+        {% set list = expand(integration_entities('gasbuddy') | select('search', 'pb_') | select('search', 'regular_gas')) | map(attribute = 'entity_id') | list %}
+        {% set vars = namespace(price = 100) %}
+          
+        {% for station in list %}
+          {% set price = states(station) %}
+          {% if price != 'unknown' and price | float(0) < vars.price | float(0) %}
+            {% set vars.price = price | float(0) %}
+          {% endif %}
+        {% endfor %}
+          
+        {{ iif(vars.price != 100, vars.price, 'unknown') }}
+    
+    - name: PB Gas Station
+      unique_id: pb_gas_station
+      state: >
+        {% set list = expand(integration_entities('gasbuddy') | select('search', 'pb_') | select('search', 'regular_gas')) | map(attribute = 'entity_id') | list %}
+        {% set vars = namespace(price = 100, name = '') %}
+          
+        {% for station in list %}
+          {% set price = states(station) %}
+          {% set name = state_attr(station, 'friendly_name').replace('PB ', '').replace(' Regular Gas', '') %}
+          {% if price != 'unknown' and price | float(0) < vars.price | float(0) %}
+            {% set vars.price = price | float(0) %}
+            {% set vars.name = name %}
+          {% endif %}
+        {% endfor %}
+        
+        {{ iif(vars.price != 100, vars.name, 'unknown') }}
+    
+    - name: SC Gas Price
+      unique_id: sc_gas_price
+      state: >
+        {% set list = expand(integration_entities('gasbuddy') | select('search', 'sc_') | select('search', 'regular_gas')) | map(attribute = 'entity_id') | list %}
+        {% set vars = namespace(price = 100) %}
+          
+        {% for station in list %}
+          {% set price = states(station) %}
+          {% if price != 'unknown' and price | float(0) < vars.price | float(0) %}
+            {% set vars.price = price | float(0) %}
+          {% endif %}
+        {% endfor %}
+          
+        {{ iif(vars.price != 100, vars.price, 'unknown') }}
+    
+    - name: SC Gas Station
+      unique_id: sc_gas_station
+      state: >
+        {% set list = expand(integration_entities('gasbuddy') | select('search', 'sc_') | select('search', 'regular_gas')) | map(attribute = 'entity_id') | list %}
+        {% set vars = namespace(price = 100, name = '') %}
+          
+        {% for station in list %}
+          {% set price = states(station) %}
+          {% set name = state_attr(station, 'friendly_name').replace('SC ', '').replace(' Regular Gas', '') %}
+          {% if price != 'unknown' and price | float(0) < vars.price | float(0) %}
+            {% set vars.price = price | float(0) %}
+            {% set vars.name = name %}
+          {% endif %}
+        {% endfor %}
+        
+        {{ iif(vars.price != 100, vars.name, 'unknown') }}
 
 #---------- Miscellaneous ----------#
 
