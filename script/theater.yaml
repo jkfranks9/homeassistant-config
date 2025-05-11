@@ -799,7 +799,9 @@ perform_post_open_tasks:
           after:  '18:00:00'
           before: '23:30:00'
     
-    - service: script.disable_family_room_av
+    - service: script.toggle_family_room_av
+      data:
+        operation: 'off'
 
 #=========================#
 #     Volume Control      #

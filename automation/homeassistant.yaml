@@ -578,62 +578,48 @@
 
 # The Zigbee device unavailable notification is triggered unintentionally when the Zigbee2MQTT add-on is updated.
 # Detect that here and disable the notification automation; re-enable it after the update is complete.
-- alias: Disable Zigbee Unavailable Notification
-  id: 'disable_zigbee_unavailable_notification'
+- alias: Toggle Zigbee Unavailable Notification
+  id: toggle_zigbee_unavailable_notification
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: update.zigbee2mqtt_update
       from: 'off'
       to: 'on'
-  
-  action:
-    - service: automation.turn_off
-      entity_id: automation.notify_zigbee_device_unavailable
-
-- alias: Enable Zigbee Unavailable Notification
-  id: 'enable_zigbee_unavailable_notification'
-  
-  trigger:
-    - platform: state
+      id: 'off'
+    
+    - trigger: state
       entity_id: update.zigbee2mqtt_update
       from: 'on'
       to: 'off'
+      id: 'on'
   
-  action:
-    - service: automation.turn_on
+  actions:
+    - action: automation.turn_{{ trigger.id }}
       entity_id: automation.notify_zigbee_device_unavailable
 
 #=======================#
 #     Hockey Season     #
 #=======================#
 
-- alias: Enable Hockey Hobby
-  id: enable_hockey_hobby
+- alias: Toggle Hockey Hobby
+  id: toggle_hockey_hobby
   
   triggers:
     - trigger: state
       entity_id: input_boolean.hockey_season
       from: 'off'
       to: 'on'
-  
-  actions:
-    - action: automation.turn_on
-      entity_id:
-        - automation.notify_next_canes_game
-        - automation.notify_next_flyers_game
-
-- alias: Disable Hockey Hobby
-  id: disable_hockey_hobby
-  
-  triggers:
+      id: 'on'
+    
     - trigger: state
       entity_id: input_boolean.hockey_season
       from: 'on'
       to: 'off'
+      id: 'off'
   
   actions:
-    - action: automation.turn_off
+    - action: automation.turn_{{ trigger.id }}
       entity_id:
         - automation.notify_next_canes_game
         - automation.notify_next_flyers_game

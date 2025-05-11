@@ -19,7 +19,9 @@ bedtime:
       entity_id: input_boolean.nighttime
 
     # Turn off the Family Room AV system.
-    - action: script.disable_family_room_av
+    - action: script.toggle_family_room_av
+      data:
+        operation: 'off'
     
     # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
     - action: script.turn_on

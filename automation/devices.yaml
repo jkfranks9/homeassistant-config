@@ -721,7 +721,9 @@
       entity_id: input_boolean.extended_away_mode
       state: 'off'
     
-    - action: script.enable_family_room_av
+    - action: script.toggle_family_room_av
+      data:
+        operation: 'on'
 
 #================================#
 #     Human Presence Sensors     #
@@ -731,33 +733,26 @@
 # But what is needed is a delayed reaction after the human presence sensor turns off, so the fan doesn't go off until it's
 # clear that the office is unoccupied. So we use an input boolean here that turns on quickly but only turns off 
 # if the human presence sensor doesn't detect presence for a decent interval.
-- alias: Turn On Office occupied
-  id: turn_on_office_occupied
+- alias: Toggle Office occupied
+  id: toggle_office_occupied
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.office_human_sensor_presence
       from: 'off'
       to: 'on'
       for: '00:02:00'
-  
-  action:
-    - service: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.office_occupied
-
-- alias: Turn Off Office occupied
-  id: turn_off_office_occupied
-  
-  trigger:
-    - platform: state
+      id: 'on'
+    
+    - trigger: state
       entity_id: binary_sensor.office_human_sensor_presence
       from: 'on'
       to: 'off'
       for: '00:20:00'
+      id: 'off'
   
-  action:
-    - service: input_boolean.turn_off
+  actions:
+    - action: input_boolean.turn_{{ trigger.id }}
       target:
         entity_id: input_boolean.office_occupied
 

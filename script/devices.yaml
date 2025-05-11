@@ -102,23 +102,21 @@ restart_shield_tv:
 #     Family Room AV     #
 #========================#
 
-# Turn on family room AV.
-enable_family_room_av:
-  alias: Enable Family Room AV
+toggle_family_room_av:
+  alias: Toggle Family Room AV
+  
+  fields:
+    operation:
+      description: Whether to turn the AV system on or off.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
   
   sequence:
     
-    - action: switch.turn_on
-      entity_id:
-        - switch.fire_tv_plug
-        - switch.family_room_av
-
-# Turn off family room AV.
-disable_family_room_av:
-  alias: Disable Family Room AV
-  sequence:
-    
-    - action: switch.turn_off
+    - action: switch.turn_{{ operation }}
       entity_id:
         - switch.fire_tv_plug
         - switch.family_room_av
@@ -149,17 +147,8 @@ toggle_vacuum_automation:
         - "{{ operation != automation_state }}"
       
       then:
-        
-        - if:
-            - "{{ operation == 'on' }}"
-          
-          then:
-            - action: automation.turn_on
-              entity_id: automation.start_vacuum
-          
-          else:
-            - action: automation.turn_off
-              entity_id: automation.start_vacuum
+        - action: automation.turn_{{ operation }}
+          entity_id: automation.start_vacuum
 
 #=========================#
 #     Laundry History     #

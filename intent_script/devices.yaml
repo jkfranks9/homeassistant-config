@@ -12,8 +12,12 @@ RestartFireTV:
 
 TVOff:
   action:
-    service: script.disable_family_room_av
+    service: script.toggle_family_room_av
+    data:
+      operation: 'off'
 
 TVOn:
   action:
-    service: script.enable_family_room_av
+    service: script.toggle_family_room_av
+    data:
+      operation: 'on'
