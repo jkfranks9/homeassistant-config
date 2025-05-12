@@ -1483,40 +1483,6 @@
 #     Dryer     #
 #===============#
 
-- alias: Start Dryer
-  id: start_dryer
-  
-  triggers:
-    - trigger: state
-      entity_id: binary_sensor.dryer_sensor_start_button
-      from: 'off'
-      to: 'on'
-  
-  actions:    
-    
-    # Indicate the dryer has started. This is the initial state before the temperature has been detected (in Turn On Dryer Running).
-    - action: input_boolean.turn_on
-      entity_id: input_boolean.dryer_started
-    
-    # Remember to backup the log tomorrow morning.
-    - action: input_boolean.turn_on
-      entity_id: input_boolean.backup_laundry_log
-    
-    # Log the start in the laundry events log.
-    - action: script.log_laundry_event
-      data:
-        event_type: basic
-        prefix: Dryer
-        message: >
-          {% set intemp  = states('sensor.downstairs_temperature') %}
-          {% set inhum   = states('sensor.downstairs_humidity') %}
-          {% set outtemp = states('sensor.porch_sensor_temperature') %}
-          {% set outhum  = states('sensor.porch_sensor_humidity') %}
-          {% set drytemp = states('sensor.dryer_sensor_temperature') %}
-          {% set dryhum  = states('sensor.dryer_sensor_humidity') %}
-          
-          starting: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%); dryer ({{ drytemp }}°, {{ dryhum }}%)
-
 - alias: Turn On Dryer Running
   id: turn_on_dryer_running
   
@@ -1546,11 +1512,24 @@
     
     # Indicate the dryer is running.
     - action: input_boolean.turn_on
-      entity_id: input_boolean.dryer_running   
+      entity_id: input_boolean.dryer_running
     
-    # Turn off dryer started.
-    - action: input_boolean.turn_off
-      entity_id: input_boolean.dryer_started
+    # Remember to backup the log tomorrow morning.
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.backup_laundry_log
+    
+    # Log initial information in the laundry events log.
+    - action: script.log_laundry_event
+      data:
+        event_type: basic
+        prefix: Dryer
+        message: >
+          {% set intemp  = states('sensor.downstairs_temperature') %}
+          {% set inhum   = states('sensor.downstairs_humidity') %}
+          {% set outtemp = states('sensor.porch_sensor_temperature') %}
+          {% set outhum  = states('sensor.porch_sensor_humidity') %}
+          
+          starting: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%)
     
     # Log temperature detected in the laundry events log.
     - action: script.log_laundry_event
