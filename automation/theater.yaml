@@ -112,15 +112,6 @@
         message: "Projector lamp error detected. Please wait a few minutes while I try to fix it."
         room: ['family_room', 'theater']
         voice_type: announce
-      
-    # - action: notify.alexa_media
-      # data:
-        # message: "Projector lamp error detected. Please wait a few minutes while I try to fix it."
-        # target:
-          # - media_player.family_room_echo
-          # - media_player.theater_echo
-        # data:
-          # type: tts
     
     # Wait a bit for the projector to turn itself off. We can't check the state to determine this because for this error
     # the state never changes from off.
@@ -133,15 +124,6 @@
         message: "I'm resetting the projector."
         room: ['family_room', 'theater']
         voice_type: tts
-    
-    # - action: notify.alexa_media
-      # data:
-        # message: "I'm resetting the projector."
-        # target:
-          # - media_player.family_room_echo
-          # - media_player.theater_echo
-        # data:
-          # type: tts
     
     # Set the expected powered off flag. This prevents the Check Projector Off automation from turning the plug
     # back on.
@@ -170,15 +152,6 @@
         message: "I'm turning the projector back on. Keep your fingers crossed!"
         room: ['family_room', 'theater']
         voice_type: tts
-    
-    # - action: notify.alexa_media
-      # data:
-        # message: "I'm turning the projector back on. Keep your fingers crossed!"
-        # target:
-          # - media_player.family_room_echo
-          # - media_player.theater_echo
-        # data:
-          # type: tts
     
     - delay: '00:00:05'
     

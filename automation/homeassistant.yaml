@@ -210,10 +210,6 @@
     
     # Backup automations and scripts log files.
     - action: shell_command.backup_auto_scripts_log
-    
-    # Turn off washer plug.
-    - action: switch.turn_off
-      entity_id: switch.washer
 
     # Make sure the dryer isn't running, just in case.
     - action: input_boolean.turn_off

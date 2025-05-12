@@ -62,13 +62,10 @@ activate_cinema:
       target:
         entity_id: input_boolean.projector_error_handling
         
-    # Make sure power monitoring plugs are on.
+    # Turn on plugs needed for some equipment. Other equipment plugs are turned on every day at wakeup time.
     - action: switch.turn_on
       target:
-        entity_id:
-          - switch.projector
-          - switch.subwoofer_front
-          - switch.subwoofer_back
+        entity_id: "{{ label_entities('theater_off') }}"
     
     # Start the input Harmony activity, which ensures the correct devices are on.
     # However, if Enable Streaming is requested but the cinema is currently on, then use the Stream Player
@@ -127,30 +124,6 @@ activate_cinema:
             speak: excited
             room: ['family_room', 'theater']
             voice_type: tts
-        
-        # - action: notify.alexa_media
-          # data:
-            # message: >
-              # <speak>
-                # <amazon:emotion name="excited" intensity="low">
-                # {{ ["I'm waiting a bit for the projector to warm up.", 
-                    # "You have a minute or so before the theater is ready.", 
-                    # "I'll let you know when things are ready.",
-                    # "Hopefully the projector won't explode. Stay tuned.",
-                    # "Lights are on, just waiting on the projection equipment.",
-                    # "Loading the film canister now.",
-                    # "Theater is waking up.",
-                    # "Popcorn is popping. Cokes are bubbling. Grab a seat and relax.",
-                    # "I'm flipping on all the switches. Hope that works.",
-                    # "What's this big red button do? Let's find out!"
-                   # ] | random }}
-                # </amazon:emotion>
-              # </speak>
-            # target:
-              # - media_player.family_room_echo
-              # - media_player.theater_echo
-            # data:
-              # type: tts
       
         # Delay for a while to make sure the projector is on and any error that may have been detected has been fixed, or the projector is active.
         - variables:
@@ -177,15 +150,6 @@ activate_cinema:
                 message: "I'm sorry, but I failed to fix a projector lamp error."
                 room: ['family_room', 'theater']
                 voice_type: announce
-            
-            # - action: notify.alexa_media
-              # data:
-                # message: "I'm sorry, but I failed to fix a projector lamp error."
-                # target:
-                  # - media_player.family_room_echo
-                  # - media_player.theater_echo
-                # data:
-                  # type: tts
   
     # Activate Kodi if requested.
     - if:
@@ -366,15 +330,6 @@ play_random_kodi_videos:
             message: "I'm sorry, but Kodi videos could not be retrieved."
             room: ['family_room', 'theater']
             voice_type: announce
-        
-        # - action: notify.alexa_media
-          # data:
-            # message: "I'm sorry, but Kodi videos could not be retrieved."
-            # target:
-              # - media_player.family_room_echo
-              # - media_player.theater_echo
-            # data:
-              # type: tts
     
         - stop: 'Kodi videos could not be retrieved'
   
@@ -578,11 +533,6 @@ close_cinema:
     - action: remote.turn_off
       entity_id: remote.harmony_hub
     
-    # The front subwoofer appears to always be on, so turn off the plug.
-    - action: switch.turn_off
-      target:
-        entity_id: switch.subwoofer_front
-    
     # Set the upstairs Ecobee to away or sleep mode, depending on the time of day.
     - if:
         - condition: time
@@ -681,18 +631,6 @@ check_cinema_usage_control:
                 room: ['family_room', 'theater']
                 voice_type: announce
         
-            # - service: notify.alexa_media
-              # data:
-                # message: >
-                  # {% set delay_minutes = (delay / 60) | round %}
-                  # {% set delay_display = iif(delay_minutes >= 1, delay_minutes, 1) %}
-                  # {{ 'Cinema has been ' ~ message_state1 ~ ' recently. Delaying cinema ' ~ message_state2 ~ ' for ' ~ delay_display ~ ' ' ~ iif(delay_display == 1, 'minute', 'minutes') ~ '.' }}
-                # target:
-                  # - media_player.family_room_echo
-                  # - media_player.theater_echo
-                # data:
-                  # type: tts
-        
             - service: timer.start
               data:
                 entity_id: timer.cinema_usage_delay
@@ -744,29 +682,6 @@ perform_post_open_tasks:
         speak: excited
         room: ['family_room', 'theater']
         voice_type: tts
-    
-    # - service: notify.alexa_media
-      # data:
-        # message: >
-          # <speak>
-            # <amazon:emotion name="excited" intensity="medium">
-            # {{ ["Cinema is now open to the public!", 
-                # "Hope you enjoy the show!", 
-                # "White Rabbit Theater is ready!",
-                # "Don't forget to silence your phones!",
-                # "Please don't lose your children in the dark!",
-                # "Watch for weeping angels!",
-                # "Come relax in our state of the art theater!",
-                # "Prepare to laugh and weep in equal measure!",
-                # "Time to vegetate on the couch!"
-               # ] | random }}
-            # </amazon:emotion>
-          # </speak>
-        # target:
-          # - media_player.family_room_echo
-          # - media_player.theater_echo
-        # data:
-          # type: tts
     
     # Set the upstairs Ecobee to home mode.
     - service: script.set_thermostat_preset

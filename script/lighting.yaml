@@ -52,6 +52,20 @@ bedtime:
     
     # Turn off voice assistant screens.
     - scene: scene.voice_assistants_off
+    
+    # Turn off certain plugs. These are plugs that are turned on only when needed.
+    - action: switch.turn_off
+      target:
+        entity_id: "{{ label_entities('off_at_night') }}"
+    
+    # Turn off theater plugs if the theater is not in use.
+    - if:
+        - "{{ states('input_boolean.theater_open') == 'off' or states('sensor.harmony_hub') == 'PowerOff' }}"
+      
+      then:    
+        - action: switch.turn_off
+          target:
+            entity_id: "{{ label_entities('theater_off') + label_entities('theater_off_at_night') }}"
   
 # Going to sleep now.
 sleeptime:
@@ -166,6 +180,11 @@ wakeup:
     
     - action: light.turn_off
       entity_id: light.island_light
+    
+    # Turn on certain theater plugs. These control devices that could be updated at any time.
+    - action: switch.turn_on
+      target:
+        entity_id: "{{ label_entities('theater_off_at_night') }}"
 
 #===========================================#
 #     Children-Only Bedtime Environment     #

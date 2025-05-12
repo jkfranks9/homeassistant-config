@@ -118,19 +118,6 @@
         room: ['master_bedroom']
         voice_type: tts
     
-    # - action: notify.alexa_media
-      # data:
-        # message: >
-          # {% set msg = 'Good morning. You slept ' ~ hours ~ ' hours' ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' minutes.', '.') %}
-          # {% if calendar == true %}
-            # {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
-          # {% endif %}
-          
-          # {{ msg }}
-        # target: media_player.master_bedroom_echo
-        # data:
-          # type: tts
-    
     # Turn on voice assistant screens.
     - if:
         - condition: numeric_state
