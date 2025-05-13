@@ -65,7 +65,7 @@ bedtime:
       then:    
         - action: switch.turn_off
           target:
-            entity_id: "{{ label_entities('theater_off') + label_entities('theater_off_at_night') }}"
+            entity_id: "{{ label_entities('theater_off') }}"
   
 # Going to sleep now.
 sleeptime:
@@ -180,11 +180,6 @@ wakeup:
     
     - action: light.turn_off
       entity_id: light.island_light
-    
-    # Turn on certain theater plugs. These control devices that could be updated at any time.
-    - action: switch.turn_on
-      target:
-        entity_id: "{{ label_entities('theater_off_at_night') }}"
 
 #===========================================#
 #     Children-Only Bedtime Environment     #
