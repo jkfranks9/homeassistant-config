@@ -2,6 +2,8 @@
 #     Notification Sensors     #
 #==============================#
 
+#---------- Trigger Sensors ----------#
+
 #--------------------------------------------#
 #   -- Mobile Notification Tag Registry --   #
 #--------------------------------------------#
@@ -29,39 +31,83 @@
             {{ dict(current.items() | rejectattr('0', 'eq', trigger.event.data.key)) }}
           {% endif %}
 
-# This sensor just contains the keys for the mobile tag registry. This is used for manual unregistration of tags
-# from the UI, and for ease of walking through the registry.
+#---------- Normal Sensors ----------#
+
 - sensor:
+
+    #--------------------------------------------#
+    #   -- Mobile Notification Tag Registry --   #
+    #--------------------------------------------#
+
+    # This sensor just contains the keys for the mobile tag registry. This is used for manual unregistration of tags
+    # from the UI, and for ease of walking through the registry.
     - name: Mobile Tag Registry Keys
       unique_id: mobile_tag_registry_keys
       state: "{{ this.attributes.tags | length }}"
       
       attributes:
         tags: >
-          {% set val = namespace(keys = []) %}
+          {% set var = namespace(keys = []) %}
           {% if states('sensor.mobile_tag_registry') != 'unavailable' %}
-            {% set val.keys = state_attr('sensor.mobile_tag_registry', 'tags').keys() | list %}
+            {% set var.keys = state_attr('sensor.mobile_tag_registry', 'tags').keys() | list %}
           {% endif %}
           
-          {{val.keys}}
+          {{ var.keys }}
 
-# This sensor contains all mobile notifications that can only be cleared manually. It is intended to be used by
-# the Remove Manual Mobile Notification script, which in turn is intended to be called by an Alexa routine.
-- sensor:
+    # This sensor contains all mobile notifications that can only be cleared manually. It is intended to be used by
+    # the Remove Manual Mobile Notification script, which in turn is intended to be called by an Alexa routine.
     - name: Mobile Tag Registry Manual Clear
       unique_id: mobile_tag_registry_manual_clear
       state: "{{ this.attributes.tags | length }}"
       
       attributes:
         tags: >
-          {% set val = namespace(manual_tags = []) %}
+          {% set var = namespace(manual_tags = []) %}
           {% if states('sensor.mobile_tag_registry') != 'unavailable' %}
             {% for tag in state_attr('sensor.mobile_tag_registry', 'tags') %}
               {% set tag_entry = state_attr('sensor.mobile_tag_registry', 'tags').get(tag) %}
               {% if tag_entry[0] == 'manual' %}
-                {% set val.manual_tags = val.manual_tags + [tag] %}
+                {% set var.manual_tags = var.manual_tags + [tag] %}
               {% endif %}
             {% endfor %}
           {% endif %}
           
-          {{val.manual_tags}}
+          {{ var.manual_tags }}
+
+    #-----------------------------------#
+    #   -- Voice Assistant Devices --   #
+    #-----------------------------------#
+    
+    # List of all rooms containing an Amazon echo device.
+    - name: Voice Echo Rooms
+      unique_id: voice_echo_rooms
+      state: "{{ this.attributes.rooms | length }}"
+      
+      attributes:
+        rooms: >
+          {% set var = namespace(list = []) %}
+          {% for state in states.media_player %}
+            {% set entity = state.entity_id %}
+            {% if '_echo' in entity and '_with_' not in entity %}
+              {% set var.list = var.list + [entity.split('.')[1].replace('_echo', '')] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ var.list | sort }}
+    
+    # List of all rooms containing a Home Assistant (nabu) device.
+    - name: Voice Nabu Rooms
+      unique_id: voice_nabu_rooms
+      state: "{{ this.attributes.rooms | length }}"
+      
+      attributes:
+        rooms: >
+          {% set var = namespace(list = []) %}
+          {% for state in states.assist_satellite %}
+            {% set entity = state.entity_id %}
+            {% if '_assist_satellite' in entity %}
+              {% set var.list = var.list + [entity.split('.')[1].replace('_nabu_assist_satellite', '')] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ var.list | sort}}
