@@ -536,7 +536,7 @@ send_message_to_room_voice_device:
           - choose:
             
             # First priority is an HA Assist (Nabu) device.
-            - conditions: "{{ repeat.item in states('sensor.voice_nabu_rooms') }}"
+            - conditions: "{{ repeat.item in state_attr('sensor.voice_nabu_rooms', 'rooms') }}"
             
               sequence:
                 - variables:
@@ -553,7 +553,7 @@ send_message_to_room_voice_device:
                       family: nabu
             
             # Second priority is an Amazon Echo device.
-            - conditions: "{{ repeat.item in states('sensor.voice_echo_rooms') }}"
+            - conditions: "{{ repeat.item in state_attr('sensor.voice_echo_rooms', 'rooms') }}"
             
               sequence:
                 - variables:
