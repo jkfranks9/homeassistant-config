@@ -1,43 +1,3 @@
-#===============#
-#     House     #
-#===============#
-
-# Turn off extended away mode if Jon returns home early.
-turn_off_extended_away_mode:
-  alias: Turn Off Extended Away Mode  
-  sequence:
-
-    # Continue only if extended away mode is currently on.  
-    - condition: state
-      entity_id: input_boolean.extended_away_mode
-      state: 'on'
-    
-    # Set the extended away end 2 minutes from now (the extra time is just to make sure the timing satifies my paranoia).
-    # This in turn will trigger the Disable Extended Away Mode automation.
-    - service: input_datetime.set_datetime
-      target:
-        entity_id: input_datetime.extended_away_end
-      data:
-        datetime: "{{ (now() + timedelta(minutes = 2)).strftime('%Y-%m-%d %H:%M:%S') }}"
-
-# Restore the penthouse bedroom to normal. This can happen when all family members leave, or when just parents
-# leave, but a child remains.
-restore_normal_penthouse_bedroom:
-  alias: Restore Normal Penthouse Bedroom
-  
-  sequence:
-    
-    # Remove upstairs thermostat hold.
-    - action: script.remove_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        extended: false
-            
-    # Turn on the vacuum automation.
-    - action: script.toggle_vacuum_automation
-      data:
-        operation: 'on'
-
 #==========================#
 #     Computer Control     #
 #==========================#
@@ -102,21 +62,23 @@ restart_shield_tv:
 #     Family Room AV     #
 #========================#
 
-toggle_family_room_av:
-  alias: Toggle Family Room AV
-  
-  fields:
-    operation:
-      description: Whether to turn the AV system on or off.
-      selector:
-        select:
-          options:
-            - 'on'
-            - 'off'
+# Turn on family room AV.
+enable_family_room_av:
+  alias: Enable Family Room AV
   
   sequence:
     
-    - action: switch.turn_{{ operation }}
+    - action: switch.turn_on
+      entity_id:
+        - switch.fire_tv_plug
+        - switch.family_room_av
+
+# Turn off family room AV.
+disable_family_room_av:
+  alias: Disable Family Room AV
+  sequence:
+    
+    - action: switch.turn_off
       entity_id:
         - switch.fire_tv_plug
         - switch.family_room_av
@@ -223,32 +185,6 @@ update_laundry_history_time_ranges:
         entity_id: "{{ stop_entity_prefix ~ '1' }}"
       data_template:
         timestamp: "{{ stop_time + 60 }}"
-
-#======================#
-#     Echo Devices     #
-#======================#
-
-# Mute bedroom echo devices until 9 AM the next morning (unmuted in Unmute Guest Bedroom Echos automation).
-mute_studio_echo:
-  alias: Mute Studio Echo
-  
-  sequence:
-    - service: switch.turn_on
-      entity_id: switch.studio_echo_do_not_disturb_switch
-
-mute_master_bedroom_echo:
-  alias: Mute Master Bedroom Echo
-  
-  sequence:
-    - service: switch.turn_on
-      entity_id: switch.master_bedroom_echo_do_not_disturb_switch
-
-mute_penthouse_echo:
-  alias: Mute Penthouse Echo
-  
-  sequence:
-    - service: switch.turn_on
-      entity_id: switch.penthouse_echo_do_not_disturb_switch
 
 #======================#
 #     Garage Doors     #

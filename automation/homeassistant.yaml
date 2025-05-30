@@ -191,12 +191,9 @@
     # Don't touch the few that are turned off most of the time, or for extended periods.
     - action: automation.turn_on
       entity_id:
-        - automation.close_house
-        - automation.open_house
+        - automation.determine_cpap_filter_target_day
         - automation.run_studio_motion_based_light
-        - automation.run_master_bath_motion_based_light
-        - automation.turn_on_guest_lights_sunset
-        - automation.control_office_lamp
+        - automation.update_last_alexa_device
     
     # Some automations that could be off should only be turned back on conditionally.
     - if:

@@ -36,6 +36,8 @@ activate_cinema:
   
   variables:
     cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' }}"
+    plugs: "{{ label_entities('theater_off') }}"
+    num_plugs: "{{ plugs | length }}"
   
   sequence:
     
@@ -65,7 +67,25 @@ activate_cinema:
     # Turn on plugs needed for some equipment. Other equipment plugs are turned on every day at wakeup time.
     - action: switch.turn_on
       target:
-        entity_id: "{{ label_entities('theater_off') }}"
+        entity_id: "{{ plugs }}"
+    
+    # Wait a bit for the plugs to turn on before starting the Harmony activity. Quit if they don't.
+    - wait_template: >
+        {% set var = namespace(results = []) %}
+        {% for plug in plugs %}
+        {% if states(plug) == 'on' %}
+        {% set var.results = var.results + [true] %}
+        {% endif %}
+        {% endfor %}
+        {{ var.results | length == num_plugs }}
+    
+      timeout: '00:01:00'
+    
+    - if:
+        "{{ wait.completed == false }}"
+      
+      then:
+        - stop: "Cinema plugs failed to turn on."
     
     # Start the input Harmony activity, which ensures the correct devices are on.
     # However, if Enable Streaming is requested but the cinema is currently on, then use the Stream Player
@@ -714,9 +734,7 @@ perform_post_open_tasks:
           after:  '18:00:00'
           before: '23:30:00'
     
-    - service: script.toggle_family_room_av
-      data:
-        operation: 'off'
+    - service: script.disable_family_room_av
 
 #=========================#
 #     Volume Control      #
@@ -954,9 +972,8 @@ change_downstairs_lighting:
         test_lights: "{{ iif(is_state('input_boolean.christmas_mode', 'off'), 'light.family_room_lamp', 'light.all_christmas_lights') }}"
         ambient_min: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
         ambient_value: "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) }}"
-        all_day: "{{ is_state('binary_sensor.all_day_christmas_lights', 'on') }}"
         activation_lights: "{{ ['light.stairway_light', 'light.island_light'] }}"
-        non_activation_lights: "{{ ['light.daytime_lights', 'light.stairway_light', 'light.island_light'] }}"
+        non_activation_lights: "{{ ['light.office_lamp', 'light.family_room_lamp', 'light.hallway_lamp'] + activation_lights }}"
     
     - if:
         - "{{ turn_on == true }}"
@@ -975,7 +992,7 @@ change_downstairs_lighting:
           # and otherwise they should already be on.
           then:
             - if:
-                - "{{ iif(all_day == false, is_state(test_lights, 'on') or ambient_value < ambient_min, true) }}"
+                - "{{ is_state(test_lights, 'on') or ambient_value < ambient_min }}"
               
               then:
                 - action: script.turn_on_lights_per_conditions

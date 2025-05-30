@@ -5,10 +5,6 @@
 # NOTE: These intents require knowing the most recently spoken to device. So all intent scripts must call a script
 # that in turn calls Get Voice Device Data as the first step.
 
-ChangeLight:
-  action:
-    service: script.voice_toggle_room_light
-
 FanHigh:
   action:
     - service: script.voice_modify_fan
@@ -33,6 +29,18 @@ FanOff:
       data:
         speed: 'off'
 
+LightOn:
+  action:
+    - action: script.voice_operate_light
+      data:
+        operation: 'on'
+
+LightOff:
+  action:
+    - action: script.voice_operate_light
+      data:
+        operation: 'off'
+
 RemoveNotification:
   action:
-    service: script.voice_mobile_notification
+    - action: script.voice_mobile_notification

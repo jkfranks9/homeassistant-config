@@ -2,10 +2,6 @@
 #     Lighting     #
 #==================#
 
-Awake:
-  action:
-    service: script.awake
-
 Bathroom:
   action:
     service: script.turn_on_bathroom_light
@@ -49,7 +45,3 @@ TurnOffChristmasLights:
 TurnOnChristmasLights:
   action:
     service: script.turn_on_christmas_lights
-
-WakeUp:
-  action:
-    service: script.wakeup

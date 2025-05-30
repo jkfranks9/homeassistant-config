@@ -1,0 +1,589 @@
+#===============================#
+#     Occupied Guest Suites     #
+#===============================#
+
+# The guest suites (studio and penthouse) each have a dropdown that identifies the guest(s) using that suite overnight.
+# These are maintained here and are driven by the Handle Guest {Arrival|Departure} automations, and also by manual changes
+# made that trigger the Modify Occupied Guest Suites automation. Arrivals and departures are likely staggered, and in any 
+# case are processed one at a time. Some notes:
+#
+# - Couples can always stay together, or prefer separate sleeping conditions. 
+# - Minors can stay with a parent, or prefer sleeping alone. 
+# - Some combinations of guests are valid, while others are not (based on history, preferences, etc).
+# - Regardless of the defaults set here, there are some guest combinations that can be changed by the guests themselves.
+#   Those are handled by the Modify Occupied Guest Suites automation.
+
+# Add a guest to a suite. This is done for guest arrival, or manually by some guests that can switch suites using a dropdown
+# on the dashboard.
+add_guest_to_suite:
+  alias: Add Guest To Suite
+  
+  fields:
+    guest:
+      description: Name of the guest to be added.
+    
+    suite:
+      description: The suite to which the guest is to be added.
+      selector:
+        select:
+          options:
+            - Studio
+            - Penthouse
+  
+  sequence:
+    - variables:
+        suite_entity: "{{ 'input_select.' ~ suite | lower ~ '_guests' }}"
+        
+    # Update the suite guests.
+    - if:
+        - "{{ (guest == 'Sarah' and is_state(suite_entity, 'Skylar')) or (guest == 'Skylar' and is_state(suite_entity, 'Sarah')) }}"
+        
+      then:    
+        - action: input_select.select_option
+          target:
+            entity_id: "{{ suite_entity }}"
+          data:
+            option: 'Skylar + Sarah'
+      
+      else:    
+        - action: input_select.select_option
+          target:
+            entity_id: "{{ suite_entity }}"
+          data:
+            option: "{{ guest }}"
+    
+    # Prepare the suite for occupancy.    
+    - action: script.modify_{{ suite | lower }}
+      data:
+        reason: arrival
+
+# Remove a guest from a suite. This is done for guest departure, or manually by some guests that can switch suites using a dropdown
+# on the dashboard.
+remove_guest_from_suite:
+  alias: Remove Guest From Suite
+  
+  fields:
+    guest:
+      description: Name of the guest to be removed.
+    
+    suite:
+      description: The suite to which the guest is to be removed.
+      selector:
+        select:
+          options:
+            - Studio
+            - Penthouse
+        
+  sequence:
+    - variables:
+        suite_entity: "{{ 'input_select.' ~ suite | lower ~ '_guests' }}"
+        combined_guests: "{{ '+' in states(suite_entity) }}"
+    
+    # Update the suite guests.
+    - if:
+        - "{{ combined_guests }}"
+        
+      then:    
+        - action: input_select.select_option
+          target:
+            entity_id: "{{ suite_entity }}"
+          data:
+            option: "{{ iif(guest == 'Sarah', 'Skylar', 'Sarah') }}"
+      
+      else:    
+        - action: input_select.select_option
+          target:
+            entity_id: "{{ suite_entity }}"
+          data:
+            option: 'Empty'
+    
+    # Clean up the suite if needed.
+    - choose:
+        - conditions: "{{ suite == 'Penthouse' and not combined_guests }}"
+      
+          sequence:
+            
+            # Restore penthouse.   
+            - action: script.modify_penthouse
+              data:
+                reason: departure
+        
+        - conditions: "{{ suite == 'Studio' and not combined_guests }}"
+      
+          sequence:
+            
+            # Restore studio.   
+            - action: script.modify_studio
+              data:
+                reason: departure
+
+#==========================#
+#     Sleep Start/Stop     #
+#==========================#
+
+# Prepare for bedtime.
+bedtime:
+  alias: Bedtime
+  
+  sequence:
+    
+    # Turn on the master bedroom lamp.
+    - action: light.turn_on
+      entity_id: light.master_bedroom_lamp
+      data:
+        color_temp_kelvin: 2700
+        brightness_pct: 100
+    
+    # Turn on nighttime mode.
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+
+    # Turn off the Family Room AV system.
+    - action: script.disable_family_room_av
+    
+    # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
+    - action: script.turn_on
+      target:
+        entity_id: script.close_garage_door_north
+      data:
+        variables:
+          use_info_message: true
+    
+    - action:  script.turn_on
+      target:
+        entity_id: script.close_garage_door_south
+      data:
+        variables:
+          use_info_message: true
+    
+    # Lock the PC.
+    - action: script.turn_on
+      entity_id: script.lock_pc
+      
+    - delay: '00:00:07'
+      
+    # Establish the proper bedtime environment (lights, thermostats, echo devices).
+    - action: script.establish_bedtime_environment
+    
+    # Turn off all fans.
+    - scene: scene.fans_off
+    
+    # Turn off voice assistant screens.
+    - scene: scene.voice_assistants_off
+    
+    # Turn off certain plugs. These are plugs that are turned on only when needed.
+    - action: switch.turn_off
+      target:
+        entity_id: "{{ label_entities('off_at_night') }}"
+    
+    # Turn off theater plugs if the theater is not in use.
+    - if:
+        - "{{ states('input_boolean.theater_open') == 'off' or states('sensor.harmony_hub') == 'PowerOff' }}"
+      
+      then:    
+        - action: switch.turn_off
+          target:
+            entity_id: "{{ label_entities('theater_off') + label_entities('theater_off_at_night') }}"
+  
+# Going to sleep now.
+sleeptime:
+  alias: Sleeptime
+  
+  sequence:
+    
+    # Only works during night time.
+    - condition: state
+      entity_id: input_boolean.nighttime
+      state: 'on'
+    
+    # Turn on sleeptime mode.
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.sleeptime
+    
+    # Turn off the master suite lights.
+    - action: light.turn_off
+      entity_id: light.master_suite_lights
+
+# Turn on the bathroom light during the night.
+turn_on_bathroom_light:
+  alias: Turn On Bathroom Light
+  
+  sequence:
+    
+    # Only works during night time.
+    - condition: state
+      entity_id: input_boolean.nighttime
+      state: 'on'
+    
+    # Turn on bathroom flag.
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.bathroom
+    
+    # Turn on master bedroom lamp.
+    - action: light.turn_on
+      entity_id: light.master_bedroom_lamp
+      data:
+        color_temp_kelvin: 2700
+        brightness_pct: 20
+    
+    # Turn on bath light.
+    - action: light.turn_on
+      entity_id: light.master_vanity_light
+    
+    # Wait a few minutes then turn off the bathroom flag and light.
+    - delay: '00:12:00'
+    
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.bathroom
+    
+    - action: light.turn_off
+      entity_id: light.master_vanity_light
+
+#=============================#
+#     Bedtime Environment     #
+#=============================#
+
+# Bedtime environment rules (lighting and thermostats) are determined by family members present (adults and children), and by the occupied
+# bedrooms.
+
+establish_bedtime_environment:
+  alias: Establish Bedtime Environment
+  
+  sequence:
+    - variables:
+        
+        # Turn off all lights if it's just me home, or all non-bedroom lights if family are present.
+        scene: "{{ iif(is_state('binary_sensor.adults_home', 'off') and is_state('binary_sensor.children_home', 'off'), 'non_master_lights_out', 'non_bedroom_lights_out') }}"
+    
+    # Turn off most lights.
+    - action: scene.turn_on
+      target:
+        entity_id: "{{ 'scene.' ~ scene }}"
+    
+    # Modify the master suite for bedtime.
+    - action: script.modify_master_suite
+      data:
+        reason: bedtime
+        
+    # Modify the studio for bedtime.
+    - action: script.modify_studio
+      data:
+        reason: bedtime
+        
+    # Modify the penthouse for bedtime.
+    - action: script.modify_penthouse
+      data:
+        reason: bedtime
+
+# Reset the bedtime environment in the morning. This is called by the Handle Jon Awake automation.
+reset_bedtime_environment:
+  alias: Reset Bedtime Environment
+  
+  sequence:
+    
+    # Modify the master suite for bedtime.
+    - action: script.modify_master_suite
+      data:
+        reason: wakeup
+        
+    # Modify the studio for bedtime.
+    - action: script.modify_studio
+      data:
+        reason: wakeup
+        
+    # Modify the penthouse for bedtime.
+    - action: script.modify_penthouse
+      data:
+        reason: wakeup
+
+#==========================#
+#     Suite Management     #
+#==========================#
+
+# Perform tasks for the master suite for certain events.
+modify_master_suite:
+  alias: Modify Master Suite
+  
+  fields:
+    reason:
+      description: The event that has occurred.
+      selector:
+        select:
+          options:
+            - bedtime
+            - wakeup
+  
+  sequence:
+    - variables:
+        
+        # These allow us to perform tasks for any reason without needing to use if/else or choose.
+        on_off_option: "{{ iif(reason == 'bedtime', 'off', 'on') }}"
+        open_close_option: "{{ iif(reason == 'bedtime', 'open', 'close') }}"
+    
+    # Perform tasks for any reason.
+    
+    # Sometimes the bathroom motion sensor is twitchy and the light would turn back on after being turned off for a bathroom break 
+    # with the original implementation. I can instead manage the light during the night using the Turn On Bathroom Light script.
+    # So turn the automation off at bedtime and back on at wakeup.
+    - action: automation.turn_{{ on_off_option }}
+      entity_id: automation.run_master_bath_motion_based_light
+        
+    # Open or close the HVAC vents.
+    - action: script.{{ open_close_option }}_hvac_vents
+    
+    # Perform tasks for wakeup only.
+    - if:
+        - "{{ reason == 'wakeup' }}"
+          
+      then:
+  
+        # Turn on master bedroom lamp if needed.
+        - action: script.turn_on_lights_per_conditions
+          data:
+            light_entity: light.master_bedroom_lamp
+            lux_entity: sensor.downstairs_sensor_ambient_light
+            min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
+
+        # Turn off the master suite lights when motion is detected downstairs.
+        - wait_template: >
+            {% set motion = states('binary_sensor.downstairs_motion') %}
+            {% set devices = state_attr('binary_sensor.downstairs_motion', 'devices') %}
+            {% set master = 'binary_sensor.master_bath_motion_detector_occupancy' in devices %}
+            {{ motion == 'on' and master == false }}
+
+        - action: homeassistant.turn_off
+          target:
+            entity_id: light.master_suite_lights
+
+# Perform tasks for the studio for certain events.
+modify_studio:
+  alias: Modify Studio
+  
+  fields:
+    reason:
+      description: The event that has occurred.
+      selector:
+        select:
+          options:
+            - arrival
+            - departure
+            - bedtime
+            - wakeup
+  
+  sequence:
+    - choose:
+        
+        # Arrival tasks.
+        - conditions: "{{ reason == 'arrival' }}"
+          
+          sequence:
+            
+            # Turn on the preferred lamp(s) if it's dark.
+            - if:
+                - condition: state
+                  entity_id: binary_sensor.studio_arrival_darkness
+                  state: 'on'
+              
+              then:
+                - action: script.operate_preferred_studio_lamps
+                  data:
+                    operation: 'on'
+        
+        # Departure tasks.
+        - conditions: "{{ reason == 'departure' }}"
+          
+          sequence:
+            
+            # Turn off studio lights.
+            - action: light.turn_off
+              target:
+                entity_id: light.studio_lights
+        
+        # Bedtime tasks.
+        - conditions: "{{ reason == 'bedtime' }}"
+          
+          sequence:
+            - choose:
+                
+                # Make sure lights are off if the studio is not occupied.
+                - conditions: "{{ is_state('binary_sensor.studio_occupied', 'off') }}"
+              
+                  sequence:
+                    - action: light.turn_off
+                      entity_id: light.studio_lights
+                
+                # Make sure only the night light is on if the studio is in use by a child only.
+                - conditions: "{{ is_state('input_select.studio_guests', 'Skylar') }}"
+              
+                  sequence:
+                    - action: scene.apply
+                      data:
+                        entities:
+                          light.hallway_lamp:              'on'
+                          light.studio_minus_night_lights: 'off'
+        
+            # Set a temporary temperature hold downstairs if needed.
+            - if:
+                - condition: state
+                  entity_id: binary_sensor.studio_occupied
+                  state: 'on'
+              
+              then:
+                - action: script.set_temporary_thermostat_hold
+                  data:
+                    thermostat_entity: climate.downstairs
+                    heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
+                    cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
+                    days: 1
+        
+        # Wakeup tasks.
+        - conditions: "{{ reason == 'wakeup' }}"
+          
+          sequence:
+    
+            # Remove downstairs thermostat hold.
+            - action: script.remove_thermostat_hold
+              data:
+                thermostat_entity: climate.downstairs
+                extended: false
+                    
+            # Turn off studio lights.
+            - action: light.turn_off
+              entity_id: light.studio_lights
+
+# Perform tasks for the penthouse for certain events.
+modify_penthouse:
+  alias: Modify Penthouse
+  
+  fields:
+    reason:
+      description: The event that has occurred.
+      selector:
+        select:
+          options:
+            - arrival
+            - departure
+            - bedtime
+            - wakeup
+  
+  sequence:
+    - choose:
+        
+        # Arrival tasks.
+        - conditions: "{{ reason == 'arrival' }}"
+          
+          sequence:
+
+            # Set a temporary temperature hold.
+            - action: script.set_penthouse_thermostat_hold
+                    
+            # Turn off the vacuum automation.
+            - action: script.toggle_vacuum_automation
+              data:
+                operation: 'off'
+            
+            # Turn on the penthouse lamp if it's dark.
+            - if:
+                - condition: state
+                  entity_id: binary_sensor.penthouse_arrival_darkness
+                  state: 'on'
+              
+              then:
+                - action: light.turn_on
+                  target:
+                    entity_id: light.penthouse_lamp
+        
+        # Departure tasks.
+        - conditions: "{{ reason == 'departure' }}"
+          
+          sequence:
+    
+            # Remove thermostat hold.
+            - action: script.remove_thermostat_hold
+              data:
+                thermostat_entity: climate.upstairs
+                extended: false
+                    
+            # Turn on the vacuum automation.
+            - action: script.toggle_vacuum_automation
+              data:
+                operation: 'on'
+            
+            # Turn off upstairs lights.
+            - action: light.turn_off
+              target:
+                entity_id: light.upstairs_lights
+                              
+            # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+            - action: script.turn_off_fan_light
+              data:
+                fan_entity: light.theater_fan
+        
+        # Bedtime tasks.
+        - conditions: "{{ reason == 'bedtime' }}"
+          
+          sequence:
+            - choose:
+                
+                # Turn off all upstairs lights if the penthouse is not occupied.
+                - conditions:
+                    - condition: state
+                      entity_id: binary_sensor.penthouse_occupied
+                      state: 'off'
+              
+                  sequence:
+                    - action: light.turn_off
+                      entity_id: light.upstairs_lights
+                
+                # Set up the penthouse lights if a child is sleeping upstairs.
+                - conditions: "{{ 'Skylar' in states('input_select.penthouse_guests') }}"
+              
+                  sequence:
+                    - action: scene.apply
+                      data:
+                        entities:
+                          light.penthouse_vanity_light:       'on'
+                          light.penthouse_minus_night_lights: 'off'
+                          light.upstairs_common_lights:       'off'
+                          light.theater_lights:               'off'
+                          
+            # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+            - action: script.turn_off_fan_light
+              data:
+                fan_entity: light.theater_fan
+        
+        # Wakeup tasks.
+        - conditions: "{{ reason == 'wakeup' }}"
+          
+          sequence:
+    
+            # Turn off the upstairs night light if we turned it on at bedtime.
+            # The downstairs night lights (aka daytime lights) are turned off by an automation.
+            # Note that if it's still dark, we don't check this light again anywhere. Oh well.
+            - if:
+                - "{{ 'Skylar' in states('input_select.penthouse_guests') }}"
+              
+              then:    
+                - action: light.turn_off
+                  target:
+                    entity_id: light.penthouse_vanity_light
+
+# Set a thermostat hold for the penthouse, that uses a unique temperature range for each family member.
+set_penthouse_thermostat_hold:
+  alias: Set Penthouse Thermostat Hold
+  
+  sequence:
+    - variables:
+        suite_guest: "{{ states('input_select.penthouse_guests') }}"
+        guest: "{{ iif('+' in states('input_select.penthouse_guests'), 'Sarah', suite_guest) }}"
+        
+        # These are temperatures ranges for each guest, that they can change at any time using the dashboard.
+        heat_temp_entity: "{{ 'input_number.' ~ guest | lower ~ '_heat_temp' }}"
+        cool_temp_entity: "{{ 'input_number.' ~ guest | lower ~ '_cool_temp' }}"
+
+    - action: script.set_temporary_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        heat_temp: "{{ states(heat_temp_entity) }}"
+        cool_temp: "{{ states(cool_temp_entity) }}"
+        days: "{{ states('input_number.penthouse_days_occupied') }}"

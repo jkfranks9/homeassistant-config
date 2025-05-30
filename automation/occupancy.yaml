@@ -1,0 +1,444 @@
+#=================================#
+#     Guest Arrival/Departure     #
+#=================================#
+
+# Handle guest arrivals ... everything concerning guest suites is handled by the Add Guest To Suite script. Other tasks
+# like opening the garage are done here.
+- alias: Handle Guest Arrival
+  id: handle_guest_arrival
+  mode: queued
+  
+  triggers:
+    
+    # Adults arrive.
+    - trigger: state
+      entity_id:
+        - person.david
+        - person.sarah
+        - person.mike
+      to: 'home'
+      id: adult
+    
+    # Children arrive.
+    - trigger: state
+      entity_id:
+        - person.skylar
+      to: 'home'
+      id: child
+  
+  actions:
+    - variables:
+        guest: "{{ trigger.to_state.attributes.friendly_name }}"
+        suite: "{{ iif(guest in ['Sarah', 'Skylar'], 'Studio', 'Penthouse') }}"
+    
+    # Special case for Mike: only add if he arrives after 4:00 PM.
+    - if:
+        - "{{ guest != 'Mike' or now().hour >= 16 }}"
+      
+      then:
+    
+        # Add the triggering guest to the appropriate suite.
+        - action: script.add_guest_to_suite
+          data:
+            guest: "{{ guest }}"
+            suite: "{{ suite }}"
+    
+    # Perform tasks for adults.
+    - if:
+        - "{{ trigger.id == 'adult' }}"
+      
+      then:
+        
+        # Open garage door.
+        - action: script.turn_on
+          target:
+            entity_id: script.open_garage_door_north
+          data:
+            variables:
+              use_info_message: true
+        
+        # If sunset has already occurred, turn on some outdoor lights.
+        # Also, start a timer to close the garage and turn off the lights after a short period of time.
+        - if:
+            - condition: state
+              entity_id: sun.sun
+              state: 'below_horizon'
+        
+          then:
+            - action: scene.apply
+              data:
+                entities:
+                  light.driveway_light:   'on'
+                  light.front_floodlight: 'on'
+            
+            - action: timer.start
+              data:
+                entity_id: timer.guest_arrival_cleanup
+                duration: '00:30:00'
+
+# Handle guest departures ... everything concerning guest suites is handled by the Remove Guest From Suite script. Other tasks
+# like closing the garage are done here.
+- alias: Handle Guest Departure
+  id: handle_guest_departure
+  mode: queued
+  
+  triggers:
+    
+    # Adults depart.
+    - trigger: state
+      entity_id:
+        - person.david
+        - person.sarah
+        - person.mike
+      from: 'home'
+      id: adult
+    
+    # Children depart.
+    - trigger: state
+      entity_id:
+        - person.skylar
+      from: 'home'
+      id: child
+  
+  actions:
+    - variables:
+        guest: "{{ trigger.to_state.attributes.friendly_name }}"
+        suite: "{{ iif(guest in states('input_select.studio_guests'), 'Studio', 'Penthouse') }}"
+    
+    # Remove the triggering guest from the appropriate suite.
+    - action: script.remove_guest_from_suite
+      data:
+        guest: "{{ guest }}"
+        suite: "{{ suite }}"
+    
+    # Perform tasks for adults.
+    - if:
+        - "{{ trigger.id == 'adult' }}"
+      
+      then:
+        
+        # Close garage door.
+        - action: script.turn_on
+          target:
+            entity_id: script.close_garage_door_north
+          data:
+            variables:
+              use_info_message: true
+            
+        # Turn off outdoor lights, in case they were on to assist departure.
+        - action: light.turn_off
+          target:
+            entity_id: light.outdoor_lights
+
+#================================#
+#     Guest Suite Management     #
+#================================#
+
+# Modify the guest suite occupancy when one or both of Sarah and Skylar are here. No other guest combinations currently
+# support modification.
+- alias: Modify Occupied Guest Suites
+  id: modify_occupied_guest_suites
+  mode: queued
+  
+  # The triggers are dropdowns for each guest, to allow changes by any guest.
+  triggers:
+    - trigger: state
+      entity_id: input_select.sarah_guest_suite
+      to:
+      id: Sarah
+    
+    - trigger: state
+      entity_id: input_select.skylar_guest_suite
+      to:
+      id: Skylar
+  
+  actions:
+    - variables:
+        prev_suite_entity: "{{ 'input_select.' ~ trigger.from_state.state | lower ~ '_guests' }}"
+        prev_suite_guests: "{{ states(prev_suite_entity) }}"
+    
+    # Only perform an actual switch if the guest is currently in the previous suite.
+    - condition: "{{ trigger.id in prev_suite_guests }}"
+    
+    # Remove the triggering guest from the previous suite and add her to the current suite.
+    - action: script.remove_guest_from_suite
+      data:
+        guest: "{{ trigger.id }}"
+        suite: "{{ trigger.from_state.state }}"
+    
+    - action: script.add_guest_to_suite
+      data:
+        guest: "{{ trigger.id }}"
+        suite: "{{ trigger.to_state.state }}"
+
+# Handle a change to the number of days a guest suite is occupied.
+# NOTE: Currently this only applies to the penthouse.
+- alias: Handle Guest Suite Occupied Days
+  id: handle_guest_suite_occupied_days
+  
+  triggers:
+    - trigger: state
+      entity_id: input_number.penthouse_days_occupied
+      to:
+  
+  conditions:
+    
+    # Only allow this change if the penthouse is currently occupied.
+    - condition: state
+      entity_id: binary_sensor.penthouse_occupied
+      state: 'on'
+  
+  actions:
+    
+    # First, remove the current thermostat hold.
+    - action: script.remove_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        extended: false
+    
+    # Wait a few minutes before the next step: I don't want quick changes to the thermostat settings.
+    - delay: '00:05:00'
+    
+    # Now reinstate the hold for the new number of days.
+    - action: script.set_penthouse_thermostat_hold
+
+#=========================#
+#     Device Trackers     #
+#=========================#
+
+# Toggle virtual device trackers.
+- alias: Toggle Virtual Device Tracker
+  id: 'toggle_virtual_device_tracker'
+  mode: queued
+  
+  triggers:
+    - trigger: state
+      entity_id:
+        - input_boolean.virtual_david
+        - input_boolean.virtual_maryam
+        - input_boolean.virtual_mike
+        - input_boolean.virtual_sarah
+        - input_boolean.virtual_skylar
+      to:
+  
+  actions:
+    - variables:
+        new_state: >
+          {% if trigger.to_state.state == 'on' %}
+            home
+          {% else %}
+            not_home
+          {% endif %}
+        
+        topic_suffix: "{{ trigger.to_state.entity_id | replace('input_boolean.', '') }}"
+    
+    - action: mqtt.publish
+      data:
+        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+        payload: "{{ new_state }}"
+
+# Toggle phone stationary device trackers, based on the wifi SSID.
+- alias: Toggle Jon Phone Stationary Tracker
+  id: toggle_jon_phone_stationary_tracker
+  
+  use_blueprint:
+    path: devices/update_phone_tracker.yaml
+    input:
+      wifi_entity: sensor.jon_galaxy_wifi_connection
+      ssid: White Rabbit
+      topic_suffix: jon_phone_stationary
+
+- alias: Toggle Mike Phone Stationary Tracker
+  id: toggle_mike_phone_stationary_tracker
+  
+  use_blueprint:
+    path: devices/update_phone_tracker.yaml
+    input:
+      wifi_entity: sensor.mike_galaxy_wifi_connection
+      ssid: White Rabbit
+      topic_suffix: mike_phone_stationary
+
+- alias: Toggle Sarah Phone Stationary Tracker
+  id: toggle_sarah_phone_stationary_tracker
+  
+  use_blueprint:
+    path: devices/update_phone_tracker.yaml
+    input:
+      wifi_entity: sensor.sarah_pixel_wi_fi_connection
+      ssid: White Rabbit
+      topic_suffix: sarah_phone_stationary
+  
+# Children without personal devices use NFC tags to scan in and out.
+- alias: Handle Child Tag Scan
+  id: handle_child_tag_scan
+  
+  triggers:
+    - trigger: tag
+      tag_id: 0c6d2dfd-4ad7-4281-9ec0-54756ed2d539
+      id: skylar
+        
+  actions:
+    - variables:
+        tracker_entity: "{{ 'device_tracker.' ~ trigger.id ~ '_nfc_tag' }}"
+        toggle_entity: "{{ 'input_boolean.' ~ trigger.id ~ '_nfc_tag' }}"
+        new_state: >
+          {% if states(tracker_entity) != 'home' %}
+            home
+          {% else %}
+            not_home
+          {% endif %}
+        topic_suffix: "{{ tracker_entity.split('.')[1] }}"
+        toggle_action: "{{ iif(new_state == 'home', 'on', 'off') }}"
+    
+    - action: mqtt.publish
+      data:
+        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+        payload: "{{ new_state }}"
+          
+    - action: input_boolean.turn_{{ toggle_action }}
+      target:
+        entity_id: "{{ toggle_entity }}"
+    
+    - action: script.send_notification
+      data:
+        destination:
+          - voice_assistant
+        message: "{{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Skylar! Come visit again soon!') }}"
+        speak: excited
+        room: ['office']
+        voice_type: tts
+
+#=========================#
+#     Sleep Detection     #
+#=========================#
+
+# Set the sleep start time.
+- alias: Set Sleep Start
+  id: set_sleep_start
+
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.jon_sleeping
+      to: 'on'
+  
+  actions:
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.sleep_start
+      data:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+# Handle everything that needs to be done when I wake up.
+- alias: Handle Jon Awake
+  id: 'handle_jon_awake'
+  
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.jon_sleeping
+      from: 'on'
+      to: 'off'
+  
+  actions:
+    - variables:
+        
+        # Sleep duration in seconds.
+        duration: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.sleep_start'))) / 3600) | round(2) }}"
+        
+        # List of echo devices.
+        echo_list: "{{ expand(integration_entities('alexa_media') | select('search', 'media_player')) |
+                       rejectattr('attributes.friendly_name', 'in', ['This Device', 'Everywhere']) | map(attribute = 'entity_id') | list }}"
+    
+    # Reset the Nighttime and Sleeptime flags.
+    - action: input_boolean.turn_off
+      entity_id:
+        - input_boolean.nighttime
+        - input_boolean.sleeptime
+    
+    # Reset the bedtime environment.
+    - action: script.reset_bedtime_environment
+    
+    # Set the sleep duration time.
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.sleep_duration
+      data:
+        value: "{{ duration }}"
+    
+    # Short delay to make sure we pick up the sleep duration we just set.
+    - delay:
+        milliseconds: 500
+    
+    # Now we can set the various notification data.
+    - variables:
+        time: "{{ states('sensor.sleep_duration_display') }}"
+        hours: "{{ time.split(':')[0] | int(0) }}"
+        minutes: "{{ time.split(':')[1] | int(0) }}"
+        hours_str: "{{ iif(hours == 1, ' hour', ' hours') }}"
+        minutes_str: "{{ iif(minutes == 1, ' minute', ' minutes') }}"
+        keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
+        calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
+          
+    # Notify about the sleep duration and possible short term calendar items.
+    - action: script.send_notification
+      data:
+        destination:
+          - voice_assistant
+        message: >
+          {% set msg = 'Good morning. You slept ' ~ hours ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ minutes_str ~ '.', '.') %}
+          {% if calendar == true %}
+            {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
+          {% endif %}
+          
+          {{ msg }}
+        room: ['master_bedroom']
+        voice_type: tts
+    
+    # Turn on voice assistant screens.
+    - if:
+        - condition: numeric_state
+          entity_id: sensor.downstairs_sensor_ambient_light
+          below: input_number.family_room_ambient_max
+      
+      then:    
+        - scene: scene.voice_assistants_on_dim
+      
+      else:    
+        - scene: scene.voice_assistants_on_bright
+    
+    # Normalize the volume on all echoes in case they were modified yesterday or during the night.
+    - repeat:
+        for_each: "{{ echo_list }}"
+        
+        sequence:
+          - if:
+              - "{{ not is_state_attr(repeat.item, 'volume_level', 0.5) }}"
+            
+            then:          
+              - action: media_player.volume_set
+                target:
+                  entity_id: "{{ repeat.item }}"
+                data:
+                  volume_level: 0.5
+    
+    # Turn on theater plugs that are only off at night.
+    - action: switch.turn_on
+      target:
+        entity_id: "{{ label_entities('theater_off_at_night') }}"
+    
+    # Turn on island light if needed (lets me get breakfast).
+    - action: script.turn_on_lights_per_conditions
+      data:
+        light_entity: light.island_light
+        lux_entity: sensor.downstairs_sensor_ambient_light
+        min_lux_value: "{{ states('input_number.kitchen_ambient_min') | float(0) }}"
+    
+    # Turn off the island light when I'm in the office, or after a few minutes.
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.office_human_sensor_presence
+          to: 'on'
+          for: 120
+      timeout: '00:15:00'
+    
+    - action: light.turn_off
+      entity_id: light.island_light

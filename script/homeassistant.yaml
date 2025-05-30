@@ -55,7 +55,7 @@ initialize_global_variables:
     - event: set_variable
       event_data:
         key: light_rooms_lights
-        value: ['light.family_room_lamp', 'light.master_bedroom_lamp', 'light.office_lamp', 'light.penthouse_light', 'light.studio_lamp_2', 'light.theater_ceiling']
+        value: ['light.family_room_lamp', 'light.master_bedroom_lamp', 'light.office_lamp', 'light.penthouse_light', 'input_select.preferred_studio_lamps', 'light.theater_ceiling']
     
     # Rooms with fans are for voice control of ceiling fans in certain rooms.
     - event: set_variable

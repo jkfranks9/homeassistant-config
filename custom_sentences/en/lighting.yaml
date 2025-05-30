@@ -4,11 +4,6 @@
 
 intents:
   
-  Awake:
-    data:
-      - sentences:
-          - "awake"
-  
   Bathroom:
     data:
       - sentences:
@@ -63,8 +58,3 @@ intents:
     data:
       - sentences:
           - "(turn on Christmas lights | Christmas lights on)"
-  
-  WakeUp:
-    data:
-      - sentences:
-          - "wake up"

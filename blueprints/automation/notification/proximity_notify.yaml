@@ -69,5 +69,5 @@ action:
         - voice_assistant
       message: "{{ input_person_name }} will be arriving soon"
       room:
-        - everywhere
+        - ['everywhere']
       voice_type: announce

@@ -7,29 +7,25 @@
   entities:
     
     # Downstairs
-    light.downstairs_common_lights:       'off'
     light.dining_room_lights:             'off'
-    light.family_room_lamp:               'off'
-    light.stairway_light:                 'off'
+    light.downstairs_common_lights:       'off'
+    light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
     light.master_suite_lights:            'off'
-    light.office_lamp:                    'off'
-    light.office_bookcase:                'off'
+    light.office_lights:                  'off'
     light.studio_lights:                  'off'
     
     # Upstairs
-    light.upstairs_common_lights:         'off'
     light.penthouse_lights:               'off'
-    light.theater_ceiling:                'off'
-    light.theater_sconces:                'off'
+    light.theater_lights:                 'off'
+    light.upstairs_common_lights:         'off'
     
     # Misc
     light.all_christmas_lights:           'off'
     light.outdoor_lights:                 'off'
     light.storage_lights:                 'off'
     
-    # Fans (see Turn Off Fan Lights automation) ... also note that rooms that contain ceiling fan lights
-    # need to have their contents expanded above, minus the fan light
+    # Fans (see Turn Off Fan Lights automation)
     input_boolean.ceiling_fan_lights_off: 'on'
 
 #===============================#
@@ -42,23 +38,20 @@
   entities:
     
     # Downstairs
-    light.downstairs_common_lights:       'off'
     light.dining_room_lights:             'off'
-    light.family_room_lamp:               'off'
-    light.stairway_light:                 'off'
+    light.downstairs_common_lights:       'off'
+    light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
     light.master_bath_light:              'off'
-    light.master_vanity_light:            'off'
     light.master_closet_light:            'off'
-    light.office_lamp:                    'off'
-    light.office_bookcase:                'off'
+    light.master_vanity_light:            'off'
+    light.office_lights:                  'off'
     light.studio_lights:                  'off'
     
     # Upstairs
-    light.upstairs_common_lights:         'off'
     light.penthouse_lights:               'off'
-    light.theater_ceiling:                'off'
-    light.theater_sconces:                'off'
+    light.theater_lights:                 'off'
+    light.upstairs_common_lights:         'off'
     
     # Misc
     light.all_christmas_lights:           'off'
@@ -83,15 +76,14 @@
   entities:
     
     # Downstairs
-    light.downstairs_common_lights:       'off'
     light.dining_room_lights:             'off'
-    light.stairway_light:                 'off'
+    light.downstairs_common_lights:       'off'
+    light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
     light.master_bath_light:              'off'
-    light.master_vanity_light:            'off'
     light.master_closet_light:            'off'
-    light.office_lamp:                    'off'
-    light.office_bookcase:                'off'
+    light.master_vanity_light:            'off'
+    light.office_lights:                  'off'
     
     # Upstairs    
     light.utility_light:                  'off'

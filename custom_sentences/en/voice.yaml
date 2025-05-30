@@ -7,11 +7,6 @@
 
 intents:
 
-  ChangeLight:
-    data:
-      - sentences:
-          - "(change light | light (on | off))"
-
   FanHigh:
     data:
       - sentences:
@@ -30,7 +25,17 @@ intents:
   FanOff:
     data:
       - sentences:
-          - "([turn] [the] fan off)"
+          - "[turn] [the] fan off"
+
+  LightOn:
+    data:
+      - sentences:
+          - "[turn] [the] (light | lamp) on"
+
+  LightOff:
+    data:
+      - sentences:
+          - "[turn] [the] (light | lamp) off"
 
   RemoveNotification:
     data:

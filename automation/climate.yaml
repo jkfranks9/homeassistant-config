@@ -37,40 +37,6 @@
         thermostat_entity: climate.upstairs
         preset: 'sleep'
 
-# Catch an unexpected transition away from vacation mode. If the upstairs bedroom is occupied, this should not happen.
-# So put the vacation hold back on, and log it.
-- alias: Catch Vacation Drop
-  id: catch_vacation_drop
-  
-  trigger:
-    - platform: state
-      entity_id: climate.upstairs
-      attribute: preset_mode
-      from:
-        - 'temp'
-        - 'vacation'
-      not_to:
-        - 'temp'
-        - 'vacation'
-  
-  condition:
-    - condition: state
-      entity_id: binary_sensor.penthouse_occupied
-      state: 'on'
-  
-  action:
-    - service: script.set_temporary_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
-        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
-        days: 7
-    
-    - service: system_log.write
-      data:
-        message: "Upstairs thermostat unexpectedly transitioned from {{ trigger.from_state.attributes.preset_mode }} to {{ trigger.to_state.attributes.preset_mode }}; resetting back to vacation mode."
-        level: error
-
 #============================================#
 #     Temperature High / Low Water Marks     #
 #============================================#

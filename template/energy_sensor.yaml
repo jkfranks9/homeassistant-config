@@ -126,10 +126,10 @@
         - sensor.office_bookcase_energy
         - sensor.office_fan_light_energy
         - sensor.office_lamp_energy
+        - sensor.sarah_s_lamp_energy
         - sensor.sink_light_energy
+        - sensor.skylar_s_lamp_energy
         - sensor.stairway_light_energy
-        - sensor.studio_lamp_1_energy
-        - sensor.studio_lamp_2_energy
         - sensor.studio_light_energy
   
   sensor:

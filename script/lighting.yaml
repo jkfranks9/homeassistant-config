@@ -1,679 +1,24 @@
-#==========================#
-#     Sleep Start/Stop     #
-#==========================#
+#============================#
+#     Extended Away Mode     #
+#============================#
 
-# Prepare for bedtime.
-bedtime:
-  alias: Bedtime
+# Turn off extended away mode if Jon returns home early.
+turn_off_extended_away_mode:
+  alias: Turn Off Extended Away Mode  
   sequence:
-    
-    # Turn on the master bedroom lamp.
-    - action: light.turn_on
-      entity_id: light.master_bedroom_lamp
-      data:
-        color_temp_kelvin: 2700
-        brightness_pct: 100
-    
-    # Turn on nighttime mode.
-    - action: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
 
-    # Turn off the Family Room AV system.
-    - action: script.toggle_family_room_av
-      data:
-        operation: 'off'
-    
-    # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
-    - action: script.turn_on
-      target:
-        entity_id: script.close_garage_door_north
-      data:
-        variables:
-          use_info_message: true
-    
-    - action:  script.turn_on
-      target:
-        entity_id: script.close_garage_door_south
-      data:
-        variables:
-          use_info_message: true
-    
-    # Lock the PC.
-    - action: script.turn_on
-      entity_id: script.lock_pc
-      
-    - delay: '00:00:07'
-      
-    # Establish the proper bedtime environment (lights, thermostats, echo devices).
-    - action: script.establish_bedtime_environment
-    
-    # Turn off all fans.
-    - scene: scene.fans_off
-    
-    # Turn off voice assistant screens.
-    - scene: scene.voice_assistants_off
-    
-    # Turn off certain plugs. These are plugs that are turned on only when needed.
-    - action: switch.turn_off
-      target:
-        entity_id: "{{ label_entities('off_at_night') }}"
-    
-    # Turn off theater plugs if the theater is not in use.
-    - if:
-        - "{{ states('input_boolean.theater_open') == 'off' or states('sensor.harmony_hub') == 'PowerOff' }}"
-      
-      then:    
-        - action: switch.turn_off
-          target:
-            entity_id: "{{ label_entities('theater_off') }}"
-  
-# Going to sleep now.
-sleeptime:
-  alias: Sleeptime
-  
-  sequence:
-    
-    # Only works during night time.
+    # Continue only if extended away mode is currently on.  
     - condition: state
-      entity_id: input_boolean.nighttime
+      entity_id: input_boolean.extended_away_mode
       state: 'on'
     
-    # Turn on sleeptime mode.
-    - action: input_boolean.turn_on
-      entity_id: input_boolean.sleeptime
-    
-    # If we just had a bathroom break, the bathroom light can turn back on after we turn off the 
-    # master suite lights, so temporarily disable the motion based automation.
-    - action: automation.turn_off
-      entity_id: automation.run_master_bath_motion_based_light
-    
-    # Turn off the master suite lights.
-    - action: light.turn_off
-      entity_id: light.master_suite_lights
-    
-    # Wait for the bathroom motion sensor to turn off, then turn the associated automation back on.
-    - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.master_bath_motion_detector_occupancy
-          to: 'off'
-      timeout: '00:01:00'
-    
-    - action: automation.turn_on
-      entity_id: automation.run_master_bath_motion_based_light
-
-# Turn on the bathroom light during the night.
-turn_on_bathroom_light:
-  alias: Turn On Bathroom Light
-  
-  sequence:
-    
-    # Only works during sleep time.
-    - condition: state
-      entity_id: input_boolean.sleeptime
-      state: 'on'
-    
-    # Turn on bathroom flag.
-    - action: input_boolean.turn_on
-      entity_id: input_boolean.bathroom
-    
-    # Turn on master bedroom lamp.
-    - action: light.turn_on
-      entity_id: light.master_bedroom_lamp
-      data:
-        color_temp_kelvin: 2700
-        brightness_pct: 20
-    
-    # Turn on bath light.
-    - action: light.turn_on
-      entity_id: light.master_vanity_light
-    
-    # Wait a few minutes then turn off the bathroom flag.
-    - delay: '00:05:00'
-    
-    - action: input_boolean.turn_off
-      entity_id: input_boolean.bathroom
-  
-# Awake but still in bed.
-awake:
-  alias: Awake
-  sequence:
-    
-    # Turn off sleeptime mode.
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.sleeptime
-      
-    # Turn on master bedroom lamp if needed.
-    - service: script.turn_on_lights_per_conditions
-      data:
-        light_entity: light.master_bedroom_lamp
-        lux_entity: sensor.downstairs_sensor_ambient_light
-        min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
-
-# I have awoken.
-wakeup:
-  alias: Wakeup
-  
-  sequence:
-    
-    # Turn off nighttime and sleeptime modes.The nighttime flag turning off triggers an automation that calls
-    # the Reset Bedtime Environment script, which (among other things) turns off the master suite lights. So
-    # we don't need to do that here.
-    - action: input_boolean.turn_off
-      entity_id:
-        - input_boolean.nighttime
-        - input_boolean.sleeptime
-    
-    # Turn on island light if needed. Other wakeup lights handled by lux sensor.
-    - action: script.turn_on_lights_per_conditions
-      data:
-        light_entity: light.island_light
-        lux_entity: sensor.downstairs_sensor_ambient_light
-        min_lux_value: "{{ states('input_number.kitchen_ambient_min') | float(0) }}"
-    
-    # Turn off the island light when I'm in the office, or after a few minutes (lets me get breakfast).
-    - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.office_human_sensor_presence
-          to: 'on'
-          for: 120
-      timeout: '00:15:00'
-    
-    - action: light.turn_off
-      entity_id: light.island_light
-
-#===========================================#
-#     Children-Only Bedtime Environment     #
-#===========================================#
-
-# Children-only bedtime environment: this is driven by an automations when children are home without parents.
-# The idea is to create the correct lighting environment before my normal bedtime, or after children are asleep.
-
-set_up_children_only_bedtime_environment:
-  alias: Set Up Children-Only Bedtime Environment
-  
-  fields:
-    stage:
-      description: 'Whether to perform pre-bedtime or post-asleep operation.'
-      selector:
-        select:
-          options:
-            - 'pre'
-            - 'post'
-  
-  sequence:
-  
-    # Verify that only children are home. If we're here after a delay until 8PM, things could have changed.
-    - condition: "{{ is_state('binary_sensor.adults_home', 'off') and is_state('binary_sensor.children_home', 'on') }}"
-    
-    # Pre-bedtime stage: turn on the appropriate bedroom light.
-    # NOTE: We don't turn off the downstairs bedroom light if another bedroom is selected, because the downstairs
-    # bedroom is home base.
-    - if:
-        - "{{ stage == 'pre' }}"
-    
-      then:
-    
-        # Determine which bedroom will be used.
-        - choose:
-      
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildDown'
-          
-            sequence:
-              - service: scene.apply
-                data:
-                  entities:
-                    light.studio_lamp_1:           'off'
-                    light.studio_lamp_2:           'on'
-                    light.penthouse_lamp:          'off'
-                    light.master_bedroom_lamp:     'off'
-      
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildUp'
-          
-            sequence:
-              - service: scene.apply
-                data:
-                  entities:
-                    light.studio_lamp_1:           'off'
-                    light.penthouse_lamp:          'on'
-                    light.master_bedroom_lamp:     'off'
-      
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'Master'
-          
-            sequence:
-              - service: scene.apply
-                data:
-                  entities:
-                    light.studio_lamp_1:           'off'
-                    light.penthouse_lamp:          'off'
-                    light.master_bedroom_lamp:
-                      state: 'on'
-                      brightness_pct: 100
-    
-      # Post-asleep stage: reset bedroom light and turn on appropriate night light if needed.
-      else:
-    
-        # Determine which bedroom is being used.
-        # NOTE: No need to worry about the master because that's handled at bedtime by Establish Bedtime Environment.
-        - choose:      
-        
-          # Downstairs: the night lights here are the daytime lights, which we don't need to touch, so just turn
-          # off the bedroom light.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildDown'
-          
-            sequence:
-              - service: light.turn_off
-                entity_id: light.studio_lamp_2
-      
-          # Upstairs: I'm assuming I'm also using the same bedroom. Turn on the night light, but don't turn off the bedroom
-          # light if it's nighttime.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildUp'
-          
-            sequence:
-              - service: light.turn_on
-                entity_id: light.penthouse_vanity_light
-            
-              - condition: state
-                entity_id: input_boolean.nighttime
-                state: 'off'
-            
-              - service: light.turn_off
-                entity_id: light.penthouse_lamp
-
-#=============================#
-#     Bedtime Environment     #
-#=============================#
-
-# Bedtime environment rules (lighting, HVAC, etc) are determined by family members present (adults and children), and by the occupied
-# bedrooms. Children in this context means too young to be in complete control of lights and other entities, so we do that here.
-
-establish_bedtime_environment:
-  alias: Establish Bedtime Environment
-  
-  sequence:
-    
-    # Always perform some tasks.
-    - action: script.open_hvac_vents
-          
-    # Just me home: turn off everything except the master bedroom lamp, and put the thermostat in sleep mode.
-    # There's no need to bother with any devices.
-    - if:
-        - condition: state
-          entity_id: input_select.occupied_bedrooms
-          state: 'Empty'
-      
-      then:
-        - scene: scene.non_master_lights_out
-
-        - action: script.set_thermostat_preset
-          data:
-            thermostat_entity: climate.downstairs
-            preset: 'sleep'
-      
-      # Family members are present.
-      else:
-    
-        # Turn off all but bedroom lights. Note that most upstairs lights are included with the upstairs suite
-        # if the upstairs bedroom is occupied.
-        - scene: scene.non_bedroom_lights_out
-        
-        # Turn off all upstairs lights if the upstairs bedroom is not occupied.
-        - if:
-            - condition: state
-              entity_id: binary_sensor.penthouse_occupied
-              state: 'off'
-          
-          then:
-            - action: scene.apply
-              data:
-                entities:
-                  light.upstairs_lights:                 'off'
-        
-        # Determine who is home and which bedrooms are occupied.
-        - choose:
-          
-          # Child only, downstairs.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildDown'
-            
-            sequence:
-                    
-              # Turn off downstairs guest lights and turn on night lights.
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'on'
-                    light.studio_light:                  'off'
-                    light.studio_lamp_1:                 'off'
-                    light.studio_lamp_2:                 'off'
-              
-              # Set up all the bedtime devices.
-              - action: script.set_up_bedroom_devices
-                data:
-                  bedrooms: 'downstairs'
-
-              # Enter sleep mode upstairs.
-              - action: script.set_thermostat_preset
-                data:
-                  thermostat_entity: climate.upstairs
-                  preset: 'sleep'
-          
-          # Child only, upstairs.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildUp'
-            
-            sequence:
-                    
-              # Turn off guest lights and turn on upstairs night lights.
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'off'
-                    light.studio_lights:                 'off'
-                    light.penthouse_tub_light:           'off'
-                    light.penthouse_vanity_light:        'on'
-                    light.penthouse_light:               'off'
-                    light.penthouse_lamp:                'off'
-              
-              # Set up all the bedtime devices.
-              - action: script.set_up_bedroom_devices
-                data:
-                  bedrooms: 'upstairs'
-          
-          # Child only, master.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'Master'
-            
-            sequence:
-                    
-              # Turn off guest lights and night lights (we turn on the master bath light later as a night light).
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'off'
-                    light.studio_lights:                 'off'
-        
-              # Set a temporary temperature hold downstairs.
-              - action: script.set_temporary_thermostat_hold
-                data:
-                  thermostat_entity: climate.downstairs
-                  heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
-                  cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
-                  days: 1
-
-              # Enter sleep mode upstairs.
-              - action: script.set_thermostat_preset
-                data:
-                  thermostat_entity: climate.upstairs
-                  preset: 'sleep'
-
-              # Mute master bedroom echo device.
-              - action: script.turn_on
-                entity_id: script.mute_master_bedroom_echo
-                
-              # Turn on the master bath light as a night light, after a delay.
-              - delay: '00:20:00'
-              - action: light.turn_on
-                entity_id: light.master_bath_light
-                  
-              # Disable the motion sensor automation, so the light remains on all night.
-              - action: automation.turn_off
-                entity_id: automation.run_master_bath_motion_based_light
-          
-          # Adults only, downstairs.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'AdultDown'
-            
-            sequence:
-                    
-              # Turn off downstairs night lights.
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'off'
-              
-              # Set up all the bedtime devices.
-              - action: script.set_up_bedroom_devices
-                data:
-                  bedrooms: 'downstairs'
-
-              # Enter sleep mode upstairs.
-              - action: script.set_thermostat_preset
-                data:
-                  thermostat_entity: climate.upstairs
-                  preset: 'sleep'
-          
-          # Adults only, upstairs.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'AdultUp'
-            
-            sequence:
-                    
-              # Turn off downstairs guest lights and night lights.
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'off'
-                    light.studio_lights:                 'off'
-              
-              # Set up all the bedtime devices.
-              - action: script.set_up_bedroom_devices
-                data:
-                  bedrooms: 'upstairs'
-          
-          # Adults only, both.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'Both'
-            
-            sequence:
-                    
-              # Turn off downstairs night lights.
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'off'
-              
-              # Set up all the bedtime devices.
-              - action: script.set_up_bedroom_devices
-                data:
-                  bedrooms: 'both'
-          
-          # Child downstairs, adults upstairs.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildDownPlus'
-            
-            sequence:
-                    
-              # Turn off downstairs guest lights and turn on night lights.
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'on'
-                    light.studio_light:                  'off'
-                    light.studio_lamp_1:                 'off'
-                    light.studio_lamp_2:                 'off'
-              
-              # Set up all the bedtime devices.
-              - action: script.set_up_bedroom_devices
-                data:
-                  bedrooms: 'both'
-          
-          # Child upstairs, adults downstairs.
-          - conditions:
-            - condition: state
-              entity_id: input_select.occupied_bedrooms
-              state: 'ChildUpPlus'
-            
-            sequence:
-                    
-              # Turn off upstairs guest lights and turn on night lights.
-              - action: scene.apply
-                data:
-                  entities:
-                    light.daytime_lights:                'off'
-                    light.penthouse_tub_light:           'off'
-                    light.penthouse_vanity_light:        'on'
-                    light.penthouse_light:               'off'
-                    light.penthouse_lamp:                'off'
-              
-              # Set up all the bedtime devices.
-              - action: script.set_up_bedroom_devices
-                data:
-                  bedrooms: 'both'
-
-# Set up the various devices required for bedtime:
-#
-# - set thermostat settings for guest comfort
-# - mute appropriate echo devices
-set_up_bedroom_devices:
-  alias: Set Up Bedroom Devices
-  
-  fields:
-    bedrooms:
-      description: 'Which bedroom(s) are occupied. We use a short form of the Occupied Bedrooms select for brevity.'
-      selector:
-        select:
-          options:
-            - 'downstairs'
-            - 'upstairs'
-            - 'both'
-  
-  sequence:
-  
-    - choose:
-      
-      # Downstairs bedroom occupied.
-      - conditions: "{{ bedrooms == 'downstairs' }}"
-      
-        sequence:
-    
-          # Set a temporary temperature hold downstairs.
-          - service: script.set_temporary_thermostat_hold
-            data:
-              thermostat_entity: climate.downstairs
-              heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
-              cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
-              days: 1
-
-          # Mute studio echo device.
-          - service: script.turn_on
-            entity_id: script.mute_studio_echo
-      
-      # Upstairs bedroom occupied. We don't change the upstairs thermostat here. 
-      # That's done once when family members arrive.
-      - conditions: "{{ bedrooms == 'upstairs' }}"
-      
-        sequence:
-
-          # Mute penthouse echo device.
-          - service: script.turn_on
-            entity_id: script.mute_penthouse_echo
-        
-      # Both bedrooms occupied. We don't change the upstairs thermostat here. 
-      # That's done once when family members arrive.
-      - conditions: "{{ bedrooms == 'both' }}"
-      
-        sequence:
-    
-          # Set a temporary temperature hold downstairs.
-          - service: script.set_temporary_thermostat_hold
-            data:
-              thermostat_entity: climate.downstairs
-              heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
-              cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
-              days: 1
-
-          # Mute studio echo device.
-          - service: script.turn_on
-            entity_id: script.mute_studio_echo
-
-          # Mute penthouse echo device.
-          - service: script.turn_on
-            entity_id: script.mute_penthouse_echo
-
-# Reset the bedtime environment in the morning. This is called by an automation that triggers on the nighttime flag turning off.
-reset_bedtime_environment:
-  alias: Reset Bedtime Environment
-  
-  sequence:
-    - variables:
-        echo_list: "{{ expand(integration_entities('alexa_media') | select('search', 'media_player')) |
-                       rejectattr('attributes.friendly_name', 'in', ['This Device', 'Everywhere']) | map(attribute = 'entity_id') | list }}"
-    
-    # Note that the bedroom echo devices automatically unmute at 9 AM. However, normalize the volume on all echoes
-    # in case they have been modified.
-    - repeat:
-        for_each: "{{ echo_list }}"
-        
-        sequence:
-          - if:
-              - "{{ not is_state_attr(repeat.item, 'volume_level', 0.5) }}"
-            
-            then:          
-              - action: media_player.volume_set
-                target:
-                  entity_id: "{{ repeat.item }}"
-                data:
-                  volume_level: 0.5
-    
-    # Turn off the upstairs night light if we turned it on at bedtime.
-    # The downstairs night lights (aka daytime lights) are turned off by an automation.
-    # Note that if it's still dark, we don't check this light again anywhere. Oh well.
-    - if:
-        - "{{ states('input_select.occupied_bedrooms') in ['ChildUp', 'ChildUpPlus'] }}"
-      
-      then:    
-        - action: light.turn_off
-          target:
-            entity_id: light.penthouse_vanity_light
-  
-    # Turn on all automations that were turned off.
-    - action: automation.turn_on
-      entity_id:
-        - automation.run_master_bath_motion_based_light
-    
-    # Remove downstairs thermostat hold.
-    - action: script.remove_thermostat_hold
-      data:
-        thermostat_entity: climate.downstairs
-        extended: false
-    
-    # Turn off the master suite lights. This is redundant if the Wakeup script was called, but is useful
-    # if the nighttime flag was turned off as a failsafe by the Reset Bedtime Environment automation.
-    - action: homeassistant.turn_off
+    # Set the extended away end 2 minutes from now (the extra time is just to make sure the timing satifies my paranoia).
+    # This in turn will trigger the Disable Extended Away Mode automation.
+    - service: input_datetime.set_datetime
       target:
-        entity_id: light.master_suite_lights
-    
-    # Close the HVAC vents.
-    - action: script.close_hvac_vents
+        entity_id: input_datetime.extended_away_end
+      data:
+        datetime: "{{ (now() + timedelta(minutes = 2)).strftime('%Y-%m-%d %H:%M:%S') }}"
 
 #=======================================#
 #     Turn On Lights Per Conditions     #
@@ -841,8 +186,44 @@ switch_studio_lamps:
   sequence:
     service: light.toggle
     entity_id:
-      - light.studio_lamp_1
-      - light.studio_lamp_2
+      - light.sarah_s_lamp
+      - light.skylar_s_lamp
+
+# Turn the preferred studio lamps on or off.
+operate_preferred_studio_lamps:
+  alias: Operate Preferred Studio Lamps
+  
+  fields:
+    operation:
+      description: Whether to turn the lamp on or off.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+  
+  sequence:
+    - variables:
+        preference: "{{ states('input_select.preferred_studio_lamps') }}"
+        lamp_entity_list: >
+          {% set var = namespace(list = []) %}
+          {% if preference in ["Sarah's", 'Both'] %}
+            {% set var.list = var.list + ['light.sarah_s_lamp'] %}
+          {% endif %}
+          {% if preference in ["Skylar's", 'Both'] %}
+            {% set var.list = var.list + ['light.skylar_s_lamp'] %}
+          {% endif %}
+          
+          {{ var.list }}
+    
+    # Perform the operation unless the preference is 'Neither'.
+    - if:
+        - "{{ lamp_entity_list | length > 0 }}"
+      
+      then:    
+        - action: light.turn_{{ operation }}
+          target:
+            entity_id: "{{ lamp_entity_list }}"
 
 #========================#
 #     Kitchen Lights     #
@@ -873,3 +254,30 @@ turn_off_kitchen_lights:
     
     - service: light.turn_off
       entity_id: light.kitchen_lights
+
+#====================#
+#     Fan Lights     #
+#====================#
+
+turn_off_fan_light:
+  alias: Turn Off Fan Light
+  
+  fields:
+    fan_entity:
+      description: Fan entity to be turned off.
+  
+  sequence:
+    
+    # Turn off the light if we think it's on, and log it for diagnostics.
+    - if:
+        - "{{ states(fan_entity) == 'on' }}"
+        
+      then:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ fan_entity }}"
+
+        - action: system_log.write
+          data:
+            message: "Turned off {{ fan_entity }}"
+            level: info

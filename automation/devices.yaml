@@ -298,7 +298,9 @@
           then:        
             - action: light.turn_on
               target:
-                entity_id: light.daytime_lights
+                entity_id:
+                  - light.family_room_lamp
+                  - light.hallway_lamp
           
           else:
             - action: script.turn_on_christmas_lights
@@ -401,284 +403,19 @@
                - light.storage_lights
                - light.outdoor_lights
 
-#=======================#
-#     House: Family     #
-#=======================#
-
-# Open the house for family.
-- alias: Open House For Family
-  id: 'open_house_for_family'
-  mode: queued
-  
-  trigger:
-    
-    # Adults arrive.
-    - platform: state
-      entity_id:
-        - person.sarah
-        - person.david
-        - person.mike
-        - person.maryam
-      from: 'not_home'
-      to: 'home'
-      id: adults
-    
-    # Children arrive.
-    - platform: state
-      entity_id:
-        - person.skylar
-      from: 'not_home'
-      to: 'home'
-      id: children
-  
-  action:
-    
-    - variables:
-        sarah_nor_skylar: "{{ not is_state('person.sarah', 'home') and not is_state('person.skylar', 'home') }}"
-        sarah_nor_david: "{{ not is_state('person.sarah', 'home') and not is_state('person.david', 'home') }}"
-    
-    # Set the default occupied bedrooms.
-    - choose:
-      
-      # Sarah with David = both.
-      - conditions: "{{ (is_state('person.sarah', 'home') and is_state('person.david', 'home')) }}"
-      
-        sequence:
-          - service: input_select.select_option
-            target:
-              entity_id: input_select.occupied_bedrooms
-            data:
-              option: 'Both'
-      
-      # David without Sarah nor Skylar = adult up.
-      - conditions: "{{ sarah_nor_skylar and is_state('person.david', 'home') }}"
-      
-        sequence:
-          - service: input_select.select_option
-            target:
-              entity_id: input_select.occupied_bedrooms
-            data:
-              option: 'AdultUp'
-      
-      # Sarah without David = adult down (it's assumed Skylar will sleep with Sarah if she's here).
-      - conditions: "{{ is_state('person.sarah', 'home') and not is_state('person.david', 'home') }}"
-      
-        sequence:
-          - service: input_select.select_option
-            target:
-              entity_id: input_select.occupied_bedrooms
-            data:
-              option: 'AdultDown'
-      
-      # Skylar with David = child down plus (plus meaning adult up).
-      - conditions: "{{ is_state('person.skylar', 'home') and is_state('person.david', 'home') }}"
-      
-        sequence:
-          - service: input_select.select_option
-            target:
-              entity_id: input_select.occupied_bedrooms
-            data:
-              option: 'ChildDownPlus'
-      
-      # Skylar alone = child down.
-      - conditions: "{{ is_state('person.skylar', 'home') and sarah_nor_david }}"
-      
-        sequence:
-          - service: input_select.select_option
-            target:
-              entity_id: input_select.occupied_bedrooms
-            data:
-              option: 'ChildDown'
-    
-    # Perform tasks for adults.
-    - if:
-        - "{{ trigger.id == 'adults' }}"
-      
-      then:
-        
-        # If sunset has already occurred, Close House won't be triggered to close the garage.
-        # So start a timer to do that in a bit.
-        # Also, since it's dark, turn on some outdoor lights.
-        - if:
-            - condition: state
-              entity_id: sun.sun
-              state: 'below_horizon'
-        
-          then:
-            - service: timer.start
-              data:
-                entity_id: timer.garage_north_close
-                duration: '00:30:00'
-            
-            - service: scene.apply
-              data:
-                entities:
-                  light.driveway_light:   'on'
-                  light.front_floodlight: 'on'
-        
-        # Open garage door.
-        - service: script.turn_on
-          target:
-            entity_id: script.open_garage_door_north
-          data:
-            variables:
-              use_info_message: true
-    
-    # Perform tasks for children.
-    - if:
-        - "{{ trigger.id == 'children' }}"
-      
-      then:
-        
-        # Turn on bedroom light if needed.
-        - service: script.turn_on_lights_per_conditions
-          data:
-            light_entity: light.studio_lamp_2
-            lux_entity: sensor.downstairs_sensor_ambient_light
-            min_lux_value: "{{ states('input_number.studio_bedroom_ambient_min') | float(0) }}"
-
-# Close house when all family members leave.
-- alias: Close House For Family
-  id: 'close_house_for_family'
-  
-  trigger:
-    
-    # Anyone leaves.
-    - platform: state
-      entity_id: binary_sensor.adults_home
-      from: 'on'
-      to: 'off'
-  
-    - platform: state
-      entity_id: binary_sensor.children_home
-      from: 'on'
-      to: 'off'
-  
-  condition:
-    
-    # Everyone must be gone.
-    - condition: state
-      entity_id: binary_sensor.adults_home
-      state: 'off'
-    
-    - condition: state
-      entity_id: binary_sensor.children_home
-      state: 'off'
-  
-  action:
-    
-    # Restore the upstairs bedroom to normal.
-    - if:
-        - condition: state
-          entity_id: binary_sensor.penthouse_occupied
-          state: 'on'
-      
-      then:
-        - service: script.restore_normal_penthouse_bedroom
-    
-    # Reset occupied bedrooms.
-    - service: input_select.select_option
-      target:
-        entity_id: input_select.occupied_bedrooms
-      data:
-        option: Empty
-    
-    # Turn off appropriate guest suite lights and fans.
-    - service: homeassistant.turn_off
-      target:
-        label_id:
-          - guest_suite_down
-          - guest_suite_up
-    
-    # Reset Child Alone.
-    - service: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.child_alone
-
-#=============================#
-#     Penthouse Occupancy     #
-#=============================#
-
-# Set the penthouse devices appropriately when the occupied bedrooms change.
-# Normally this only happens when family members arrive, but it could also be done manually via the UI.
-- alias: Prepare Penthouse Bedroom For Family
-  id: 'prepare_penthouse_bedroom_for_family'
-  mode: queued
-  
-  # Trigger when the penthouse bedroom is occupied by an adult.
-  triggers:
-    - trigger: state
-      entity_id: input_select.occupied_bedrooms
-      not_from:
-        - 'AdultUp'
-        - 'ChildDownPlus'
-        - 'Both'
-      to:
-        - 'AdultUp'
-        - 'ChildDownPlus'
-        - 'Both'
-  
-  actions:
-
-    # Set a temporary temperature hold upstairs. Assume 7 days total.
-    - action: script.set_temporary_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        heat_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_heat_temp }}"
-        cool_temp: "{{ state_attr('sensor.variables', 'variables').upstairs_home_cool_temp }}"
-        days: 7
-            
-    # Turn off the vacuum automation.
-    - action: script.toggle_vacuum_automation
-      data:
-        operation: 'off'
-
-# If a child is home with parents, we don't have a way to determine if the parents leave (not a temporary leave),
-# but the child stays home longer. So we use the Child Alone button triggered via the UI to indicate this.
-- alias: Restore Normal Penthouse Bedroom
-  id: 'restore_normal_penthouse_bedroom'
-  
-  # Trigger when the Child Alone button is pressed on the UI.
-  trigger:
-    - platform: state
-      entity_id: input_boolean.child_alone
-      to: 'on'
-  
-  action:
-    
-    # Restore the penthouse bedroom to normal.
-    - service: script.restore_normal_penthouse_bedroom
-    
-    # Reset occupied bedrooms. For now this is ChildDown, until I figure out a more complete solution.
-    - service: input_select.select_option
-      target:
-        entity_id: input_select.occupied_bedrooms
-      data:
-        option: ChildDown
-    
-    # Turn off penthouse lights and fans.
-    - service: homeassistant.turn_off
-      target:
-        label_id: guest_suite_up
-    
-    # Reset Child Alone.
-    - service: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.child_alone
-
 #================#
 #     Garage     #
 #================#
 
-# Close garage door north once a delay has occurred after family has arrived after sunset.
-- alias: Close Garage North
-  id: close_garage_north
+# Clean up stuff once a delay has occurred after family has arrived after sunset.
+- alias: Handle Guest Arrival Cleanup
+  id: handle_guest_arrival_cleanup
   
   trigger:
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.garage_north_close
+        entity_id: timer.guest_arrival_cleanup
   
   action:
     - service: script.turn_on
@@ -687,6 +424,12 @@
       data:
         variables:
           use_info_message: true
+            
+    - action: scene.apply
+      data:
+        entities:
+          light.driveway_light:   'off'
+          light.front_floodlight: 'off'
 
 #========================#
 #     Family Room AV     #
@@ -721,9 +464,7 @@
       entity_id: input_boolean.extended_away_mode
       state: 'off'
     
-    - action: script.toggle_family_room_av
-      data:
-        operation: 'on'
+    - action: script.enable_family_room_av
 
 #================================#
 #     Human Presence Sensors     #
@@ -1740,158 +1481,54 @@
           thresholds: [76, 74, 72]
           timeout: 360
 
-#=========================#
-#     Device Trackers     #
-#=========================#
-
-# Toggle virtual device trackers.
-- alias: Toggle Virtual Device Tracker
-  id: 'toggle_virtual_device_tracker'
-  mode: queued
-  
-  trigger:
-    - platform: state
-      entity_id:
-        - input_boolean.virtual_david
-        - input_boolean.virtual_maryam
-        - input_boolean.virtual_mike
-        - input_boolean.virtual_sarah
-        - input_boolean.virtual_skylar
-      to:
-  
-  action:
-    - variables:
-        new_state: >
-          {% if trigger.to_state.state == 'on' %}
-            home
-          {% else %}
-            not_home
-          {% endif %}
-        
-        topic_suffix: "{{ trigger.to_state.entity_id | replace('input_boolean.', '') }}"
-    
-    - service: mqtt.publish
-      data:
-        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
-        payload: "{{ new_state }}"
-
-# Toggle phone stationary device trackers, based on the wifi SSID.
-- alias: Toggle Jon Phone Stationary Tracker
-  id: toggle_jon_phone_stationary_tracker
-  
-  use_blueprint:
-    path: devices/update_phone_tracker.yaml
-    input:
-      wifi_entity: sensor.jon_galaxy_wifi_connection
-      ssid: White Rabbit
-      topic_suffix: jon_phone_stationary
-
-- alias: Toggle Mike Phone Stationary Tracker
-  id: toggle_mike_phone_stationary_tracker
-  
-  use_blueprint:
-    path: devices/update_phone_tracker.yaml
-    input:
-      wifi_entity: sensor.mike_galaxy_wifi_connection
-      ssid: White Rabbit
-      topic_suffix: mike_phone_stationary
-
-- alias: Toggle Sarah Phone Stationary Tracker
-  id: toggle_sarah_phone_stationary_tracker
-  
-  use_blueprint:
-    path: devices/update_phone_tracker.yaml
-    input:
-      wifi_entity: sensor.sarah_pixel_wi_fi_connection
-      ssid: White Rabbit
-      topic_suffix: sarah_phone_stationary
-  
-# Children without personal devices use NFC tags to scan in and out.
-- alias: Handle Child Tag Scan
-  id: handle_child_tag_scan
-  
-  triggers:
-    - trigger: tag
-      tag_id: 0c6d2dfd-4ad7-4281-9ec0-54756ed2d539
-      id: skylar
-        
-  actions:
-    - variables:
-        tracker_entity: "{{ 'device_tracker.' ~ trigger.id ~ '_nfc_tag' }}"
-        toggle_entity: "{{ 'input_boolean.' ~ trigger.id ~ '_nfc_tag' }}"
-        new_state: >
-          {% if states(tracker_entity) != 'home' %}
-            home
-          {% else %}
-            not_home
-          {% endif %}
-        topic_suffix: "{{ tracker_entity.split('.')[1] }}"
-        toggle_action: "{{ iif(new_state == 'home', 'on', 'off') }}"
-    
-    - action: mqtt.publish
-      data:
-        topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
-        payload: "{{ new_state }}"
-          
-    - action: input_boolean.turn_{{ toggle_action }}
-      target:
-        entity_id: "{{ toggle_entity }}"
-    
-    - action: script.send_notification
-      data:
-        destination:
-          - voice_assistant
-        message: "{{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Skylar! Come visit again soon!') }}"
-        speak: excited
-        room: ['office']
-        voice_type: tts
-
 #======================#
 #     Echo Devices     #
 #======================#
 
-# Mute master bedroom echo.
-- alias: Mute Master Bedroom Echo
-  id: 'mute_master_bedroom_echo'
+# Echo devices have a do not disturb (DND) switch, which supposedly blocks unsolicited notifications from Amazon.
+# Turn on DND in all occupied bedrooms when the Bedtime script is run. Note that the master bedroom is always occupied.
+# Turn off DND when the Handle Jon Awake automation is run.
+- alias: Manage Echo Do Not Disturb
+  id: 'manage_echo_do_not_disturb'
   
-  trigger:
-    - platform: state
-      entity_id: input_boolean.sleeptime
+  triggers:
+    - trigger: state
+      entity_id: input_boolean.nighttime
       from: 'off'
       to: 'on'
+      id: 'on'
   
-  action:
-    - service: script.turn_on
-      entity_id: script.mute_master_bedroom_echo
-
-# Unmute master bedroom echo.
-- alias: Unmute Master Bedroom Echo
-  id: 'unmute_master_bedroom_echo'
-  
-  trigger:
-    - platform: state
-      entity_id: input_boolean.sleeptime
+    - trigger: state
+      entity_id: input_boolean.nighttime
       from: 'on'
       to: 'off'
+      id: 'off'
   
-  action:
-    - service: switch.turn_off
-      entity_id: switch.master_bedroom_echo_do_not_disturb_switch
-
-# Guest bedroom echo devices might be muted at night. Unmute them at 9 AM. Note that the master bedroom echo is unmuted
-# above at the end of nighttime.
-- alias: Unmute Guest Bedroom Echoes
-  id: 'unmute_guest_bedroom_echoes'
-  
-  trigger:
-    - platform: time
-      at: '09:00:00'
-  
-  action:
-    - service: switch.turn_off
-      entity_id:
-        - switch.studio_echo_do_not_disturb_switch
-        - switch.penthouse_echo_do_not_disturb_switch
+  actions:
+    - variables:
+        
+        # Since there are only 3 bedrooms in the house, now and forever, this is just hardcoded, rather than something more sophisticated.
+        bedroom_echoes: "{{ ['switch.master_bedroom_echo_do_not_disturb_switch', 'switch.studio_echo_do_not_disturb_switch', 'switch.penthouse_echo_do_not_disturb_switch'] }}"
+    
+    # Process all bedroom echoes.
+    - repeat:
+        for_each: "{{ bedroom_echoes }}"
+        
+        sequence:
+          - variables:
+              name: "{{ repeat.item.split('.')[1].split('_')[0] }}"
+              
+              # Note that for the master bedroom, this resolves to a non-existent entity. But we don't care because it isn't used below.
+              occupied_sensor: "{{ 'binary_sensor.' ~ name ~ '_occupied' }}"
+          
+          # Continue if we need to take action for this bedroom.
+          - if:
+              - "{{ iif(name == 'master' or states(occupied_sensor) == 'on') }}"
+            
+            then:
+              - action: switch.turn_{{ trigger.id }}
+                target:
+                  entity_id: "{{ repeat.item }}"
 
 #========================#
 #     Legion T530 PC     #

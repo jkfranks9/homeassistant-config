@@ -1,135 +1,3 @@
-#=====================================#
-#     Nighttime / Sleeptime Modes     #
-#=====================================#
-
-# Reset Nighttime and Sleeptime when I'm no longer sleeping, and the office becomes occupied (I always use the office
-# in the morning). I don't want to use wait_for_trigger because I would need a long timeout, which could be lost if
-# HA reboots (very unlikely since I'd need to be in the office to kick off a reboot, but still). So I'm using several
-# triggers to accomplish the same thing in a terrible way.
-#
-# Without waiting for the office occupation, this automation conflicts with Reset Smart Bulb Nighttime, and the bedroom
-# lamp won't stay on if I choose to stay in bed for a while in the morning. What a bother!
-- alias: Handle Jon Awake
-  id: 'handle_jon_awake'
-  
-  triggers:
-    - trigger: state
-      entity_id: binary_sensor.jon_sleeping
-      from: 'on'
-      to: 'off'
-  
-    - trigger: state
-      entity_id: input_boolean.office_occupied
-      from: 'off'
-      to: 'on'
-    
-    - platform: homeassistant
-      event: start
-  
-  conditions:
-    - condition: state
-      entity_id: binary_sensor.jon_sleeping
-      state: 'off'
-  
-    - condition: state
-      entity_id: input_boolean.office_occupied
-      state: 'on'
-  
-  actions:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    
-    - service: input_boolean.turn_off
-      entity_id:
-        - input_boolean.nighttime
-        - input_boolean.sleeptime
-
-# Reset the bedtime environment when the nighttime flag turns off.
-- alias: Reset Bedtime Environment
-  id: 'reset_bedtime_environment'
-  
-  trigger:
-    - platform: state
-      entity_id: input_boolean.nighttime
-      from: 'on'
-      to: 'off'
-  
-  action:
-    - service: script.reset_bedtime_environment
-
-# Set the sleep start time.
-- alias: Set Sleep Start
-  id: set_sleep_start
-
-  triggers:
-    - trigger: state
-      entity_id: binary_sensor.jon_sleeping
-      to: 'on'
-  
-  actions:
-    - action: input_datetime.set_datetime
-      target:
-        entity_id: input_datetime.sleep_start
-      data:
-        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-
-# Set the sleep duration in hours.
-- alias: Set Sleep Duration
-  id: set_sleep_duration
-
-  triggers:
-    - trigger: state
-      entity_id: binary_sensor.jon_sleeping
-      to: 'off'
-  
-  actions:
-    - variables:
-        duration: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.sleep_start'))) / 3600) | round(2) }}"
-    
-    - action: input_number.set_value
-      target:
-        entity_id: input_number.sleep_duration
-      data:
-        value: "{{ duration }}"
-    
-    - delay:
-        milliseconds: 500
-    
-    - variables:
-        time: "{{ states('sensor.sleep_duration_display') }}"
-        hours: "{{ time.split(':')[0] | int(0) }}"
-        minutes: "{{ time.split(':')[1] | int(0) }}"
-        hours_str: "{{ iif(hours == 1, ' hour', ' hours') }}"
-        minutes_str: "{{ iif(minutes == 1, ' minute', ' minutes') }}"
-        keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
-        calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
-          
-    - action: script.send_notification
-      data:
-        destination:
-          - voice_assistant
-        message: >
-          {% set msg = 'Good morning. You slept ' ~ hours ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ minutes_str ~ '.', '.') %}
-          {% if calendar == true %}
-            {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
-          {% endif %}
-          
-          {{ msg }}
-        room: ['master_bedroom']
-        voice_type: tts
-    
-    # Turn on voice assistant screens.
-    - if:
-        - condition: numeric_state
-          entity_id: sensor.downstairs_sensor_ambient_light
-          below: input_number.family_room_ambient_max
-      
-      then:    
-        - scene: scene.voice_assistants_on_dim
-      
-      else:    
-        - scene: scene.voice_assistants_on_bright
-
 #======================#
 #     Lux Sensors      #
 #======================#
@@ -608,23 +476,21 @@
 #     Guest Lights     #
 #======================#
 
-# Turn on guest lights near sunset or in the evening when children are home.
-- alias: Turn On Guest Lights Sunset
-  id: 'turn_on_guest_lights_sunset'
+# Turn on guest lights upon darkness when children are home.
+- alias: Turn On Guest Lights At Dark
+  id: 'turn_on_guest_lights_at_dark'
   
-  trigger:
+  triggers:
     
-    # Trigger near dusk.
-    - platform: template
-      value_template: >
-        {% set dusk = as_timestamp(state_attr('sun.sun', 'next_dusk')) %}
-        {% set now = as_timestamp(now()) %}
-        {{ (dusk - now) / 60 <= 60 }}
+    # Trigger when the ambient light level is low, but only in the evening.
+    - trigger: template
+      value_template: "{{ is_state_attr('sun.sun', 'rising', false) and 
+                          states('sensor.downstairs_sensor_ambient_light') | float(0) < states('input_number.studio_bedroom_ambient_min') | float(0) }}"
     
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
   
-  condition:
+  conditions:
     - condition: state
       entity_id: binary_sensor.children_home
       state: 'on'
@@ -638,47 +504,17 @@
       state: 'off'
     
     - condition: template
-      value_template: >
-        {% set dusk = as_timestamp(state_attr('sun.sun', 'next_dusk')) %}
-        {% set now = as_timestamp(now()) %}
-        {{ (dusk - now) / 60 <= 60 }}
+      value_template: "{{ is_state_attr('sun.sun', 'rising', false) and 
+                          states('sensor.downstairs_sensor_ambient_light') | float(0) < states('input_number.studio_bedroom_ambient_min') | float(0) }}"
     
-  action:
+  actions:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    - service: script.set_up_children_only_bedtime_environment
+    # Always turn on the downstairs bedroom light(s); that's home base.
+    - action: script.operate_preferred_studio_lamps
       data:
-        stage: 'pre'
-    
-    # Always turn on the downstairs bedroom light; that's home base.
-    - service: light.turn_on
-      entity_id: light.studio_lamp_2
-
-# Turn off guest lights after bedtime when grandchildren are home.
-- alias: Turn Off Guest Lights Bedtime
-  id: 'turn_off_guest_lights_bedtime'
-  
-  trigger:
-    - platform: time
-      at: '22:30:00'
-    
-    - platform: homeassistant
-      event: start
-  
-  condition:
-    - condition: time
-      after: '22:30:00'
-    
-    - "{{ states('input_select.occupied_bedrooms') in ['ChildDown', 'ChildDownPlus'] }}"
-  
-  action:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-    
-    - service: script.set_up_children_only_bedtime_environment
-      data:
-        stage: 'post'
+        operation: 'on'
 
 #==========================#
 #     Christmas Lights     #
@@ -764,7 +600,7 @@
           before: '22:29:59'
       
       # Turn on Christmas lights, and turn off the family room lamp just in case. Also, deactivate the
-      # automation that controls Christmas lights, so they don't turn off based on the foyer light sensor.
+      # automation that controls Christmas lights, so they don't turn off based on the downstairs light sensor.
       then:
         - action: automation.turn_off
           entity_id: automation.control_christmas_lights
@@ -891,21 +727,13 @@
         
         sequence:
           
-          # Turn off the light if we think it's on.
-          - if:
-              - "{{ states(repeat.item) == 'on' }}"
-            
-            then:
-              - service: light.turn_off
-                target:
-                  entity_id: "{{ repeat.item }}"
-  
-              - service: system_log.write
-                data:
-                  message: "Turned off {{ repeat.item }}"
-                  level: info    
+          # Turn off the light if we think it's on. This is a separate script because we need it for individual fan lights
+          # elsewhere.
+          - action: script.turn_off_fan_light
+            data:
+              fan_entity: "{{ repeat.item }}"
     
     # Reset the toggle.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       target:
         entity_id: input_boolean.ceiling_fan_lights_off

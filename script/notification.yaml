@@ -514,12 +514,11 @@ send_message_to_room_voice_device:
   sequence:
     - variables:
         
-        # For the special case of the 'everywhere' room, we use the 'light_rooms' global variable. This is used for
-        # controlling a light in a room containing a voice assistant, so is equivalent to all applicable rooms.
+        # For the special case of the 'everywhere' room, we combine all rooms with an echo or nabu device.
         room_list: >
           {% set var = namespace(list = []) %}
           {% if room[0] == 'everywhere' %}
-            {% set var.list = state_attr('sensor.variables', 'variables').light_rooms %}
+            {% set var.list = union(state_attr('sensor.voice_echo_rooms', 'rooms'), state_attr('sensor.voice_nabu_rooms', 'rooms')) | sort %}
           {% else %}
             {% set var.list = room %}
           {% endif %}
@@ -531,60 +530,69 @@ send_message_to_room_voice_device:
         for_each: "{{ room_list }}"
       
         sequence:
-    
-          # Pick the right type of device.
-          - choose:
+          - variables:
+              dnd_entity: "{{ 'switch.' ~ repeat.item ~ '_echo_do_not_disturb_switch' }}"
+          
+          # Bypass any rooms with the do not disturb (DND) switch on. These are automatically set for all occupied bedrooms during the
+          # nighttime window, but can also be set manually for any device.
+          - if:
+              - "{{ states(dnd_entity) == 'off' }}"
             
-            # First priority is an HA Assist (Nabu) device.
-            - conditions: "{{ repeat.item in state_attr('sensor.voice_nabu_rooms', 'rooms') }}"
-            
-              sequence:
-                - variables:
-                    voice_entity: "{{ 'assist_satellite.' ~ repeat.item ~ '_nabu_assist_satellite' }}"
+            then:
+          
+              # Pick the right type of device.
+              - choose:
                 
-                - action: script.turn_on
-                  target:
-                    entity_id: script.send_voice_message
-                  data:
-                    variables:
-                      message: "{{ message }}"
-                      voice_entity: "{{ voice_entity }}"
-                      voice_type: "{{ voice_type }}"
-                      family: nabu
-            
-            # Second priority is an Amazon Echo device.
-            - conditions: "{{ repeat.item in state_attr('sensor.voice_echo_rooms', 'rooms') }}"
-            
-              sequence:
-                - variables:
-                    voice_entity: "{{ 'media_player.' ~ repeat.item ~ '_echo' }}"
-                    speak_message: >
-                      {% if speak == 'excited' %}
-                      <speak>
-                        <amazon:emotion name="excited" intensity="medium">
-                          {{ message }}
-                        </amazon:emotion>
-                      </speak>
-                      {% else %}
-                        {{ message }}
-                      {% endif %}
+                # First priority is an HA Assist (Nabu) device.
+                - conditions: "{{ repeat.item in state_attr('sensor.voice_nabu_rooms', 'rooms') }}"
                 
-                - action: script.turn_on
-                  target:
-                    entity_id: script.send_voice_message
-                  data:
-                    variables:
-                      message: "{{ speak_message }}"
-                      voice_entity: "{{ voice_entity }}"
-                      voice_type: "{{ voice_type }}"
-                      family: echo
-              
-            # We should never get here.
-            default:
-              - action: system_log.write
-                data:
-                  message: "Did not find any voice assistant device for: {{ repeat.item }} ."
-                  level: warning
+                  sequence:
+                    - variables:
+                        voice_entity: "{{ 'assist_satellite.' ~ repeat.item ~ '_nabu_assist_satellite' }}"
+                    
+                    - action: script.turn_on
+                      target:
+                        entity_id: script.send_voice_message
+                      data:
+                        variables:
+                          message: "{{ message }}"
+                          voice_entity: "{{ voice_entity }}"
+                          voice_type: "{{ voice_type }}"
+                          family: nabu
+                
+                # Second priority is an Amazon Echo device.
+                - conditions: "{{ repeat.item in state_attr('sensor.voice_echo_rooms', 'rooms') }}"
+                
+                  sequence:
+                    - variables:
+                        voice_entity: "{{ 'media_player.' ~ repeat.item ~ '_echo' }}"
+                        speak_message: >
+                          {% if speak == 'excited' %}
+                          <speak>
+                            <amazon:emotion name="excited" intensity="medium">
+                              {{ message }}
+                            </amazon:emotion>
+                          </speak>
+                          {% else %}
+                            {{ message }}
+                          {% endif %}
+                    
+                    - action: script.turn_on
+                      target:
+                        entity_id: script.send_voice_message
+                      data:
+                        variables:
+                          message: "{{ speak_message }}"
+                          voice_entity: "{{ voice_entity }}"
+                          voice_type: "{{ voice_type }}"
+                          family: echo
+                  
+                # We should never get here.
+                default:
+                  - action: system_log.write
+                    data:
+                      message: "Did not find any voice assistant device for: {{ repeat.item }} ."
+                      level: warning
 
 # For some reason a message sent to certain voice devices can apparently not complete, so if we're sending to multiple devices
 # some don't receive the message. Not sure how to debug or fix this, so this script sends messages in parallel to each device.

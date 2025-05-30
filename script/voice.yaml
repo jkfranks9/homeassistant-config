@@ -4,6 +4,7 @@
 
 # There is no way to pass variables from Alexa routines, so these are front ends used for those routines.  
 
+# Fans ...
 alexa_set_fan_off:
   alias: Alexa Set Fan Off
   
@@ -35,6 +36,23 @@ alexa_set_fan_high:
     - action: script.voice_modify_fan
       data:
         speed: 'high'
+
+# Lights ...
+alexa_turn_light_on:
+  alias: Alexa Turn Light On
+  
+  sequence:
+    - action: script.voice_operate_light
+      data:
+        operation: 'on'
+
+alexa_turn_light_off:
+  alias: Alexa Turn Light Off
+  
+  sequence:
+    - action: script.voice_operate_light
+      data:
+        operation: 'off'
 
 #======================#
 #     Ceiling Fans     #
@@ -89,8 +107,15 @@ voice_modify_fan:
 #=====================#
 
 # Toggle a light that lives in a room with a voice assistant device.
-voice_toggle_room_light:
-  alias: Voice Toggle Room Light
+voice_operate_light:
+  alias: Voice Operate Light
+  
+  fields:
+    operation:
+      name: Operation
+      description: Whether to turn the light on or off.
+      selector:
+        select:
   
   sequence:
     
@@ -112,11 +137,26 @@ voice_toggle_room_light:
         - "{{ room in light_rooms }}"
       
       then:
+        - variables:
+            light_entity: "{{ light_rooms_lights[light_rooms.index(room)] }}"
         
-        # Toggle the light.
-        - action: light.toggle
-          target:
-            entity_id: "{{ light_rooms_lights[light_rooms.index(room)] }}"
+        - if:
+            - "{{ light_entity.split('.')[0] == 'light' }}"
+          
+          then:
+        
+            # Operate the light.
+            - action: light.turn_{{ operation }}
+              target:
+                entity_id: "{{ light_rooms_lights[light_rooms.index(room)] }}"
+          
+          else:
+            
+            # For non-light domains, use specialized processing.
+            # NOTE: There's only one of these for now; probably needs to be a choose in order to handle additional cases.
+            - action: script.operate_preferred_studio_lamps
+              data:
+                operation: "{{ operation }}"
 
 #=======================#
 #     Notifications     #
