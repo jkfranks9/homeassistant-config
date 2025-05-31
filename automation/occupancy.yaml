@@ -354,8 +354,11 @@
         - input_boolean.nighttime
         - input_boolean.sleeptime
     
-    # Reset the bedtime environment.
-    - action: script.reset_bedtime_environment
+    # Reset the bedtime environment. Run the script in parallel, because there is a potential long wait while performing
+    # master bedroom tasks, and I'd like to hear the wakeup notification ASAP.
+    - action: script.turn_on
+      target:
+        entity_id: script.reset_bedtime_environment
     
     # Set the sleep duration time.
     - action: input_number.set_value
@@ -367,6 +370,21 @@
     # Short delay to make sure we pick up the sleep duration we just set.
     - delay:
         milliseconds: 500
+    
+    # Normalize the volume on all echoes in case they were modified yesterday or during the night.
+    - repeat:
+        for_each: "{{ echo_list }}"
+        
+        sequence:
+          - if:
+              - "{{ not is_state_attr(repeat.item, 'volume_level', 0.5) }}"
+            
+            then:          
+              - action: media_player.volume_set
+                target:
+                  entity_id: "{{ repeat.item }}"
+                data:
+                  volume_level: 0.5
     
     # Now we can set the various notification data.
     - variables:
@@ -405,25 +423,16 @@
       else:    
         - scene: scene.voice_assistants_on_bright
     
-    # Normalize the volume on all echoes in case they were modified yesterday or during the night.
-    - repeat:
-        for_each: "{{ echo_list }}"
-        
-        sequence:
-          - if:
-              - "{{ not is_state_attr(repeat.item, 'volume_level', 0.5) }}"
-            
-            then:          
-              - action: media_player.volume_set
-                target:
-                  entity_id: "{{ repeat.item }}"
-                data:
-                  volume_level: 0.5
-    
     # Turn on theater plugs that are only off at night.
     - action: switch.turn_on
       target:
         entity_id: "{{ label_entities('theater_off_at_night') }}"
+    
+    # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.
+    # The Reset Bedtime Environment script (called above) calls Modify Master Suite for wakeup. That script in turn waits 
+    # until downstairs motion is detected before turning off master suite lights. So we can use that to manage the islnad 
+    # light here.
+    - wait_template: "{{ is_state('script.modify_master_suite', 'off') }}"
     
     # Turn on island light if needed (lets me get breakfast).
     - action: script.turn_on_lights_per_conditions
@@ -431,14 +440,3 @@
         light_entity: light.island_light
         lux_entity: sensor.downstairs_sensor_ambient_light
         min_lux_value: "{{ states('input_number.kitchen_ambient_min') | float(0) }}"
-    
-    # Turn off the island light when I'm in the office, or after a few minutes.
-    - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.office_human_sensor_presence
-          to: 'on'
-          for: 120
-      timeout: '00:15:00'
-    
-    - action: light.turn_off
-      entity_id: light.island_light
