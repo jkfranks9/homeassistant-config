@@ -785,7 +785,7 @@
         next_update_seconds_cutoff: "{{ states('number.esphome_update_all_next_update_cutoff_seconds') | int(0) }}"
         
         # Fudge factor to ensure we suspend before the battery device wakes up at the target update cycle.
-        suspend_buffer_seconds: 15
+        suspend_buffer_seconds: 30
     
     # React to different devices being updated.
     - choose:
@@ -816,9 +816,15 @@
                 
                 # Duration in seconds until we suspend.
                 suspend_duration_seconds: "{{ iif(next_update_remaining_seconds >= next_update_seconds_cutoff, next_update_remaining_seconds, next_update_remaining_seconds + battery_device_cycle_seconds) - suspend_buffer_seconds }}"
+    
+            # Log some diagnostics.
+            - action: system_log.write
+              data:
+                message: "{{ 'Previous update: ' ~ as_local(as_datetime(previous_update_timestamp)) ~ ', suspend_duration: ' ~ suspend_duration_seconds }}"
+                level: info
             
             # Save the now timestamp. This allows us to re-calculate the average device update time when we get to the pre-battery device.
-            - service: input_datetime.set_datetime
+            - action: input_datetime.set_datetime
               data:
                 entity_id: input_datetime.esphome_update_all_first_device_timestamp
                 timestamp: "{{ first_device_timestamp }}"

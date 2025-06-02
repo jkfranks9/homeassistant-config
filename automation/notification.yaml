@@ -364,21 +364,23 @@
       tag: 'upstairs_entry_sensor_battery'
 
 # Porch battery powered sensor needs recharging.
+# NOTE: This is a persistent notification, to help me remember to charge the battery before trying an update all operation.
 - alias: Notify Porch Sensor Battery Low
   id: 'notify_porch_sensor_battery_low'
   
-  use_blueprint:
-    path: notification/mobile_notify.yaml
-    input:
-      trigger_type: numeric_state_below
-      entity: sensor.porch_sensor_battery_level
-      numeric_notify_threshold: 20
-      numeric_clear_threshold: 95
-      enable_clear_trigger: true
-      clear_type: auto
-      message: 'Porch sensor battery needs recharging.'
-      channel: standard
-      tag: 'porch_battery'
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.porch_sensor_battery_level
+      below: 20
+  
+  actions:    
+    - action: script.send_notification
+      data:
+        destination:
+          - persistent
+        title: 'ESPHome Device Alert'
+        message: 'Porch sensor battery needs recharging.'
+        notification_id: 'porch_battery'
 
 # Master BR Vent 1 batteries are too low.
 - alias: Notify Master BR Vent 1 Batteries Low
