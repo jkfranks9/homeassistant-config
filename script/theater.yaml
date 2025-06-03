@@ -553,25 +553,27 @@ close_cinema:
     - action: remote.turn_off
       entity_id: remote.harmony_hub
     
-    # Set the upstairs Ecobee to away or sleep mode, depending on the time of day.
+    # If the penthouse is not occupied, set the upstairs Ecobee to away or sleep mode, depending on the time of day.
     - if:
-        - condition: time
-          after:  '18:30:00'
-          before: '23:30:00'
+        - condition: state
+          entity_id: binary_sensor.penthouse_occupied
+          state: 'off'
         
       then:
-          
+        - variables:
+            
+            # Pick the right preset mode depending on the time.
+            preset_mode: >
+              {% set tod = states('sensor.time') %}
+              {% set hour = tod.split(':')[0] | int(0) %}
+              {% set minute = tod.split(':')[1] | int(0) %}
+              {% set minutes = (hour * 60) + minute %}
+              {{ iif(minutes >= 1110 or minutes <= 420, 'sleep', 'away') }}
+            
         - action: script.set_thermostat_preset
           data:
             thermostat_entity: climate.upstairs
-            preset: 'sleep'
-      
-      else:
-        
-        - action: script.set_thermostat_preset
-          data:
-            thermostat_entity: climate.upstairs
-            preset: 'away'
+            preset: "{{ preset_mode }}"
     
     # Turn on the upstairs ecobee minimum fan time.
     # NOTE: The time amount should be coordinated with the ecobee system settings, using the app or the thermostat.
@@ -703,14 +705,20 @@ perform_post_open_tasks:
         room: ['family_room', 'theater']
         voice_type: tts
     
-    # Set the upstairs Ecobee to home mode.
-    - service: script.set_thermostat_preset
-      data:
-        thermostat_entity: climate.upstairs
-        preset: 'home'
+    # Set the upstairs Ecobee to home mode if the penthouse is not occupied.
+    - if:
+        - condition: state
+          entity_id: binary_sensor.penthouse_occupied
+          state: 'off'
+        
+      then:    
+        - action: script.set_thermostat_preset
+          data:
+            thermostat_entity: climate.upstairs
+            preset: 'home'
     
     # Turn off the upstairs Ecobee minimum fan time (it makes me cold sometimes).
-    - service: ecobee.set_fan_min_on_time
+    - action: ecobee.set_fan_min_on_time
       data:
         entity_id: climate.upstairs
         fan_min_on_time: 0
@@ -718,12 +726,12 @@ perform_post_open_tasks:
     # Turn off some downstairs lights after a delay, if appropriate.
     - delay: '00:05:00'
     
-    - service: script.change_downstairs_lighting
+    - action: script.change_downstairs_lighting
       data:
         operation: post_open
     
-    # Turn off the family room AV system and box 3 screen if it's late enough and no one else is home.
-    - condition:
+    # Turn off the family room AV system if it's late enough and no one else is home.
+    - if:
         - condition: state
           entity_id: 
             - binary_sensor.adults_home
@@ -733,8 +741,9 @@ perform_post_open_tasks:
         - condition: time
           after:  '18:00:00'
           before: '23:30:00'
-    
-    - service: script.disable_family_room_av
+      
+      then:    
+        - action: script.disable_family_room_av
 
 #=========================#
 #     Volume Control      #
