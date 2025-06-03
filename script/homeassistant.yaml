@@ -63,16 +63,6 @@ initialize_global_variables:
         key: fan_rooms
         value: ['family_room', 'office', 'theater']
     
-    # Map of hockey team abbreviations to the full team name. I wish I could do this using the NHL API, but the JSON result
-    # doesn't adhere to HA requirements (is not a dictionary or list with 0th element a dictionary). Lame.
-    - event: set_variable
-      event_data:
-        key: hockey_teams
-        value: [['ANA', 'Ducks'], ['BOS', 'Bruins'], ['BUF', 'Sabres'], ['CAR', 'Hurricanes'], ['CBJ', 'Blue Jackets'], ['CGY', 'Flames'], ['CHI', 'Blackhawks'], ['COL', 'Avalanche'], ['DAL', 'Stars'], 
-                ['DET', 'Red Wings'], ['EDM', 'Oilers'], ['FLA', 'Panthers'], ['LAK', 'Kings'], ['MIN', 'Wild'], ['MTL', 'Canadiens'], ['NJD', 'Devils'], ['NSH', 'Predators'], ['NYI', 'Islanders'], ['NYR', 'Rangers'], 
-                ['OTT', 'Senators'], ['PHI', 'Flyers'], ['PIT', 'Penguins'], ['SEA', 'Kraken'], ['SJS', 'Sharks'], ['STL', 'Blues'], ['TBL', 'Lightning'], ['TOR', 'Maple Leafs'], ['UTA', 'Utah Hockey Club'], ['VAN', 'Canucks'], 
-                ['VGK', 'Golden Knights'], ['WPG', 'Jets'], ['WSH', 'Capitals']]
-    
     # Calorie values for simple exercise types.
     - event: set_variable
       event_data:

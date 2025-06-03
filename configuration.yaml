@@ -200,6 +200,26 @@ command_line:
       unit_of_measurement: '°'
       command: 'cat /sys/class/thermal/thermal_zone0/temp'
       value_template: "{{ (value | multiply(0.001) | float(0)) | round(2) }}"
+  
+  # Once per hockey season, I need to query the NHL API for the league standings, and save the result in the nhl_standings.json file.
+  # The first sensor here will then extract the 3 character team abbeviations into a list. When we query the game status during the 
+  # season, all we get for the opponent is the abbreviation. We can then find the abbreviation in this sensor's list to get the index, 
+  # and use that to get the friendly team name from the second sensor here.
+  - sensor:
+      name: NHL Team Abbrev
+      unique_id: nhl_team_abbrev
+      command: "jq '{ abbrev: .standings | map(.teamAbbrev.default) }' nhl_standings.json"
+      json_attributes:
+        - abbrev
+      value_template: "{{ value_json['abbrev'] | length }}"
+  
+  - sensor:
+      name: NHL Team Names
+      unique_id: nhl_team_names
+      command: "jq '{ names: .standings | map(.teamCommonName.default) }' nhl_standings.json"
+      json_attributes:
+        - names
+      value_template: "{{ value_json['names'] | length }}"
 
 # Shell commands
 shell_command:

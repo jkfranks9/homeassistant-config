@@ -237,14 +237,12 @@
           {% set vars = namespace(name = 'Unknown') %}
           
           {% set abbrev = this.state %}
-          {% if state_attr('sensor.variables', 'variables') != None %}
-            {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
-              {% if team[0] == abbrev %}
-                {% set vars.name = team[1] %}
-                {% break %}
-              {% endif %}
-            {% endfor %}
-          {% endif %}
+          {% for team in state_attr('sensor.nhl_team_abbrev', 'abbrev') %}
+            {% if team == abbrev %}
+              {% set vars.name = state_attr('sensor.nhl_team_names', 'names')[loop.index0] %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
           
           {{ vars.name }}
 
@@ -273,16 +271,12 @@
           {% set vars = namespace(name = 'Unknown') %}
           
           {% set abbrev = this.state %}
-          {% if state_attr('sensor.variables', 'variables') != None %}
-            {% for team in state_attr('sensor.variables', 'variables').hockey_teams %}
-              {% if team[0] == abbrev %}
-                {% set vars.name = team[1] %}
-                {% break %}
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-          
-          {{ vars.name }}
+          {% for team in state_attr('sensor.nhl_team_abbrev', 'abbrev') %}
+            {% if team == abbrev %}
+              {% set vars.name = state_attr('sensor.nhl_team_names', 'names')[loop.index0] %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
 
     #--------------------#
     #   -- GasBuddy --   #
