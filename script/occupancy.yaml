@@ -231,7 +231,7 @@ turn_on_bathroom_light:
       entity_id: light.master_vanity_light
     
     # Wait a few minutes then turn off the bathroom flag and light.
-    - delay: '00:12:00'
+    - delay: '00:15:00'
     
     - action: input_boolean.turn_off
       entity_id: input_boolean.bathroom
