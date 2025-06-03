@@ -200,9 +200,19 @@ sleeptime:
     - action: input_boolean.turn_on
       entity_id: input_boolean.sleeptime
     
-    # Turn off the master suite lights.
-    - action: light.turn_off
-      entity_id: light.master_suite_lights
+    # Verify all devices are charging. If not, the Jon Sleeping sensor won't function properly. I can't send a message to the
+    # voice assistant device, because we turn on do not disturb at bedtime. So just leave the master bedroom lamp on as an
+    # indication that the devices are not charging. Lame.
+    - if:
+        - condition: state
+          entity_id: binary_sensor.jon_devices_charging
+          state: 'on'
+      
+      then:    
+        
+        # Turn off the master suite lights.
+        - action: light.turn_off
+          entity_id: light.master_suite_lights
 
 # Turn on the bathroom light during the night.
 turn_on_bathroom_light:
