@@ -129,7 +129,8 @@ bedtime:
     
     # Turn on the master bedroom lamp.
     - action: light.turn_on
-      entity_id: light.master_bedroom_lamp
+      target:
+        entity_id: light.master_bedroom_lamp
       data:
         color_temp_kelvin: 2700
         brightness_pct: 100
@@ -231,10 +232,11 @@ turn_on_bathroom_light:
     
     # Turn on master bedroom lamp.
     - action: light.turn_on
-      entity_id: light.master_bedroom_lamp
+      target:
+        entity_id: light.master_bedroom_lamp
       data:
         color_temp_kelvin: 2700
-        brightness_pct: 20
+        brightness_pct: "{{ iif(is_state('input_boolean.sleeptime', 'off'), 100, 20) }}"
     
     # Turn on bath light.
     - action: light.turn_on

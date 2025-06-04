@@ -145,10 +145,12 @@ voice_operate_light:
           
           then:
         
-            # Operate the light.
+            # Operate the light. The brightness option is ignored for lights that don't support it.
             - action: light.turn_{{ operation }}
               target:
-                entity_id: "{{ light_rooms_lights[light_rooms.index(room)] }}"
+                entity_id: "{{ light_entity }}"
+              data:
+                brightness_pct: 100
           
           else:
             
