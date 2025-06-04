@@ -139,18 +139,21 @@ voice_operate_light:
       then:
         - variables:
             light_entity: "{{ light_rooms_lights[light_rooms.index(room)] }}"
+            
+            # When turning on, use full brightness (the option is ignored for lights that don't support it). Since we're always specifying
+            # data, use transition when turning off.
+            light_data: "{{ iif(operation == 'on', {'brightness_pct': 100}, {'transition': 0}) }}"
         
         - if:
             - "{{ light_entity.split('.')[0] == 'light' }}"
           
           then:
         
-            # Operate the light. The brightness option is ignored for lights that don't support it.
+            # Operate the light.
             - action: light.turn_{{ operation }}
               target:
                 entity_id: "{{ light_entity }}"
-              data:
-                brightness_pct: 100
+              data: "{{ light_data }}"
           
           else:
             
