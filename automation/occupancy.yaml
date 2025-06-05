@@ -171,10 +171,11 @@
         guest: "{{ trigger.id }}"
         suite: "{{ trigger.to_state.state }}"
 
-# Handle a change to the number of days a guest suite is occupied.
+# Handle a change to the number of days a guest suite is occupied. There is only one helper for days occupied that all guests use,
+# since only one (adult) guest occupies the suite at any one time.
 # NOTE: Currently this only applies to the penthouse.
-- alias: Handle Guest Suite Occupied Days
-  id: handle_guest_suite_occupied_days
+- alias: Modify Thermostat Hold For Days Occupied
+  id: modify_thermostat_hold_for_days_occupied
   
   triggers:
     - trigger: state
@@ -189,18 +190,129 @@
       state: 'on'
   
   actions:
+    - action: script.modify_penthouse_thermostat_hold
+
+# Handle a change to the individual temperature range values. Each guest has their own helpers for the low/high ends of the range, that
+# are combined into temp range sensors.
+# NOTE: Currently this only applies to the penthouse.
+- alias: Modify Thermostat Hold For Temp Range
+  id: modify_thermostat_hold_for_temp_range
+  
+  triggers:
+    - trigger: state
+      entity_id: sensor.david_temp_range
+      to:
+      id: david
     
-    # First, remove the current thermostat hold.
-    - action: script.remove_thermostat_hold
-      data:
-        thermostat_entity: climate.upstairs
-        extended: false
+    - trigger: state
+      entity_id: sensor.mike_temp_range
+      to:
+      id: mike
     
-    # Wait a few minutes before the next step: I don't want quick changes to the thermostat settings.
-    - delay: '00:05:00'
+    - trigger: state
+      entity_id: sensor.sarah_temp_range
+      to:
+      id: sarah
     
-    # Now reinstate the hold for the new number of days.
+    - trigger: state
+      entity_id: sensor.skylar_temp_range
+      to:
+      id: skylar
+  
+  conditions:
+    
+    # Only allow this change if the triggering guest is currently staying in the penthouse.
+    - "{{ trigger.id | title in states('input_select.penthouse_guests') }}"
+  
+  actions:
+    
+    # Start a delay timer if it's not currently running. The purpose of the timer is to allow both the high and low values to be changed
+    # within a reasonable time window, before actually changing the thermostat hold. For the second such change the timer will be active
+    # so we don't need to do anything. 
+    # 
+    # Note that the timer could possibly expire while HA is restarting, so set a flag so we can handle that case when HA starts up.
+    - if:
+        - condition: state
+          entity_id: timer.temp_range_delay
+          state: idle
+      
+      then:        
+        - action: timer.start
+          data:
+            entity_id: timer.temp_range_delay
+            duration: 60
+        
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.temp_range_delay_timer_started
+
+# Handle the temp range delay timer expiration. Normally, the timer finished event will drive this automation. But if HA was restarting at
+# that time, the event is lost. So we also trigger on HA start.
+- alias: Handle Temp Range Delay Timer Expiration
+  id: handle_temp_range_delay_timer_expiration
+  
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.temp_range_delay
+    
+    - trigger: homeassistant
+      event: start
+  
+  # Because of the case where HA was restarting when the timer would have expired, we need to verify that the timer is indeed idle and the 
+  # flag we set when we started it is on. Note that if HA was restarted but came back up before the timer expired, we would be triggered by
+  # the timer finished event.
+  conditions:
+    - condition: state
+      entity_id: timer.temp_range_delay
+      state: idle
+    
+    - condition: state
+      entity_id: input_boolean.temp_range_delay_timer_started
+      state: 'on'
+  
+  actions:
+    - action: script.modify_penthouse_thermostat_hold
+    
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.temp_range_delay_timer_started
+
+# Handle the thermostat hold delay timer expiration. This timer is started by the Modify Penthouse Thermostat Hold script, to guard against
+# rapid changes to the thermostat. For example, the guest could change the temp range, then do it again shortly afterwards because they
+# made a mistake.
+#
+# Note that we use the same mechanisms here as we do above for the temp range delay timer, to cover the HA restart case.
+- alias: Handle Thermostat Hold Delay Timer Expiration
+  id: handle_thermostat_hold_delay_timer_expiration
+  
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.thermostat_hold_delay
+    
+    - trigger: homeassistant
+      event: start
+  
+  conditions:
+    - condition: state
+      entity_id: timer.thermostat_hold_delay
+      state: idle
+    
+    - condition: state
+      entity_id: input_boolean.thermostat_hold_delay_timer_started
+      state: 'on'
+  
+  actions:
+    
+    # Reinstate the hold using the changed information.
     - action: script.set_penthouse_thermostat_hold
+    
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.thermostat_hold_delay_timer_started
 
 #=========================#
 #     Device Trackers     #

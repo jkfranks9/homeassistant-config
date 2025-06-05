@@ -599,3 +599,29 @@ set_penthouse_thermostat_hold:
         heat_temp: "{{ states(heat_temp_entity) }}"
         cool_temp: "{{ states(cool_temp_entity) }}"
         days: "{{ states('input_number.penthouse_days_occupied') }}"
+
+# Modify a thermostat hold for the penthouse. This is called when a guest changes the number of days occupied, or the low/high temperature
+# values.
+modify_penthouse_thermostat_hold:
+  alias: Modify Penthouse Thermostat Hold
+  
+  sequence:
+    
+    # First, remove the current thermostat hold.
+    - action: script.remove_thermostat_hold
+      data:
+        thermostat_entity: climate.upstairs
+        extended: false
+    
+    # Wait a few minutes before reinstating the new hold: I don't want quick changes to the thermostat settings. The timer expiration
+    # automation sets the new hold using the changed information.
+    # 
+    # Note that the timer could possibly expire while HA is restarting, so set a flag so we can handle that case when HA starts up.
+    - action: timer.start
+      data:
+        entity_id: timer.thermostat_hold_delay
+        duration: '00:05:00'
+        
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.thermostat_hold_delay_timer_started
