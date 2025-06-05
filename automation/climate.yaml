@@ -41,6 +41,24 @@
         thermostat_entity: climate.upstairs
         preset: 'sleep'
 
+# Get downstairs thermostat temperature values.
+- alias: Get Downstairs Thermostat Temps
+  id: get_downstairs_thermostat_temps
+  
+  use_blueprint:
+    path: climate/get_thermostat_temps.yaml
+    input:
+      climate_entity: climate.downstairs
+
+# Get upstairs thermostat temperature values.
+- alias: Get Upstairs Thermostat Temps
+  id: get_upstairs_thermostat_temps
+  
+  use_blueprint:
+    path: climate/get_thermostat_temps.yaml
+    input:
+      climate_entity: climate.upstairs
+
 #============================================#
 #     Temperature High / Low Water Marks     #
 #============================================#

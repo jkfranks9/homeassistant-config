@@ -188,8 +188,8 @@
     # Set thermostat holds.
     - service: script.set_extended_thermostat_holds
       data:
-        heat_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_heat_temp }}"
-        cool_temp: "{{ state_attr('sensor.variables', 'variables').extended_hold_cool_temp }}"
+        heat_temp: "{{ states('input_number.extended_hold_heat_temp') }}"
+        cool_temp: "{{ states('input_number.extended_hold_cool_temp') }}"
 
 # Triggered on the end of an extended away period.
 - alias: Disable Extended Away Mode

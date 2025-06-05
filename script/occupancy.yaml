@@ -444,8 +444,8 @@ modify_studio:
                 - action: script.set_temporary_thermostat_hold
                   data:
                     thermostat_entity: climate.downstairs
-                    heat_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_heat_temp }}"
-                    cool_temp: "{{ state_attr('sensor.variables', 'variables').downstairs_home_cool_temp }}"
+                    heat_temp: "{{ states('input_number.downstairs_home_heat_temp') }}"
+                    cool_temp: "{{ states('input_number.downstairs_home_cool_temp') }}"
                     days: 1
         
         # Wakeup tasks.

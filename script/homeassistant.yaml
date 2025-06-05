@@ -14,37 +14,6 @@ initialize_global_variables:
   
   sequence:
     
-    # Thermostat temperatures.
-    - event: set_variable
-      event_data:
-        key: downstairs_home_heat_temp
-        value: 68
-    
-    - event: set_variable
-      event_data:
-        key: downstairs_home_cool_temp
-        value: 77
-    
-    - event: set_variable
-      event_data:
-        key: upstairs_home_heat_temp
-        value: 67
-    
-    - event: set_variable
-      event_data:
-        key: upstairs_home_cool_temp
-        value: 76
-    
-    - event: set_variable
-      event_data:
-        key: extended_hold_heat_temp
-        value: 59
-    
-    - event: set_variable
-      event_data:
-        key: extended_hold_cool_temp
-        value: 83
-    
     # Rooms with lights are for voice control of lights in certain rooms.
     # NOTE: The next 2 variables are related and must be kept in sync.
     - event: set_variable

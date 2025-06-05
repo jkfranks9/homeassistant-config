@@ -1,0 +1,73 @@
+# Get temperature setpoints from a thermometer.
+
+blueprint:
+  name: Get Thermostat Temps
+  description: >
+    There are certain automations and scripts that need to set temporary or extended holds (vacations) on the Ecobee thermostats. In some cases,
+    the low/high temperatures for these holds should match, or be based on, those configured on the thermostats for defined preset values.
+    
+    Instead of querying the thermostats each time we need these values, this blueprint sets the values into number helpers whenever the preset
+    on a thermostat changes to one of the known values (home, away or sleep). Since the thermostat configuration is rarely changed, this is
+    far more often than required, but causes no harm.
+  domain: automation
+  
+  input:
+    climate_entity:
+      name: Climate Entity
+      description: Thermostat (climate) entity.
+      selector:
+        entity:
+          domain: climate
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_climate_entity: !input climate_entity
+
+# Trigger on any change to the thermostat preset. Note that vacations don't use known preset values, so will be ignored.
+triggers:
+  - trigger: state
+    entity_id: !input climate_entity
+    attribute: preset_mode
+    to:
+
+actions:
+  - variables:
+      thermostat_name: "{{ input_climate_entity.split('.')[1] }}"
+      preset_mode: "{{ state_attr(input_climate_entity, 'preset_mode') }}"
+      extended_offset: 1.5
+  
+  # Proceed according to known preset values.
+  - choose:
+    
+    # Home preset: use the currently configured low/high values as-is.
+    - conditions: "{{ preset_mode == 'home' }}"
+      
+      sequence:
+        - action: input_number.set_value
+          target:
+            entity_id: "{{ 'input_number.' ~ thermostat_name ~ '_home_heat_temp' }}"
+          data:
+            value: "{{ state_attr(input_climate_entity, 'target_temp_low') }}"
+        
+        - action: input_number.set_value
+          target:
+            entity_id: "{{ 'input_number.' ~ thermostat_name ~ '_home_cool_temp' }}"
+          data:
+            value: "{{ state_attr(input_climate_entity, 'target_temp_high') }}"
+    
+    # Away or sleep preset: these currently (maybe forever) use identical configurations. We use these to set extended away temperatures that
+    # are slightly lower or higher than the configured values.
+    - conditions: "{{ preset_mode in ['away', 'sleep'] }}"
+      
+      sequence:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.extended_hold_heat_temp
+          data:
+            value: "{{ state_attr(input_climate_entity, 'target_temp_low') | int(0) - extended_offset }}"
+        
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.extended_hold_cool_temp
+          data:
+            value: "{{ state_attr(input_climate_entity, 'target_temp_high') | int(0) + extended_offset }}"
