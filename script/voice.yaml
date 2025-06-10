@@ -194,22 +194,33 @@ update_last_alexa_device:
   
   sequence:
     - variables:
-        
-        # This can be twitchy; increase if the update sometimes doesn't work.
-        delay: 500
-    
-    - delay: 
-        milliseconds: "{{ delay }}"
+        wait_seconds: 12
     
     # We need to ask Alexa to update the last called echo device, because this information is not pushed to us by Amazon.
     - action: alexa_media.update_last_called
     
-    # Next update the Last Alexa sensor, using an event trigger.
-    - event: update_last_alexa_sensor
+    # The Alexa Media Player integration kindly provides an event that indicates the above call has completed, so wait for it.
+    - wait_for_trigger:
+      - trigger: event
+        event_type: alexa_media_last_called_event
+      
+      timeout: "{{ wait_seconds }}"
     
-    # Then we need to wait a bit.
-    - delay: 
-        milliseconds: "{{ delay }}"
+    # If we didn't time out, update the Last Alexa sensor, using an event trigger. Otherwise, send an announcement that we failed.
+    - if:
+        - "{{ wait.completed }}"
+      
+      then:   
+        - event: update_last_alexa_sensor
+      
+      else:        
+        - action: script.send_notification
+          data:
+            destination:
+              - voice_assistant
+            message: "I'm sorry, but Amazon failed to tell me what echo was just spoken to."
+            room: ['everywhere']
+            voice_type: announce
 
 # Get information about the most recently spoken to voice device.
 get_voice_device_data:
