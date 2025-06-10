@@ -610,7 +610,7 @@ check_cinema_usage_control:
     delay_time: 300
     
     # Time in seconds to delay the requested open or close.
-    delay: "{{ (delay_time - delta_time) | round }}"
+    delay: "{{ (delay_time - delta_time) | round(0, 'ceil') }}"
   
   sequence:
     
