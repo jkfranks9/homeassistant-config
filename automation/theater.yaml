@@ -202,6 +202,8 @@
       id: 'off'
   
   actions:
+    
+    # These are just for debugging  (they can be seen in the trace).
     - variables:
         projector_state1: "{{ states('media_player.epson_projector') }}"
         projector_error1: "{{ states('input_boolean.projector_error_handling') }}"
@@ -213,10 +215,87 @@
     
     - delay: '00:00:01'
     
+    # Debugging again.
     - variables:
         projector_state2: "{{ states('media_player.epson_projector') }}"
         projector_error2: "{{ states('input_boolean.projector_error_handling') }}"
         projector_active2: "{{ states('input_boolean.projector_active') }}"
+    
+    - action: system_log.write
+      data:
+        message: "{{ 'Projector active changed from ' ~ projector_active1 ~ ' to ' ~ projector_active2 }}"
+        level: info
+
+# When the cinema is activated, we need to know if the projector is functional. Sometimes it fails with a bogus error, which we try to
+# fix using the Handle Projector Error automation. But that can also fail. So before doing cinema post-open processing, we need to know
+# if the projector is functional. 
+#
+# The Activate Cinema script starts a long timer to allow time for a projector error to be fixed. Here we trigger on that timer expiration,
+# which indicates failure, or on the projector being on/active, which indicates success.
+- alias: Determine Projector State
+  id: determine_projector_state
+  
+  triggers:
+    - trigger: template
+      value_template: "{{ (states('media_player.epson_projector') in ['warmup', 'on'] and is_state('input_boolean.projector_error_handling', 'off')) 
+                          or is_state('input_boolean.projector_active', 'on') }}"
+      id: success
+  
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.projector_status
+      id: failure
+  
+  actions:
+    
+    # Success trigger.
+    - if:
+        - "{{ trigger.id == 'success' }}"
+      
+      then:        
+        
+        # Cancel the projector status timer.
+        - action: timer.cancel
+          target:
+            entity_id: timer.projector_status
+        
+        # Perform post-open tasks.
+        - action: script.turn_on
+          entity_id: script.perform_post_open_tasks
+      
+      # Failure trigger.
+      else:
+        
+        # We could have a timing situation where the 2 triggers happen nearly simultaneously. In that case we want to ignore the timer
+        # expiration.
+        - if:
+            - "{{ not (states('media_player.epson_projector') in ['warmup', 'on'] and is_state('input_boolean.projector_error_handling', 'off')) 
+                          or is_state('input_boolean.projector_active', 'on') }}"
+          
+          then:        
+            - action: script.send_notification
+              data:
+                destination:
+                  - voice_assistant
+                message: "I'm sorry, but I failed to fix a projector lamp error."
+                room: ['family_room', 'theater']
+                voice_type: announce
+
+# Log the projector state for debugging.
+- alias: Log Projector State
+  id: log_projector_state
+  
+  triggers:
+    - trigger: state
+      entity_id: media_player.epson_projector
+      to:
+  
+  actions:
+    - action: system_log.write
+      data:
+        message: "{{ 'Projector state changed from ' ~ trigger.from_state.state ~ ' to ' ~ trigger.to_state.state }}"
+        level: info
 
 #==================================#
 #     Automatic Volume Control     #

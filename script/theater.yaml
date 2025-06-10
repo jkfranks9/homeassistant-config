@@ -145,31 +145,19 @@ activate_cinema:
             room: ['family_room', 'theater']
             voice_type: tts
       
-        # Delay for a while to make sure the projector is on and any error that may have been detected has been fixed, or the projector is active.
+        # Define a few variables for debugging (they can be seen in the trace).
         - variables:
             projector_state: "{{ states('media_player.epson_projector') }}"
             projector_error: "{{ states('input_boolean.projector_error_handling') }}"
             projector_active: "{{ states('input_boolean.projector_active') }}"
         
-        - wait_template: "{{ (projector_state in ['warmup', 'on'] and projector_error == 'off') or projector_active == 'on' }}"
-          timeout: '00:10:00'
-    
-        # Perform post-open tasks if the projector is functioning.
-        - if:
-            - "{{ wait.completed }}"
-          
-          then:        
-            - action: script.turn_on
-              entity_id: script.perform_post_open_tasks
-          
-          else:
-            - action: script.send_notification
-              data:
-                destination:
-                  - voice_assistant
-                message: "I'm sorry, but I failed to fix a projector lamp error."
-                room: ['family_room', 'theater']
-                voice_type: announce
+        # Start a timer to wait for the projector to be functional. The timeout is long in case a projector error is detected; 
+        # it takes several minutes to attempt a fix (see the Handle Projector Error automation).
+        - action: timer.start
+          data:
+            entity_id: timer.projector_status
+            duration:
+              minutes: 10
   
     # Activate Kodi if requested.
     - if:
