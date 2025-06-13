@@ -26,7 +26,7 @@
     - service: system_log.write
       data:
         message: "{{ 'calories from state last changed/month: ' ~ trigger.from_state.last_changed ~ ' / ' ~ month }}"
-        level: info
+        level: debug
     
     # Set the correct history value using the month variable to complete the target entity ID.
     - service: input_number.set_value

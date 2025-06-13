@@ -72,11 +72,11 @@ actions:
   - action: system_log.write
     data:
       message: "From state: {{ trigger.from_state }}"
-      level: info    
+      level: debug    
   - action: system_log.write
     data:
       message: "To state: {{ trigger.to_state }}"
-      level: info
+      level: debug
   # DEBUG messages
     
   - choose:

@@ -445,6 +445,26 @@
         message: >
          {{ as_timestamp(trigger.event.time_fired) | timestamp_custom('%b %d: %X') }}: (S) {{ trigger.event.data.name }}
 
+#========================#
+#     YAML Log Level     #
+#========================#
+
+# Change the log level used in automations & scripts.
+# NOTE: The default is specified in the logger configuration using:
+#   homeassistant.components.system_log.external
+- alias: Change YAML Log Level
+  id: change_yaml_log_level
+  
+  # Trigger on changes to the YAML Log Level dropdown (available on the dashboard).
+  triggers:
+    - trigger: state
+      entity_id: input_select.yaml_log_level
+  
+  actions:
+    - action: logger.set_level
+      data:
+        homeassistant.components.system_log.external: "{{ trigger.to_state.state }}"
+
 #==================================#
 #     Persistent Notifications     #
 #==================================#
@@ -1084,7 +1104,7 @@
           - action: system_log.write
             data:
               message: "{{ 'iteration ' ~ repeat.index ~ ': type=' ~ type ~ ', avail=' ~ states('input_number.mini_todo_available_minutes') ~ ', tasks=' ~ states('counter.mini_todo_tasks') ~ ', attempts=' ~ states('counter.mini_todo_attempts') }}"
-              level: info
+              level: debug
           
           - choose:
           

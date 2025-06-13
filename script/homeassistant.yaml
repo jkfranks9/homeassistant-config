@@ -1286,7 +1286,7 @@ publish_mqtt_automated_states:
     - service: system_log.write
       data:
         message: "Publish MQTT state: {{ service_data }}"
-        level: info
+        level: debug
 
 # Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
 set_up_mqtt_automated_config:

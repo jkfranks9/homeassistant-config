@@ -280,4 +280,4 @@ turn_off_fan_light:
         - action: system_log.write
           data:
             message: "Turned off {{ fan_entity }}"
-            level: info
+            level: debug
