@@ -216,6 +216,69 @@
         thermostat_entity: climate.upstairs
         extended: true
 
+# Turn the nighttime flag on or off at semi-random times during extended away, so the Run Extended Away Lights automation
+# doesn't run all night long.
+- alias: Control Nighttime During Extended Away
+  id: control_nighttime_during_extended_away
+  
+  triggers:
+    
+    # Trigger at night.
+    - trigger: time
+      at: '22:00:00'
+      id: 'on'
+    
+    # Trigger in the morning.
+    - trigger: time
+      at: '05:30:00'
+      id: 'off'
+  
+  conditions:
+    
+    # Since extended away mode can get turned off any time, verify that it's on right now.
+    - condition: state
+      entity_id: input_boolean.extended_away_mode
+      state: 'on'
+  
+  actions:
+    
+    # Start a timer for a random number of minutes. The nighttime flag is modified when the timer expires.
+    - action: timer.start
+      data:
+        entity_id: timer.extended_away_nighttime
+        duration:
+          minutes: "{{ range(5, 90) | random }}"
+    
+    # Set a toggle according to the trigger ID. This determines whether we turn the nighttime flag on or off when the
+    # timer expires.
+    - action: input_boolean.turn_{{ trigger.id }}
+      target:
+        entity_id: input_boolean.extended_away_nighttime
+
+# Handle the extended away nighttime timer expiration.
+- alias: Handle Extended Away Nighttime Timer
+  id: handle_extended_away_nighttime_timer
+  
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.extended_away_nighttime
+  
+  conditions:
+    
+    # Since extended away mode can get turned off any time, verify that it's on right now.
+    - condition: state
+      entity_id: input_boolean.extended_away_mode
+      state: 'on'
+  
+  actions:
+    
+    # Turn the nighttime flag on or off according to the extended away nighttime toggle.
+    - action: input_boolean.turn_{{ states('input_boolean.extended_away_nighttime') }}
+      target:
+        entity_id: input_boolean.nighttime
+
 # Randomly turn certain lights on/off during extended away mode, between ~sunset and nighttime start, and
 # between nighttime end and ~sunrise (only occurs during winter-ish months).
 
