@@ -33,7 +33,7 @@ variables:
   input_operation: !input operation
   
   # Group of toggles configured using the UI that indicate what lights are in use this season.
-  all_lights: "{{ expand('group.christmas_lights') | map(attribute='entity_id') | list }}"
+  all_lights: "{{ expand('group.christmas_plugs') | map(attribute='entity_id') | list }}"
   
   # Is the Christmas village being used?
   village_in_use: "{{ states('input_boolean.christmas_village') == 'on' }}"
