@@ -40,7 +40,7 @@
       attributes:
         device_list: >
           {# --List of devices that don't make contact for many hours-- #}
-          {% set skip_time_check_entities = ['switch.hall_light', 'switch.dining_table_light', 'switch.master_closet_light', 'switch.master_vanity_light'] %}
+          {% set skip_time_check_entities = ['switch.studio_hall', 'switch.dining_room_table', 'switch.master_closet', 'switch.master_vanity'] %}
           
           {# --List of device entities, associated last seen sensors-- #}
           {% set device_list = [
@@ -54,13 +54,13 @@
                                 ['binary_sensor.cc2530_router_led', 'sensor.cc2530_router_last_seen'],
                                 ['switch.sonoff_router', 'sensor.sonoff_router_last_seen'],
                                 ['binary_sensor.office_human_sensor_presence', 'sensor.office_human_sensor_last_seen'],
-                                ['switch.hall_light', 'sensor.hall_light_last_seen'],
-                                ['switch.dining_table_light', 'sensor.dining_table_light_last_seen'],
-                                ['switch.master_vanity_light', 'sensor.master_vanity_light_last_seen'],
+                                ['switch.studio_hall', 'sensor.studio_hall_last_seen'],
+                                ['switch.dining_room_table', 'sensor.dining_room_table_last_seen'],
+                                ['switch.master_vanity', 'sensor.master_vanity_last_seen'],
                                 ['binary_sensor.master_closet_sensor_contact', 'sensor.master_closet_sensor_last_seen'],
                                 ['binary_sensor.attic_door_sensor_contact', 'sensor.attic_door_sensor_last_seen'],
                                 ['binary_sensor.upstairs_entry_sensor_contact', 'sensor.upstairs_entry_sensor_last_seen'],
-                                ['switch.master_closet_light', 'sensor.master_closet_light_last_seen']
+                                ['switch.master_closet', 'sensor.master_closet_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -103,13 +103,13 @@
                                 'input_number.cc2530_router_led',
                                 'input_number.sonoff_router',
                                 'input_number.office_human_sensor_presence',
-                                'input_number.hall_light',
-                                'input_number.dining_table_light',
-                                'input_number.master_vanity_light',
+                                'input_number.studio_hall',
+                                'input_number.dining_room_table',
+                                'input_number.master_vanity',
                                 'input_number.master_closet_sensor_door',
                                 'input_number.attic_door_sensor_door',
                                 'input_number.upstairs_entry_sensor_door',
-                                'input_number.master_closet_light'
+                                'input_number.master_closet'
                                ] %}
                                
           {# --Create an empty list to start-- #}

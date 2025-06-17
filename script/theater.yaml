@@ -969,7 +969,7 @@ change_downstairs_lighting:
         test_lights: "{{ iif(is_state('input_boolean.christmas_mode', 'off'), 'light.family_room_lamp', 'light.all_christmas_lights') }}"
         ambient_min: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
         ambient_value: "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) }}"
-        activation_lights: "{{ ['light.stairway_light', 'light.island_light'] }}"
+        activation_lights: "{{ ['light.stairway', 'light.kitchen_island'] }}"
         non_activation_lights: "{{ ['light.office_lamp', 'light.family_room_lamp', 'light.hallway_lamp'] + activation_lights }}"
     
     - if:

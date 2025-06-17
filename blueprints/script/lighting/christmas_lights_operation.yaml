@@ -38,11 +38,11 @@ variables:
   # Is the Christmas village being used?
   village_in_use: "{{ states('input_boolean.christmas_village') == 'on' }}"
   
-  # Set of normal lights that double as Christmas lights. If the village is in use we take over the dining room lamps plug.
+  # Set of normal lights that double as Christmas lights. If the village is in use we take over the dining room buffet plug.
   normal_lights: >
     {% set ns = namespace(lights = ['light.dining_room_hutch', 'light.foyer_hutch']) %}
     {% if village_in_use %}
-      {% set ns.lights = ns.lights + ['light.dining_room_lamps'] %}
+      {% set ns.lights = ns.lights + ['light.dining_room_buffet'] %}
     {% endif %}
     
     {{ ns.lights }}

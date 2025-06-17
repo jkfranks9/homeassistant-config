@@ -290,7 +290,7 @@ set_up_yard_work_devices:
         
         - action: light.turn_on
           target:
-            entity_id: light.laundry_room_light
+            entity_id: light.Laundry_room
       
       # Handle the office fan and laundry room light when coming inside.
       else:
@@ -305,7 +305,7 @@ set_up_yard_work_devices:
         
         - action: light.turn_off
           target:
-            entity_id: light.laundry_room_light
+            entity_id: light.Laundry_room
     
     # Handle the garage door (do nothing for intermediate stage).
     - choose:

@@ -428,7 +428,7 @@
     - action: scene.apply
       data:
         entities:
-          light.driveway_light:   'off'
+          light.driveway:         'off'
           light.front_floodlight: 'off'
 
 #========================#

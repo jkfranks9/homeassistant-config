@@ -240,7 +240,7 @@ turn_on_bathroom_light:
     
     # Turn on bath light.
     - action: light.turn_on
-      entity_id: light.master_vanity_light
+      entity_id: light.master_vanity
     
     # Wait a few minutes then turn off the bathroom flag and light.
     - delay: '00:15:00'
@@ -249,7 +249,7 @@ turn_on_bathroom_light:
       entity_id: input_boolean.bathroom
     
     - action: light.turn_off
-      entity_id: light.master_vanity_light
+      entity_id: light.master_vanity
 
 #=============================#
 #     Bedtime Environment     #
@@ -503,7 +503,7 @@ modify_penthouse:
               then:
                 - action: light.turn_on
                   target:
-                    entity_id: light.penthouse_lamp
+                    entity_id: light.penthouse_bed_lamp
         
         # Departure tasks.
         - conditions: "{{ reason == 'departure' }}"
@@ -554,7 +554,7 @@ modify_penthouse:
                     - action: scene.apply
                       data:
                         entities:
-                          light.penthouse_vanity_light:       'on'
+                          light.penthouse_vanity:             'on'
                           light.penthouse_minus_night_lights: 'off'
                           light.upstairs_common_lights:       'off'
                           light.theater_lights:               'off'
@@ -578,7 +578,7 @@ modify_penthouse:
               then:    
                 - action: light.turn_off
                   target:
-                    entity_id: light.penthouse_vanity_light
+                    entity_id: light.penthouse_vanity
 
 # Set a thermostat hold for the penthouse, that uses a unique temperature range for each family member.
 set_penthouse_thermostat_hold:

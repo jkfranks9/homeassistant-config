@@ -68,7 +68,7 @@
             - action: scene.apply
               data:
                 entities:
-                  light.driveway_light:   'on'
+                  light.driveway:         'on'
                   light.front_floodlight: 'on'
             
             - action: timer.start
@@ -549,6 +549,6 @@
     # Turn on island light if needed (lets me get breakfast).
     - action: script.turn_on_lights_per_conditions
       data:
-        light_entity: light.island_light
+        light_entity: light.kitchen_island
         lux_entity: sensor.downstairs_sensor_ambient_light
         min_lux_value: "{{ states('input_number.kitchen_ambient_min') | float(0) }}"

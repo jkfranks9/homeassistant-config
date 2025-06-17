@@ -153,7 +153,7 @@ sensor:
   - platform: homeassistant
     name: Penthouse Light Power
     id: ph_light
-    entity_id: sensor.penthouse_light_power
+    entity_id: sensor.penthouse_bedroom_power
     <<: &import_power
       state_class: measurement
       device_class: power
@@ -162,25 +162,25 @@ sensor:
   - platform: homeassistant
     name: Penthouse Lamp Power
     id: ph_lamp
-    entity_id: sensor.penthouse_lamp_power
+    entity_id: sensor.penthouse_bed_lamp_power
     <<: *import_power
   
   - platform: homeassistant
     name: Penthouse Tub Light Power
     id: ph_tub
-    entity_id: sensor.penthouse_tub_light_power
+    entity_id: sensor.penthouse_shower_power
     <<: *import_power
   
   - platform: homeassistant
     name: Penthouse Vanity Light Power
     id: ph_vanity
-    entity_id: sensor.penthouse_vanity_light_power
+    entity_id: sensor.penthouse_vanity_power
     <<: *import_power
   
   - platform: homeassistant
     name: Utility Light Power
     id: util_light
-    entity_id: sensor.utility_light_power
+    entity_id: sensor.utility_power
     <<: *import_power
   
   - platform: homeassistant
@@ -193,7 +193,7 @@ sensor:
   - platform: homeassistant
     name: Theater Ceiling Power
     id: th_ceiling
-    entity_id: sensor.theater_ceiling_power
+    entity_id: sensor.theater_recessed_power
     <<: *import_power
   
   - platform: homeassistant

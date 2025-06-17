@@ -107,30 +107,30 @@
     - <<: *cumulator_trigger
     
       entity_id:
+        - sensor.dining_room_buffet_energy
         - sensor.dining_room_hutch_energy
-        - sensor.dining_room_lamps_energy
-        - sensor.dining_table_light_energy
+        - sensor.dining_room_table_energy
         - sensor.family_room_fan_light_energy
         - sensor.family_room_lamp_energy
         - sensor.foyer_hutch_energy
-        - sensor.garage_light_energy
-        - sensor.hall_light_energy
+        - sensor.garage_energy
         - sensor.hallway_lamp_energy
-        - sensor.island_light_energy
-        - sensor.kitchen_light_energy
-        - sensor.laundry_room_light_energy
-        - sensor.master_bath_light_energy
+        - sensor.kitchen_counters_energy
+        - sensor.kitchen_island_energy
+        - sensor.kitchen_sink_energy
+        - sensor.Laundry_room_energy
         - sensor.master_bedroom_lamp_energy
-        - sensor.master_closet_light_energy
-        - sensor.master_vanity_light_energy
+        - sensor.master_closet_energy
+        - sensor.master_shower_energy
+        - sensor.master_vanity_energy
         - sensor.office_bookcase_energy
         - sensor.office_fan_light_energy
         - sensor.office_lamp_energy
         - sensor.sarah_s_lamp_energy
-        - sensor.sink_light_energy
         - sensor.skylar_s_lamp_energy
-        - sensor.stairway_light_energy
-        - sensor.studio_light_energy
+        - sensor.stairway_energy
+        - sensor.studio_bath_energy
+        - sensor.studio_hall_energy
   
   sensor:
     - <<: *cumulator_sensor
@@ -144,10 +144,10 @@
     
       entity_id:
         - sensor.back_floodlight_energy
-        - sensor.back_yard_light_energy
-        - sensor.driveway_light_energy
+        - sensor.back_yard_energy
+        - sensor.driveway_energy
         - sensor.front_floodlight_energy
-        - sensor.porch_light_energy
+        - sensor.porch_energy
   
   sensor:
     - <<: *cumulator_sensor
@@ -160,17 +160,17 @@
     - <<: *cumulator_trigger
     
       entity_id:
-        - sensor.attic_light_energy
-        - sensor.hallway_light_energy
-        - sensor.penthouse_lamp_energy
-        - sensor.penthouse_light_energy
-        - sensor.penthouse_tub_light_energy
-        - sensor.penthouse_vanity_light_energy
-        - sensor.snack_light_energy
-        - sensor.theater_ceiling_energy
+        - sensor.attic_energy
+        - sensor.penthouse_bed_lamp_energy
+        - sensor.penthouse_bedroom_energy
+        - sensor.penthouse_hall_energy
+        - sensor.penthouse_shower_energy
+        - sensor.penthouse_vanity_energy
+        - sensor.snack_bar_energy
         - sensor.theater_fan_light_energy
+        - sensor.theater_recessed_energy
         - sensor.theater_sconces_energy
-        - sensor.utility_light_energy
+        - sensor.utility_energy
   
   sensor:
     - <<: *cumulator_sensor

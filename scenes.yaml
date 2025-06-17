@@ -42,9 +42,9 @@
     light.downstairs_common_lights:       'off'
     light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
-    light.master_bath_light:              'off'
-    light.master_closet_light:            'off'
-    light.master_vanity_light:            'off'
+    light.master_closet:                  'off'
+    light.master_shower:                  'off'
+    light.master_vanity:                  'off'
     light.office_lights:                  'off'
     light.studio_lights:                  'off'
     
@@ -80,13 +80,13 @@
     light.downstairs_common_lights:       'off'
     light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
-    light.master_bath_light:              'off'
-    light.master_closet_light:            'off'
-    light.master_vanity_light:            'off'
+    light.master_closet:                  'off'
+    light.master_shower:                  'off'
+    light.master_vanity:                  'off'
     light.office_lights:                  'off'
     
     # Upstairs    
-    light.utility_light:                  'off'
+    light.utility:                        'off'
     
     # Misc
     light.all_christmas_lights:           'off'
@@ -108,16 +108,16 @@
   name: Theater Aux Dark
   entities:
     light.upstairs_common_lights: 'off'
-    light.stairway_light:         'off'
+    light.stairway:               'off'
 
 # Turn on partial theater auxiliary lights. Note that the stairway light is controlled by a script in this
 # scenario, so is missing here.
 - id: 'theater_aux_partial'
   name: Theater Aux Partial
   entities:
-    light.snack_light:    'off'
-    light.hallway_light:  'on'
-    light.utility_light:  'off'
+    light.snack_bar:      'off'
+    light.penthouse_hall: 'on'
+    light.utility:        'off'
 
 #===============================#
 #     Ceiling and Bath Fans     #
