@@ -164,6 +164,12 @@
         day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%w') | int(0) }}"
         day_of_month: "{{ now().day }}"
     
+    # Reset the recordable exercise toggle. This is used in the Register Exercise Metrics script so we only bump the
+    # associated count once per day.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.exercise_recordable
+    
     # Reset daily exercise values.
     - action: input_number.set_value
       target:
