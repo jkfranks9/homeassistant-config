@@ -179,7 +179,7 @@
     path: notification/mobile_notify.yaml
     input:
       trigger_type: state
-      entity: [switch.family_room_av, switch.garage_chargers, light.master_bedroom_lamp, light.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
+      entity: [switch.family_room_av, switch.ego_battery_charger, switch.toro_135_battery_charger, light.master_bedroom_lamp, light.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
       from_state: 'on'
       to_state: 'off'
       delay: 31
@@ -421,6 +421,36 @@
       message: 'Master BR vent 2 batteries need replacing.'
       channel: standard
       tag: 'master_br_vent_2_battery'
+
+# Ego battery charge is complete.
+- alias: Notify Ego Battery Charge Complete
+  id: notify_ego_battery_charge_complete
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.ego_battery_charger_current_consumption
+      numeric_notify_threshold: 10
+      clear_type: assisted
+      message: 'Ego battery charge is complete.'
+      channel: standard
+      tag: 'ego_battery_charger'
+
+# Toro 135 battery charge is complete.
+- alias: Notify Toro 135 Battery Charge Complete
+  id: notify_toro_135_battery_charge_complete
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.toro_135_battery_charger_current_consumption
+      numeric_notify_threshold: 10
+      clear_type: assisted
+      message: 'Toro 135 battery charge is complete.'
+      channel: standard
+      tag: 'toro_135_battery_charger'
 
 #=================================#
 #     Proximity Notifications     #
@@ -1221,3 +1251,25 @@
               - action: script.remove_mobile_notification
                 data:
                   tag: "{{ repeat.item }}"
+
+# For battery charger notifications, unregister them when the associated plug is turned off.
+- alias: Unregister Battery Charger Notifications
+  id: unregister_battery_charger_notifications
+  
+  triggers:
+    - trigger: state
+      entity_id: switch.ego_battery_charger
+      from: 'on'
+      to: 'off'
+    
+    - trigger: state
+      entity_id: switch.toro_135_battery_charger
+      from: 'on'
+      to: 'off'
+  
+  actions:
+    
+    # Remove the notification and unregister the tag.
+    - action: script.remove_mobile_notification
+      data:
+        tag: "{{ trigger.to_state.entity_id.split('.')[1] }}"

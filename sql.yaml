@@ -653,8 +653,8 @@
     AS `change`
   <<: *base_anchor
 
-- name: Garage Chargers Energy L90d
-  unique_id: garage_chargers_energy_l90d
+- name: Ego Battery Charger Energy L90d
+  unique_id: ego_battery_charger_energy_l90d
   query: >
     SELECT
       (SELECT 
@@ -664,7 +664,25 @@
         INNER JOIN statistics s ON 
           s.metadata_id = sm.id 
         WHERE 
-          sm.statistic_id='sensor.garage_chargers_energy' 
+          sm.statistic_id='sensor.ego_battery_charger_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor
+
+- name: Toro 135 Battery Charger Energy L90d
+  unique_id: toro_135_battery_charger_energy_l90d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.toro_135_battery_charger_energy' 
         AND
           s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)
