@@ -489,7 +489,7 @@
       entity_id: binary_sensor.office_human_sensor_presence
       from: 'on'
       to: 'off'
-      for: '00:20:00'
+      for: '00:15:00'
       id: 'off'
   
   actions:
