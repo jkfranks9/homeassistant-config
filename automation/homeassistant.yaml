@@ -1035,11 +1035,11 @@
     - variables:
         
         # Calendar and processing variables.
-        window_lower_bound: "{{ state_attr('sensor.variables', 'variables').mini_todo_start_time }}"
-        window_upper_bound: "{{ state_attr('sensor.variables', 'variables').mini_todo_end_time }}"
+        window_lower_bound: "{{ states('input_datetime.mini_todo_start_time') }}"
+        window_upper_bound: "{{ states('input_datetime.mini_todo_end_time') }}"
         start_time: "{{ states('sensor.date') ~ ' ' ~ window_lower_bound }}"
         end_time: "{{ states('sensor.date') ~ ' ' ~ window_upper_bound }}"
-        total_minutes: "{{ (((as_timestamp(end_time) - as_timestamp(start_time)) / 60) - state_attr('sensor.variables', 'variables').mini_todo_downtime_minutes) | int(0) }}"
+        total_minutes: "{{ (((as_timestamp(end_time) - as_timestamp(start_time)) / 60) - states('input_number.mini_todo_downtime_minutes') | int(0)) }}"
         
     # Initialize the available minutes using the daily start and end times, minus down time (for lunch and breaks).
     - action: input_number.set_value
@@ -1091,6 +1091,22 @@
     - action: counter.reset
       target:
         entity_id: counter.mini_todo_attempts
+    
+    # I want to give priority to cleaning and yard work items, so do one of each of those (if any exist) before starting the loop below.
+    - if:
+        - "{{ state_attr('sensor.mini_todo_weekly_cleaning_list', 'items') | length > 0 }}"
+      
+      then:
+        - action: script.add_mini_todo_periodic_item
+          data:
+            type: cleaning
+    - if:
+        - "{{ state_attr('sensor.mini_todo_weekly_yard_work_list', 'items') | length > 0 }}"
+      
+      then:
+        - action: script.add_mini_todo_periodic_item
+          data:
+            type: yard_work
     
     # Now add other items until we've used up the available time or hit the max items or attempts. This is done with priority in mind, 
     # but is also subject to coin tosses.

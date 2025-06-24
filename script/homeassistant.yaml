@@ -64,40 +64,24 @@ initialize_global_variables:
         key: recordable_exercise_minimum_days_per_month
         value: 10
     
-    # Mini todo list daily constants.
-    - event: set_variable
-      event_data:
-        key: mini_todo_start_time
-        value: '10:00:00'
-    
-    - event: set_variable
-      event_data:
-        key: mini_todo_end_time
-        value: '16:00:00'
-    
-    - event: set_variable
-      event_data:
-        key: mini_todo_downtime_minutes
-        value: 60
-    
     # Mini todo list periodic cleaning time estimates.
     - event: set_variable
       event_data:
         key: mini_todo_cleaning_times
         value: { "{{ state_attr('input_datetime.periodic_cleaning_dining_foyer', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45, 
-                 "{{ state_attr('input_datetime.periodic_cleaning_family_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
-                 "{{ state_attr('input_datetime.periodic_cleaning_kitchen', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45,
-                 "{{ state_attr('input_datetime.periodic_cleaning_laundry_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10,
+                 "{{ state_attr('input_datetime.periodic_cleaning_family_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [30, 60],
+                 "{{ state_attr('input_datetime.periodic_cleaning_kitchen', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [45, 30],
+                 "{{ state_attr('input_datetime.periodic_cleaning_laundry_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
                  "{{ state_attr('input_datetime.periodic_cleaning_master_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
-                 "{{ state_attr('input_datetime.periodic_cleaning_master_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45,
-                 "{{ state_attr('input_datetime.periodic_cleaning_office', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ state_attr('input_datetime.periodic_cleaning_master_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [45, 45],
+                 "{{ state_attr('input_datetime.periodic_cleaning_office', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [30, 50],
                  "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
                  "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
-                 "{{ state_attr('input_datetime.periodic_cleaning_snack_bar', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10,
+                 "{{ state_attr('input_datetime.periodic_cleaning_snack_bar', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
                  "{{ state_attr('input_datetime.periodic_cleaning_studio_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 20,
-                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10,
+                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [15, 45],
                  "{{ state_attr('input_datetime.periodic_cleaning_theater', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
-                 "{{ state_attr('input_datetime.periodic_cleaning_utility', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 10
+                 "{{ state_attr('input_datetime.periodic_cleaning_utility', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15
                }
     
     # Mini todo list periodic yard work time estimates.
@@ -173,8 +157,8 @@ get_weather_metrics:
         
         # The first and last hours of the daily time span. We use the normal time span but slide the window back one hour, so I can start earlier 
         # than the normal start during the hot summer, while also avoiding a bit of the late afternoon.
-        first_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_start_time.split(':')[0] | int(0) - 1 }}"
-        last_hour: "{{ state_attr('sensor.variables', 'variables').mini_todo_end_time.split(':')[0] | int(0) - 1 }}"
+        first_hour: "{{ states('input_datetime.mini_todo_start_time').split(':')[0] | int(0) - 1 }}"
+        last_hour: "{{ states('input_datetime.mini_todo_end_time').split(':')[0] | int(0) - 1 }}"
     
     # Calculate the weather metrics for the daily time span.
     - action: script.calculate_weather_metrics
@@ -358,13 +342,6 @@ generate_weekly_periodic_list:
   
   sequence:
     
-    # Initialize the combinable buffer text in case we're going to combine 2 items.
-    - action: input_text.set_value
-      target:
-        entity_id: input_text.mini_todo_periodic_combinable_buffer
-      data:
-        value: empty
-    
     # Empty the Weekly Periodic List sensor.
     - action: script.send_mini_todo_event
       data:
@@ -396,19 +373,6 @@ generate_weekly_periodic_list:
         
         # Walk through the list forwards or backwards randomly.
         loop_template: "{{ iif(randomizer is even, actionable_entities[0:generator_count], actionable_entities[0:generator_count] | reverse | list) }}"
-        
-        # How many of the actionable items we're going to pick are combinable (consume <= 20 minutes)?
-        combinable_entities: >
-          {% set val = namespace(list = []) %}
-          {% for entity in loop_template %}
-            {% set name = state_attr(entity, 'friendly_name').split(split_text)[-1] | trim %}
-            {% set minutes = state_attr('sensor.variables', 'variables')[times_var][name] | int(0) %}
-            {% if minutes <= 20 %}
-              {% set val.list = val.list + [entity] %}
-            {% endif %}
-          {% endfor %}
-          
-          {{ val.list }}
     
     - repeat:
         for_each: "{{ loop_template }}"
@@ -425,39 +389,13 @@ generate_weekly_periodic_list:
                 {% else %}
                   ot:
                 {% endif %}
-          
-          # Handle a combinable item if we have at least 2 such.
-          - if:
-              - "{{ combinable_entities | length >= 2 and repeat.item in combinable_entities }}"
             
-            then:
-              
-              # If this is the first combinable item, save it in a text.
-              - if:
-                  - "{{ states('input_text.mini_todo_periodic_combinable_buffer') == 'empty' }}"
-                
-                then:
-                  - action: input_text.set_value
-                    target:
-                      entity_id: input_text.mini_todo_periodic_combinable_buffer
-                    data:
-                      value: "{{ item_text }}"
-                
-                # Else combine the saved item with this one and add it to the weekly sensor.
-                else:
-                  - action: script.send_mini_todo_event
-                    data:
-                      event_type: add
-                      item_type: "{{ type }}"
-                      value: "{{ icon_tag ~ (states('input_text.mini_todo_periodic_combinable_buffer') ~ ', ' ~ item_text) }}"
-            
-            # Else add this item to the weekly sensor.
-            else:
-              - action: script.send_mini_todo_event
-                data:
-                  event_type: add
-                  item_type: "{{ type }}"
-                  value: "{{ icon_tag ~ item_text }}"
+          # Add this item to the weekly sensor.
+          - action: script.send_mini_todo_event
+            data:
+              event_type: add
+              item_type: "{{ type }}"
+              value: "{{ icon_tag ~ item_text }}"
 
 # This is an input to the daily mini-todo list logic. It is run once a week to pick a few days for free time.
 # This is represented as a bitmask, where the least significant bit represents Sunday.
@@ -865,17 +803,40 @@ add_mini_todo_periodic_item:
     
       then:
         - variables:
+            
+            # Pick a random item from the list.
+            item: "{{ list[range(0, list | length) | random] }}"
+            
+            # Extract the estimated time from the item. For the cleaning type, this is a list of 2 values for certain rooms: 
+            # normal and deep clean times. All other rooms contain just the normal time as a single value.
             times_variable: "{{ 'mini_todo_' ~ type ~ '_times' }}"
-            item: >
-              {% set index = range(0, list | length) | random %}
-              {% set witem = list[index] %}
-              {% set name = witem.split(':')[1] %}
-              {% set minutes = state_attr('sensor.variables', 'variables')[times_variable][name] %}
-          
-              {{ witem ~ '-' ~ minutes }}
-        
-            value: "{{ item.split('-')[0] }}"
-            est_minutes: "{{ item.split('-')[1] | int(0) }}"
+            name: "{{ item.split(':')[1] }}"
+            time: "{{ state_attr('sensor.variables', 'variables')[times_variable][name] }}"
+            
+            # For deep clean rooms, determine if the last deep clean was six months ago or more.
+            deep_clean: >
+              {% if time is list %}
+                {% set last_deep_clean = states('input_datetime.last_deep_clean_' ~ name.replace(' ', '_') | lower) %}
+                {% set delta_seconds = as_timestamp(now()) - as_timestamp(last_deep_clean) %}
+                {% if delta_seconds / 3600 / 24 / 30.4167 >= 6 %}
+                  true
+                {% else %}
+                  false
+                {% endif %}
+              {% else %}
+                false
+              {% endif %}
+            
+            # Use the normal or deep clean time as appropriate.
+            est_minutes: >
+              {% if time is list and deep_clean == true %}
+                {% set minutes = time | sum %}
+              {% else %}
+                {% set minutes = time %}
+              {% endif %}
+              {{ minutes }}
+            
+            # Determine if it's OK to pick yard work items.
             outdoor_friendly: "{{ states('binary_sensor.outdoor_work_friendly') }}"
         
         # Insert the selected item, but skip yard work if it's not OK to work outside.
@@ -883,9 +844,14 @@ add_mini_todo_periodic_item:
             - "{{ type != 'yard_work' or outdoor_friendly == 'on' }}"
           
           then:
+            - variables:
+                
+                # Indicate a deep clean item if appropriate.
+                item: "{{ iif(deep_clean == true, item ~ ' (deep)', item) }}"
+            
             - action: script.insert_mini_todo_item
               data:
-                value: "{{ value }}"
+                value: "{{ item }}"
                 item_time: "{{ est_minutes }}"
                 major: false
 
@@ -1035,6 +1001,11 @@ handle_completed_reminder_or_periodic_item:
         number:
           min: 0
           max: 31
+    
+    deep_clean:
+      description: Whether or not a deep clean was performed for a cleaning item.
+      selector:
+        boolean:
   
   sequence:
     - variables:
@@ -1065,11 +1036,11 @@ handle_completed_reminder_or_periodic_item:
         - "{{ domain == 'input_datetime' }}"
       
       then:
-        - service: "{{ 'script.set_datetime_offset_' ~ normalized_period }}"
+        - action: "{{ 'script.set_datetime_offset_' ~ normalized_period }}"
           data: "{{ datetime_offset_data }}"
       
       else:
-        - service: script.set_number_offset
+        - action: script.set_number_offset
           data:
             entity: "{{ entity }}"
             base_entity: "{{ base_entity }}"
@@ -1095,15 +1066,27 @@ handle_completed_reminder_or_periodic_item:
               {% endif %}
             item_name: "{{ icon_tag ~ state_attr(entity, 'friendly_name') | replace('Periodic ' ~ name_type | title ~ ' ', '') }}"
         
+        # Remove the item from the weekly sensor.
         - if:
             - "{{ item_name in state_attr(list_entity, 'items') }}"
           
           then:        
-            - service: script.send_mini_todo_event
+            - action: script.send_mini_todo_event
               data:
                 event_type: remove
                 item_type: "{{ type }}"
                 value: "{{ item_name }}"
+        
+        # If we just performed a deep clean on a room, update the last deep clean timestamp.
+        - if:
+            - "{{ deep_clean == true }}"
+          
+          then:
+            - action: input_datetime.set_datetime
+              target:
+                entity_id: input_datetime.last_deep_clean_{{ entity_name.replace('periodic_cleaning_', '') }}
+              data:
+                timestamp: "{{ now().timestamp() }}"
     
 # Set an input datetime entity with an offset in days.
 set_datetime_offset_days:
