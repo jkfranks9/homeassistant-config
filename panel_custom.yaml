@@ -12,3 +12,14 @@
   require_admin: true
   config:
     ingress: core_configurator
+
+# Helpers
+- name: ha_helpers
+  sidebar_title: Helpers
+  sidebar_icon: mdi:handshake
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: 'config/helpers'
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator
