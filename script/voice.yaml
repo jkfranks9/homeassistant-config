@@ -2,7 +2,8 @@
 #     Alexa Front Ends     #
 #==========================#
 
-# There is no way to pass variables from Alexa routines, so these are front ends used for those routines.  
+# NOTE: These scripts require knowing the most recently spoken to device. So all the scripts called here must call
+# Get Voice Device Data as the first step.
 
 # Fans ...
 alexa_set_fan_off:
@@ -11,6 +12,7 @@ alexa_set_fan_off:
   sequence:
     - action: script.voice_modify_fan
       data:
+        caller: alexa
         speed: 'off'
 
 alexa_set_fan_low:
@@ -19,6 +21,7 @@ alexa_set_fan_low:
   sequence:
     - action: script.voice_modify_fan
       data:
+        caller: alexa
         speed: 'low'
 
 alexa_set_fan_medium:
@@ -27,6 +30,7 @@ alexa_set_fan_medium:
   sequence:
     - action: script.voice_modify_fan
       data:
+        caller: alexa
         speed: 'medium'
 
 alexa_set_fan_high:
@@ -35,6 +39,7 @@ alexa_set_fan_high:
   sequence:
     - action: script.voice_modify_fan
       data:
+        caller: alexa
         speed: 'high'
 
 # Lights ...
@@ -44,6 +49,7 @@ alexa_turn_light_on:
   sequence:
     - action: script.voice_operate_light
       data:
+        caller: alexa
         operation: 'on'
 
 alexa_turn_light_off:
@@ -52,7 +58,17 @@ alexa_turn_light_off:
   sequence:
     - action: script.voice_operate_light
       data:
+        caller: alexa
         operation: 'off'
+
+# Other ...
+alexa_remove_notification:
+  alias: Alexa Remove Notification
+  
+  sequence:
+    - action: script.voice_mobile_notification
+      data:
+        caller: alexa
 
 #======================#
 #     Ceiling Fans     #
@@ -63,6 +79,15 @@ voice_modify_fan:
   alias: Voice Modify Fan
   
   fields:
+    caller:
+      name: Caller
+      description: The family of the voice device that was spoken to.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+    
     speed:
       name: Speed
       description: Fan speed to be used (see fan_settings variable).
@@ -73,6 +98,8 @@ voice_modify_fan:
     
     # Get the room containing the voice assistant device that was used.
     - action: script.get_voice_device_data
+      data:
+        caller: "{{ caller }}"
       response_variable: result
     
     - variables:
@@ -111,6 +138,15 @@ voice_operate_light:
   alias: Voice Operate Light
   
   fields:
+    caller:
+      name: Caller
+      description: The family of the voice device that was spoken to.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+    
     operation:
       name: Operation
       description: Whether to turn the light on or off.
@@ -121,6 +157,8 @@ voice_operate_light:
     
     # Get the room containing the voice assistant device that was used.
     - action: script.get_voice_device_data
+      data:
+        caller: "{{ caller }}"
       response_variable: result
     
     - variables:
@@ -171,10 +209,22 @@ voice_operate_light:
 voice_mobile_notification:
   alias: Voice Mobile Notification
   
+  fields:
+    caller:
+      name: Caller
+      description: The family of the voice device that was spoken to.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+  
   sequence:
     
     # Get the room containing the voice assistant device that was used.
     - action: script.get_voice_device_data
+      data:
+        caller: "{{ caller }}"
       response_variable: result
     
     # Remove manual mobile notification(s) using the output device from the response variable.
@@ -187,6 +237,57 @@ voice_mobile_notification:
 #     Utilities     #
 #===================#
 
+# Get information about the most recently spoken to voice device.
+get_voice_device_data:
+  alias: Get Voice Device Data
+  
+  fields:
+    caller:
+      name: Caller
+      description: The family of the voice device that was spoken to.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+  
+  sequence:
+    
+    # Pre-process according to the caller.
+    - choose:
+        - conditions: "{{ caller == 'alexa' }}"
+        
+          sequence:
+    
+            # Update the last alexa device. Note that this could have already been done by the Update Last Alexa Device
+            # automation, but we can't be sure. It might not even work now :(
+            - action: script.update_last_alexa_device
+            
+            - variables:
+                last_device_entity: "{{ states('sensor.last_alexa') }}"
+                last_device_suffix: "{{ '_echo' }}"
+        
+        - conditions: "{{ caller == 'nabu' }}"
+        
+          sequence:
+            - variables:
+                last_device_entity: "{{ states('input_text.last_nabu_device') }}"
+                last_device_suffix: "{{ '_nabu_assist_satellite' }}"
+    
+    - variables:
+        
+        # Pull the room out of the voice device entity name.
+        room: "{{ (last_device_entity.split('.')[1]).split(last_device_suffix)[0] }}"
+        
+        # Some nabu devices don't support TTS announcements. If such a device was used, set the output device to the echo in the same room.
+        output_device_entity: "{{ iif(caller == 'nabu', iif(state_attr(last_device_entity, 'supported_features') | bitwise_and(1) == 0, 'media_player.' ~ room ~ '_echo', last_device_entity), last_device_entity) }}"
+        
+        # Returned data.
+        data: "{{ {'device': last_device_entity, 'output': output_device_entity, 'room': room} }}"  
+        
+    - stop: "Returning device data"
+      response_variable: data
+
 # Update the Last Alexa sensor, which contains the most recently spoken to echo media player.
 # NOTE: For Nabu devices this is handled by the Update Last Nabu Device automation.
 update_last_alexa_device:
@@ -194,26 +295,40 @@ update_last_alexa_device:
   
   sequence:
     - variables:
-        wait_seconds: 12
+        wait_seconds: 5
+        retry_count: 3
+        done: false
     
-    # We need to ask Alexa to update the last called echo device, because this information is not pushed to us by Amazon.
-    - action: alexa_media.update_last_called
+    # Amazon is twitchy, so retry a few times if necessary.
+    - repeat:
+        until: "{{ done == true or repeat.index >= retry_count }}"
+        
+        sequence:
     
-    # The Alexa Media Player integration kindly provides an event that indicates the above call has completed, so wait for it.
-    - wait_for_trigger:
-      - trigger: event
-        event_type: alexa_media_last_called_event
-      
-      timeout: "{{ wait_seconds }}"
+          # We need to ask Alexa to update the last called echo device, because this information is not pushed to us by Amazon.
+          - action: alexa_media.update_last_called
+        
+          # The Alexa Media Player integration kindly provides an event that indicates the above call has completed, so wait for it.
+          - wait_for_trigger:
+            - trigger: event
+              event_type: alexa_media_last_called_event
+            timeout: "{{ wait_seconds }}"
+        
+          # If we didn't time out, update the Last Alexa sensor, using an event trigger. Otherwise, try again.
+          - if:
+              - "{{ wait.completed }}"
+          
+            then:
+              - variables:
+                  done: true
+              
+              - event: update_last_alexa_sensor
     
-    # If we didn't time out, update the Last Alexa sensor, using an event trigger. Otherwise, send an announcement that we failed.
+    # We failed, so send an announcement.
     - if:
-        - "{{ wait.completed }}"
+        - "{{ done == false }}"
       
-      then:   
-        - event: update_last_alexa_sensor
-      
-      else:        
+      then:
         - action: script.send_notification
           data:
             destination:
@@ -221,52 +336,3 @@ update_last_alexa_device:
             message: "I'm sorry, but Amazon failed to tell me what echo was just spoken to."
             room: ['everywhere']
             voice_type: announce
-
-# Get information about the most recently spoken to voice device.
-get_voice_device_data:
-  alias: Get Voice Device Data
-  
-  sequence:
-    
-    # We don't know what family of voice assistant (Alexa or Nabu) was used to drive this script. But in order to figure
-    # that out, we first need to update the Last Alexa sensor. If in fact we were called for an Alexa device this will
-    # get us the information we need to pick Alexa as the family. But if we were called for a Nabu device, this will not
-    # change the previous timestamp of the last Alexa device that was used. So we should be good. However, since the
-    # Last Alexa sensor can be updated randomly for usage outside of the scripts in this file, turn off the 
-    # Update Last Alexa Device automation so any pending random updates are ignored while we do our thing.    
-    - action: automation.turn_off
-      entity_id: automation.update_last_alexa_device
-    
-    - action: script.update_last_alexa_device
-    
-    - variables:
-        
-        # The family of voice assistant is either alexa (for echo devices) or nabu (for HA voice devices). We use the following
-        # to get the most recent family spoken to:
-        #
-        # Alexa: the Last Alexa sensor contains the echo media player entity that was last updated. We get the last called timestamp
-        #        from that, which is in milliseconds.
-        # Nabu : the Last Nabu Device text contains the assist satellite entity that was last updated. We get the last updated timestamp
-        #        from that, which is in seconds.
-        family: >
-          {% set last_alexa_ts = state_attr(states('sensor.last_alexa'), 'last_called_timestamp') / 1000 %}
-          {% set last_nabu_ts = as_timestamp(states.input_text.last_nabu_device.last_updated) %}
-          {{ iif(last_alexa_ts > last_nabu_ts, 'alexa', 'nabu') }}
-        last_device_entity: "{{ iif(family == 'alexa', states('sensor.last_alexa'), states('input_text.last_nabu_device')) }}"
-        last_device_suffix: "{{ iif(family == 'alexa', '_echo', '_nabu_assist_satellite') }}"
-        
-        # Pull the room out of the voice device entity name.
-        room: "{{ (last_device_entity.split('.')[1]).split(last_device_suffix)[0] }}"
-        
-        # Some nabu devices don't support TTS announcements. If such a device was used, set the output device to the echo in the same room.
-        output_device_entity: "{{ iif(family == 'nabu', iif(state_attr(last_device_entity, 'supported_features') | bitwise_and(1) == 0, 'media_player.' ~ room ~ '_echo', last_device_entity), last_device_entity) }}"
-        
-        # Returned data.
-        data: "{{ {'device': last_device_entity, 'output': output_device_entity, 'room': room} }}"   
-    
-    # Turn the Update Last Alexa Device automation back on.
-    - action: automation.turn_on
-      entity_id: automation.update_last_alexa_device
-        
-    - stop: "Returning device data"
-      response_variable: data
