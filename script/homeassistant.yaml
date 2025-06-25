@@ -812,10 +812,11 @@ add_mini_todo_periodic_item:
             times_variable: "{{ 'mini_todo_' ~ type ~ '_times' }}"
             name: "{{ item.split(':')[1] }}"
             time: "{{ state_attr('sensor.variables', 'variables')[times_variable][name] }}"
+            time_is_list: "{{ iif(time is list, true, false) }}"
             
             # For deep clean rooms, determine if the last deep clean was six months ago or more.
             deep_clean: >
-              {% if time is list %}
+              {% if time_is_list %}
                 {% set last_deep_clean = states('input_datetime.last_deep_clean_' ~ name.replace(' ', '_') | lower) %}
                 {% set delta_seconds = as_timestamp(now()) - as_timestamp(last_deep_clean) %}
                 {% if delta_seconds / 3600 / 24 / 30.4167 >= 6 %}
@@ -829,8 +830,12 @@ add_mini_todo_periodic_item:
             
             # Use the normal or deep clean time as appropriate.
             est_minutes: >
-              {% if time is list and deep_clean == true %}
-                {% set minutes = time | sum %}
+              {% if time_is_list %}
+                {% if deep_clean == true %}
+                  {% set minutes = time | sum %}
+                {% else %}
+                  {% set minutes = time[0] %}
+                {% endif %}
               {% else %}
                 {% set minutes = time %}
               {% endif %}
