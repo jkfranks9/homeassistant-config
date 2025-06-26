@@ -105,7 +105,6 @@ include:
     - sensor.*_current_consumption
     - sensor.*_energy
     - sensor.*_temperature
-    - sensor.best_price_gas_*
     - sensor.home_*_distance
     - sensor.total_*_calories
     - sensor.total_*_time
