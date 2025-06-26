@@ -165,7 +165,7 @@
       from_state: 'on'
       to_state: 'off'
       delay: 16
-      conditions: "{{ states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_power') | float(0) > 0 }}"
+      conditions: "{{ states(trigger.entity_id) == 'off' and states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_power') | float(0) > 0 }}"
       extract_tag_type: sonoff_power
       clear_type: manual
       message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' plug is off but reporting power usage.' }}"
@@ -182,11 +182,11 @@
       entity: [switch.family_room_av, switch.ego_battery_charger, switch.toro_135_battery_charger, light.master_bedroom_lamp, light.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
       from_state: 'on'
       to_state: 'off'
-      delay: 31
-      conditions: "{{ states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_current_consumption') | float(0) > 0 }}"
+      delay: 16
+      conditions: "{{ states(trigger.entity_id) == 'off' and states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_current_consumption') | float(0) > 0 }}"
       extract_tag_type: tplink_power
       clear_type: manual
-      message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' plug is off but reporting power usage.' }}"
+      message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' is off but reporting power usage.' }}"
       channel: standard
 
 #===============================#
