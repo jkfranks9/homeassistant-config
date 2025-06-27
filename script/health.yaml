@@ -168,22 +168,32 @@ start_yard_work:
   
   sequence:
     
+    # Only execute during yard work inactive state.
+    - condition: state
+      entity_id: input_boolean.yard_work_active
+      state: 'off'
+    
+    # Set yard work active state.
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.yard_work_active
+    
     # Set the start time. We use this to accumulate time across breaks.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.yard_work_start
       data:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Initialize the accumulated time.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.yard_work_accumulated_time
       data:
         value: 0
     
     # Set up necessary devices.
-    - service: script.set_up_yard_work_devices
+    - action: script.set_up_yard_work_devices
       data:
         going_out: true
         stage: initial
@@ -194,8 +204,18 @@ pause_yard_work:
   
   sequence:
     
+    # Only execute during yard work active state.
+    - condition: state
+      entity_id: input_boolean.yard_work_active
+      state: 'on'
+    
+    # Set yard work inactive state.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.yard_work_active
+    
     # Accumulate the time so far, rounding down to the nearest 5 minutes, since it takes a few minutes to get going.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.yard_work_accumulated_time
       data:
@@ -207,7 +227,7 @@ pause_yard_work:
           {{ accum + minutes }}
     
     # Set up necessary devices.
-    - service: script.set_up_yard_work_devices
+    - action: script.set_up_yard_work_devices
       data:
         going_out: false
         stage: intermediate
@@ -218,15 +238,25 @@ resume_yard_work:
   
   sequence:
     
+    # Only execute during yard work inactive state.
+    - condition: state
+      entity_id: input_boolean.yard_work_active
+      state: 'off'
+    
+    # Set yard work active state.
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.yard_work_active
+    
     # Reinitialize the start time for the next interval of work.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.yard_work_start
       data:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Set up necessary devices.
-    - service: script.set_up_yard_work_devices
+    - action: script.set_up_yard_work_devices
       data:
         going_out: true
         stage: intermediate
@@ -237,8 +267,18 @@ stop_yard_work:
   
   sequence:
     
+    # Only execute during yard work active state.
+    - condition: state
+      entity_id: input_boolean.yard_work_active
+      state: 'on'
+    
+    # Set yard work inactive state.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.yard_work_active
+    
     # Accumulate the final time.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.yard_work_accumulated_time
       data:
@@ -250,14 +290,14 @@ stop_yard_work:
           {{ accum + minutes }}
     
     # Set the daily time from the accumulated time.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.yard_work_daily_time
       data:
         value: "{{ states('input_number.yard_work_accumulated_time') }}"
     
     # Set up necessary devices.
-    - service: script.set_up_yard_work_devices
+    - action: script.set_up_yard_work_devices
       data:
         going_out: false
         stage: final
