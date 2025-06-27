@@ -237,13 +237,28 @@
           entity_id: input_boolean.hockey_season
           state: 'on'
       
-      then:    
-        - action: homeassistant.update_entity
-          target:
-            entity_id:
-              - sensor.next_canes_game
-              - sensor.next_flyers_game
-          continue_on_error: true
+      then:
+        - if:
+            - condition: state
+              entity_id: input_boolean.hockey_canes_active
+              state: 'on'
+          
+          then:        
+            - action: homeassistant.update_entity
+              target:
+                entity_id: sensor.next_canes_game
+              continue_on_error: true
+        
+        - if:
+            - condition: state
+              entity_id: input_boolean.hockey_flyers_active
+              state: 'on'
+          
+          then:        
+            - action: homeassistant.update_entity
+              target:
+                entity_id: sensor.next_flyers_game
+              continue_on_error: true
     
     # Bump the F150 mileage. We use this to notify when the next service is due.
     - action: input_number.set_value
@@ -638,10 +653,18 @@
       id: 'off'
   
   actions:
+    
+    # Toggle the notification automations.
     - action: automation.turn_{{ trigger.id }}
       entity_id:
         - automation.notify_next_canes_game
         - automation.notify_next_flyers_game
+    
+    # Toggle the team active toggles. These can be turned off using the dashboard if a team doesn't make the playoffs :(
+    - action: input_boolean.turn_{{ trigger.id }}
+      entity_id:
+        - input_boolean.hockey_canes_active
+        - input_boolean.hockey_flyers_active
 
 #======================#
 #     Mobile Texts     #
