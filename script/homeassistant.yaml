@@ -782,6 +782,9 @@ add_mini_todo_periodic_item:
   
   mode: queued
   
+  trace:
+    stored_traces: 25
+  
   fields:
     type:
       description: The type of periodic list sensor to use.
@@ -868,6 +871,9 @@ insert_mini_todo_item:
   
   mode: queued
   
+  trace:
+    stored_traces: 25
+  
   fields:
     value:
       description: The item to be inserted.
@@ -893,7 +899,12 @@ insert_mini_todo_item:
             {% endif %}
           {% endfor %}
           {{ var.allowed }}
-                    
+          
+    - action: system_log.write
+      data:
+        message: "{{ 'Attempting to add ' ~ value ~ ':' ~ item_time }}"
+        level: info
+    
     # Bump the attempts counter.
     - service: counter.increment
       target:
@@ -908,6 +919,11 @@ insert_mini_todo_item:
         - "{{ item_time <= current_minutes or major_item == true }}"
         
       then:
+        - action: system_log.write
+          data:
+            message: "{{ 'Adding ' ~ value ~ ':' ~ item_time }}"
+            level: info
+        
         - event: add_mini_todo_item
           event_data:
             value: "{{ value }}"

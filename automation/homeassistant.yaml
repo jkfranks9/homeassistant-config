@@ -1151,6 +1151,12 @@
               message: "{{ 'iteration ' ~ repeat.index ~ ': type=' ~ type ~ ', avail=' ~ states('input_number.mini_todo_available_minutes') ~ ', tasks=' ~ states('counter.mini_todo_tasks') ~ ', attempts=' ~ states('counter.mini_todo_attempts') }}"
               level: debug
           
+          # Although we have code in Insert Mini ToDo Item to detect duplicate items, I have seen duplicates get added anyway. I'm guessing
+          # that it must be a timing issue with the event to add to the Daily Mini ToDo List. So introduce a small delay. Doing so here also
+          # covers the cleaning and yard work tasks that are potentially added before this loop.
+          - delay:
+              milliseconds: 500
+          
           - choose:
           
             # Add a periodic task.
