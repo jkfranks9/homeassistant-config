@@ -184,7 +184,7 @@ bedtime:
       then:    
         - action: switch.turn_off
           target:
-            entity_id: "{{ label_entities('theater_off') + label_entities('theater_off_at_night') }}"
+            entity_id: "{{ label_entities('theater_off') }}"
   
 # Going to sleep now.
 sleeptime:

@@ -535,11 +535,6 @@
       else:    
         - scene: scene.voice_assistants_on_bright
     
-    # Turn on theater plugs that are only off at night.
-    - action: switch.turn_on
-      target:
-        entity_id: "{{ label_entities('theater_off_at_night') }}"
-    
     # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.
     # The Reset Bedtime Environment script (called above) calls Modify Master Suite for wakeup. That script in turn waits 
     # until downstairs motion is detected before turning off master suite lights. So we can use that to manage the islnad 
