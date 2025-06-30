@@ -24,7 +24,7 @@ KitchenOn:
 
 LightsOut:
   action:
-    service: script.lights_out
+    scene: scene.lights_out
 
 SleepTime:
   action:
