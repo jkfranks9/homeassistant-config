@@ -39,6 +39,7 @@
       entity_id:
         - assist_satellite.family_room_nabu_assist_satellite
         - assist_satellite.office_nabu_assist_satellite
+        - assist_satellite.studio_nabu_assist_satellite
         - assist_satellite.theater_nabu_assist_satellite
       from: 'listening'
       to: 'processing'
