@@ -379,6 +379,16 @@
       wifi_entity: sensor.sarah_pixel_wi_fi_connection
       ssid: White Rabbit
       topic_suffix: sarah_phone_stationary
+
+- alias: Toggle David Phone Stationary Tracker
+  id: toggle_david_phone_stationary_tracker
+  
+  use_blueprint:
+    path: devices/update_phone_tracker.yaml
+    input:
+      wifi_entity: sensor.david_s_latest_phone_wi_fi_connection
+      ssid: White Rabbit
+      topic_suffix: david_phone_stationary
   
 # Children without personal devices use NFC tags to scan in and out.
 - alias: Handle Child Tag Scan

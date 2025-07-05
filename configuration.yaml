@@ -66,6 +66,12 @@ mqtt:
       payload_home: "home"
       payload_not_home: "not_home"
     
+    - name: David Phone Stationary
+      state_topic: "homeassistant/device_tracker/david_phone_stationary"
+      source_type: router
+      payload_home: "home"
+      payload_not_home: "not_home"
+    
     # Pseudo stationary device trackers based on NFC tags.
     - name: Skylar NFC Tag
       state_topic: "homeassistant/device_tracker/skylar_nfc_tag"
