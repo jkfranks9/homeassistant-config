@@ -47,7 +47,7 @@ intents:
   StartBluray:
     data:
       - sentences:
-          - "start bluray"
+          - "start blu-ray"
   
   StartLaserdisc:
     data:
