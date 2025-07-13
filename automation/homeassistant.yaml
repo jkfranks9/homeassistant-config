@@ -1055,6 +1055,9 @@
     # Clear the todo list for today.
     - event: reset_mini_todo_items
     
+    # Wait until the list is cleared before continuing.
+    - wait_template: "{{ state_attr('sensor.daily_mini_todo_list', 'items') | count == 0 }}"
+    
     - variables:
         
         # Calendar and processing variables.
