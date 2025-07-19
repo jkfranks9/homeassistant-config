@@ -11,15 +11,16 @@ logs:
   homeassistant.setup:  warning
 
   # HA automations
-  homeassistant.components.automation.log_automations:                        warning
-  homeassistant.components.automation.log_scripts:                            warning
-  homeassistant.components.automation.set_maximum_attic_temperature:          warning
-  homeassistant.components.automation.set_maximum_garage_temperature:         warning
-  homeassistant.components.automation.set_maximum_outdoor_temperature:        warning
-  homeassistant.components.automation.set_minimum_attic_temperature:          warning
-  homeassistant.components.automation.set_minimum_garage_temperature:         warning
-  homeassistant.components.automation.set_minimum_outdoor_temperature:        warning
-  homeassistant.components.automation.set_washer_operation:                   warning
+  homeassistant.components.automation.calculate_esphome_battery_device_sleep_time: warning
+  homeassistant.components.automation.log_automations:                             warning
+  homeassistant.components.automation.log_scripts:                                 warning
+  homeassistant.components.automation.set_maximum_attic_temperature:               warning
+  homeassistant.components.automation.set_maximum_garage_temperature:              warning
+  homeassistant.components.automation.set_maximum_outdoor_temperature:             warning
+  homeassistant.components.automation.set_minimum_attic_temperature:               warning
+  homeassistant.components.automation.set_minimum_garage_temperature:              warning
+  homeassistant.components.automation.set_minimum_outdoor_temperature:             warning
+  homeassistant.components.automation.set_washer_operation:                        warning
 
   # HA scripts
   homeassistant.components.script.calculate_weather_metrics:          warning
@@ -120,6 +121,9 @@ filters:
   homeassistant.components.androidtv.entity:
     - ".* ADB connection re-establishing attempt in the next update. .*"
 
+  homeassistant.components.automation.calculate_esphome_battery_device_sleep_time:
+    - "Log ESPHome Battery Device Awake: Already running"
+  
   homeassistant.components.binary_sensor:
     - "Setup of binary_sensor platform .* is taking over 10 seconds"
   
@@ -189,6 +193,9 @@ filters:
   homeassistant.setup:
     - "Setup of .* is taking over 10 seconds"
 
+  homeassistant.util.logging:
+    - "Module homeassistant.components.sensor is logging too frequently"
+  
   music_assistant:
     - "Finished job [Cleanup cache] in .* seconds"
   
