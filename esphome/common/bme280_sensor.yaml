@@ -7,6 +7,7 @@ sensor:
       name: Temperature
       id: ${prefix}_temperature
       unit_of_measurement: "°F"
+      accuracy_decimals: 2
       filters:
         - calibrate_linear:
             # Map 0.0 (from sensor) to 0.0 (true value)
@@ -19,6 +20,7 @@ sensor:
     pressure:
       name: Pressure
       id: ${prefix}_pressure
+      accuracy_decimals: 2
       filters:
         - sliding_window_moving_average:
             window_size: $window_size
@@ -26,6 +28,7 @@ sensor:
     humidity:
       name: Humidity
       id: ${prefix}_humidity
+      accuracy_decimals: 2
       filters:
         - calibrate_linear:
             # Map 0.0 (from sensor) to 0.0 (true value)
