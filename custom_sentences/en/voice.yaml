@@ -6,36 +6,42 @@
 # that in turn calls Get Voice Device Data as the first step.
 
 intents:
+  
+  Bedtime:
+    data:
+      - sentences:
+          - "bedtime"
 
   FanHigh:
     data:
       - sentences:
-          - "([set] [the] fan high | tea earl grey hot)"
+          - "([(set the | set)] fan high | tea earl grey hot)
+"
 
   FanLow:
     data:
       - sentences:
-          - "([set] [the] fan low | tea earl grey cool)"
+          - "([(set the | set)] fan low | tea earl grey cool)"
 
   FanMedium:
     data:
       - sentences:
-          - "([set] [the] fan medium | tea earl grey lukewarm)"
+          - "([(set the | set)] fan medium | tea earl grey lukewarm)"
 
   FanOff:
     data:
       - sentences:
-          - "[turn] [the] fan off"
-
-  LightOn:
-    data:
-      - sentences:
-          - "[turn] [the] (light | lamp) on"
+          - "[(turn the | turn)] fan off"
 
   LightOff:
     data:
       - sentences:
-          - "[turn] [the] (light | lamp) off"
+          - "[(turn the | turn)] (light | lamp) off"
+
+  LightOn:
+    data:
+      - sentences:
+          - "[(turn the | turn)] (light | lamp) on"
 
   RemoveNotification:
     data:

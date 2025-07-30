@@ -113,8 +113,3 @@ intents:
     data:
       - sentences:
           - "(watch | play) videos"
-  
-  WatchYoutubeTV:
-    data:
-      - sentences:
-          - "[watch] Youtube TV"

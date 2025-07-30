@@ -59,9 +59,8 @@ turn_on_lights_per_conditions:
 #     Smart Bulbs     #
 #=====================#
     
-# We have power glitches occasionally, which cause all TP-Link smart bulbs to turn on. Here we attempt to
-# turn them off if they're not supposed to be on at the moment. This is intended to be called by a voice
-# assistant.
+# We have power glitches occasionally, which cause smart bulbs to turn on. Here we attempt to turn them off 
+# if they're not supposed to be on at the moment. This is intended to be called by a voice assistant.
 reset_smart_bulbs:
   alias: Reset Smart Bulbs
   
@@ -75,6 +74,18 @@ reset_smart_bulbs:
         light_entity: light.office_lamp
         lux_entity: sensor.office_sensor_ambient_light
         lux_value: "{{ states('input_number.office_ambient_max') | int(0) }}"
+
+    - action: script.reset_smart_bulb_lux_sensor
+      data:
+        light_entity: light.family_room_lamp
+        lux_entity: sensor.downstairs_sensor_ambient_light
+        lux_value: "{{ states('input_number.family_room_ambient_max') | int(0) }}"
+
+    - action: script.reset_smart_bulb_lux_sensor
+      data:
+        light_entity: light.studio_night_light
+        lux_entity: sensor.downstairs_sensor_ambient_light
+        lux_value: "{{ states('input_number.studio_bedroom_ambient_max') | int(0) }}"
           
 # Reset a smart bulb based on various sleep/wake modes.
 reset_smart_bulb_nighttime:
@@ -195,7 +206,7 @@ operate_preferred_studio_lamps:
   
   fields:
     operation:
-      description: Whether to turn the lamp on or off.
+      description: Whether to turn the light(s) on or off.
       selector:
         select:
           options:
@@ -205,7 +216,7 @@ operate_preferred_studio_lamps:
   sequence:
     - variables:
         preference: "{{ states('input_select.preferred_studio_lamps') }}"
-        lamp_entity_list: >
+        light_entity_list: >
           {% set var = namespace(list = []) %}
           {% if preference in ["Sarah's", 'Both'] %}
             {% set var.list = var.list + ['light.sarah_s_lamp'] %}
@@ -218,12 +229,48 @@ operate_preferred_studio_lamps:
     
     # Perform the operation unless the preference is 'Neither'.
     - if:
-        - "{{ lamp_entity_list | length > 0 }}"
+        - "{{ light_entity_list | length > 0 }}"
       
       then:    
         - action: light.turn_{{ operation }}
           target:
-            entity_id: "{{ lamp_entity_list }}"
+            entity_id: "{{ light_entity_list }}"
+
+# Turn the preferred studio night lights on or off.
+operate_preferred_studio_night_lights:
+  alias: Operate Preferred Studio Night Lights
+  
+  fields:
+    operation:
+      description: Whether to turn the light(s) on or off.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+  
+  sequence:
+    - variables:
+        preference: "{{ states('input_select.preferred_studio_night_lights') }}"
+        light_entity_list: >
+          {% set var = namespace(list = []) %}
+          {% if preference in ['Night', 'Both'] %}
+            {% set var.list = var.list + ['light.studio_night_light'] %}
+          {% endif %}
+          {% if preference in ['Hallway Lamp', 'Both'] %}
+            {% set var.list = var.list + ['light.hallway_lamp'] %}
+          {% endif %}
+          
+          {{ var.list }}
+    
+    # Perform the operation unless the preference is 'Neither'.
+    - if:
+        - "{{ light_entity_list | length > 0 }}"
+      
+      then:    
+        - action: light.turn_{{ operation }}
+          target:
+            entity_id: "{{ light_entity_list }}"
 
 #========================#
 #     Kitchen Lights     #
@@ -259,25 +306,30 @@ turn_off_kitchen_lights:
 #     Fan Lights     #
 #====================#
 
-turn_off_fan_light:
-  alias: Turn Off Fan Light
+turn_off_fan_lights:
+  alias: Turn Off Fan Lights
   
   fields:
-    fan_entity:
-      description: Fan entity to be turned off.
+    light_entity:
+      description: List of fan light entities to be turned off.
   
   sequence:
     
-    # Turn off the light if we think it's on, and log it for diagnostics.
-    - if:
-        - "{{ states(fan_entity) == 'on' }}"
+    - repeat:
+        for_each: "{{ light_entity }}"
         
-      then:
-        - action: light.turn_off
-          target:
-            entity_id: "{{ fan_entity }}"
+        sequence:
+    
+          # Turn off the light if we think it's on, and log it for diagnostics.
+          - if:
+              - "{{ states(repeat.item) == 'on' }}"
+            
+            then:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ repeat.item }}"
 
-        - action: system_log.write
-          data:
-            message: "Turned off {{ fan_entity }}"
-            level: debug
+              - action: system_log.write
+                data:
+                  message: "Turned off {{ repeat.item }}"
+                  level: debug

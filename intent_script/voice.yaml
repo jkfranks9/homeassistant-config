@@ -5,31 +5,41 @@
 # NOTE: These intents require knowing the most recently spoken to device. So all the scripts called here must call
 # Get Voice Device Data as the first step.
 
+# Sleep ...
+Bedtime:
+  action:
+    - action: script.turn_on
+      target:
+        entity_id: script.bedtime_front_end
+      data:
+        variables:
+          caller: nabu
+
 # Fans ...
 FanHigh:
   action:
-    - service: script.voice_modify_fan
+    - action: script.voice_modify_fan
       data:
         caller: nabu
         speed: 'high'
 
 FanLow:
   action:
-    - service: script.voice_modify_fan
+    - action: script.voice_modify_fan
       data:
         caller: nabu
         speed: 'low'
 
 FanMedium:
   action:
-    - service: script.voice_modify_fan
+    - action: script.voice_modify_fan
       data:
         caller: nabu
         speed: 'medium'
 
 FanOff:
   action:
-    - service: script.voice_modify_fan
+    - action: script.voice_modify_fan
       data:
         caller: nabu
         speed: 'off'
@@ -49,7 +59,7 @@ LightOff:
         caller: nabu
         operation: 'off'
 
-# Other ...
+# Notifications ...
 RemoveNotification:
   action:
     - action: script.voice_mobile_notification

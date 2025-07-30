@@ -286,10 +286,13 @@
         - "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) < states('input_number.family_room_ambient_min') | float(0) }}"
       
       then:
+        
+        # Office lamp.
         - action: light.turn_on
           target:
             entity_id: light.office_lamp
         
+        # Daytime or Christmas lights.
         - if:
             - condition: state
               entity_id: input_boolean.christmas_mode
@@ -307,6 +310,17 @@
               data:
                 variables:
                   additional_lights: daytime
+        
+        # Studio lamp(s) if Skylar home alone.
+        - if:
+            - condition: state
+              entity_id: person.skylar
+              state: 'home'
+          
+          then:
+            - action: script.operate_preferred_studio_lamps
+              data:
+                operation: 'on'
 
 # Close up the house when needed.
 - alias: Close House
@@ -383,11 +397,18 @@
         
           then:
         
-            # Turn off all lights.
-            - scene: scene.lights_out
-        
-            # Turn off all fans.
-            - scene: scene.fans_off
+            # Turn off all lights and fans.
+            - action: scene.turn_on
+              target:
+                entity_id:
+                  - scene.lights_out
+                  - scene.fans_off_downstairs
+                  - scene.fans_off_upstairs
+            
+            # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+            - action: script.turn_off_fan_lights
+              data:
+                light_entity: "{{ expand(state_attr('light.ceiling_fan_lights', 'entity_id')) | map(attribute = 'entity_id') | list }}"
       
     - if:
       

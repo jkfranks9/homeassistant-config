@@ -29,7 +29,7 @@
   actions:
     - variables:
         guest: "{{ trigger.to_state.attributes.friendly_name }}"
-        suite: "{{ iif(guest in ['Sarah', 'Skylar'], 'Studio', 'Penthouse') }}"
+        suite: "{{ states('input_select.' ~ guest | lower ~ '_guest_suite') }}"
     
     # Special case for Mike: only add if he arrives after 4:00 PM.
     - if:
@@ -134,14 +134,23 @@
 #     Guest Suite Management     #
 #================================#
 
-# Modify the guest suite occupancy when one or both of Sarah and Skylar are here. No other guest combinations currently
-# support modification.
+# Modify the guest suite occupancy. This is done using the dashboard.
 - alias: Modify Occupied Guest Suites
   id: modify_occupied_guest_suites
   mode: queued
   
   # The triggers are dropdowns for each guest, to allow changes by any guest.
   triggers:
+    - trigger: state
+      entity_id: input_select.david_guest_suite
+      to:
+      id: David
+    
+    - trigger: state
+      entity_id: input_select.mike_guest_suite
+      to:
+      id: Mike
+    
     - trigger: state
       entity_id: input_select.sarah_guest_suite
       to:
@@ -153,14 +162,11 @@
       id: Skylar
   
   actions:
-    - variables:
-        prev_suite_entity: "{{ 'input_select.' ~ trigger.from_state.state | lower ~ '_guests' }}"
-        prev_suite_guests: "{{ states(prev_suite_entity) }}"
     
-    # Only perform an actual switch if the guest is currently in the previous suite.
-    - condition: "{{ trigger.id in prev_suite_guests }}"
+    # Only perform an actual switch if the guest is currently home.
+    - condition: "{{ is_state('person.' ~ trigger.id | lower, 'home') }}"
     
-    # Remove the triggering guest from the previous suite and add her to the current suite.
+    # Remove the triggering guest from the previous suite and add them to the current suite.
     - action: script.remove_guest_from_suite
       data:
         guest: "{{ trigger.id }}"
@@ -170,35 +176,33 @@
       data:
         guest: "{{ trigger.id }}"
         suite: "{{ trigger.to_state.state }}"
+    
+    # If we're switching suites, send the completion event.
+    - if:
+        - condition: state
+          entity_id: input_boolean.switch_guest_suites
+          state: 'on'
+      
+      then:
+        - event: switch_guest_suites_complete
 
-# Handle a change to the number of days a guest suite is occupied. There is only one helper for days occupied that all guests use,
-# since only one (adult) guest occupies the suite at any one time.
-# NOTE: Currently this only applies to the penthouse.
-- alias: Modify Thermostat Hold For Days Occupied
-  id: modify_thermostat_hold_for_days_occupied
+# Handle a change to the thermostat metrics (currently only applies to the penthouse):
+#
+# - Number of nights a guest suite is occupied. There is only one helper for nights occupied that all guests use,
+#   since only one (adult) guest occupies the suite at any one time.
+# - Individual temperature range values. Each guest has their own helpers for the low/high ends of the range, that
+#   are combined into temp range sensors.
+- alias: Modify Thermostat Hold Metrics
+  id: modify_thermostat_hold_metrics
+  
+  mode: queued
   
   triggers:
     - trigger: state
-      entity_id: input_number.penthouse_days_occupied
+      entity_id: input_number.penthouse_nights_occupied
       to:
-  
-  conditions:
+      id: nights
     
-    # Only allow this change if the penthouse is currently occupied.
-    - condition: state
-      entity_id: binary_sensor.penthouse_occupied
-      state: 'on'
-  
-  actions:
-    - action: script.modify_penthouse_thermostat_hold
-
-# Handle a change to the individual temperature range values. Each guest has their own helpers for the low/high ends of the range, that
-# are combined into temp range sensors.
-# NOTE: Currently this only applies to the penthouse.
-- alias: Modify Thermostat Hold For Temp Range
-  id: modify_thermostat_hold_for_temp_range
-  
-  triggers:
     - trigger: state
       entity_id: sensor.david_temp_range
       to:
@@ -220,42 +224,47 @@
       id: skylar
   
   conditions:
+    - or:
     
-    # Only allow this change if the triggering guest is currently staying in the penthouse.
-    - "{{ trigger.id | title in states('input_select.penthouse_guests') }}"
+        # For the nights trigger, ensure the penthouse is currently occupied.
+        - "{{ trigger.id == 'nights' and is_state('binary_sensor.penthouse_occupied', 'on') }}"
+        
+        # For a non-nights trigger, ensure the triggering guest is currently staying in the penthouse.
+        - "{{ trigger.id != 'nights' and trigger.id | title in states('input_select.penthouse_guests') }}"
   
   actions:
     
-    # Start a delay timer if it's not currently running. The purpose of the timer is to allow both the high and low values to be changed
-    # within a reasonable time window, before actually changing the thermostat hold. For the second such change the timer will be active
-    # so we don't need to do anything. 
+    # Start a delay timer if it's not currently running. The purpose of the timer is to allow all available metrics to be changed
+    # within a reasonable time window, before actually changing the thermostat hold. For all but the first such change within the
+    # window, the timer will be active so we won't do anything. 
     # 
     # Note that the timer could possibly expire while HA is restarting, so set a flag so we can handle that case when HA starts up.
     - if:
         - condition: state
-          entity_id: timer.temp_range_delay
+          entity_id: timer.thermostat_metrics_delay
           state: idle
       
       then:        
         - action: timer.start
           data:
-            entity_id: timer.temp_range_delay
-            duration: 60
+            entity_id: timer.thermostat_metrics_delay
+            duration:
+              minutes: "{{ states('input_number.thermostat_metrics_delay_minutes') }}"
         
         - action: input_boolean.turn_on
           target:
-            entity_id: input_boolean.temp_range_delay_timer_started
+            entity_id: input_boolean.thermostat_metrics_delay_timer_started
 
-# Handle the temp range delay timer expiration. Normally, the timer finished event will drive this automation. But if HA was restarting at
-# that time, the event is lost. So we also trigger on HA start.
-- alias: Handle Temp Range Delay Timer Expiration
-  id: handle_temp_range_delay_timer_expiration
+# Handle the thermostat metrics delay timer expiration. Normally, the timer finished event will drive this automation. But if HA was 
+# restarting at that time, the event is lost. So we also trigger on HA start.
+- alias: Handle Thermostat Metrics Delay Timer Expiration
+  id: handle_thermostat_metrics_delay_timer_expiration
   
   triggers:
     - trigger: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.temp_range_delay
+        entity_id: timer.thermostat_metrics_delay
     
     - trigger: homeassistant
       event: start
@@ -265,11 +274,11 @@
   # the timer finished event.
   conditions:
     - condition: state
-      entity_id: timer.temp_range_delay
+      entity_id: timer.thermostat_metrics_delay
       state: idle
     
     - condition: state
-      entity_id: input_boolean.temp_range_delay_timer_started
+      entity_id: input_boolean.thermostat_metrics_delay_timer_started
       state: 'on'
   
   actions:
@@ -277,7 +286,7 @@
     
     - action: input_boolean.turn_off
       target:
-        entity_id: input_boolean.temp_range_delay_timer_started
+        entity_id: input_boolean.thermostat_metrics_delay_timer_started
 
 # Handle the thermostat hold delay timer expiration. This timer is started by the Modify Penthouse Thermostat Hold script, to guard against
 # rapid changes to the thermostat. For example, the guest could change the temp range, then do it again shortly afterwards because they
@@ -313,6 +322,48 @@
     - action: input_boolean.turn_off
       target:
         entity_id: input_boolean.thermostat_hold_delay_timer_started
+
+#===========================================#
+#     Studio Preferred Lamps Management     #
+#===========================================#
+
+# Modify studio lights if the preferred lamps are changed while the studio is occupied.
+- alias: Modify Active Studio Lamps
+  id: modify_active_studio_lamps
+  
+  triggers:
+    - trigger: state
+      entity_id: input_select.preferred_studio_lamps
+      to:
+  
+  # The following must be true:
+  #
+  # 1) The studio must be occupied.
+  # 2) It must be dark enough according to the ambient light level.
+  conditions: "{{ is_state('binary_sensor.studio_occupied', 'on') and
+                  states('sensor.downstairs_sensor_ambient_light') | float(0) < states('input_number.studio_bedroom_ambient_min') | float(0) }}"
+  
+  actions:
+    - variables:
+        
+        # The new (just changed) preference.
+        preference: "{{ states('input_select.preferred_studio_lamps') }}"
+        
+        # The operation to perform on each lamp.
+        sarah_s_lamp_operation: >
+          {{ iif(preference in ['Sarah\'s', 'Both'], 'on', 'off') }}
+        skylar_s_lamp_operation: >
+          {{ iif(preference in ['Skylar\'s', 'Both'], 'on', 'off') }}
+    
+    # Operate Sarah's lamp.
+    - action: light.turn_{{ sarah_s_lamp_operation }}
+      target:
+        entity_id: light.sarah_s_lamp
+    
+    # Operate Skylar's lamp.
+    - action: light.turn_{{ skylar_s_lamp_operation }}
+      target:
+        entity_id: light.skylar_s_lamp
 
 #=========================#
 #     Device Trackers     #
@@ -539,11 +590,15 @@
           entity_id: sensor.downstairs_sensor_ambient_light
           below: input_number.family_room_ambient_max
       
-      then:    
-        - scene: scene.voice_assistants_on_dim
+      then:
+        - action: scene.turn_on
+          target:
+            entity_id: scene.voice_assistants_on_dim
       
       else:    
-        - scene: scene.voice_assistants_on_bright
+        - action: scene.turn_on
+          target:
+            entity_id: scene.voice_assistants_on_bright
     
     # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.
     # The Reset Bedtime Environment script (called above) calls Modify Master Suite for wakeup. That script in turn waits 

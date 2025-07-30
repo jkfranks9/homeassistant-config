@@ -4,44 +4,48 @@
 
 Bathroom:
   action:
-    service: script.turn_on_bathroom_light
-
-Bedtime:
-  action:
-    service: script.bedtime
+    - action: script.turn_on_bathroom_light
 
 KitchenBright:
   action:
-    service: script.turn_on_bright_kitchen_lights
+    - action: script.turn_on_bright_kitchen_lights
 
 KitchenOff:
   action:
-    service: script.turn_off_kitchen_lights
+    - action: script.turn_off_kitchen_lights
 
 KitchenOn:
   action:
-    service: script.turn_on_kitchen_lights
+    - action: script.turn_on_kitchen_lights
 
 LightsOut:
   action:
-    scene: scene.lights_out
+    - action: scene.turn_on
+      target:
+        entity_id: scene.lights_out
 
 SleepTime:
   action:
-    service: script.sleeptime
+    - action: script.sleeptime
 
 StartBathTime:
   action:
-    service: script.start_bath_time
+    - action: script.start_bath_time
+
+StudioNightLightsOn:
+  action:
+    - action: script.operate_preferred_studio_night_lights
+      data:
+        operation: 'on'
 
 SwitchStudioLamps:
   action:
-    service: script.switch_studio_lamps
+    - action: script.switch_studio_lamps
 
 TurnOffChristmasLights:
   action:
-    service: script.turn_off_christmas_lights
+    - action: script.turn_off_christmas_lights
 
 TurnOnChristmasLights:
   action:
-    service: script.turn_on_christmas_lights
+    - action: script.turn_on_christmas_lights

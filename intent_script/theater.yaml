@@ -4,92 +4,88 @@
 
 BreakTime:
   action:
-    service: script.set_theater_idle
+    - action: script.set_theater_idle
 
 CloseCinema:
   action:
-    service: script.close_cinema
+    - action: script.close_cinema
 
 LowerVolume:
   action:
-    service: script.lower_theater_volume
+    - action: script.lower_theater_volume
 
 OpenCinema:
   action:
-    service: script.open_cinema
+    - action: script.open_cinema
 
 PlayFeature:
   action:
-    service: script.play_feature_movie
+    - action: script.play_feature_movie
 
 RaiseVolume:
   action:
-    service: script.raise_theater_volume
+    - action: script.raise_theater_volume
 
 RestartShieldTV:
   action:
-    service: script.restart_shield_tv
+    - action: script.restart_shield_tv
 
 ResumeCinema:
   action:
-    service: script.resume_cinema
+    - action: script.resume_cinema
 
 StartBluray:
   action:
-    service: script.start_bluray
+    - action: script.start_bluray
 
 StartLaserdisc:
   action:
-    service: script.start_laserdisc
+    - action: script.start_laserdisc
 
 StartStreaming:
   action:
-    service: script.start_streaming
+    - action: script.start_streaming
 
 StartTurntable:
   action:
-    service: script.start_turntable
+    - action: script.start_turntable
 
 WatchAmazonPrime:
   action:
-    service: script.watch_amazon_prime
+    - action: script.watch_amazon_prime
 
 WatchAMCPlus:
   action:
-    service: script.watch_amc_plus
+    - action: script.watch_amc_plus
 
 WatchDisneyPlus:
   action:
-    service: script.watch_disney_plus
+    - action: script.watch_disney_plus
 
 WatchHulu:
   action:
-    service: script.watch_hulu
+    - action: script.watch_hulu
 
 WatchKodi:
   action:
-    service: script.watch_kodi
+    - action: script.watch_kodi
 
 WatchMax:
   action:
-    service: script.watch_max
+    - action: script.watch_max
 
 WatchNetflix:
   action:
-    service: script.watch_netflix
+    - action: script.watch_netflix
 
 WatchParamountPlus:
   action:
-    service: script.watch_paramount_plus
+    - action: script.watch_paramount_plus
 
 WatchPeacock:
   action:
-    service: script.watch_peacock
+    - action: script.watch_peacock
 
 WatchVideos:
   action:
-    service: script.play_random_kodi_videos
-
-WatchYoutubeTV:
-  action:
-    service: script.watch_youtube_tv
+    - action: script.play_random_kodi_videos

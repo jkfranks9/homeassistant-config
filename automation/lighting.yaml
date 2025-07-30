@@ -161,11 +161,15 @@
     - if:
         - "{{ trigger.id == 'dim' }}"
       
-      then:    
-        - scene: scene.voice_assistants_on_dim
+      then:
+        - action: scene.turn_on
+          target:
+            entity_id: scene.voice_assistants_on_dim
       
-      else:    
-        - scene: scene.voice_assistants_on_bright
+      else:
+        - action: scene.turn_on
+          target:
+            entity_id: scene.voice_assistants_on_bright
 
 #============================#
 #     Extended Away Mode     #
@@ -759,44 +763,3 @@
   action:
     - service: automation.turn_on
       entity_id: automation.run_studio_motion_based_light
-
-#============================#
-#     Ceiling Fan Lights     #
-#============================#
-
-# Turn off ceiling fan lights. This is triggered from scenes that turn off all/most lights.
-# We can't put the fan lights in the scenes themselves, due to those lights operating in optimistic mode.
-- alias: Turn Off Fan Lights
-  id: turn_off_fan_lights
-  
-  # Trigger on a toggle that's turned on by various scenes.
-  trigger:
-    - platform: state
-      entity_id: input_boolean.ceiling_fan_lights_off
-      from: 'off'
-      to: 'on'
-  
-  variables:
-    
-    # List of all ceiling fan light entities.
-    fan_lights: "{{ expand(state_attr('light.ceiling_fan_lights', 'entity_id')) | map(attribute = 'entity_id') | list }}"
-  
-  action:
-    
-    - repeat:
-        
-        # Repeat for all ceiling fan lights.
-        for_each: "{{ fan_lights }}"
-        
-        sequence:
-          
-          # Turn off the light if we think it's on. This is a separate script because we need it for individual fan lights
-          # elsewhere.
-          - action: script.turn_off_fan_light
-            data:
-              fan_entity: "{{ repeat.item }}"
-    
-    # Reset the toggle.
-    - action: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.ceiling_fan_lights_off

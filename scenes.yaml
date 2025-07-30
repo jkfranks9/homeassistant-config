@@ -16,61 +16,17 @@
     light.studio_lights:                  'off'
     
     # Upstairs
-    light.penthouse_lights:               'off'
-    light.theater_lights:                 'off'
-    light.upstairs_common_lights:         'off'
+    light.upstairs_lights:                'off'
     
     # Misc
     light.all_christmas_lights:           'off'
     light.outdoor_lights:                 'off'
     light.storage_lights:                 'off'
-    
-    # Fans (see Turn Off Fan Lights automation)
-    input_boolean.ceiling_fan_lights_off: 'on'
-
-#===============================#
-#     Non Master Lights Out     #
-#===============================#
-
-# Turn off all lights except the master bedroom, used when Jon goes to bed.
-- id: 'non_master_lights_out'
-  name: Non Master Lights Out
-  entities:
-    
-    # Downstairs
-    light.dining_room_lights:             'off'
-    light.downstairs_common_lights:       'off'
-    light.family_room_lights:             'off'
-    light.kitchen_lights:                 'off'
-    light.master_closet:                  'off'
-    light.master_shower:                  'off'
-    light.master_vanity:                  'off'
-    light.office_lights:                  'off'
-    light.studio_lights:                  'off'
-    
-    # Upstairs
-    light.penthouse_lights:               'off'
-    light.theater_lights:                 'off'
-    light.upstairs_common_lights:         'off'
-    
-    # Misc
-    light.all_christmas_lights:           'off'
-    light.storage_lights:                 'off'
-    light.outdoor_lights:                 'off'
-    
-    # Fans (see Turn Off Fan Lights automation) ... also note that rooms that contain ceiling fan lights
-    # need to have their contents expanded above, minus the fan light
-    input_boolean.ceiling_fan_lights_off: 'on'
 
 #================================#
 #     Non Bedroom Lights Out     #
 #================================#
 
-# Turn off all lights except guest suites and related night lights.
-# Note that the theater and most upstairs common lights are not included here, in case the upstairs
-# bedroom is occupied. In that case, such lights might still be in use at my bedtime. The 
-# Establish Bedtime Environment script takes care of any additional lights that need to be off, based 
-# on occupied bedrooms.
 - id: 'non_bedroom_lights_out'
   name: Non Bedroom Lights Out
   entities:
@@ -80,22 +36,30 @@
     light.downstairs_common_lights:       'off'
     light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
-    light.master_closet:                  'off'
-    light.master_shower:                  'off'
-    light.master_vanity:                  'off'
     light.office_lights:                  'off'
-    
-    # Upstairs    
-    light.utility:                        'off'
     
     # Misc
     light.all_christmas_lights:           'off'
     light.storage_lights:                 'off'
     light.outdoor_lights:                 'off'
+
+#========================================#
+#     Studio Guests Awake Lights Out     #
+#========================================#
+
+- id: 'studio_guests_awake_lights_out'
+  name: Studio Guests Awake Lights Out
+  entities:
     
-    # Fans (see Turn Off Fan Lights automation) ... also note that rooms that contain ceiling fan lights
-    # need to have their contents expanded above, minus the fan light
-    input_boolean.ceiling_fan_lights_off: 'on'
+    # Downstairs
+    light.dining_room_lights:             'off'
+    light.downstairs_common_lights:       'off'
+    light.office_lights:                  'off'
+    
+    # Misc
+    light.all_christmas_lights:           'off'
+    light.storage_lights:                 'off'
+    light.outdoor_lights:                 'off'
 
 #==================================#
 #     Theater Auxiliary Lights     #
@@ -122,15 +86,19 @@
 #===============================#
 #     Ceiling and Bath Fans     #
 #===============================#
-- id: 'fans_off'
-  name: Fans Off
+- id: 'fans_off_downstairs'
+  name: Fans Off Downstairs
   entities:
     fan.family_room_fan:    'off'
     fan.office_fan:         'off'
-    fan.theater_fan:        'off'
-    
     switch.master_bath_fan: 'off'
     switch.studio_fan:      'off'
+    switch.treadmill_fan:   'off'
+
+- id: 'fans_off_upstairs'
+  name: Fans Off Upstairs
+  entities:
+    fan.theater_fan:        'off'
     switch.penthouse_fan:   'off'
 
 #=================================#

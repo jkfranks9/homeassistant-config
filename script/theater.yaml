@@ -879,24 +879,39 @@ change_theater_volume:
 # Make the theater dark.
 set_theater_dark:
   alias: Set Theater Dark
+  
   sequence:
-    - scene: scene.theater_aux_dark
-    - scene: scene.lutron_dark
+    - action: scene.turn_on
+      target:
+        entity_id:
+          - scene.theater_aux_dark
+          - scene.lutron_dark
 
 # Make the theater dark, with a delay.
 set_theater_dark_delay:
   alias: Set Theater Dark Delay
+  
   sequence:
-    - scene: scene.theater_aux_dark
+    - action: scene.turn_on
+      target:
+        entity_id: scene.theater_aux_dark
+    
     - delay: '00:00:12'
-    - scene: scene.lutron_dark
+    
+    - action: scene.turn_on
+      target:
+        entity_id: scene.lutron_dark
 
 # Make the theater dim.
 set_theater_dim:
   alias: Set Theater Dim
+  
   sequence:
-    - scene: scene.theater_aux_dark
-    - scene: scene.lutron_dim
+    - action: scene.turn_on
+      target:
+        entity_id:
+          - scene.theater_aux_dark
+          - scene.lutron_dim
 
 # Make the theater idle, meaning it's on but we need lights to see.
 set_theater_idle:
@@ -913,10 +928,12 @@ set_theater_idle:
             - 'break'
             - 'close'
   
-  sequence:    
-    - scene: scene.theater_aux_partial
-    
-    - scene: scene.lutron_idle
+  sequence:
+    - action: scene.turn_on
+      target:
+        entity_id:
+          - scene.theater_aux_partial
+          - scene.lutron_idle
     
     - if:
         - "{{ not operation is defined }}"

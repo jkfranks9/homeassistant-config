@@ -2,7 +2,7 @@
 #     Alexa Front Ends     #
 #==========================#
 
-# NOTE: These scripts require knowing the most recently spoken to device. So all the scripts called here must call
+# NOTE: The following scripts require knowing the most recently spoken to device. So all the scripts called here must call
 # Get Voice Device Data as the first step.
 
 # Fans ...
@@ -69,6 +69,24 @@ alexa_remove_notification:
     - action: script.voice_mobile_notification
       data:
         caller: alexa
+
+alexa_bedtime_front_end:
+  alias: Alexa Bedtime Front End
+  
+  sequence:
+    - action: script.bedtime_front_end
+      data:
+        caller: alexa
+
+# NOTE: The following scripts do not require knowing the most recently spoken to device.
+
+alexa_studio_night_lights_on:
+  alias: Alexa Studio Night Lights On
+  
+  sequence:
+    - action: script.operate_preferred_studio_night_lights
+      data:
+        operation: 'on'
 
 #======================#
 #     Ceiling Fans     #
@@ -201,9 +219,9 @@ voice_operate_light:
               data:
                 operation: "{{ operation }}"
 
-#=======================#
-#     Notifications     #
-#=======================#
+#===============#
+#     Other     #
+#===============#
 
 # Remove one or more mobile notifications that can only be cleared manually.
 voice_mobile_notification:
@@ -231,7 +249,89 @@ voice_mobile_notification:
     - action: script.remove_manual_mobile_notification
       data:
         voice_device: "{{ result.output }}"
+
+# Bedtime script front end. We need to determine if any adult guests staying in the studio are still awake. If so, some 
+# bedtime actions need to be deferred. For example, someone could be watching TV in the family room, so I don't want to 
+# turn off the family room AV and lights when I go to bed.
+bedtime_front_end:
+  alias: Bedtime Front End
+  
+  fields:
+    caller:
+      name: Caller
+      description: The family of the voice device that was spoken to.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+  
+  sequence:
+    
+    # Initialize the result.
+    - variables:
+        studio_guests_awake: false
+    
+    # Only ask the question if an adult guest is occupying the studio.
+    - if:
+        - "{{ states('input_select.studio_guests') not in ['Empty', 'Skylar'] }}"
+      
+      then:
+    
+        # Get the room containing the voice assistant device that was used.
+        - action: script.get_voice_device_data
+          data:
+            caller: "{{ caller }}"
+          response_variable: result
         
+        - variables:
+            
+            # Extract the room from the response variable.
+            room: "{{ result.room }}"
+        
+        # Set up the question.
+        - action: input_text.set_value
+          target:
+            entity_id: input_text.ask_question
+          data:
+            value: 'Are studio guests still awake?'
+        
+        # Ask the question.
+        - action: script.ask_question
+          data:
+            voice_assistant: assist_satellite.{{ room }}_nabu_assist_satellite
+            preannounce: true
+        
+        # Pick up the result.
+        - variables:
+            studio_guests_awake: "{{ iif(is_state('input_boolean.ask_question', 'on'), true, false) }}"
+    
+    # Call the bedtime script with the result.
+    - action: script.Bedtime
+      data:
+        studio_guests_awake: "{{ studio_guests_awake }}" 
+
+#=======================#
+#     Conversations     #
+#=======================#
+
+# Generic script to ask a question. The question is supplied in a text, and the response is provided in a toggle. One retry is allowed.
+ask_question:
+  alias: Ask Question
+  
+  use_blueprint:
+    path: homeassistant/ask_yes_no_question.yaml
+    input:
+      question: "{{ states('input_text.ask_question') }}"
+      number_of_retries: 1
+      yes_actions:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.ask_question
+      no_actions:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.ask_question
 
 #===================#
 #     Utilities     #

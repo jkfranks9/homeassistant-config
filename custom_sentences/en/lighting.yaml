@@ -9,11 +9,6 @@ intents:
       - sentences:
           - "bathroom"
   
-  Bedtime:
-    data:
-      - sentences:
-          - "bedtime"
-  
   KitchenBright:
     data:
       - sentences:
@@ -43,6 +38,11 @@ intents:
     data:
       - sentences:
           - "start bath time"
+  
+  StudioNightLightsOn:
+    data:
+      - sentences:
+          - "[(turn | turn the)] night (light | lights) on"
   
   SwitchStudioLamps:
     data:

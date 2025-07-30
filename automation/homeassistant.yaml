@@ -307,6 +307,23 @@
         parse_config: false
         create_file: true
     
+    # Reset the default guest suite preferences for all guests not currently home.
+    - repeat:
+        for_each:
+          - 'david'
+          - 'mike'
+          - 'sarah'
+          - 'skylar'
+        
+        sequence:
+          - if:
+              - "{{ not is_state('person.' ~ repeat.item, 'home') }}"
+            
+            then:
+              - action: input_select.select_first
+                target:
+                  entity_id: "{{ 'input_select.' ~ repeat.item ~ '_guest_suite' }}"
+    
     # Perform weekly chores at the start of a new week (Sunday).
     - if:
         - "{{ day_of_week == 0 }}"

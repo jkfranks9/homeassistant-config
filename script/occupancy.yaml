@@ -33,6 +33,7 @@ add_guest_to_suite:
   sequence:
     - variables:
         suite_entity: "{{ 'input_select.' ~ suite | lower ~ '_guests' }}"
+        suite_entry_state: "{{ states(suite_entity) }}"
         
     # Update the suite guests.
     - if:
@@ -51,6 +52,18 @@ add_guest_to_suite:
             entity_id: "{{ suite_entity }}"
           data:
             option: "{{ guest }}"
+    
+    # If the suite was empty upon entry, then wait for the associated binary sensor to change before continuing, as the
+    # binary sensor could be used when modifying the suite.
+    - if:
+        - "{{ suite_entry_state == 'Empty' }}"
+      
+      then:
+        - repeat:
+            until: "{{ is_state('binary_sensor.' ~ suite | lower ~ '_occupied', 'on') }}"
+            
+            sequence:
+              - event: unused_event
     
     # Prepare the suite for occupancy.    
     - action: script.modify_{{ suite | lower }}
@@ -79,6 +92,9 @@ remove_guest_from_suite:
         suite_entity: "{{ 'input_select.' ~ suite | lower ~ '_guests' }}"
         combined_guests: "{{ '+' in states(suite_entity) }}"
     
+    # Only continue if the guest is currently in the suite. There are cases where this isn't true.
+    - condition: "{{ guest in states(suite_entity) }}"
+    
     # Update the suite guests.
     - if:
         - "{{ combined_guests }}"
@@ -96,6 +112,14 @@ remove_guest_from_suite:
             entity_id: "{{ suite_entity }}"
           data:
             option: 'Empty'
+
+        # Since the suite is now empty, wait for the associated binary sensor to change before continuing, as the
+        # binary sensor could be used when modifying the suite.
+        - repeat:
+            until: "{{ is_state('binary_sensor.' ~ suite | lower ~ '_occupied', 'off') }}"
+            
+            sequence:
+              - event: unused_event
     
     # Clean up the suite if needed.
     - choose:
@@ -117,6 +141,96 @@ remove_guest_from_suite:
               data:
                 reason: departure
 
+# Sometimes when both guest suites are occupied, one or more guests want to switch suites. Doing this by moving one guest at a time
+# is tedious and requires waiting for (slow) thermostat changes. This script provides a one button method for switching.
+switch_guest_suites:
+  alias: Switch Guest Suites
+  
+  sequence:
+    
+    # Only proceed if both suites are occupied.
+    - condition: template
+      value_template: "{{ is_state('binary_sensor.studio_occupied', 'on') and is_state('binary_sensor.penthouse_occupied', 'on') }}"
+    
+    # Set a flag that modifies certain suite-specific functions when we're switching.
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.switch_guest_suites
+      
+    - variables:
+        suite_list: ['Studio', 'Penthouse']
+          
+        # Current suite guest lists. We need these because we'll be changing the actual dropdowns for suite occupancy as we progress.
+        studio_guest_list: >
+          {% set curr_studio_guests = states('input_select.studio_guests') %}
+          {% set var = namespace(list = []) %}
+          {% if '+' in curr_studio_guests %}
+            {% set var.list = [curr_studio_guests.split(' + ')[0]] %}
+            {% set var.list = var.list + [curr_studio_guests.split(' + ')[1]] %}
+          {% else %}
+            {% set var.list = [curr_studio_guests] %}
+          {% endif %}
+          {{ var.list }}
+        
+        penthouse_guest_list: >
+          {% set curr_penthouse_guests = states('input_select.penthouse_guests') %}
+          {% set var = namespace(list = []) %}
+          {% if '+' in curr_penthouse_guests %}
+            {% set var.list = [curr_penthouse_guests.split(' + ')[0]] %}
+            {% set var.list = var.list + [curr_penthouse_guests.split(' + ')[1]] %}
+          {% else %}
+            {% set var.list = [curr_penthouse_guests] %}
+          {% endif %}
+          {{ var.list }}
+    
+    # To perform the switch, the following happens for each guest in each suite:
+    # 
+    # 1) Modify the person-specific suite preference. This causes the Modify Occupied Guest Suites automation to run.
+    # 2) The automation calls the Remove Guest From Suite and Add Guest To Suite scripts, which change the suite occupancy.
+    # 3) As part of removing and adding, the Modify {Studio | Penthouse} scripts run.
+    # 4) Those scripts perform any suite processing needed for switching, with the exception of changing the penthouse thermostat metrics.
+    # 5) When finished, the switch_guest_suites_complete event is sent; we need to wait for this event for each guest before handling the next.
+    #
+    # Finally, the penthouse thermostat is modified for the changed guest.
+    
+    - repeat:
+        for_each: "{{ suite_list }}"
+      
+        sequence:
+          - variables:
+              guest_list: "{{ iif(repeat.first, studio_guest_list, penthouse_guest_list) }}"
+              new_suite: "{{ iif(repeat.first, 'Penthouse', 'Studio') }}"
+        
+          # Handle all suite guests.
+          - repeat:
+              for_each: "{{ guest_list }}"
+            
+              sequence:
+                - variables:
+                    guest_suite_preference_entity: "{{ 'input_select.' ~ repeat.item | lower ~ '_guest_suite' }}"
+                                
+                # Modify the person-specific suite preference.
+                - action: input_select.select_option
+                  target:
+                    entity_id: "{{ guest_suite_preference_entity }}"
+                  data:
+                    option: "{{ new_suite }}"
+              
+                # Wait for the event indicating we're all done with this guest.
+                - wait_for_trigger:
+                    - trigger: event
+                      event_type: switch_guest_suites_complete
+                  timeout:
+                    minutes: 2
+    
+    # Reset the switch flag.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.switch_guest_suites
+    
+    # We've deferred setting the penthouse thermostat hold while switching; do it now.
+    - action: script.modify_penthouse_thermostat_hold
+
 #==========================#
 #     Sleep Start/Stop     #
 #==========================#
@@ -125,22 +239,14 @@ remove_guest_from_suite:
 bedtime:
   alias: Bedtime
   
+  fields:
+    studio_guests_awake:
+      name: Studio Guests Awake
+      description: Toggle indicating if any studio guests are still awake.
+      selector:
+        boolean:
+  
   sequence:
-    
-    # Turn on the master bedroom lamp.
-    - action: light.turn_on
-      target:
-        entity_id: light.master_bedroom_lamp
-      data:
-        color_temp_kelvin: 2700
-        brightness_pct: 100
-    
-    # Turn on nighttime mode.
-    - action: input_boolean.turn_on
-      entity_id: input_boolean.nighttime
-
-    # Turn off the Family Room AV system.
-    - action: script.disable_family_room_av
     
     # Close garage doors ... run the scripts in parallel because they contain a several minute delay.
     - action: script.turn_on
@@ -160,17 +266,6 @@ bedtime:
     # Lock the PC.
     - action: script.turn_on
       entity_id: script.lock_pc
-      
-    - delay: '00:00:07'
-      
-    # Establish the proper bedtime environment (lights, thermostats, echo devices).
-    - action: script.establish_bedtime_environment
-    
-    # Turn off all fans.
-    - scene: scene.fans_off
-    
-    # Turn off voice assistant screens.
-    - scene: scene.voice_assistants_off
     
     # Turn off certain plugs. These are plugs that are turned on only when needed.
     - action: switch.turn_off
@@ -185,6 +280,44 @@ bedtime:
         - action: switch.turn_off
           target:
             entity_id: "{{ label_entities('theater_off') }}"
+    
+    # Turn on nighttime mode.
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.nighttime
+
+    # Perform tasks if no studio guests are awake.
+    - if:
+        - "{{ studio_guests_awake == false }}"
+      
+      then:    
+        
+        # Turn off the Family Room AV system.
+        - action: script.disable_family_room_av
+    
+        # Turn off voice assistant screens and downstairs fans.
+        - action: scene.turn_on
+          target:
+            entity_id:
+              - scene.voice_assistants_off
+              - scene.fans_off_downstairs
+    
+    # Perform tasks if the penthouse is not occupied.
+    - if:
+        - condition: state
+          entity_id: binary_sensor.penthouse_occupied
+          state: 'off'
+      
+      then:
+        
+        # Turn off upstairs fans.
+        - action: scene.turn_on
+          target:
+            entity_id: scene.fans_off_upstairs
+      
+    # Establish the proper bedtime environment (lights, thermostats, echo devices).
+    - action: script.establish_bedtime_environment
+      data:
+        studio_guests_awake: "{{ studio_guests_awake }}"
   
 # Going to sleep now.
 sleeptime:
@@ -261,16 +394,14 @@ turn_on_bathroom_light:
 establish_bedtime_environment:
   alias: Establish Bedtime Environment
   
+  fields:
+    studio_guests_awake:
+      name: Studio Guests Awake
+      description: Toggle indicating if any studio guests are still awake.
+      selector:
+        boolean:
+  
   sequence:
-    - variables:
-        
-        # Turn off all lights if it's just me home, or all non-bedroom lights if family are present.
-        scene: "{{ iif(is_state('binary_sensor.adults_home', 'off') and is_state('binary_sensor.children_home', 'off'), 'non_master_lights_out', 'non_bedroom_lights_out') }}"
-    
-    # Turn off most lights.
-    - action: scene.turn_on
-      target:
-        entity_id: "{{ 'scene.' ~ scene }}"
     
     # Modify the master suite for bedtime.
     - action: script.modify_master_suite
@@ -286,6 +417,30 @@ establish_bedtime_environment:
     - action: script.modify_penthouse
       data:
         reason: bedtime
+      
+    # Wait a bit before turning off lights.
+    - delay: '00:00:07'
+    
+    - variables:
+        scene: "{{ iif(studio_guests_awake == false, 'non_bedroom_lights_out', 'studio_guests_awake_lights_out') }}"
+        fan_light_entities: >
+          {% set var = namespace(lights = ['light.office_fan']) %}
+          {% if studio_guests_awake == false %}
+            {% set var.lights = var.lights + ['light.family_room_fan'] %}
+          {% endif %}
+          
+          {{ var.lights }}
+        
+    # Turn off non-bedroom lights, but leave some on if studio guests are still awake. Individual suite lights are
+    # handled by the suite-specific scripts directly above.
+    - action: scene.turn_on
+      target:
+        entity_id: "{{ 'scene.' ~ scene }}"
+              
+    # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+    - action: script.turn_off_fan_lights
+      data:
+        light_entity: "{{ fan_light_entities }}"
 
 # Reset the bedtime environment in the morning. This is called by the Handle Jon Awake automation.
 reset_bedtime_environment:
@@ -329,19 +484,41 @@ modify_master_suite:
     - variables:
         
         # These allow us to perform tasks for any reason without needing to use if/else or choose.
-        on_off_option: "{{ iif(reason == 'bedtime', 'off', 'on') }}"
         open_close_option: "{{ iif(reason == 'bedtime', 'open', 'close') }}"
     
     # Perform tasks for any reason.
-    
-    # Sometimes the bathroom motion sensor is twitchy and the light would turn back on after being turned off for a bathroom break 
-    # with the original implementation. I can instead manage the light during the night using the Turn On Bathroom Light script.
-    # So turn the automation off at bedtime and back on at wakeup.
-    - action: automation.turn_{{ on_off_option }}
-      entity_id: automation.run_master_bath_motion_based_light
         
     # Open or close the HVAC vents.
     - action: script.{{ open_close_option }}_hvac_vents
+    
+    # Perform tasks for bedtime only.
+    - if:
+        - "{{ reason == 'bedtime' }}"
+          
+      then:
+    
+        # Turn on the master bedroom lamp.
+        - action: light.turn_on
+          target:
+            entity_id: light.master_bedroom_lamp
+          data:
+            color_temp_kelvin: 2700
+            brightness_pct: 100
+                    
+        # Set up other master lights.
+        - action: scene.apply
+          data:
+            entities:
+              light.master_closet: 'off'
+              light.master_shower: 'off'
+              light.master_vanity: 'on'
+    
+        # PLACE HOLDER
+        # I intend to someday add a ceiling fan to the master bedroom.
+        # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+        # - action: script.turn_off_fan_lights
+          # data:
+            # light_entity: [light.master_bedroom_fan]
     
     # Perform tasks for wakeup only.
     - if:
@@ -406,10 +583,24 @@ modify_studio:
           
           sequence:
             
-            # Turn off studio lights.
-            - action: light.turn_off
-              target:
-                entity_id: light.studio_lights
+            - if:
+                - condition: state
+                  entity_id: binary_sensor.studio_occupied
+                  state: 'off'
+              
+              then:
+            
+                # Turn off studio lights.
+                - action: light.turn_off
+                  target:
+                    entity_id: light.studio_lights
+        
+                # PLACE HOLDER
+                # I intend to someday add a ceiling fan to the studio bedroom.
+                # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+                # - action: script.turn_off_fan_lights
+                  # data:
+                # light_entity: [light.studio_bedroom_fan]
         
         # Bedtime tasks.
         - conditions: "{{ reason == 'bedtime' }}"
@@ -423,16 +614,25 @@ modify_studio:
                   sequence:
                     - action: light.turn_off
                       entity_id: light.studio_lights
+    
+                    # PLACE HOLDER
+                    # I intend to someday add a ceiling fan to the studio bedroom.
+                    # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+                    # - action: script.turn_off_fan_lights
+                      # data:
+                        # light_entity: [light.studio_bedroom_fan]
                 
-                # Make sure only the night light is on if the studio is in use by a child only.
+                # Make sure only the night lights are on if the studio is in use by a child only.
                 - conditions: "{{ is_state('input_select.studio_guests', 'Skylar') }}"
               
                   sequence:
-                    - action: scene.apply
+                    - action: script.operate_preferred_studio_night_lights
                       data:
-                        entities:
-                          light.hallway_lamp:              'on'
-                          light.studio_minus_night_lights: 'off'
+                        operation: 'on'
+                    
+                    - action: light.turn_off
+                      target:
+                        entity_id: light.studio_minus_night_lights
         
             # Set a temporary temperature hold downstairs if needed.
             - if:
@@ -464,6 +664,8 @@ modify_studio:
               entity_id: light.studio_lights
 
 # Perform tasks for the penthouse for certain events.
+# NOTE: If we're switching suites we defer modifying the thermostat until the switch is complete, to avoid modifying it
+#       multiple times (in certain cases), and because it takes a bit of time.
 modify_penthouse:
   alias: Modify Penthouse
   
@@ -485,9 +687,15 @@ modify_penthouse:
         - conditions: "{{ reason == 'arrival' }}"
           
           sequence:
-
-            # Set a temporary temperature hold.
-            - action: script.set_penthouse_thermostat_hold
+            
+            # Set a temporary thermostat hold if we're not switching suites.
+            - if:
+                - condition: state
+                  entity_id: input_boolean.switch_guest_suites
+                  state: 'off'
+              
+              then:
+                - action: script.set_penthouse_thermostat_hold
                     
             # Turn off the vacuum automation.
             - action: script.toggle_vacuum_automation
@@ -509,27 +717,39 @@ modify_penthouse:
         - conditions: "{{ reason == 'departure' }}"
           
           sequence:
-    
-            # Remove thermostat hold.
-            - action: script.remove_thermostat_hold
-              data:
-                thermostat_entity: climate.upstairs
-                extended: false
-                    
-            # Turn on the vacuum automation.
-            - action: script.toggle_vacuum_automation
-              data:
-                operation: 'on'
             
-            # Turn off upstairs lights.
-            - action: light.turn_off
-              target:
-                entity_id: light.upstairs_lights
-                              
-            # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
-            - action: script.turn_off_fan_light
-              data:
-                fan_entity: light.theater_fan
+            # Restore the penthouse to normal if it's unoccupied, and we're not switching suites.
+            - if:
+                - condition: state
+                  entity_id: binary_sensor.penthouse_occupied
+                  state: 'off'
+                
+                - condition: state
+                  entity_id: input_boolean.switch_guest_suites
+                  state: 'off'
+              
+              then:
+    
+                # Remove thermostat hold.
+                - action: script.remove_thermostat_hold
+                  data:
+                    thermostat_entity: climate.upstairs
+                    extended: false
+                        
+                # Turn on the vacuum automation.
+                - action: script.toggle_vacuum_automation
+                  data:
+                    operation: 'on'
+                
+                # Turn off upstairs lights.
+                - action: light.turn_off
+                  target:
+                    entity_id: light.upstairs_lights
+                                  
+                # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+                - action: script.turn_off_fan_lights
+                  data:
+                    light_entity: [light.theater_fan]
         
         # Bedtime tasks.
         - conditions: "{{ reason == 'bedtime' }}"
@@ -546,6 +766,11 @@ modify_penthouse:
                   sequence:
                     - action: light.turn_off
                       entity_id: light.upstairs_lights
+
+                    # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
+                    - action: script.turn_off_fan_lights
+                      data:
+                        light_entity: [light.theater_fan]
                 
                 # Set up the penthouse lights if a child is sleeping upstairs.
                 - conditions: "{{ 'Skylar' in states('input_select.penthouse_guests') }}"
@@ -560,9 +785,9 @@ modify_penthouse:
                           light.theater_lights:               'off'
                           
             # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
-            - action: script.turn_off_fan_light
+            - action: script.turn_off_fan_lights
               data:
-                fan_entity: light.theater_fan
+                light_entity: [light.theater_fan]
         
         # Wakeup tasks.
         - conditions: "{{ reason == 'wakeup' }}"
@@ -598,10 +823,10 @@ set_penthouse_thermostat_hold:
         thermostat_entity: climate.upstairs
         heat_temp: "{{ states(heat_temp_entity) }}"
         cool_temp: "{{ states(cool_temp_entity) }}"
-        days: "{{ states('input_number.penthouse_days_occupied') }}"
+        days: "{{ states('input_number.penthouse_nights_occupied') }}"
 
-# Modify a thermostat hold for the penthouse. This is called when a guest changes the number of days occupied, or the low/high temperature
-# values.
+# Modify a thermostat hold for the penthouse. This is called when a guest changes the number of nights occupied, or the low/high temperature
+# values, and at the completion of switching suites.
 modify_penthouse_thermostat_hold:
   alias: Modify Penthouse Thermostat Hold
   
@@ -620,7 +845,8 @@ modify_penthouse_thermostat_hold:
     - action: timer.start
       data:
         entity_id: timer.thermostat_hold_delay
-        duration: '00:05:00'
+        duration:
+          minutes: "{{ states('input_number.thermostat_hold_delay_minutes') }}"
         
     - action: input_boolean.turn_on
       target:
