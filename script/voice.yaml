@@ -246,9 +246,12 @@ voice_mobile_notification:
       response_variable: result
     
     # Remove manual mobile notification(s) using the output device from the response variable.
-    - action: script.remove_manual_mobile_notification
+    - action: script.turn_on
+      target:
+        entity_id: script.remove_manual_mobile_notification
       data:
-        voice_device: "{{ result.output }}"
+        variables:
+          voice_device: "{{ result.output }}"
 
 # Bedtime script front end. We need to determine if any adult guests staying in the studio are still awake. If so, some 
 # bedtime actions need to be deferred. For example, someone could be watching TV in the family room, so I don't want to 
