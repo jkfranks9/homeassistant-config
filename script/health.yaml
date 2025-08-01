@@ -2,43 +2,18 @@
 #     Workout      #
 #==================#
 
+# This is driven by a voice assistant. The daily time can also be set manually using the dashboard.
 set_workout_daily_time:
   alias: Set Workout Daily Time
   
   sequence:
     
     # Set the workout time based on the current constant value.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: input_number.workout_daily_time
       data:
         value: "{{ states('input_number.variables_workout_time') }}"
-    
-    # Set the next workout group.
-    - service: script.set_workout_group
-
-set_workout_group:
-  alias: Set Workout Group
-  
-  sequence:
-    
-    # Bump the workout group or reset it to 1.
-    - if:
-        - condition: numeric_state
-          entity_id: input_number.workout_group
-          above: 3
-      
-      then:
-        - service: input_number.set_value
-          target:
-            entity_id: input_number.workout_group
-          data:
-            value: 1
-      
-      else:
-        - service: input_number.increment
-          target:
-            entity_id: input_number.workout_group
 
 #==========================#
 #     Exercise Metrics     #
@@ -46,6 +21,9 @@ set_workout_group:
 
 # Here we use the daily exercise time/calories values to update the weekly and monthly metrics. This is called when any exercise
 # type is performed, after the corresponding daily values have been set.
+#
+# We also record and log the exercise type for insurance purposes if the time or steps meets daily goals.
+#
 # NOTE: We depend on the weekly and monthly values being reset as needed, so we can start with fresh (0) values at the start of
 # a new week or month. This happens in the Perform Daily Chores automation.
 register_exercise_metrics:
@@ -127,29 +105,60 @@ register_exercise_metrics:
                 entity_id: input_number.steps_monthly
               data:
                 value: "{{ states('input_number.steps_monthly') | int(0) + daily_steps }}"
+    
+            # For a workout type, update the workout group.
+            - if:
+                - "{{ exercise_type == 'workout' }}"
+              
+              then:
+                
+                - variables:
+                    next_group: >
+                      {% set curr_group = states('input_number.workout_group') | int(0) %}
+                      {{ iif(curr_group > 3, 1, curr_group + 1) }}
+                
+                - action: input_number.set_value
+                  target:
+                    entity_id: input_number.workout_group
+                  data:
+                    value: "{{ next_group }}"
         
-        # Bump the recordable exercise counter if the time meets or exceeds the daily threshold. This is mainly used
-        # for insurance purposes (if I exercise at least n minutes a day for n days a month I get a benefit).
-        # The toggle is used so we only bump the count once per day.
+        - variables:
+            
+            # The exercise is recordable if the time/steps meets or exceeds the daily goal, and the recordable toggle is
+            # currently off (so we only record once per day).
+            recordable: >
+              {% set toggle_state = states('input_boolean.exercise_recordable') %}
+              {% set non_steps_recordable = daily_time >= recordable_exercise_minimum_time %}
+              {% set steps_recordable = states('input_number.steps_daily') | int(0) >= state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) %}
+              {{ toggle_state == 'off' and iif(exercise_type != steps, non_steps_recordable == true, steps_recordable == true) }}
+        
+            
+        # Record this exercise if it meets the requirements.
         - if:
-            - "{{ daily_time >= recordable_exercise_minimum_time and states('input_boolean.exercise_recordable') == 'off' }}"
+            - "{{ recordable == true }}"
           
           then:
+          
+            # Increment the exercise days and recordable days counters.
             - action: counter.increment
               target:
-                entity_id: counter.exercise_recordable
+                entity_id:
+                  - "{{ 'counter.' ~ exercise_type ~ '_days' }}"
+                  - counter.exercise_recordable
         
+            # Set the toggle so we don't do this again for today.
             - action: input_boolean.turn_on
               target:
                 entity_id: input_boolean.exercise_recordable
-        
-        # Log the metrics, so I have a record of activity for each month (the log is backed up on the first of each
-        # month, which starts a new log file).
-        - action: notify.send_message
-          target:
-            entity_id: notify.exercise_activity
-          data:
-            message: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') ~ ': Exercise type: ' ~ type_str ~ ' ' ~ metric_str ~ ' ' ~ metric_val ~ ', calories: ' ~ daily_calories }}"
+            
+            # Log the metrics, so I have a record of activity for each month (the log is backed up on the first of each
+            # month, which starts a new log file).
+            - action: notify.send_message
+              target:
+                entity_id: notify.exercise_activity
+              data:
+                message: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') ~ ': Exercise type: ' ~ type_str ~ ' ' ~ metric_str ~ ' ' ~ metric_val ~ ', calories: ' ~ daily_calories }}"
       
       # Invalid exercise type, log it.
       else:

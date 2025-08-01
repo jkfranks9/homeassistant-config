@@ -44,14 +44,14 @@ variables:
   units_divisor: "{{ iif(input_exercise_type in ['workout', 'yard_work'], 60, 1000) }}"
 
 # Trigger when the units entity is updated.
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: !input units_entity
   
 # Don't do anything if the units entity was reset to 0, as happens in the Perform Daily Chores automation.
 condition: "{{ trigger.to_state.state | int(0) > 0 }}"
 
-action:
+actions:
     
   # Continue if we have a valid input.
   - if:
@@ -60,42 +60,20 @@ action:
     then:
   
       # Calculate the calories.
-      - service: input_number.set_value
+      - action: input_number.set_value
         target:
           entity_id: "{{ daily_calories_entity }}"
         data:
           value: "{{ ((states(input_units_entity) | int(0) / units_divisor) * calories_per_unit) | int(0) }}"
-
-      # Register weekly and monthly exercise metrics.
-      - service: script.register_exercise_metrics
+        
+      # Register exercise metrics.
+      - action: script.register_exercise_metrics
         data:
           exercise_type: "{{ input_exercise_type }}"
-        
-      # Indicate that we exercised today.
-      - if:
-          - "{{ input_exercise_type != 'steps' }}"
-        
-        # Unconditionally turn on the current day for all types except steps.
-        then:      
-          - service: script.modify_current_exercise_day
-            data:
-              exercise_types: [ "{{ input_exercise_type }}" ]
-              operation: true
-        
-        # For steps, we only count days where we've reached the daily goal.
-        else:
-          - if:
-              - "{{ states(input_units_entity) | int(0) >= state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) }}"
-            
-            then:      
-              - service: script.modify_current_exercise_day
-                data:
-                  exercise_types: [ "{{ input_exercise_type }}" ]
-                  operation: true
     
     # Invalid exercise type, log it.
     else:
-      - service: system_log.write
+      - action: system_log.write
         data:
           message: "Invalid input exercise type {{ input_exercise_type }} specified"
           level: error

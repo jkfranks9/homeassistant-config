@@ -185,12 +185,6 @@
       data:
         value: 0
     
-    # Reset the exercise flags for the current day, so we won't count this day if no exercise is done.    
-    - action: script.modify_current_exercise_day
-      data:
-        exercise_types: ['treadmill', 'workout', 'yard_work', 'steps']
-        operation: false
-    
     # Turn on most automations that may have been turned off. This is normally not needed, but some can be left off
     # if certain automations or scripts do not finish normally.
     #
@@ -380,11 +374,16 @@
               - input_number.steps_monthly_calories
           data:
             value: 0
-        
-        # Reset the recordable exercise counter.
+    
+        # Reset monthly exercise and recordable counts.    
         - action: counter.reset
           target:
-            entity_id: counter.exercise_recordable
+            entity_id:
+              - counter.treadmill_days
+              - counter.workout_days
+              - counter.yard_work_days
+              - counter.steps_days
+              - counter.exercise_recordable
         
         # Backup the exercise activity log.
         - action: shell_command.backup_exercise_log
