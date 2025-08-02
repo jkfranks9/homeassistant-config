@@ -540,7 +540,8 @@
       data:
         value: "{{ duration }}"
     
-    # Short delay to make sure we pick up the sleep duration we just set.
+    # The sleep duration just set above is used to update the Sleep Duration Display sensor, which is used below.
+    # Take a short nap to allow the sensor to be updated.
     - delay:
         milliseconds: 500
     
@@ -558,6 +559,14 @@
                   entity_id: "{{ repeat.item }}"
                 data:
                   volume_level: 0.5
+    
+    # The Nighttime toggle being reset (above) causes the Manage Echo Do Not Disturb automation to run. We need to ensure
+    # that the master bedroom echo has been unmuted before trying to send the announcement below.
+    - repeat:
+        until: "{{ is_state('switch.master_bedroom_echo_do_not_disturb_switch', 'off') }}"
+        
+        sequence:
+          - event: unused_event
     
     # Now we can set the various notification data.
     - variables:
