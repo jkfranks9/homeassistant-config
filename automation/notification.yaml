@@ -164,7 +164,7 @@
       entity: [switch.kitchen_appliance_1, switch.kitchen_appliance_2, switch.kitchen_appliance_3, switch.microwave, switch.projector, switch.subwoofer_back, switch.subwoofer_front]
       from_state: 'on'
       to_state: 'off'
-      delay: 16
+      delay: 30
       conditions: "{{ states(trigger.entity_id) == 'off' and states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_power') | float(0) > 0 }}"
       extract_tag_type: sonoff_power
       clear_type: manual
@@ -182,7 +182,7 @@
       entity: [switch.family_room_av, switch.ego_battery_charger, switch.toro_135_battery_charger, light.master_bedroom_lamp, light.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
       from_state: 'on'
       to_state: 'off'
-      delay: 16
+      delay: 30
       conditions: "{{ states(trigger.entity_id) == 'off' and states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_current_consumption') | float(0) > 0 }}"
       extract_tag_type: tplink_power
       clear_type: manual
