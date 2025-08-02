@@ -368,7 +368,7 @@
 - alias: Notify Porch Sensor Battery Low
   id: 'notify_porch_sensor_battery_low'
   
-  # Trigger on the battery level too low, but also if we haven't gotten an update within two device update cycles. The latter is
+  # Trigger on the battery level too low, but also if we haven't gotten an update within a few device update cycles. The latter is
   # a failsafe in case we somehow miss the battery level dropping, which has happened a few times.
   triggers:
     - trigger: numeric_state
@@ -377,7 +377,7 @@
     
     - trigger: numeric_state
       entity_id: sensor.porch_sensor_last_updated_minutes
-      above: 20
+      above: 30
   
   actions:    
     - action: script.send_notification
