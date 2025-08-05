@@ -702,31 +702,42 @@
   variables:
     title: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.title') }}"
     text: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.text') }}"
+    category: "{{ state_attr('sensor.jon_galaxy_last_notification', 'category') }}"
     
-    person: >
+    # This could be a group text, so create a list.
+    persons: >
+      {% set var = namespace(list = []) %}
       {% if 'Michael' in title or 'Michael' in text %}
-        Michael
-      {% elif 'Maryam' in title or 'Maryam' in text %}
-        Maryam
-      {% elif 'Sarah' in title or 'Sarah' in text %}
-        Sarah
-      {% elif 'David' in title or 'David' in text %}
-        David
-      {% else %}
-        Stranger
+        {% set var.list = var.list + ['Michael'] %}
       {% endif %}
+      {% if 'Maryam' in title or 'Maryam' in text %}
+        {% set var.list = var.list + ['Maryam'] %}
+      {% endif %}
+      {% if 'Sarah' in title or 'Sarah' in text %}
+        {% set var.list = var.list + ['Sarah'] %}
+      {% endif %}
+      {% if 'David' in title or 'David' in text %}
+        {% set var.list = var.list + ['David'] %}
+      {% endif %}
+      {% if var.list | length == 0 %}
+        {% set var.list = var.list + ['Stranger'] %}
+      {% endif %}
+      
+      {{ var.list }}
     
+    # Possible reasons to respond.
     on_treadmill: "{{ states('input_boolean.treadmill_triggered') == 'on' }}"
     sleeping: "{{ states('input_boolean.sleeptime') == 'on' }}"
     driving: "{{ states('binary_sensor.jon_driving') == 'on' }}"
-    
-    timer_entity: "{{ 'timer.text_response_delay_' ~ person | lower }}"
   
   conditions:
     - and:
     
+      # Weed out emails.
+      - "{{ category != 'email' }}"
+    
       # Text must be from family member.
-      - "{{ person != 'Stranger' }}"
+      - "{{ persons[0] != 'Stranger' }}"
       
       # And any of the following. These are all mutually exclusive.
       - or:
@@ -739,48 +750,57 @@
     
         # I'm driving.
         - "{{ driving }}"
-      
-      # The response delay timer must not be running.
-      - "{{ states(timer_entity) == 'idle' }}"
   
   actions:
-    - variables:
-        number: >
-          {% if person == 'Michael' %}
-            9199246845
-          {% elif person == 'Maryam' %}
-            9197571974
-          {% elif person == 'Sarah' %}
-            2522302146
-          {% elif person == 'David' %}
-            2522991689
-          {% else %}
-            0000000000
-          {% endif %}
-        
-        activity: >
-          {% if on_treadmill %}
-            on the treadmill
-          {% elif sleeping %}
-            asleep, and dreaming of sugarplums
-          {% elif driving %}
-            driving, or at least in a vehicle
-          {% else %}
-            unavailable for some unknown reason
-          {% endif %}
     
-    # Send the response via gmail to the mobile number.
-    - action: notify.gmail
-      data:
-        title: ' '
-        target: "{{ number ~ '@vtext.com' }}"
-        message: "{{ 'Sorry, I am ' ~ activity ~ '. I will respond when available.' }}"
+    # Repeat for each person.
+    - repeat:
+        for_each: "{{ persons }}"
         
-    # Start the response delay timer.
-    - action: timer.start
-      data:
-        entity_id: "{{ timer_entity }}"
-        duration: 300
+        sequence:
+          - variables:  
+              timer_entity: "{{ 'timer.text_response_delay_' ~ repeat.item | lower }}"
+          
+          # Verify the response delay timer for this person is not running.
+          - condition: "{{ states(timer_entity) == 'idle' }}"
+          
+          - variables:
+              number: >
+                {% if repeat.item == 'Michael' %}
+                  9199246845
+                {% elif repeat.item == 'Maryam' %}
+                  9197571974
+                {% elif repeat.item == 'Sarah' %}
+                  2522302146
+                {% elif repeat.item == 'David' %}
+                  2522991689
+                {% else %}
+                  0000000000
+                {% endif %}
+            
+              activity: >
+                {% if on_treadmill %}
+                  on the treadmill
+                {% elif sleeping %}
+                  asleep, and dreaming of {{ ('sugarplums', 'aliens', 'flying', 'weasels', 'being lost in an everchanging city', 'trying to find a bathroom', 'ghosts messing with electricity') | random }}
+                {% elif driving %}
+                  driving, or at least in a vehicle
+                {% else %}
+                  unavailable for some unknown reason
+                {% endif %}
+        
+          # Send the response via gmail to the mobile number.
+          - action: notify.gmail
+            data:
+              title: ' '
+              target: "{{ number ~ '@vtext.com' }}"
+              message: "{{ 'Sorry, I am ' ~ activity ~ '. I will respond when available.' }}"
+            
+          # Start the response delay timer for this person.
+          - action: timer.start
+            data:
+              entity_id: "{{ timer_entity }}"
+              duration: 300
 
 #=========================#
 #     ESPHome Updates     #
