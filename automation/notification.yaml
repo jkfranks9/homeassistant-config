@@ -1187,7 +1187,7 @@
       to: docked
   
     - trigger: numeric_state
-      entity_id: sensor.ecovacs_battery
+      entity_id: sensor.ecovacs_deebot_battery
       above: 90
   
   conditions:

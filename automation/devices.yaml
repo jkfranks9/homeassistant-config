@@ -893,7 +893,7 @@
         entity_id: timer.vacuum
     
     - trigger: numeric_state
-      entity_id: sensor.ecovacs_battery
+      entity_id: sensor.ecovacs_deebot_battery
       below: 20
   
   conditions:
