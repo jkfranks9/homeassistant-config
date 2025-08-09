@@ -271,6 +271,15 @@ operate_preferred_studio_night_lights:
         - action: light.turn_{{ operation }}
           target:
             entity_id: "{{ light_entity_list }}"
+                    
+    # Also turn off non-night lights if the operation is 'on'.
+    - if:
+        - "{{ operation == 'on' }}"
+      
+      then:
+        - action: light.turn_off
+          target:
+            entity_id: light.studio_minus_night_lights
 
 #========================#
 #     Kitchen Lights     #
