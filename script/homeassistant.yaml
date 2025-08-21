@@ -115,26 +115,6 @@ initialize_global_variables:
                  "{{ state_attr('input_datetime.periodic_other_trash', 'friendly_name').split('Periodic Other ')[-1] }}": 40
                }
     
-    # ESPHome update all assistance (see Assist ESPHome Update All automation) ...
-    
-    # ... number of total devices being updated within a short period to indicate this is an update all operation.
-    - event: set_variable
-      event_data:
-        key: esphome_update_all_target_device_count
-        value: 3
-    
-    # ... number of devices alphabetically before the battery device.
-    - event: set_variable
-      event_data:
-        key: esphome_update_all_prior_device_count
-        value: 6
-    
-    # ... battery device update cycle in seconds. This must match the deep_sleep configuration in the battery device (total of sleep and run durations).
-    - event: set_variable
-      event_data:
-        key: esphome_update_all_battery_device_cycle_seconds
-        value: 600
-    
     # Mobile notification tags to be sent to Sarah in addition to Jon.
     - event: set_variable
       event_data:
