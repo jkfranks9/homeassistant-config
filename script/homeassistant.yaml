@@ -88,22 +88,20 @@ initialize_global_variables:
     - event: set_variable
       event_data:
         key: mini_todo_yard_work_times
-        value: { "{{ state_attr('input_datetime.periodic_yard_mow_push', 'friendly_name').split('Periodic Yard ')[-1] }}": 25,
-                 "{{ state_attr('input_datetime.periodic_yard_mow_tractor', 'friendly_name').split('Periodic Yard ')[-1] }}": 100, 
-                 "{{ state_attr('input_datetime.periodic_yard_spray_back_pool_roadside', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
-                 "{{ state_attr('input_datetime.periodic_yard_spray_edge_trees', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
-                 "{{ state_attr('input_datetime.periodic_yard_spray_frontage_driveway', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
-                 "{{ state_attr('input_datetime.periodic_yard_spray_sidewalk_front_side', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_back', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_courtyard', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_edge_trees', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_front', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_frontage_east', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_frontage_west', 'friendly_name').split('Periodic Yard ')[-1] }}": 90,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_pool', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_roadside', 'friendly_name').split('Periodic Yard ')[-1] }}": 60,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_side', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_sidewalk', 'friendly_name').split('Periodic Yard ')[-1] }}": 40
+        value: { "{{ state_attr('input_datetime.periodic_yard_mow_area_1', 'friendly_name').split('Periodic Yard ')[-1] }}": 100,
+                 "{{ state_attr('input_datetime.periodic_yard_mow_area_2', 'friendly_name').split('Periodic Yard ')[-1] }}": 30, 
+                 "{{ state_attr('input_datetime.periodic_yard_spray_area_1', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_area_2', 'friendly_name').split('Periodic Yard ')[-1] }}": 35,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_area_3', 'friendly_name').split('Periodic Yard ')[-1] }}": 30,
+                 "{{ state_attr('input_datetime.periodic_yard_spray_area_4', 'friendly_name').split('Periodic Yard ')[-1] }}": 20,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_1', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_2', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_3', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_4', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_5', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_6', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_7', 'friendly_name').split('Periodic Yard ')[-1] }}": 20,
+                 "{{ state_attr('input_datetime.periodic_yard_trim_area_8', 'friendly_name').split('Periodic Yard ')[-1] }}": 50
                }
     
     # Mini todo list periodic other time estimates.
@@ -267,21 +265,20 @@ generate_periodic_lists:
             start_date: "{{ start_date }}"
             generator_count: 3
             date_entities: [
-                            'input_datetime.periodic_yard_spray_frontage_driveway',
-                            'input_datetime.periodic_yard_spray_sidewalk_front_side',
-                            'input_datetime.periodic_yard_spray_back_pool_roadside',
-                            'input_datetime.periodic_yard_spray_edge_trees',
-                            'input_datetime.periodic_yard_trim_frontage_east',
-                            'input_datetime.periodic_yard_trim_frontage_west',
-                            'input_datetime.periodic_yard_trim_sidewalk',
-                            'input_datetime.periodic_yard_trim_front',
-                            'input_datetime.periodic_yard_trim_side',
-                            'input_datetime.periodic_yard_trim_back',
-                            'input_datetime.periodic_yard_trim_pool',
-                            'input_datetime.periodic_yard_trim_roadside',
-                            'input_datetime.periodic_yard_trim_edge_trees',
-                            'input_datetime.periodic_yard_mow_tractor',
-                            'input_datetime.periodic_yard_mow_push'
+                            'input_datetime.periodic_yard_spray_area_1',
+                            'input_datetime.periodic_yard_spray_area_2',
+                            'input_datetime.periodic_yard_spray_area_3',
+                            'input_datetime.periodic_yard_spray_area_4',
+                            'input_datetime.periodic_yard_trim_area_1',
+                            'input_datetime.periodic_yard_trim_area_2',
+                            'input_datetime.periodic_yard_trim_area_3',
+                            'input_datetime.periodic_yard_trim_area_4',
+                            'input_datetime.periodic_yard_trim_area_5',
+                            'input_datetime.periodic_yard_trim_area_6',
+                            'input_datetime.periodic_yard_trim_area_7',
+                            'input_datetime.periodic_yard_trim_area_8',
+                            'input_datetime.periodic_yard_mow_area_1',
+                            'input_datetime.periodic_yard_mow_area_2'
                            ]
 
 # This is an input to the daily mini-todo list logic. It is run once a week to generate a short list of periodic tasks 
