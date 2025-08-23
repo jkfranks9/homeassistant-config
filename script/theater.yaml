@@ -193,6 +193,15 @@ open_cinema:
 #     2) Play Feature Movie     #
 #===============================#
 
+# This proceeds as follows:
+#
+# 1) This script activates the cinema and calls Kodi with the GetMovies command.
+# 2) The Process Kodi Command Result automation runs with either a successful or unsuccessful result.
+# 3) Process Kodi Command Result calls the Process Single Kodi Movie Result script for success; an error is simply logged.
+# 4) Process Single Kodi Movie Result attempts to build a short playlist of music videos using the Get All Kodi Videos script... see the 
+#    description of '3) Play Random Music Videos' for details.
+# 5) If the video playlist was built, the movie is appended to the playlist and the playlist is played; if not the movie alone is played.
+
 play_feature_movie:
   alias: Play Feature Movie
   
@@ -239,6 +248,13 @@ process_single_kodi_movie_result:
     # Pick up the movie ID.
     - variables:
         movieid: "{{ result.movies.0.movieid }}"
+    
+    # Indicate to Process Kodi Videos Result to build a short list of videos.
+    - action: input_select.select_option
+      target:
+        entity_id: input_select.kodi_videos_type
+      data:
+        option: 'short'
     
     # Build a set of random music videos as a preamble to the movie. These are added to a playlist.
     # There is a chance this could fail, in which case we just play the movie.
@@ -301,6 +317,15 @@ process_single_kodi_movie_result:
 #     3) Play Random Music Videos     #
 #=====================================#
 
+# This proceeds as follows:
+#
+# 1) This script activates the cinema and calls the Get All Kodi Videos script.
+# 2) Get All Kodi Videos calls Kodi with the GetMusicVideos command, and waits for a playlist to be built or an error.
+# 2) The Process Kodi Command Result automation runs with either a successful or unsuccessful result.
+# 3) Process Kodi Command Result calls the Process Kodi Videos Result script for success; an error is simply logged.
+# 4) Process Kodi Videos Result attempts to build a long playlist of music videos; if successful this script plays the
+#    resulting playlist.
+
 # Play random videos using Kodi. This is intended to be run standalone. Playing videos as a preamble to a movie
 # uses some of the same technology, but is part of the Play Feature Movie script.
 play_random_kodi_videos:
@@ -321,6 +346,13 @@ play_random_kodi_videos:
       
       then:
         - stop: "Cinema usage is denied."
+    
+    # Indicate to Process Kodi Videos Result to build a long list of videos.
+    - action: input_select.select_option
+      target:
+        entity_id: input_select.kodi_videos_type
+      data:
+        option: 'long'
 
     # Build a set of random music videos. These are added to a playlist.
     - action: script.get_all_kodi_videos
@@ -1123,141 +1155,6 @@ restore_lighting_on_resume:
       data:
         operation: resume
 
-#=======================#
-#     Activate Kodi     #
-#=======================#
-
-# Activate Kodi on the Shield TV. We make no assumptions here about the rest of the theater; for example we don't
-# require the projector to be on. All we need is the Shield TV on and the Kodi application running on it.
-activate_kodi:
-  alias: Activate Kodi
-  
-  sequence:
-  
-    # Turn on the Shield TV if needed so we can host the Kodi application.
-    - if:
-        - condition: state
-          entity_id: media_player.shield_tv
-          state: 'off'
-      
-      then:    
-        - service: media_player.turn_on
-          data:
-            entity_id: media_player.shield_tv
-        - delay: '00:00:02'
-  
-    # Start Kodi on the Shield TV.
-    - service: remote.turn_on
-      target:
-        entity_id: remote.shield_android_tv
-      data:
-        activity: Kodi
-    - delay: '00:00:01'
-
-#============================#
-#     Kodi Movie Results     #
-#============================#
-
-# When we send commands to Kodi, for example to get movies or music videos, it seems we can't wait for the result in a script
-# using wait_for_trigger, because the result event is fired before such trigger is initialized (at least from what I've seen).
-# So we use automations instead to react to the result event, and process those results here, for movies. 
-#
-# Results for a set of music videos is handled directly by the Process Kodi Video Result automation.
-handle_kodi_movies_result:
-  alias: Handle Kodi Movies Result
-  
-  fields:
-    result:
-      description: The result from the GetMovies Kodi call.
-  
-  sequence:
-    
-    # We expect either one movie to be returned, or all of them. Pass the result on to the appropriate script to continue.
-    - choose:
-      - conditions: "{{ result.limits.total == 1 }}"
-        
-        sequence:
-          - service: script.process_single_kodi_movie_result
-            data:
-              result: "{{ result }}"
-      
-      - conditions: "{{ result.limits.total > 1 }}"
-        
-        sequence:
-          - service: script.process_all_kodi_movies_result
-            data:
-              result: "{{ result }}"
-      
-      # Nothing was returned. This is unexpected.
-      default:
-        - service: system_log.write
-          data:
-            message: "Kodi GetMovies command did not return any movies."
-            level: warning
-
-#========================#
-#     Kodi All Movies    #
-#========================#
-
-# Get the list of all movies known by Kodi.
-# This script is only needed when the Kodi movie library is updated.
-get_all_kodi_movies:
-  alias: Get All Kodi Movies
-  
-  sequence:
-    
-    # Activate Kodi on the Shield TV.
-    - service: script.activate_kodi
-    
-    - delay: '00:00:10'
-  
-    # Send the GetMovies command to Kodi. The Handle Kodi Movies Result script calls Process All Kodi Movies Result
-    # below with the command result.
-    - service: kodi.call_method
-      data:
-        entity_id: media_player.kodi
-        method: VideoLibrary.GetMovies
-
-# Process the list of movies returned by Kodi.
-process_all_kodi_movies_result:
-  alias: Process All Kodi Movies Result
-  
-  fields:
-    result:
-      description: The result from the GetMovies Kodi call.
-  
-  sequence:
-    
-    - variables:
-        movie_list: >
-          {% set movies = result.get('movies') %}
-          {% set ns = namespace(list = []) %}
-          {% for movie in movies %}
-            {% set ns.list = ns.list + [movie.get('label')] %}
-          {% endfor %}
-          
-          {{ ns.list | sort }}
-    
-    # Call the python script to populate the input select.
-    - service: pyscript.save_input_select_options
-      data:
-        entity: input_select.kodi_movies
-        list: "{{ movie_list }}"
-        file: '/config/all_movies_backup'
-  
-    # Exit the Kodi application.
-    - service: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'Home'
-        device: NVIDIA Shield TV
-    - delay: '00:00:01'
-  
-    # Turn the Shield TV off again.
-    - service: media_player.turn_off
-      data:
-        entity_id: media_player.shield_tv
-
 #=====================================#
 #     Kodi Video Playlist Control     #
 #=====================================#
@@ -1273,7 +1170,7 @@ get_all_kodi_videos:
         max_retries: 3
         
         # Wait timeout.
-        timeout_secs: 5
+        timeout_secs: 7
     
     # This is a flag to know when we're done.
     - action: input_boolean.turn_off
@@ -1374,6 +1271,259 @@ get_all_kodi_videos:
               - stop: 'Kodi playlist was not built but no error was detected'
                 response_variable: result
 
+# Select random videos from all that are available.
+process_kodi_videos_result:
+  alias: Process Kodi Videos Result
+  
+  fields:
+    result:
+      description: The result from the GetMovies Kodi call.
+  
+  sequence:
+  
+    - variables:
+        video_list_type: "{{ states('input_select.kodi_videos_type') }}"
+        max_videos: "{{ states('input_number.kodi_videos_max_number_' ~ video_list_type ) | int(0) }}"
+        max_time: "{{ states('input_number.kodi_videos_max_minutes_' ~ video_list_type) | int(0) * 60 }}"
+        max_video_time: "{{ 10 * 60 }}"
+        
+        # Collect the relevant pieces of the results into separate lists.
+        artists:  "{{ result['musicvideos'] | map(attribute='artist.0') | list }}"
+        ids:      "{{ result['musicvideos'] | map(attribute='musicvideoid') | list }}"
+        runtimes: "{{ result['musicvideos'] | map(attribute='streamdetails.video.0.duration') | list }}"
+        
+        # Then refactor those lists into a list of [artist, ID, runtime] for each video, weeding out long videos and
+        # 'PreRoll' artist (such videos are movie prerolls, not music videos).
+        results: >
+          {% set result = namespace(list = []) %}
+          {% for artist in artists %}
+            {% if artist != 'PreRoll' and runtimes[loop.index0] < max_video_time %}
+              {% set result.list = result.list + [[artists[loop.index0], ids[loop.index0], runtimes[loop.index0]]] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ result.list }}
+        
+        # Number of videos available.
+        number_of_videos: "{{ results | length() }}"
+        
+        # Minimum runtime ... we use this to determine if no possible video can fit into the remaining total time, meaning we're done.
+        minimum_runtime: >
+          {% set min = namespace(time = max_time) %}
+          {% for result in results %}
+            {% set rt = result[2] %}
+            {% if rt < min.time %}
+              {% set min.time = rt %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ min.time }}
+    
+    # Initialize variables...
+    
+    # These ensure that no duplicate artists are selected, and collect the IDs and run times of the videos we select.
+    - action: input_text.set_value
+      target:
+        entity_id:
+          - input_text.music_video_artists
+          - input_text.music_video_ids
+          - input_text.music_video_runtimes
+      data:
+        value: ''
+    
+    # This ensures we end the loop if we've checked all videos without satisfying the limits.
+    - action: input_select.set_options
+      target:
+        entity_id: input_select.music_videos_checked
+      data:
+        options: placeholder
+    
+    # These accumulate the total run time, and count the number of videos.
+    - action: input_number.set_value
+      target:
+        entity_id:
+          - input_number.music_videos_total_time
+          - input_number.music_videos_selected
+      data:
+        value: 0
+    
+    # This is a flag to know when we're done selecting videos.
+    - action: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.music_video_selection_done
+          
+    # Log video information.
+    - action: system_log.write
+      data:
+        message: "Kodi video count: {{ number_of_videos }}, min runtime: {{ minimum_runtime }}"
+        level: info
+    
+    - action: system_log.write
+      data:
+        message: "Kodi video list: {{ results }}"
+        level: debug
+    
+    # Loop through the result to randomly select videos.
+    - repeat:
+        
+        # We're done if any of the limits are reached or we've checked all videos.
+        until:
+          - condition: state
+            entity_id: input_boolean.music_video_selection_done
+            state: 'on'          
+        
+        sequence:
+          
+          - variables:
+              
+              # Random index into the list of videos.
+              index: "{{ range(number_of_videos) | random }}"
+              
+              # Data from the randomly selected video.
+              artist:  "{{ results[index][0] }}"
+              videoid: "{{ results[index][1] }}"
+              runtime: "{{ results[index][2] }}"
+              
+          # Debug logging.
+          - action: system_log.write
+            data:
+              message: "Checking video ({{ repeat.index }}): '{{ artist }}', {{ videoid }}, {{ runtime }}"
+              level: debug
+          
+          # Skip this video if:
+          # - this artist has already been chosen
+          # - the runtime is too long
+          - if:
+              - "{{ artist not in states('input_text.music_video_artists') and
+                    runtime + states('input_number.music_videos_total_time') | int(0) <= max_time }}"
+            
+            then:
+          
+              # Only do something if the limits haven't been reached.
+              #
+              # Note the following:
+              #
+              # 1) We check if the total accumulated time is less than the maximum time minus the minimum runtime.
+              #    If this is false no possible video can be found to fill out the time to the maximum.
+              # 2) We also only iterate to twice the number of videos found (an arbitrary value), so we don't
+              #    spend too much time trying to fill up the total time.
+              - if:
+                  - "{{ states('input_number.music_videos_total_time') | int(0) < max_time - minimum_runtime and 
+                        states('input_number.music_videos_selected') | int(0) < max_videos and
+                        repeat.index <= number_of_videos * 2}}"
+                
+                then:
+                  
+                  # Update the list of chosen artists.
+                  - action: input_text.set_value
+                    target:
+                      entity_id: input_text.music_video_artists
+                    data:
+                      value: >
+                        {% from 'utilities.jinja' import build_list %}
+                        {{ build_list('input_text.music_video_artists', artist) }}
+                  
+                  # Update the list of chosen video IDs.
+                  - action: input_text.set_value
+                    target:
+                      entity_id: input_text.music_video_ids
+                    data:
+                      value: >
+                        {% from 'utilities.jinja' import build_list %}
+                        {{ build_list('input_text.music_video_ids', videoid) }}
+                  
+                  # Update the list of chosen video run times.
+                  - action: input_text.set_value
+                    target:
+                      entity_id: input_text.music_video_runtimes
+                    data:
+                      value: >
+                        {% from 'utilities.jinja' import build_list %}
+                        {{ build_list('input_text.music_video_runtimes', runtime) }}
+                  
+                  # Accumulate the total run time.
+                  - action: input_number.set_value
+                    target:
+                      entity_id: input_number.music_videos_total_time
+                    data:
+                      value: "{{ states('input_number.music_videos_total_time') | int(0) + runtime | int(0) }}"
+                  
+                  # Bump the number of selected videos.
+                  - action: input_number.increment
+                    target:
+                      entity_id: input_number.music_videos_selected
+                
+                # Limits have been reached, we're done.
+                else:
+                  - action: input_boolean.turn_on
+                    data:
+                      entity_id: input_boolean.music_video_selection_done
+          
+          # Add this video to the checked list if we haven't checked it yet.
+          - action: input_select.set_options
+            target:
+              entity_id: input_select.music_videos_checked
+            data:
+              options: >
+                {% set id = videoid | string %}
+                {% set current = state_attr('input_select.music_videos_checked', 'options') %}
+                  {% if id not in current %}
+                    {% if 'placeholder' not in current %}
+                      {% set current = current + [id] %}
+                    {% else %}
+                      {% set current = videoid %}
+                    {% endif %}
+                  {% endif %}
+                
+                {{ current }}
+          
+          # Log the results so far.
+          - action: system_log.write
+            data:
+              message: >
+                {% set runtime = states('input_number.music_videos_total_time') %}
+                {% set artists = states('input_text.music_video_artists') %}
+                {% set num_checked = state_attr('input_select.music_videos_checked', 'options') | length() %}
+                {{ 'Total runtime: ' ~ runtime ~ ', artists: ' ~ artists ~ ', num checked: ' ~ num_checked }}
+              level: info
+          
+          # We're done if we've checked all available videos, or we've hit the max time or number of videos.
+          - if:
+              - "{{ state_attr('input_select.music_videos_checked', 'options') | length() >= number_of_videos or
+                    max_time - states('input_number.music_videos_total_time') | int(0) < minimum_runtime or
+                    states('input_number.music_videos_selected') | int(0) >= max_videos }}"
+            
+            then:
+              - action: input_boolean.turn_on
+                data:
+                  entity_id: input_boolean.music_video_selection_done
+    
+    # Debug logging.
+    - action: system_log.write
+      data:
+        message: "Found artists: {{ states('input_text.music_video_artists') }}"
+        level: debug
+    - action: system_log.write
+      data:
+        message: "Found video IDs: {{ states('input_text.music_video_ids') }}"
+        level: debug
+    - action: system_log.write
+      data:
+        message: "Found run times: {{ states('input_text.music_video_runtimes') }}"
+        level: debug
+    - action: system_log.write
+      data:
+        message: "Total time: {{ states('input_number.music_videos_total_time') | int(0) }} minutes"
+        level: debug
+    
+    # Go build the video playlist.
+    - action: script.build_kodi_video_playlist
+    
+    # Indicate the playlist has been built.
+    - action: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.music_video_playlist_built
+
 # Build a playlist of selected music videos.
 build_kodi_video_playlist:
   alias: Build Kodi Video Playlist
@@ -1417,3 +1567,129 @@ play_kodi_playlist:
         method: Player.Open
         item:
           playlistid: 1
+
+#========================#
+#     Kodi Utilities     #
+#========================#
+
+# Activate Kodi on the Shield TV. We make no assumptions here about the rest of the theater; for example we don't
+# require the projector to be on. All we need is the Shield TV on and the Kodi application running on it.
+activate_kodi:
+  alias: Activate Kodi
+  
+  sequence:
+  
+    # Turn on the Shield TV if needed so we can host the Kodi application.
+    - if:
+        - condition: state
+          entity_id: media_player.shield_tv
+          state: 'off'
+      
+      then:    
+        - action: media_player.turn_on
+          data:
+            entity_id: media_player.shield_tv
+        
+    # Wait until the Shield media player is on.
+    # NOTES:
+    # 1) We check the state of the media player for the Android TV Remote integration. The ADB media player turns on in 'idle' state
+    #    but I don't trust that will always be true.
+    # 2) We can't use wait_for_trigger because of timing between the state we want and the associated trigger being initialized.
+    - repeat:
+        until: "{{ is_state('media_player.shield_android_tv', 'on') }}"
+        
+        sequence:
+          - event: unused_event
+          
+          - delay:
+              milliseconds: 10
+          
+    # Initialize the toggle that indicates Kodi is responding to commands.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.kodi_activated
+  
+    # Start Kodi on the Shield TV.
+    - action: remote.turn_on
+      target:
+        entity_id: remote.shield_android_tv
+      data:
+        activity: Kodi
+    
+    # Wait until Kodi responds to commands, by sending a valid command that we never actually use. If this succeeds
+    # the Process Kodi Command Result automation turns on the toggle that indicates Kodi is responding to commands.    
+    # If this doesn't work within the timeout period, then whatever we need Kodi for will also probably fail. Oh well.
+    - variables:
+        delay_milliseconds: 500
+        timeout_seconds: 10
+    
+    - repeat:
+        until: "{{ is_state('input_boolean.kodi_activated', 'on') or repeat.index > timeout_seconds * 1000 / delay_milliseconds }}"
+        
+        sequence:
+          - action: kodi.call_method
+            data:
+              entity_id: media_player.kodi
+              method: VideoLibrary.GetMovieSets
+          
+          - delay:
+              milliseconds: "{{ delay_milliseconds }}"
+
+# Get the list of all movies known by Kodi.
+# This script is only needed when the Kodi movie library is updated.
+get_all_kodi_movies:
+  alias: Get All Kodi Movies
+  
+  sequence:
+    
+    # Activate Kodi on the Shield TV.
+    - service: script.activate_kodi
+    
+    - delay: '00:00:10'
+  
+    # Send the GetMovies command to Kodi. The Handle Kodi Movies Result script calls Process All Kodi Movies Result
+    # below with the command result.
+    - service: kodi.call_method
+      data:
+        entity_id: media_player.kodi
+        method: VideoLibrary.GetMovies
+
+# Process the list of movies returned by Kodi.
+process_all_kodi_movies_result:
+  alias: Process All Kodi Movies Result
+  
+  fields:
+    result:
+      description: The result from the GetMovies Kodi call.
+  
+  sequence:
+    
+    - variables:
+        movie_list: >
+          {% set movies = result.get('movies') %}
+          {% set ns = namespace(list = []) %}
+          {% for movie in movies %}
+            {% set ns.list = ns.list + [movie.get('label')] %}
+          {% endfor %}
+          
+          {{ ns.list | sort }}
+    
+    # Call the python script to populate the input select.
+    - service: pyscript.save_input_select_options
+      data:
+        entity: input_select.kodi_movies
+        list: "{{ movie_list }}"
+        file: '/config/all_movies_backup'
+  
+    # Exit the Kodi application.
+    - service: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'Home'
+        device: NVIDIA Shield TV
+    - delay: '00:00:01'
+  
+    # Turn the Shield TV off again.
+    - service: media_player.turn_off
+      data:
+        entity_id: media_player.shield_tv
