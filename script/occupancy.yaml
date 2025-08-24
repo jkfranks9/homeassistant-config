@@ -34,24 +34,65 @@ add_guest_to_suite:
     - variables:
         suite_entity: "{{ 'input_select.' ~ suite | lower ~ '_guests' }}"
         suite_entry_state: "{{ states(suite_entity) }}"
+        conflict: false
         
     # Update the suite guests.
-    - if:
-        - "{{ (guest == 'Sarah' and is_state(suite_entity, 'Skylar')) or (guest == 'Skylar' and is_state(suite_entity, 'Sarah')) }}"
-        
-      then:    
-        - action: input_select.select_option
-          target:
-            entity_id: "{{ suite_entity }}"
-          data:
-            option: 'Skylar + Sarah'
+    - choose:
       
-      else:    
+      # Some combinations result in a conflict that must be manually resolved.
+      - conditions: "{{ guest in ['David', 'Mike'] and suite_entry_state != 'Empty' }}"
+        
+        sequence:
+          - variables:
+              conflict: true
+      
+      - conditions: "{{ guest in ['Sarah', 'Skylar'] and suite_entry_state in ['David', 'Mike'] }}"
+        
+        sequence:
+          - variables:
+              conflict: true
+      
+      # The only valid guest combination is Skylar + Sarah.
+      - conditions: "{{ guest in ['Sarah', 'Skylar'] and suite_entry_state != 'Empty' }}"
+        
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: "{{ suite_entity }}"
+            data:
+              option: 'Skylar + Sarah'
+      
+      # Add a valid single guest.
+      default:    
         - action: input_select.select_option
           target:
             entity_id: "{{ suite_entity }}"
           data:
             option: "{{ guest }}"
+    
+    # If we found a conflict, send a notification and quit.
+    - if:
+        - "{{ conflict == true }}"
+      
+      then:
+        - variables:
+            tag: guest_conflict
+            title: 'Attention:'
+            message: "{{ 'Jon, there is a conflict with adding ' ~ guest ~ ' to the ' ~ suite ~ '.' }}"
+            room: ['family_room', 'office']
+            channel: standard
+            tag_registry_value: "{{ {'tag': tag, 'clear_type': 'manual', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
+            notification_data: "{{ {'destination': ['mobile', 'voice_assistant'], 'room': room, 'voice_type': 'announce', 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'tag': tag} }}"
+    
+        # Register the tag.
+        - action: script.register_mobile_notification
+          data: "{{ tag_registry_value }}"
+        
+        # Send a notification.    
+        - action: script.send_notification
+          data: "{{ notification_data }}"
+        
+        - stop: 'Guest conflict'
     
     # If the suite was empty upon entry, then wait for the associated binary sensor to change before continuing, as the
     # binary sensor could be used when modifying the suite.
