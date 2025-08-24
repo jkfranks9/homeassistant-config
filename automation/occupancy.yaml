@@ -453,7 +453,6 @@
   actions:
     - variables:
         tracker_entity: "{{ 'device_tracker.' ~ trigger.id ~ '_nfc_tag' }}"
-        toggle_entity: "{{ 'input_boolean.' ~ trigger.id ~ '_nfc_tag' }}"
         new_state: >
           {% if states(tracker_entity) != 'home' %}
             home
@@ -467,19 +466,6 @@
       data:
         topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
         payload: "{{ new_state }}"
-          
-    - action: input_boolean.turn_{{ toggle_action }}
-      target:
-        entity_id: "{{ toggle_entity }}"
-    
-    - action: script.send_notification
-      data:
-        destination:
-          - voice_assistant
-        message: "{{ iif(new_state == 'home', 'Hi Skylar! Hope you enjoy your stay!', 'Bye Skylar! Come visit again soon!') }}"
-        speak: excited
-        room: ['office']
-        voice_type: tts
 
 #=========================#
 #     Sleep Detection     #
