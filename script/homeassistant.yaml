@@ -1417,11 +1417,11 @@ gather_upcoming_reminders:
   variables:
     
     # List of all reminder datetimes of interest.
+    # On hiatus: add this to date_entities to reestablish: 'input_datetime.reminder_payment_disney',
     reminder_dates: >
       {% set reminder_dates = [
                                'input_datetime.reminder_payment_amazon',
                                'input_datetime.reminder_payment_creditunion',
-                               'input_datetime.reminder_payment_disney',
                                'input_datetime.reminder_payment_mortgage',
                                'input_datetime.reminder_payment_randolph',
                                'input_datetime.reminder_medication_eliquis',
