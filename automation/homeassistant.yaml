@@ -1019,22 +1019,20 @@
           target:
             entity_id: counter.unifi_integration_errors
 
-# Reload Ecovacs if it goes unavailable. Also check at HA start because it might already be unavailable.
+# Reload Ecovacs if it goes unavailable.
 - alias: Reload Ecovacs Integration
   id: reload_ecovacs_integration
   
   triggers:
     - trigger: state
-      entity_id: vacuum.ecovacs_deebot_none
+      entity_id:
+        - vacuum.ecovacs_deebot_none
+        - sensor.ecovacs_deebot_filter_lifespan
+        - sensor.ecovacs_deebot_main_brush_lifespan
+        - sensor.ecovacs_deebot_side_brush_lifespan
       to: unavailable
-    
-    - trigger: homeassistant
-      event: start
-  
-  conditions:
-    - condition: state
-      entity_id: vacuum.ecovacs_deebot_none
-      state: unavailable
+      for:
+        seconds: 30
   
   actions:    
     - action: homeassistant.reload_config_entry
