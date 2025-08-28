@@ -180,10 +180,19 @@
           - input_number.workout_daily_calories
           - input_number.yard_work_daily_time
           - input_number.yard_work_daily_calories
+          - input_number.other_daily_time
+          - input_number.other_daily_calories
           - input_number.steps_daily
           - input_number.steps_daily_calories
       data:
         value: 0
+    
+    # Initialize the 'other' exercise effective date to today.
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.other_date
+      data:
+        timestamp: "{{ now().timestamp() }}"
     
     # Turn on most automations that may have been turned off. This is normally not needed, but some can be left off
     # if certain automations or scripts do not finish normally.
@@ -334,6 +343,8 @@
               - input_number.workout_weekly_calories
               - input_number.yard_work_weekly_time
               - input_number.yard_work_weekly_calories
+              - input_number.other_weekly_time
+              - input_number.other_weekly_calories
               - input_number.steps_weekly
               - input_number.steps_weekly_calories
           data:
@@ -370,6 +381,8 @@
               - input_number.workout_monthly_calories
               - input_number.yard_work_monthly_time
               - input_number.yard_work_monthly_calories
+              - input_number.other_monthly_time
+              - input_number.other_monthly_calories
               - input_number.steps_monthly
               - input_number.steps_monthly_calories
           data:
@@ -382,6 +395,7 @@
               - counter.treadmill_days
               - counter.workout_days
               - counter.yard_work_days
+              - counter.other_days
               - counter.steps_days
               - counter.exercise_recordable
         

@@ -45,6 +45,11 @@ initialize_global_variables:
     
     - event: set_variable
       event_data:
+        key: other_calories_per_hour
+        value: 200
+    
+    - event: set_variable
+      event_data:
         key: steps_calories_per_thousand
         value: 40.2
     

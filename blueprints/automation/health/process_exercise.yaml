@@ -14,6 +14,7 @@ blueprint:
           options:
             - workout
             - yard_work
+            - other
             - steps
     
     units_entity:
@@ -23,25 +24,30 @@ blueprint:
         entity:
           domain: input_number
 
+mode: queued
+
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_exercise_type: !input exercise_type
   input_units_entity: !input units_entity
   
-  valid: "{{ input_exercise_type in ['workout', 'yard_work', 'steps'] }}"
+  valid: "{{ input_exercise_type in ['workout', 'yard_work', 'other', 'steps'] }}"
   daily_calories_entity: "{{ 'input_number.' ~ input_exercise_type ~ '_daily_calories' }}"
   workout_calories_per_unit: "{{ state_attr('sensor.variables', 'variables').workout_calories_per_hour }}"
   yard_work_calories_per_unit: "{{ state_attr('sensor.variables', 'variables').yard_work_calories_per_hour }}"
+  other_calories_per_unit: "{{ state_attr('sensor.variables', 'variables').other_calories_per_hour }}"
   steps_calories_per_unit: "{{ state_attr('sensor.variables', 'variables').steps_calories_per_thousand }}"
   calories_per_unit: >
     {% if input_exercise_type == 'workout' %}
       {{ workout_calories_per_unit }}
     {% elif input_exercise_type == 'yard_work' %}
       {{ yard_work_calories_per_unit }}
+    {% elif input_exercise_type == 'other' %}
+      {{ other_calories_per_unit }}
     {% elif input_exercise_type == 'steps' %}
       {{ steps_calories_per_unit }}
     {% endif %}
-  units_divisor: "{{ iif(input_exercise_type in ['workout', 'yard_work'], 60, 1000) }}"
+  units_divisor: "{{ iif(input_exercise_type == 'steps', 1000, 60) }}"
 
 # Trigger when the units entity is updated.
 triggers:
@@ -58,18 +64,55 @@ actions:
       - "{{ valid }}"
       
     then:
+      - variables:
+          effective_date_str: "{{ states('input_datetime.other_date') }}"
+          today_str: "{{ now().strftime('%Y-%m-%d') }}"
+          effective_timestamp: "{{ as_timestamp(effective_date_str) }}"
+          today_timestamp: "{{ as_timestamp(today_str) }}"
   
-      # Calculate the calories.
-      - action: input_number.set_value
-        target:
-          entity_id: "{{ daily_calories_entity }}"
-        data:
-          value: "{{ ((states(input_units_entity) | int(0) / units_divisor) * calories_per_unit) | int(0) }}"
+      # Send a persistent notification and stop if the 'other' effective date is in the future.
+      - if:
+          - "{{ input_exercise_type == 'other' and effective_timestamp > today_timestamp }}"
+          
+        then:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.other_daily_time
+            data:
+              value: 0
+          
+          - action: script.send_notification
+            data:
+              destination:
+                - persistent
+              title: Exercise Date Alert
+              message: "The effective date for the 'other' exercise type is in the future."
+              notification_id: exercise_future_date
+          
+          - stop: "The effective date for the 'other' exercise type is in the future."
+        
+      # Set the daily calories. However, skip this for the 'other' type if the effective date is not today, meaning
+      # it must be in the past because we've eliminated invalid future dates above. 
+      # Note that we still calculate and pass the daily calories to the Register Exercise Metrics script, so that
+      # we can deal with weekly and monthly values.
+      - variables:
+          daily_calories: "{{ ((states(input_units_entity) | int(0) / units_divisor) * calories_per_unit) | int(0) }}"
+      
+      - if:
+          - "{{ input_exercise_type != 'other' or effective_date_str == today_str }}"
+          
+        then:
+          - action: input_number.set_value
+            target:
+              entity_id: "{{ daily_calories_entity }}"
+            data:
+              value: "{{ daily_calories }}"
         
       # Register exercise metrics.
       - action: script.register_exercise_metrics
         data:
           exercise_type: "{{ input_exercise_type }}"
+          daily_calories: "{{ daily_calories }}"
     
     # Invalid exercise type, log it.
     else:

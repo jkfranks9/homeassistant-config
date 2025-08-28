@@ -762,11 +762,8 @@
     # NOTES:
     #   - The above formula only works for 0-5 degree incline ... more work needed here if I ever do higher inclines.
     #   - My cooldown period is always 1 minute at 2.0 MPH (ctime and ckph variables).
-    - action: input_number.set_value
-      target:
-        entity_id: input_number.treadmill_daily_calories
-      data:
-        value: >
+    - variables:
+        daily_calories: >
           {% set weight  = states('sensor.smart_scale_p1_weight') | float(0) %}
           {% set speed   = states('input_number.treadmill_speed') | float(0) %}
           {% set incline = states('input_number.treadmill_incline') | int(0) %}
@@ -795,10 +792,17 @@
             {{ cooldown     + (( (kph**3 * 0.0221) -  (kph**2 * 0.1349) +  (kph * 0.8025) + 2.1000) * wkg *  time) | int(0) }}
           {% endif %}
     
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.treadmill_daily_calories
+      data:
+        value: "{{ daily_calories }}"
+    
     # Register treadmill metrics.
     - action: script.register_exercise_metrics
       data:
         exercise_type: treadmill
+        daily_calories: "{{ daily_calories }}"
     
     # Update the current treadmill used minutes. We keep minutes because the treadmill time is likely to not be an even hour.
     # We convert the minutes to hours in order to determine if lubrication is needed.

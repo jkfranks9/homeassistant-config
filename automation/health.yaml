@@ -116,6 +116,15 @@
       exercise_type: yard_work
       units_entity: input_number.yard_work_daily_time
 
+# Other exercise.
+- alias: Process Other Exercise
+  id: 'process_other_exercise'
+  use_blueprint:
+    path: health/process_exercise.yaml
+    input:
+      exercise_type: other
+      units_entity: input_number.other_daily_time
+
 # Steps exercise.
 - alias: Process Steps Exercise
   id: 'process_steps_exercise'

@@ -38,17 +38,24 @@ register_exercise_metrics:
             - treadmill
             - workout
             - yard_work
+            - other
             - steps
+    
+    daily_calories:
+      description: The daily calories value for the exercise type.
+      selector:
+        number:
+          min: 0
+          max: 2000
   
   variables:
-    valid: "{{ exercise_type in ['treadmill', 'workout', 'yard_work', 'steps'] }}"
+    valid: "{{ exercise_type in ['treadmill', 'workout', 'yard_work', 'other', 'steps'] }}"
     weekly_time_entity: "{{ 'input_number.' ~ exercise_type ~ '_weekly_time' }}"
     weekly_calories_entity: "{{ 'input_number.' ~ exercise_type ~ '_weekly_calories' }}"
     monthly_time_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_time' }}"
     monthly_calories_entity: "{{ 'input_number.' ~ exercise_type ~ '_monthly_calories' }}"
     daily_time: "{{ states('input_number.' ~ exercise_type ~ '_daily_time') | int(0) }}"
     daily_steps: "{{ states('sensor.steps_daily') | int(0) }}"
-    daily_calories: "{{ states('input_number.' ~ exercise_type ~ '_daily_calories') | int(0) }}"
     recordable_exercise_minimum_time: "{{ state_attr('sensor.variables', 'variables').recordable_exercise_minimum_time | int(0) }}"
     type_str: "{{ exercise_type ~ (' ' * (9 - exercise_type|length)) ~ ',' }}"
     metric_str: "{{ iif(exercise_type == 'steps', 'steps:', 'time :') }}"
@@ -61,36 +68,63 @@ register_exercise_metrics:
         - "{{ valid }}"
       
       then:
+        - variables:
+            effective_date_str: "{{ states('input_datetime.other_date') }}"
+            today_str: "{{ now().strftime('%Y-%m-%d') }}"
+            effective_date_day_of_week: "{{ as_timestamp(effective_date_str) | timestamp_custom('%w') | int(0) }}"
+            today_day_of_week: "{{ as_timestamp(now()) | timestamp_custom('%w') | int(0) }}"
+            effective_date_day_of_month: "{{ as_timestamp(effective_date_str) | timestamp_custom('%d') | int(0) }}"
+            today_day_of_month: "{{ now().day }}"
         
-        # Update the calorie metrics.        
-        - action: input_number.set_value
-          target:
-            entity_id: "{{ weekly_calories_entity }}"
-          data:
-            value: "{{ states(weekly_calories_entity) | int(0) + daily_calories }}"
+        # Update the weekly calories. However, skip this for the 'other' type if the effective day of week is not in the current week.
+        - if:
+            - "{{ input_exercise_type != 'other' or effective_date_day_of_week <= today_day_of_week }}"
+          
+          then:
+            - action: input_number.set_value
+              target:
+                entity_id: "{{ weekly_calories_entity }}"
+              data:
+                value: "{{ states(weekly_calories_entity) | int(0) + daily_calories }}"
         
-        - action: input_number.set_value
-          target:
-            entity_id: "{{ monthly_calories_entity }}"
-          data:
-            value: "{{ states(monthly_calories_entity) | int(0) + daily_calories }}"
+        # Update the monthly calories. However, skip this for the 'other' type if the effective day of month is not in the current month.
+        - if:
+            - "{{ input_exercise_type != 'other' or effective_date_day_of_month <= today_day_of_month }}"
+          
+          then:
+            - action: input_number.set_value
+              target:
+                entity_id: "{{ monthly_calories_entity }}"
+              data:
+                value: "{{ states(monthly_calories_entity) | int(0) + daily_calories }}"
         
         # Update the time metrics for the appropriate exercise types.
         - if:
             - "{{ exercise_type != 'steps' }}"
           
           then:
-            - action: input_number.set_value
-              target:
-                entity_id: "{{ weekly_time_entity }}"
-              data:
-                value: "{{ states(weekly_time_entity) | int(0) + daily_time }}"
-            
-            - action: input_number.set_value
-              target:
-                entity_id: "{{ monthly_time_entity }}"
-              data:
-                value: "{{ states(monthly_time_entity) | int(0) + daily_time }}"
+        
+            # Update the weekly time. However, skip this for the 'other' type if the effective day of week is not in the current week.
+            - if:
+                - "{{ input_exercise_type != 'other' or effective_date_day_of_week <= today_day_of_week }}"
+              
+              then:
+                - action: input_number.set_value
+                  target:
+                    entity_id: "{{ weekly_time_entity }}"
+                  data:
+                    value: "{{ states(weekly_time_entity) | int(0) + daily_time }}"
+        
+            # Update the monthly time. However, skip this for the 'other' type if the effective day of month is not in the current month.
+            - if:
+                - "{{ input_exercise_type != 'other' or effective_date_day_of_week <= today_day_of_week }}"
+              
+              then:
+                - action: input_number.set_value
+                  target:
+                    entity_id: "{{ monthly_time_entity }}"
+                  data:
+                    value: "{{ states(monthly_time_entity) | int(0) + daily_time }}"
           
           # Update the steps metrics.
           else:
@@ -126,12 +160,14 @@ register_exercise_metrics:
         - variables:
             
             # The exercise is recordable if the time/steps meets or exceeds the daily goal, and the recordable toggle is
-            # currently off (so we only record once per day).
+            # currently off (so we only record once per day). It's also recordable for the 'other' exercise type for a day
+            # in the past.
             recordable: >
+              {% set not_today = exercise_type == 'other' and effective_date_str != today_str %}
               {% set toggle_state = states('input_boolean.exercise_recordable') %}
               {% set non_steps_recordable = daily_time >= recordable_exercise_minimum_time %}
               {% set steps_recordable = states('input_number.steps_daily') | int(0) >= state_attr('sensor.variables', 'variables').steps_daily_goal | int(0) %}
-              {{ toggle_state == 'off' and iif(exercise_type != steps, non_steps_recordable == true, steps_recordable == true) }}
+              {{ not_today or (toggle_state == 'off' and iif(exercise_type != steps, non_steps_recordable == true, steps_recordable == true)) }}
         
             
         # Record this exercise if it meets the requirements.
@@ -154,11 +190,14 @@ register_exercise_metrics:
             
             # Log the metrics, so I have a record of activity for each month (the log is backed up on the first of each
             # month, which starts a new log file).
+            - variables:
+                log_timestamp: "{{ iif(exercise_type == 'other', as_timestamp(effective_date_str), as_timestamp(now())) }}"
+            
             - action: notify.send_message
               target:
                 entity_id: notify.exercise_activity
               data:
-                message: "{{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') ~ ': Exercise type: ' ~ type_str ~ ' ' ~ metric_str ~ ' ' ~ metric_val ~ ', calories: ' ~ daily_calories }}"
+                message: "{{ log_timestamp | timestamp_custom('%b %d %Y %X') ~ ': Exercise type: ' ~ type_str ~ ' ' ~ metric_str ~ ' ' ~ metric_val ~ ', calories: ' ~ daily_calories }}"
       
       # Invalid exercise type, log it.
       else:
