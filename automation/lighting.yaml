@@ -583,6 +583,39 @@
       data:
         operation: 'on'
 
+# For some reason, the studio night light randomly turns on, but does not report its state. So we turn it on then off at intervals
+# if certain conditions exist. Strange but true.
+- alias: Turn Off Studio Night Light
+  id: turn_off_studio_night_light
+  
+  triggers:
+    
+    # Trigger once per hour.
+    - trigger: time_pattern
+      minutes: 1
+  
+  conditions:
+    
+    # Continue if the studio is empty or it's not dark.
+    - or:
+      - condition: state
+        entity_id: input_select.studio_guests
+        state: Empty
+      
+      - "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) >= states('input_number.studio_bedroom_ambient_max') | float(0) }}"
+    
+  actions:
+    - action: light.turn_on
+      target:
+        entity_id: light.studio_night_light
+    
+    - delay:
+        milliseconds: 100
+    
+    - action: light.turn_off
+      target:
+        entity_id: light.studio_night_light
+
 #==========================#
 #     Christmas Lights     #
 #==========================#
