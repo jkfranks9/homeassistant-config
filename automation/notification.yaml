@@ -234,10 +234,10 @@
   use_blueprint:
     path: notification/mobile_notify.yaml
     input:
-      trigger_type: state
-      entity: binary_sensor.studio_motion_detector_battery_low
-      from_state: 'off'
-      to_state: 'on'
+      trigger_type: numeric_state_below
+      entity: sensor.studio_motion_detector_battery
+      numeric_notify_threshold: 20
+      numeric_clear_threshold: 50
       enable_clear_trigger: true
       clear_type: auto
       message: 'Studio motion detector battery needs replacing.'
@@ -251,10 +251,10 @@
   use_blueprint:
     path: notification/mobile_notify.yaml
     input:
-      trigger_type: state
-      entity: binary_sensor.laundry_room_motion_detector_battery_low
-      from_state: 'off'
-      to_state: 'on'
+      trigger_type: numeric_state_below
+      entity: sensor.laundry_room_motion_detector_battery
+      numeric_notify_threshold: 20
+      numeric_clear_threshold: 50
       enable_clear_trigger: true
       clear_type: auto
       message: 'Laundry room motion detector battery needs replacing.'
@@ -268,10 +268,10 @@
   use_blueprint:
     path: notification/mobile_notify.yaml
     input:
-      trigger_type: state
-      entity: binary_sensor.master_bath_motion_detector_battery_low
-      from_state: 'off'
-      to_state: 'on'
+      trigger_type: numeric_state_below
+      entity: sensor.master_bath_motion_detector_battery
+      numeric_notify_threshold: 20
+      numeric_clear_threshold: 50
       enable_clear_trigger: true
       clear_type: auto
       message: 'Master bath motion detector battery needs replacing.'
