@@ -179,12 +179,10 @@ blueprint:
       selector:
         boolean:
     
-    enable_voice_assistant_destination:
-      name: Enable Voice Assistant Destination
-      description: (Optional) Whether or not to send the notification to all rooms containing voice assistant devices.
-      default: false
-      selector:
-        boolean:
+    voice_assistant_rooms:
+      name: Voice Assistant Rooms
+      description: (Optional) List of rooms containing voice assistant devices to receive the message.
+      default: []
     
     extract_tag_type:
       name: Extract Tag Type
@@ -245,7 +243,7 @@ trigger_variables:
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_calendar_tag: !input calendar_tag
-  input_enable_voice_assistant_destination: !input enable_voice_assistant_destination
+  input_voice_assistant_rooms: !input voice_assistant_rooms
   input_extract_tag_type: !input extract_tag_type
   input_clear_type: !input clear_type
   input_title: !input title
@@ -407,13 +405,14 @@ action:
         then:
             
           - variables:
-              destination: "{{ iif(input_enable_voice_assistant_destination, ['mobile', 'voice_assistant'], ['mobile']) }}"
+              voice_assistant_enabled: "{{ input_voice_assistant_rooms | length > 0 }}"
+              destination: "{{ iif(voice_assistant_enabled == true, ['mobile', 'voice_assistant'], ['mobile']) }}"
               message: !input message
               tag_registry_value: "{{ {'tag': tag, 'clear_type': input_clear_type, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} }}"
               notification_data: >
                 {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} %}
-                {% if input_enable_voice_assistant_destination %}
-                  {% set additional = {'room': ['everywhere'], 'voice_type': 'announce', 'tag': tag} %}
+                {% if voice_assistant_enabled == true %}
+                  {% set additional = {'room': input_voice_assistant_rooms, 'voice_type': 'announce', 'tag': tag} %}
                 {% else %}
                   {% set additional = {'tag': tag} %}
                 {% endif %}

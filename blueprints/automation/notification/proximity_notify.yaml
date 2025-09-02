@@ -68,6 +68,5 @@ action:
       destination:
         - voice_assistant
       message: "{{ input_person_name }} will be arriving soon"
-      room:
-        - ['everywhere']
+      room: "{{ states('sensor.announcement_rooms') }}"
       voice_type: announce
