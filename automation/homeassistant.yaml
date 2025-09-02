@@ -421,6 +421,7 @@
       event_type: automation_triggered
   
   # Weed out automations we want to skip (including this one!).
+  # NOTE: Keep the skip list in sync with the logger configuration.
   conditions:
     - condition: template
       value_template: >
@@ -466,6 +467,7 @@
       event_type: script_started
   
   # Weed out scripts we want to skip.
+  # NOTE: Keep the skip list in sync with the logger configuration.
   conditions:
     - condition: template
       value_template: >

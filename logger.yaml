@@ -11,6 +11,7 @@ logs:
   homeassistant.setup:  warning
 
   # HA automations
+  # NOTE: Keep this in sync with the skip list in the Log Automations automation.
   homeassistant.components.automation.log_automations:                 warning
   homeassistant.components.automation.log_scripts:                     warning
   homeassistant.components.automation.set_maximum_attic_temperature:   warning
@@ -22,14 +23,12 @@ logs:
   homeassistant.components.automation.set_washer_operation:            warning
 
   # HA scripts
-  homeassistant.components.script.calculate_weather_metrics:          warning
-  homeassistant.components.script.change_downstairs_lighting:         warning
+  # NOTE: Keep this in sync with the skip list in the Log Scripts automation.
   homeassistant.components.script.log_laundry_event:                  warning
   homeassistant.components.script.mobile_notification_worker:         warning
   homeassistant.components.script.restore_lighting_on_resume:         warning
   homeassistant.components.script.resume_cinema:                      warning
   homeassistant.components.script.resume_worker:                      warning
-  homeassistant.components.script.send_notification:                  warning
   homeassistant.components.script.set_datetime_offset_days:           warning
   homeassistant.components.script.set_datetime_offset_months:         warning
   homeassistant.components.script.set_datetime_offset_weeks:          warning
@@ -41,6 +40,7 @@ logs:
 
   # HA misc components
   homeassistant.components.analytics:                     warning
+  homeassistant.components.assist_satellite:              debug
   homeassistant.components.mqtt.discovery:                warning
   homeassistant.components.system_log.external:           info # This is for logs in automations and scripts.
   homeassistant.components.websocket_api.http.connection: warning
