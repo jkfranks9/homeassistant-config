@@ -532,19 +532,28 @@
         milliseconds: 500
     
     # Normalize the volume on all echoes in case they were modified yesterday or during the night.
+    # However, we're about to send an announcement to the master bedroom, and I want that to be quieter, so use a lower
+    # volume for that one device for now. We normalize it after the announcement.
+    - variables:
+        normal_volume: 0.5
+        quiet_volume: 0.3
+    
     - repeat:
         for_each: "{{ echo_list }}"
         
         sequence:
+          - variables:
+              volume: "{{ iif((repeat.item).split('.')[1] == 'master_bedroom_echo', quiet_volume, normal_volume) }}"
+              
           - if:
-              - "{{ not is_state_attr(repeat.item, 'volume_level', 0.5) }}"
+              - "{{ not is_state_attr(repeat.item, 'volume_level', volume) }}"
             
-            then:          
+            then:
               - action: media_player.volume_set
                 target:
                   entity_id: "{{ repeat.item }}"
                 data:
-                  volume_level: 0.5
+                  volume_level: "{{ volume }}"
     
     # The Nighttime toggle being reset (above) causes the Manage Echo Do Not Disturb automation to run. We need to ensure
     # that the master bedroom echo has been unmuted before trying to send the announcement below.
@@ -553,14 +562,17 @@
         
         sequence:
           - event: unused_event
+          
+          - delay:
+              milliseconds: 10
     
     # Now we can set the various notification data.
     - variables:
         time: "{{ states('sensor.sleep_duration_display') }}"
         hours: "{{ time.split(':')[0] | int(0) }}"
         minutes: "{{ time.split(':')[1] | int(0) }}"
-        hours_str: "{{ iif(hours == 1, ' hour', ' hours') }}"
-        minutes_str: "{{ iif(minutes == 1, ' minute', ' minutes') }}"
+        hours_str: "{{ iif(hours == 1, 'hour', 'hours') }}"
+        minutes_str: "{{ iif(minutes == 1, 'minute', 'minutes') }}"
         keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
           
@@ -570,7 +582,7 @@
         destination:
           - voice_assistant
         message: >
-          {% set msg = 'Good morning. You slept ' ~ hours ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ minutes_str ~ '.', '.') %}
+          {% set msg = 'Good morning. You slept ' ~ hours ~ ' ' ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' ' ~ minutes_str ~ '.', '.') %}
           {% if calendar == true %}
             {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
           {% endif %}
@@ -597,9 +609,16 @@
     
     # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.
     # The Reset Bedtime Environment script (called above) calls Modify Master Suite for wakeup. That script in turn waits 
-    # until downstairs motion is detected before turning off master suite lights. So we can use that to manage the islnad 
-    # light here.
+    # until downstairs motion is detected before turning off master suite lights. So we can use that to manage the island 
+    # light and echo volume here.
     - wait_template: "{{ is_state('script.modify_master_suite', 'off') }}"
+                  
+    # Normalize the master bedroom echo volume.
+    - action: media_player.volume_set
+      target:
+        entity_id: media_player.master_bedroom_echo
+      data:
+        volume_level: "{{ normal_volume }}"
     
     # Turn on island light if needed (lets me get breakfast).
     - action: script.turn_on_lights_per_conditions
