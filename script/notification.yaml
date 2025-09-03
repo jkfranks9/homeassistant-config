@@ -594,11 +594,13 @@ send_message_to_room_voice_device:
                       message: "Did not find any voice assistant device for: {{ repeat.item }} ."
                       level: warning
 
-# For some reason a message sent to certain voice devices can apparently not complete, so if we're sending to multiple devices
-# some don't receive the message. Not sure how to debug or fix this, so this script sends messages in parallel to each device.
+# I've had problems sending multiple messages to multiple devices. So here we queue all messages.
+# I'm taking a wild quess at the maximum that can be queued, but erring on the side of not missing any.
 send_voice_message:
   alias: Send Voice Message
-  mode: parallel
+  
+  mode: queued
+  max: 25
   
   fields:
     message:
