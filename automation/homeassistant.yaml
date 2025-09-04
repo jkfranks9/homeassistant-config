@@ -48,12 +48,17 @@
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
     
-    # TEMPORARY until Alexa Media Player startup problem is fixed.
-    - delay: '00:00:30'
+    # Reload integrations that seem to have startup problems.
+    - delay:
+        seconds: 30
+    
+    # - action: homeassistant.reload_config_entry
+      # target:
+        # entity_id: media_player.office_echo    
     
     - action: homeassistant.reload_config_entry
       target:
-        entity_id: media_player.office_echo
+        entity_id: vacuum.ecovacs_deebot_none
 
 #=====================#
 #     MQTT Chores     #
