@@ -205,7 +205,7 @@ command_line:
       name: CPU Temp
       unit_of_measurement: '°'
       command: 'cat /sys/class/thermal/thermal_zone0/temp'
-      value_template: "{{ (value | multiply(0.001) | float(0)) | round(2) }}"
+      value_template: "{{ (value | multiply(0.001) | float(0)) | round(1) }}"
   
   # Once per hockey season, I need to query the NHL API for the league standings, and save the result in the nhl_standings.json file.
   # The first sensor here will then extract the 3 character team abbeviations into a list. When we query the game status during the 
