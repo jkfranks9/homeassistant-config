@@ -20,7 +20,6 @@ homeassistant:
 #========================#
 
 automation:     !include_dir_merge_list automation
-binary_sensor:  !include binary_sensor.yaml
 cover:          !include covers.yaml
 group:          !include_dir_merge_named group
 intent_script:  !include_dir_merge_named intent_script
