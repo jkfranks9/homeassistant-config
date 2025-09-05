@@ -449,10 +449,14 @@
     - trigger: tag
       tag_id: 0c6d2dfd-4ad7-4281-9ec0-54756ed2d539
       id: skylar
+    
+    - trigger: state
+      entity_id: input_button.skylar_tag_scan
+      id: skylar_simulated
         
   actions:
     - variables:
-        tracker_entity: "{{ 'device_tracker.' ~ trigger.id ~ '_nfc_tag' }}"
+        tracker_entity: "{{ 'device_tracker.' ~ trigger.id.split('_')[0] ~ '_nfc_tag' }}"
         new_state: >
           {% if states(tracker_entity) != 'home' %}
             home
