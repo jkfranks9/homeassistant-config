@@ -58,7 +58,7 @@
     #   -- Driving --   #
     #-------------------#
     
-    # These are inputs to the bayesian sensor Jon Driving. The delay off configuration helps smooth out
+    # This is input to the bayesian sensor Jon Driving. The delay off configuration helps smooth out
     # delays from traffic, construction, or traffic lights. The amount of delay can never be perfect,
     # but it's better than nothing.
     - name: Jon Companion Driving
@@ -66,3 +66,17 @@
       state: "{{ state_attr('device_tracker.jon_companion', 'speed') > 10 }}"
       delay_off:
         minutes: 2
+
+    #-------------------#
+    #   -- Devices --   #
+    #-------------------#
+    
+    # This is input to the bayesian sensor Jon Sleeping. We need the delay on/off to prevent glitches in the charging status
+    # of the devices from doing things like waking me up 10 minutes after I fall asleep.
+    - name: Jon Devices Charging
+      unique_id: jon_devices_charging
+      state: "{{ is_state('binary_sensor.jon_galaxy_is_charging', 'on') and is_state('binary_sensor.lenovo_tablet_is_charging', 'on') }}"
+      delay_on:
+        seconds: 30
+      delay_off:
+        seconds: 30
