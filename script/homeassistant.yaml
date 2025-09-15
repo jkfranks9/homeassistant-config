@@ -221,11 +221,11 @@ generate_periodic_lists:
         - "{{ type in ['all', 'cleaning'] }}"
     
       then:
-        - service: script.generate_weekly_periodic_list
+        - action: script.generate_weekly_periodic_list
           data:
             type: cleaning
             start_date: "{{ start_date }}"
-            generator_count: "{{ iif(states('input_boolean.mini_todo_generator_switch') == 'off', 3, 4) }}"
+            generator_count: 3
             date_entities: [
                             'input_datetime.periodic_cleaning_kitchen',
                             'input_datetime.periodic_cleaning_studio_bath',
@@ -247,11 +247,11 @@ generate_periodic_lists:
         - "{{ type in ['all', 'other'] }}"
     
       then:
-        - service: script.generate_weekly_periodic_list
+        - action: script.generate_weekly_periodic_list
           data:
             type: other
             start_date: "{{ start_date }}"
-            generator_count: 5
+            generator_count: 2
             date_entities: [
                             'input_datetime.periodic_other_ear_drops',
                             'input_datetime.periodic_other_haircut',
@@ -264,11 +264,11 @@ generate_periodic_lists:
         - "{{ type in ['all', 'yard_work'] }}"
     
       then:
-        - service: script.generate_weekly_periodic_list
+        - action: script.generate_weekly_periodic_list
           data:
             type: yard_work
             start_date: "{{ start_date }}"
-            generator_count: 3
+            generator_count: 2
             date_entities: [
                             'input_datetime.periodic_yard_spray_area_1',
                             'input_datetime.periodic_yard_spray_area_2',
@@ -334,39 +334,51 @@ generate_weekly_periodic_list:
         split_text: "{{ 'Periodic ' ~ type.split('_')[0] | title }}"
         times_var: "{{ 'mini_todo_' ~ type ~ '_times' }}"
         
-        # List of actionable items (those overdue or due within a few days).
-        actionable_entities: >
+        # Refactor the input date entities into a list of timestamps and friendly names, sorted by timestamp, so we
+        # pick the oldest items to work on.
+        sorted_dates: >
           {# Start with an empty list. #}
           {% set var = namespace(list = []) %}
           
-          {# Walk through the input date entities. #}
-          {% for entity in date_entities %}
+          {# Walk through the date entities. #}
+          {% for date in date_entities %}
             
-            {# Add to the list if the entity is overdue or due within a few days. #}
-            {% if as_timestamp(states(entity), 0) <= as_timestamp(as_datetime(start_date) + timedelta(days = 3), 0) %}
-              {% set var.list = var.list + [entity] %}
+            {# Refactor into timestamps & names. #}
+            {% set ts = state_attr(date, 'timestamp') %}
+            {% set name = state_attr(date, 'friendly_name') %}
+            {% set var.list = var.list + [{'day': ts, 'name': name.split(split_text)[-1] | trim}] %}
+          {% endfor %}
+          
+          {# Sort by the timestamp. #}
+          {{ var.list | sort(attribute = 'day')}}
+        
+        # List of actionable items (those overdue or due within a few days).
+        actionable_items: >
+          {# Start with an empty list. #}
+          {% set var = namespace(list = []) %}
+          
+          {# Walk through the sorted dates. #}
+          {% for item in sorted_dates %}
+            
+            {# Add to the list if the item is overdue or due within a few days. #}
+            {% if item.day <= as_timestamp(as_datetime(start_date) + timedelta(days = 3), 0) %}
+              {% set var.list = var.list + [item.name] %}
             {% endif %}
           {% endfor %}
           
           {{ var.list }}
         
-        # Randomizer, just for fun.
-        randomizer: "{{ range(10) | random }}"
-        
-        # Walk through the list forwards or backwards randomly.
-        loop_template: "{{ iif(randomizer is even, actionable_entities[0:generator_count], actionable_entities[0:generator_count] | reverse | list) }}"
-    
+    # Walk through the actionable items.
     - repeat:
-        for_each: "{{ loop_template }}"
+        for_each: "{{ actionable_items[0:generator_count] }}"
         
         sequence:
           - variables:
-              item_text: "{{ state_attr(repeat.item, 'friendly_name').split(split_text)[-1] }}"
               icon_tag: >
                 {% if type == 'cleaning' %}
                   cl:
                 {% elif type == 'yard_work' %}
-                  {% set category = item_text.split()[0] %}
+                  {% set category = repeat.item.split()[0] %}
                   {{ iif(category == 'Spray', 'ys:', iif(category == 'Trim', 'yt:', 'ym:')) }}
                 {% else %}
                   ot:
@@ -377,7 +389,7 @@ generate_weekly_periodic_list:
             data:
               event_type: add
               item_type: "{{ type }}"
-              value: "{{ icon_tag ~ item_text }}"
+              value: "{{ icon_tag ~ repeat.item }}"
 
 # This is an input to the daily mini-todo list logic. It is run once a week to pick a few days for free time.
 # This is represented as a bitmask, where the least significant bit represents Sunday.
@@ -549,13 +561,6 @@ add_mini_todo_calendar_items:
       
         - stop: Extended away
         
-        # Initialize the calendar all day type.
-        - service: input_select.select_option
-          target:
-            entity_id: input_select.mini_todo_all_day_calendar_type
-          data:
-            option: none
-        
     # Process each calendar event.
     - repeat:
         for_each: "{{ agenda['calendar.calendar'].events }}"
@@ -586,24 +591,6 @@ add_mini_todo_calendar_items:
                     - variables:
                         all_day_type: "{{ iif('(visit)' in summary, 'visit', 'trip') }}"
                         cal_tag: "{{ '(' ~ all_day_type ~ ')' }}"
-                    
-                    # We need to note what type of all day event this is.
-                    - if:
-                        - "{{ all_day_type == 'visit' }}"
-                      
-                      then:
-                        - service: input_select.select_option
-                          target:
-                            entity_id: input_select.mini_todo_all_day_calendar_type
-                          data:
-                            option: visit
-                      
-                      else:                    
-                        - service: input_select.select_option
-                          target:
-                            entity_id: input_select.mini_todo_all_day_calendar_type
-                          data:
-                            option: trip
                     
                     - service: input_number.set_value
                       target:
@@ -801,17 +788,16 @@ add_mini_todo_periodic_item:
             
             # For deep clean rooms, determine if the last deep clean was six months ago or more.
             deep_clean: >
+              {% set var = namespace(dc = false) %}
               {% if time_is_list %}
                 {% set last_deep_clean = states('input_datetime.last_deep_clean_' ~ name.replace(' ', '_') | lower) %}
                 {% set delta_seconds = as_timestamp(now()) - as_timestamp(last_deep_clean) %}
                 {% if delta_seconds / 3600 / 24 / 30.4167 >= 6 %}
-                  true
-                {% else %}
-                  false
+                  {% set var.dc = true %}
                 {% endif %}
-              {% else %}
-                false
               {% endif %}
+              
+              {{ var.dc }}
             
             # Use the normal or deep clean time as appropriate.
             est_minutes: >
@@ -1004,17 +990,13 @@ handle_completed_reminder_or_periodic_item:
         number:
           min: 0
           max: 31
-    
-    deep_clean:
-      description: Whether or not a deep clean was performed for a cleaning item.
-      selector:
-        boolean:
   
   sequence:
     - variables:
         normalized_period: "{{ iif(period[-1] != 's', period ~ 's', period) }}"
         domain: "{{ states[entity].domain }}"
         entity_name: "{{ entity.split('.')[-1] }}"
+        last_deep_clean_entity: "{{ 'input_datetime.last_deep_clean_' ~ entity_name.replace('periodic_cleaning_', '') }}"
         
         # This is the input to the datetime offset script. For days and weeks offsets it includes just the datetime entity
         # and the amount. But for months offset it also includes a target day. This allows us to set the next interval
@@ -1033,6 +1015,19 @@ handle_completed_reminder_or_periodic_item:
           {% else %}
             {{ ns.val }}
           {% endif %}
+            
+        # For deep clean rooms, determine if the last deep clean was six months ago or more.
+        deep_clean: >
+          {% set var = namespace(dc = false) %}
+          {% if states(last_deep_clean_entity) != 'unknown' %}
+            {% set last_deep_clean = states(last_deep_clean_entity) %}
+            {% set delta_seconds = as_timestamp(now()) - as_timestamp(last_deep_clean) %}
+            {% if delta_seconds / 3600 / 24 / 30.4167 >= 6 %}
+              {% set var.dc = true %}
+            {% endif %}
+          {% endif %}
+          
+          {{ var.dc }}
     
     # Call one of the datetime offset scripts (per the period), or the number offset script.
     - if:
@@ -1087,7 +1082,7 @@ handle_completed_reminder_or_periodic_item:
           then:
             - action: input_datetime.set_datetime
               target:
-                entity_id: input_datetime.last_deep_clean_{{ entity_name.replace('periodic_cleaning_', '') }}
+                entity_id: "{{ last_deep_clean_entity }}"
               data:
                 timestamp: "{{ now().timestamp() }}"
     

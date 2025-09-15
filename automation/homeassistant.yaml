@@ -356,18 +356,14 @@
             value: 0
         
         # Generate the weekly mini todo stuff:
-    
-        # 1) Toggle the generator switch, which introduces randomness into some decisions.
-        - action: input_boolean.toggle
-          entity_id: input_boolean.mini_todo_generator_switch
         
-        # 2) Create weekly periodic lists.
+        # 1) Create weekly periodic lists.
         - action: script.generate_periodic_lists
           data:
             type: all
             start_date: "{{ states('sensor.date') }}"
         
-        # 3) Determine which days will be free time this week.
+        # 2) Determine which days will be free time this week.
         - action: script.generate_weekly_free_time_days
     
     # Perform monthly chores at the start of a new month.
