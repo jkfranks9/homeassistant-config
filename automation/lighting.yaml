@@ -610,11 +610,29 @@
         entity_id: light.studio_night_light
     
     - delay:
-        milliseconds: 100
+        milliseconds: 200
     
     - action: light.turn_off
       target:
         entity_id: light.studio_night_light
+    
+    # Send a persistent notification if the light is still on.
+    - delay:
+        seconds: 10
+    
+    - if:
+        - condition: state
+          entity_id: light.studio_night_light
+          state: 'on'
+      
+      then:    
+        - action: script.send_notification
+          data:
+            destination:
+              - persistent
+            title: Lighting Alert
+            message: Studio night light is still on. Perhaps millisecond delay is too short.
+            notification_id: 'studio_night_light_on'
 
 #==========================#
 #     Christmas Lights     #
