@@ -287,10 +287,13 @@
       
       then:
         
-        # Office lamp.
+        # Always turn on these.
         - action: light.turn_on
           target:
-            entity_id: light.office_lamp
+            entity_id:
+              - light.office_lamp
+              - light.driveway
+              - light.front_floodlight
         
         # Daytime or Christmas lights.
         - if:
@@ -424,9 +427,9 @@
                - light.storage_lights
                - light.outdoor_lights
 
-#================#
-#     Garage     #
-#================#
+#===============================#
+#     Guest Arrival Cleanup     #
+#===============================#
 
 # Clean up stuff once a delay has occurred after family has arrived after sunset.
 - alias: Handle Guest Arrival Cleanup
@@ -445,12 +448,12 @@
       data:
         variables:
           use_info_message: true
-            
-    - action: scene.apply
-      data:
-        entities:
-          light.driveway:         'off'
-          light.front_floodlight: 'off'
+        
+    - action: light.turn_off
+      target:
+        entity_id:
+          - light.driveway
+          - light.front_floodlight
 
 #========================#
 #     Family Room AV     #
