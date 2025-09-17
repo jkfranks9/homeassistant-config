@@ -1314,9 +1314,9 @@
           {% set intemp  = states('sensor.downstairs_temperature') %}
           {% set inhum   = states('sensor.downstairs_humidity') %}
           {% set outtemp = states('sensor.porch_sensor_temperature') %}
-          {% set outhum  = states('sensor.porch_sensor_humidity') %}
+          {% set outhum  = states('sensor.openweathermap_humidity') %}
           
-          starting: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%)
+          starting: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }} %)
     
     # Log temperature detected in the laundry events log.
     - action: script.log_laundry_event

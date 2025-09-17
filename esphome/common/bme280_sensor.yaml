@@ -30,13 +30,6 @@ sensor:
       id: ${prefix}_humidity
       accuracy_decimals: 2
       filters:
-        - calibrate_linear:
-            # Map 0.0 (from sensor) to 0.0 (true value)
-            - 0.0 -> 0.0
-            - $hum_calibrate_measured_1 -> $hum_calibrate_truth_1
-            - $hum_calibrate_measured_2 -> $hum_calibrate_truth_2
-            - $hum_calibrate_measured_3 -> $hum_calibrate_truth_3
-            - $hum_calibrate_measured_4 -> $hum_calibrate_truth_4
         - sliding_window_moving_average:
             window_size: $window_size
             send_every:  $window_size

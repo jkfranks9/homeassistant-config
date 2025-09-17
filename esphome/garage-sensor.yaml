@@ -17,16 +17,6 @@ substitutions:
   calibrate_measured:        "72.0"
   calibrate_truth:           "72.0"
   
-  # Used by humidity sensors
-  hum_calibrate_measured_1:  "90.0"
-  hum_calibrate_truth_1:     "90.0"
-  hum_calibrate_measured_2:  "75.0"
-  hum_calibrate_truth_2:     "75.0"
-  hum_calibrate_measured_3:  "60.0"
-  hum_calibrate_truth_3:     "60.0"
-  hum_calibrate_measured_4:  "45.0"
-  hum_calibrate_truth_4:     "45.0"
-  
   # Used by bme280 sensor
   prefix:                    garage_sensor
 
