@@ -855,18 +855,45 @@
   
   triggers:
     - trigger: time
-      at: '03:00:00'
+      at: '12:00:00'
   
   conditions:
-    - condition: time
-      weekday:
-        - mon
+    # - condition: time
+      # weekday:
+        # - mon
     
     - condition: state
       entity_id: timer.vacuum
       state: 'idle'
   
   actions:
+    
+    # Sometimes the Ecovacs integration needs to be reloaded to function properly. If the vacuum state isn't docked, try
+    # reloading it, then wait for the state to change to docked.
+    - if:
+        - "{{ states('vacuum.ecovacs_deebot_none') != 'docked' }}"
+      
+      then:    
+        - action: homeassistant.reload_config_entry
+          target:
+            entity_id: vacuum.ecovacs_deebot_none
+        
+        - wait_template: "{{ is_state('vacuum.ecovacs_deebot_none', 'docked') }}"
+          timeout:
+            seconds: 10
+        
+        # Still no good? We're done.
+        - if:
+            - "{{ states('vacuum.ecovacs_deebot_none') != 'docked' }}"
+          
+          then:
+            - action: script.send_notification
+              data:
+                destination:
+                  - persistent
+                title: Device Alert
+                message: Vacuum not functioning good.
+                notification_id: 'vacuum_nfg'
     
     # Reset status toggles.
     - action: input_boolean.turn_off
