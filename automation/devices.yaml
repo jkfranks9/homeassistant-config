@@ -858,12 +858,12 @@
   
   triggers:
     - trigger: time
-      at: '12:00:00'
+      at: '03:00:00'
   
   conditions:
-    # - condition: time
-      # weekday:
-        # - mon
+    - condition: time
+      weekday:
+        - mon
     
     - condition: state
       entity_id: timer.vacuum
@@ -897,6 +897,8 @@
                 title: Device Alert
                 message: Vacuum not functioning good.
                 notification_id: 'vacuum_nfg'
+            
+            - stop: Vacuum not functioning good
     
     # Reset status toggles.
     - action: input_boolean.turn_off
