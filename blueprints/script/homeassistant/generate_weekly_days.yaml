@@ -1,0 +1,66 @@
+blueprint:
+  name: Generate Weekly Days
+  description: >
+    Generate a weekly list of random days. This is used primarily for the Mini ToDo list, for
+    such things as free days or exercise days.
+    
+    The list is represented as a bitmask, where the least significant bit represents Sunday.
+  domain: script
+  
+  input:
+    weekly_days_entity:
+      name: Weekly Days Entity
+      description: The entity into which the place the list.
+      selector:
+        entity:
+          domain: input_number
+    
+    num_days:
+      name: Num Days
+      description: How many days to generate.
+      selector:
+        number:
+          min: 1
+          max: 7
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_weekly_days_entity: !input weekly_days_entity
+  input_num_days: !input num_days
+
+sequence:
+    - variables:
+        days: >
+          {# Initialize variables. #}
+          {% set v = namespace(value = 0) %}
+          {% set d = namespace(days = [0, 1, 2, 3, 4, 5, 6]) %}
+          {% set l = namespace(len = d.days | length) %}
+          
+          {# Loop per the input number of days. #}
+          {% for iter in input_num_days %}
+            
+            {# Pick a random day and update the result. #}
+            {% set idx = range(0, l.len) | random %}
+            {% set day_on = 2 ** d.days[idx] %}
+            {% set v.value = v.value | bitwise_or(day_on) %}
+            
+            {# Remove the day we just picked from the days list. #}
+            {% set var = namespace(new = []) %}
+            {% for item in d.days %}
+              {% if loop.index0 != idx %}
+                {% set var.new = var.new + [item] %}
+              {% endif %}
+            {% endfor %}
+            {% set d.days = var.new %}
+            
+            {# Decrement the days length for the next iteration. #}
+            {% set l.len = l.len - 1 %}
+          {% endfor %}
+          
+          {{ v.value }}
+          
+    - action: input_number.set_value
+      target:
+        entity_id: "{{ input_weekly_days_entity }}"
+      data:
+        value: "{{ days }}"

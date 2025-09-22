@@ -363,8 +363,10 @@
             type: all
             start_date: "{{ states('sensor.date') }}"
         
-        # 2) Determine which days will be free time this week.
+        # 2) Determine which days will be free time and exercise this week.
         - action: script.generate_weekly_free_time_days
+        
+        - action: script.generate_weekly_exercise_days
     
     # Perform monthly chores at the start of a new month.
     - if:
@@ -907,6 +909,35 @@
         window_upper_bound: "{{ window_upper_bound }}"
         start_time: "{{ start_time }}"
         end_time: "{{ end_time }}"
+    
+    # If this is an exercise day, add that to the list. Weekly Exercise Days is a bitmask, where the 
+    # least significant bit is Sunday.
+    - if:
+        - "{{ states('input_number.mini_todo_weekly_exercise_days') | int(0) | bitwise_and(2 ** now().isoweekday()) > 0 }}"
+      
+      then:
+        - variables:
+            last_treadmill: "{{ as_timestamp(states('sensor.treadmill_last_changed')) }}"
+            last_workout: "{{ as_timestamp(states('sensor.workout_last_changed')) }}"
+            exercise_type: "{{ iif(last_treadmill > last_workout, 'Workout', 'Treadmill') }}"
+            current_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(0) }}"
+            exercise_minutes: "{{ iif(last_treadmill > last_workout, states('input_number.variables_workout_time') | int(0) + 10, states('input_number.default_treadmill_minutes') | int(0) + 10) }}"
+                
+        # Subtract the exercise time for this event from the current available time.
+        - service: input_number.set_value
+          target:
+            entity_id: input_number.mini_todo_available_minutes
+          data:
+            value: "{{ current_minutes - exercise_minutes }}"
+        
+        - event: add_mini_todo_item
+          event_data:
+            value: "{{ 'ex:' ~ exercise_type }}"
+                    
+        # Bump the tasks counter.
+        - action: counter.increment
+          target:
+            entity_id: counter.mini_todo_tasks
     
     # If this is a free time day, just add that to the list and go away. Weekly Free Time Days is a bitmask, where the 
     # least significant bit is Sunday.

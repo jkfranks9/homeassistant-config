@@ -19,6 +19,7 @@
 !blueprints/automation/theater
 !blueprints/script/
 !blueprints/script/devices
+!blueprints/script/homeassistant
 !blueprints/script/lighting
 !blueprints/script/theater
 

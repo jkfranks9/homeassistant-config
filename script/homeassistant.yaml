@@ -391,50 +391,26 @@ generate_weekly_periodic_list:
               item_type: "{{ type }}"
               value: "{{ icon_tag ~ repeat.item }}"
 
-# This is an input to the daily mini-todo list logic. It is run once a week to pick a few days for free time.
-# This is represented as a bitmask, where the least significant bit represents Sunday.
+# These are inputs to the daily mini-todo list logic. They are run once a week to pick a few days for 
+# free time and exercise. The results are represented as bitmasks, where the least significant bit represents 
+# Sunday.
 generate_weekly_free_time_days:
   alias: Generate Weekly Free Time Days
   
-  sequence:
-    - variables:
-        days: >
-          {# We want either 2 or 3 days per week. #}
-          {% set count = iif(now().day is odd, range(1, 3) | list, range(1, 4) | list) %}
-          
-          {# Initialize variables. #}
-          {% set v = namespace(value = 0) %}
-          {% set d = namespace(days = [0, 1, 2, 3, 4, 5, 6]) %}
-          {% set l = namespace(len = d.days | length) %}
-          
-          {# Loop per the loop count. #}
-          {% for iter in count %}
-            
-            {# Pick a random day and update the result. #}
-            {% set idx = range(0, l.len) | random %}
-            {% set day_on = 2 ** d.days[idx] %}
-            {% set v.value = v.value | bitwise_or(day_on) %}
-            
-            {# Remove the day we just picked from the days list. #}
-            {% set var = namespace(new = []) %}
-            {% for item in d.days %}
-              {% if loop.index0 != idx %}
-                {% set var.new = var.new + [item] %}
-              {% endif %}
-            {% endfor %}
-            {% set d.days = var.new %}
-            
-            {# Decrement the days length for the next iteration. #}
-            {% set l.len = l.len - 1 %}
-          {% endfor %}
-          
-          {{ v.value }}
-          
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.mini_todo_weekly_free_time_days
-      data:
-        value: "{{ days }}"
+  use_blueprint:
+    path: homeassistant/generate_weekly_days.yaml
+    input:
+      weekly_days_entity: input_number.mini_todo_weekly_free_time_days
+      num_days: "{{ iif(now().day is odd, range(1, 3) | list, range(1, 4) | list) }}"
+
+generate_weekly_exercise_days:
+  alias: Generate Weekly Exercise Days
+  
+  use_blueprint:
+    path: homeassistant/generate_weekly_days.yaml
+    input:
+      weekly_days_entity: input_number.mini_todo_weekly_exercise_days
+      num_days: "{{ iif(now().day is even, range(1, 3) | list, range(1, 4) | list) }}"
 
 # Helper script for sending mini todo list events. Looks like the event itself cannot be a template, and I don't want to keep
 # multiple copies of choose logic everywhere.
