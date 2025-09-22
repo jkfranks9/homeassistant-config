@@ -323,7 +323,7 @@ ask_question:
   alias: Ask Question
   
   use_blueprint:
-    path: homeassistant/ask_yes_no_question.yaml
+    path: voice/ask_yes_no_question.yaml
     input:
       question: "{{ states('input_text.ask_question') }}"
       number_of_retries: 1
