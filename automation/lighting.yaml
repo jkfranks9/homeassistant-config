@@ -609,17 +609,22 @@
       target:
         entity_id: light.studio_night_light
     
-    - delay:
-        milliseconds: 200
-    
-    - action: light.turn_off
-      target:
-        entity_id: light.studio_night_light
+    - repeat:
+        
+        sequence:
+          - delay:
+              seconds: "{{ repeat.index * 5 }}"
+        
+          - action: light.turn_off
+            target:
+              entity_id: light.studio_night_light
+          
+          - variables:
+              state: "{{ states('light.studio_night_light') }}"
+        
+        until: "{{ is_state('light.studio_night_light', 'off') or repeat.index >= 3 }}"
     
     # Send a persistent notification if the light is still on.
-    - delay:
-        seconds: 10
-    
     - if:
         - condition: state
           entity_id: light.studio_night_light
