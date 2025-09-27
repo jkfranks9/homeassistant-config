@@ -197,8 +197,8 @@ switch_studio_lamps:
   sequence:
     service: light.toggle
     entity_id:
-      - light.sarah_s_lamp
-      - light.skylar_s_lamp
+      - light.studio_front_window_lamp
+      - light.studio_side_window_lamp
 
 # Turn the preferred studio lamps on or off.
 operate_preferred_studio_lamps:
@@ -218,11 +218,11 @@ operate_preferred_studio_lamps:
         preference: "{{ states('input_select.preferred_studio_lamps') }}"
         light_entity_list: >
           {% set var = namespace(list = []) %}
-          {% if preference in ["Sarah's", 'Both'] %}
-            {% set var.list = var.list + ['light.sarah_s_lamp'] %}
+          {% if preference in ['Front Window', 'Both'] %}
+            {% set var.list = var.list + ['light.studio_front_window_lamp'] %}
           {% endif %}
-          {% if preference in ["Skylar's", 'Both'] %}
-            {% set var.list = var.list + ['light.skylar_s_lamp'] %}
+          {% if preference in ['Side Window', 'Both'] %}
+            {% set var.list = var.list + ['light.studio_side_window_lamp'] %}
           {% endif %}
           
           {{ var.list }}

@@ -126,11 +126,11 @@
         - sensor.office_bookcase_energy
         - sensor.office_fan_light_energy
         - sensor.office_lamp_energy
-        - sensor.sarah_s_lamp_energy
-        - sensor.skylar_s_lamp_energy
         - sensor.stairway_energy
         - sensor.studio_bath_energy
+        - sensor.studio_front_window_lamp_energy
         - sensor.studio_hall_energy
+        - sensor.studio_side_window_lamp_energy
   
   sensor:
     - <<: *cumulator_sensor

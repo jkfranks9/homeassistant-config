@@ -350,20 +350,20 @@
         preference: "{{ states('input_select.preferred_studio_lamps') }}"
         
         # The operation to perform on each lamp.
-        sarah_s_lamp_operation: >
-          {{ iif(preference in ['Sarah\'s', 'Both'], 'on', 'off') }}
-        skylar_s_lamp_operation: >
-          {{ iif(preference in ['Skylar\'s', 'Both'], 'on', 'off') }}
+        front_window_lamp_operation: >
+          {{ iif(preference in ['Front Window', 'Both'], 'on', 'off') }}
+        side_window_lamp_operation: >
+          {{ iif(preference in ['Side Window', 'Both'], 'on', 'off') }}
     
     # Operate Sarah's lamp.
-    - action: light.turn_{{ sarah_s_lamp_operation }}
+    - action: light.turn_{{ front_window_lamp_operation }}
       target:
-        entity_id: light.sarah_s_lamp
+        entity_id: light.studio_front_window_lamp
     
     # Operate Skylar's lamp.
-    - action: light.turn_{{ skylar_s_lamp_operation }}
+    - action: light.turn_{{ side_window_lamp_operation }}
       target:
-        entity_id: light.skylar_s_lamp
+        entity_id: light.studio_side_window_lamp
 
 #=========================#
 #     Device Trackers     #
