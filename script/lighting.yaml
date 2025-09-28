@@ -190,16 +190,6 @@ start_bath_time:
 #     Studio Lamps     #
 #======================#
 
-# Switch lamps in the studio bedroom.
-switch_studio_lamps:
-  alias: Switch Studio Lamps
-  
-  sequence:
-    service: light.toggle
-    entity_id:
-      - light.studio_front_window_lamp
-      - light.studio_side_window_lamp
-
 # Turn the preferred studio lamps on or off.
 operate_preferred_studio_lamps:
   alias: Operate Preferred Studio Lamps

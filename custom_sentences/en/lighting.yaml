@@ -44,11 +44,6 @@ intents:
       - sentences:
           - "[(turn | turn the)] night (light | lights) on"
   
-  SwitchStudioLamps:
-    data:
-      - sentences:
-          - "switch [studio] lamps"
-  
   TurnOffChristmasLights:
     data:
       - sentences:
