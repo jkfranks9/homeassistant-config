@@ -9,11 +9,11 @@
 #--------------------------------------------#
 
 # We keep a registry of mobile notifications, with the tag as the key and the notification parameters as the data.
-- trigger:
-    - platform: event
+- triggers:
+    - trigger: event
       event_type: register_mobile_tag
   
-    - platform: event
+    - trigger: event
       event_type: unregister_mobile_tag
   
   sensor:

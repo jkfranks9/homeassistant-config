@@ -12,8 +12,8 @@
 # since it appears none of the media player entities change state when the Alexa Media Player update_last_called service is invoked.
 # Obviously attributes are updated but not the state, so after we call the update_last_called service we issue the event that triggers
 # this sensor. 
-- trigger:
-    - platform: event
+- triggers:
+    - trigger: event
       event_type: update_last_alexa_sensor
     
   sensor:

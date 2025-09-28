@@ -458,6 +458,7 @@
 
 - alias: Notify Jon Arriving Soon
   id: 'notify_jon_arriving_soon'
+  
   use_blueprint:
     path: notification/proximity_notify.yaml
     input:
@@ -467,6 +468,7 @@
 
 - alias: Notify Mike Arriving Soon
   id: 'notify_mike_arriving_soon'
+  
   use_blueprint:
     path: notification/proximity_notify.yaml
     input:
@@ -476,6 +478,7 @@
 
 - alias: Notify Sarah Arriving Soon
   id: 'notify_sarah_arriving_soon'
+  
   use_blueprint:
     path: notification/proximity_notify.yaml
     input:
@@ -1166,12 +1169,12 @@
       event_data:
         entity_id: timer.astronomy_friendly
     
-  action:
+  actions:
     - variables:
         tag: "{{ trigger.event.data.entity_id | replace('timer.', '') }}"
     
     # Remove the notification and unregister the tag.
-    - service: script.remove_mobile_notification
+    - action: script.remove_mobile_notification
       data:
         tag: "{{ tag }}"
 

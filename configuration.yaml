@@ -20,7 +20,6 @@ homeassistant:
 #========================#
 
 automation:     !include_dir_merge_list automation
-cover:          !include covers.yaml
 group:          !include_dir_merge_named group
 intent_script:  !include_dir_merge_named intent_script
 logger:         !include logger.yaml
@@ -115,28 +114,6 @@ mqtt:
 
 wake_on_lan:
 
-#==================#
-#     Switches     #
-#==================#
-
-switch:
-
-  # Amazon Smart Plug ... copies the input boolean of the same name, allowing the plug to be a switch (and thus a light),
-  # which in turn allows it to be placed in a group.
-  - platform: template
-    switches:
-      alexa_ha_plug:
-        friendly_name: Office Bookcase
-        value_template: "{{ is_state('input_boolean.alexa_ha_plug', 'on') }}"
-        turn_on:
-          - service: input_boolean.turn_on
-            entity_id:
-              - input_boolean.alexa_ha_plug
-        turn_off:
-          - service: input_boolean.turn_off
-            entity_id:
-              - input_boolean.alexa_ha_plug
-
 #================================#
 #     Universal Media Player     #
 #================================#
@@ -152,11 +129,11 @@ media_player:
     browse_media_entity: media_player.shield_tv_cast
     commands:
       turn_off:
-        service: media_player.turn_off
+        action: media_player.turn_off
         data:
           entity_id: media_player.shield_android_tv
       turn_on:
-        service: media_player.turn_on
+        action: media_player.turn_on
         data:
           entity_id: media_player.shield_android_tv
 

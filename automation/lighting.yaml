@@ -179,18 +179,18 @@
 - alias: Enable Extended Away Mode
   id: enable_extended_away_mode
   
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: input_datetime.extended_away_start
   
-  action:
+  actions:
     
     # Turn on extended away mode.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.extended_away_mode
     
     # Set thermostat holds.
-    - service: script.set_extended_thermostat_holds
+    - action: script.set_extended_thermostat_holds
       data:
         heat_temp: "{{ states('input_number.extended_hold_heat_temp') }}"
         cool_temp: "{{ states('input_number.extended_hold_cool_temp') }}"
@@ -199,23 +199,23 @@
 - alias: Disable Extended Away Mode
   id: disable_extended_away_mode
   
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: input_datetime.extended_away_end
   
-  action:
+  actions:
     
     # Turn off extended away mode.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.extended_away_mode
     
     # Remove thermostat holds.
-    - service: script.remove_thermostat_hold
+    - action: script.remove_thermostat_hold
       data:
         thermostat_entity: climate.downstairs
         extended: true
     
-    - service: script.remove_thermostat_hold
+    - action: script.remove_thermostat_hold
       data:
         thermostat_entity: climate.upstairs
         extended: true
@@ -289,23 +289,23 @@
 - alias: Run Extended Away Lights
   id: run_extended_away_lights
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_boolean.extended_away_mode
       to: 'on'
     
-    - platform: state
+    - trigger: state
       entity_id: input_boolean.nighttime
       to: 'off'
     
-    - platform: state
+    - trigger: state
       entity_id: sun.sun
       to: below_horizon
     
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
   
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.extended_away_mode
       state: 'on'
@@ -318,7 +318,7 @@
       entity_id: sun.sun
       state: below_horizon
   
-  action:
+  actions:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
@@ -331,7 +331,7 @@
         group_lights_filtered_entities: "{{ expand(group_id) | rejectattr('entity_id', 'in', normal_lights) | map(attribute = 'entity_id') | list }}"
               
     # Initialize the early return toggle.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.extended_away_early_return
     
     # Repeat until the conditions are no longer met.
@@ -353,7 +353,7 @@
           #
           # - If the number of lights currently on exceeds the maximum, pick an entity from those that are already on.
           # - Otherwise, pick any entity from the away group.
-          - service: homeassistant.toggle
+          - action: homeassistant.toggle
             data:
               entity_id: "{{ toggle_entity }}"
      
@@ -364,13 +364,14 @@
           - wait_template: "{{ is_state('input_boolean.extended_away_mode', 'off') }}"
             timeout:
               minutes: "{{ range(10, 60) | random }}"
+          
           - if:
               - "{{ wait.completed }}"
             
             then:
               
               # Turn on the early return toggle. Due to local variable scope, I can't just use the wait.completed flag below.
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 entity_id: input_boolean.extended_away_early_return
       
         # Conditions that cause us to end the repeat sequence.
@@ -390,15 +391,15 @@
           state: 'off'
       
       then:
-        - service: homeassistant.turn_off
+        - action: homeassistant.turn_off
           entity_id: light.away_lights
       
       else:
-        - service: homeassistant.turn_on
+        - action: homeassistant.turn_on
           data:
             entity_id: "{{ normal_lights }}"
         
-        - service: homeassistant.turn_off
+        - action: homeassistant.turn_off
           data:
             entity_id: "{{ group_lights_filtered_entities }}"
 
@@ -407,14 +408,14 @@
 - alias: Turn Off Extended Away Mode
   id: 'turn_off_extended_away_mode'
   
-  trigger:
-    - platform: template
+  triggers:
+    - trigger: template
       value_template: "{{ states('sensor.home_jon_distance') | int(0) < 13000 }}"
       
-  condition: "{{ is_state('sensor.home_jon_direction_of_travel', 'towards') }}"
+  conditions: "{{ is_state('sensor.home_jon_direction_of_travel', 'towards') }}"
   
-  action:
-    - service: script.turn_off_extended_away_mode
+  actions:
+    - action: script.turn_off_extended_away_mode
 
 #=========================#
 #     Motion Sensors      #
@@ -769,13 +770,13 @@
 - alias: Turn On Office Bookcase Via Alexa
   id: 'turn_on_office_bookcase_via_alexa'
 
-  trigger:
-  - platform: state
+  triggers:
+  - trigger: state
     entity_id: input_boolean.alexa_ha_plug
     to: 'on'
 
-  action:
-    - service: media_player.play_media
+  actions:
+    - action: media_player.play_media
       target:
         entity_id: media_player.family_room_echo
       data:
@@ -786,13 +787,13 @@
 - alias: Turn Off Office Bookcase Via Alexa
   id: 'turn_off_office_bookcase_via_alexa'
 
-  trigger:
-  - platform: state
+  triggers:
+  - trigger: state
     entity_id: input_boolean.alexa_ha_plug
     to: 'off'
 
-  action:
-    - service: media_player.play_media
+  actions:
+    - action: media_player.play_media
       target:
         entity_id: media_player.family_room_echo
       data:
@@ -808,12 +809,12 @@
 - alias: Stop Bath Time
   id: 'stop_bath_time'
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.bath_time
   
-  action:
-    - service: automation.turn_on
+  actions:
+    - action: automation.turn_on
       entity_id: automation.run_studio_motion_based_light

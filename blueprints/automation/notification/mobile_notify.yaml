@@ -254,10 +254,10 @@ variables:
   
   title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"
 
-trigger:
+triggers:
   
   # State trigger: notify
-  - platform: state
+  - trigger: state
     entity_id: !input entity
     from: !input from_state
     to: !input to_state
@@ -265,7 +265,7 @@ trigger:
     id: state_notify
   
   # State trigger: clear
-  - platform: state
+  - trigger: state
     entity_id: !input entity
     from: !input to_state
     to: !input from_state
@@ -275,7 +275,7 @@ trigger:
   #----------------------------------------------------
   
   # Numeric state trigger (above): notify
-  - platform: numeric_state
+  - trigger: numeric_state
     entity_id: !input entity
     value_template: !input numeric_notify_template
     above: !input numeric_notify_threshold
@@ -283,7 +283,7 @@ trigger:
     id: numeric_above_notify
   
   # Numeric state trigger (above): clear
-  - platform: numeric_state
+  - trigger: numeric_state
     entity_id: !input entity
     value_template: !input numeric_clear_template
     below: !input numeric_clear_threshold
@@ -293,7 +293,7 @@ trigger:
   #----------------------------------------------------
   
   # Numeric state trigger (below): notify
-  - platform: numeric_state
+  - trigger: numeric_state
     entity_id: !input entity
     value_template: !input numeric_notify_template
     below: !input numeric_notify_threshold
@@ -301,7 +301,7 @@ trigger:
     id: numeric_below_notify
   
   # Numeric state trigger (below): clear
-  - platform: numeric_state
+  - trigger: numeric_state
     entity_id: !input entity
     value_template: !input numeric_clear_template
     above: !input numeric_clear_threshold
@@ -311,7 +311,7 @@ trigger:
   #----------------------------------------------------
   
   # Time trigger: notify
-  - platform: time
+  - trigger: time
     at: !input time_of_day
     enabled: "{{ tv_trigger_type == 'time' }}"
     id: time_notify
@@ -319,7 +319,7 @@ trigger:
   #----------------------------------------------------
   
   # Event trigger: notify
-  - platform: event
+  - trigger: event
     event_type: !input event_type
     event_data: !input event_data
     enabled: "{{ tv_trigger_type == 'event' }}"
@@ -328,7 +328,7 @@ trigger:
   #----------------------------------------------------
   
   # Template trigger: notify
-  - platform: template
+  - trigger: template
     value_template: !input template
     enabled: "{{ tv_trigger_type == 'template' }}"
     id: template_notify
@@ -336,7 +336,7 @@ trigger:
   #----------------------------------------------------
   
   # Calendar trigger: notify
-  - platform: calendar
+  - trigger: calendar
     event: start
     entity_id: calendar.calendar
     offset: !input calendar_offset
@@ -346,20 +346,20 @@ trigger:
   #----------------------------------------------------
   
   # Leapfrog trigger: notify
-  - platform: numeric_state
+  - trigger: numeric_state
     entity_id: !input current_value_entity
     above: !input due_value_entity
     enabled: "{{ tv_trigger_type == 'leapfrog' }}"
     id: leapfrog_notify
   
   # Leapfrog trigger: clear
-  - platform: numeric_state
+  - trigger: numeric_state
     entity_id: !input due_value_entity
     above: !input current_value_entity
     enabled: "{{ tv_trigger_type == 'leapfrog' and tv_enable_clear_trigger == true }}"
     id: leapfrog_clear
 
-condition: 
+conditions: 
   
   # Weed out junk for triggers that contain states.
   - "{{ trigger.from_state.state not in ['unknown', 'unavailable'] if trigger.from_state is defined else true }}"
@@ -367,7 +367,7 @@ condition:
   # Ensure the event contains the calendar tag for a calendar trigger.
   - "{{ input_calendar_tag in trigger.calendar_event.summary if tv_trigger_type == 'calendar' else true }}"
 
-action:
+actions:
   
   # Delay before checking the input conditions.
   - delay: !input delay

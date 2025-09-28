@@ -17,7 +17,7 @@ variables:
 sequence:
     
   # Activate Shield TV streaming in the cinema.
-  - service: script.activate_cinema
+  - action: script.activate_cinema
     data:
       activity: Enable Streaming
       need_kodi: false
@@ -33,18 +33,18 @@ sequence:
     
   # After a short delay, bring up the target application on the Shield TV.
   - delay: '00:00:02'
-  - service: remote.turn_on
+  - action: remote.turn_on
     target:
       entity_id: remote.shield_android_tv
     data:
       activity: "{{ input_appl_name }}"
   
   # Now switch the receiver to the proper input so the application can be viewed on screen.
-  - service: remote.send_command
+  - action: remote.send_command
     entity_id: remote.harmony_hub
     data:
       command: 'InputCbl/Sat'
       device: Marantz Receiver
   
   # Establish the target lighting.
-  - service: script.set_theater_dark_delay
+  - action: script.set_theater_dark_delay

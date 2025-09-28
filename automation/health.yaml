@@ -7,13 +7,13 @@
   id: 'save_monthly_calories'
   
   # Trigger when the total monthly calories sensor changes.
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.total_monthly_calories
     
   # This should ensure we are actually changing from a valid state, and not just triggering because
   # the current value is 0, and that's it's the first day of the month.
-  condition:
+  conditions:
     - "{{ now().day == 1 }}"
     
     - "{{ trigger.from_state and trigger.from_state.state | float(0) > 0.0 }}"
@@ -22,14 +22,14 @@
   variables:
     month: "{{ as_timestamp(trigger.from_state.last_changed) | timestamp_custom('%b') | lower() }}"
   
-  action:
-    - service: system_log.write
+  actions:
+    - action: system_log.write
       data:
         message: "{{ 'calories from state last changed/month: ' ~ trigger.from_state.last_changed ~ ' / ' ~ month }}"
         level: debug
     
     # Set the correct history value using the month variable to complete the target entity ID.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: "input_number.calories_curr_year_{{ month }}"
       data:
@@ -63,14 +63,14 @@
             sequence:
               
               # Copy the current year value to the previous year for the corresponding month.
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: "input_number.calories_prev_year_{{ months[repeat.index-1] }}"
                 data:
                   value: "{{ states('input_number.calories_curr_year_' + months[repeat.index-1]) }}"
               
               # Rest the current year value to zero.
-              - service: input_number.set_value
+              - action: input_number.set_value
                 target:
                   entity_id: "input_number.calories_curr_year_{{ months[repeat.index-1] }}"
                 data:
@@ -87,12 +87,12 @@
 - alias: Copy Daily Steps
   id: copy_daily_steps
   
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: '23:59:00'
   
-  action:
-    - service: input_number.set_value
+  actions:
+    - action: input_number.set_value
       target:
         entity_id: input_number.steps_daily
       data:
@@ -101,6 +101,7 @@
 # Workout exercise.
 - alias: Process Workout Exercise
   id: 'process_workout_exercise'
+  
   use_blueprint:
     path: health/process_exercise.yaml
     input:
@@ -110,6 +111,7 @@
 # Yard work exercise.
 - alias: Process Yard Work Exercise
   id: 'process_yard_work_exercise'
+  
   use_blueprint:
     path: health/process_exercise.yaml
     input:
@@ -119,6 +121,7 @@
 # Other exercise.
 - alias: Process Other Exercise
   id: 'process_other_exercise'
+  
   use_blueprint:
     path: health/process_exercise.yaml
     input:
@@ -128,6 +131,7 @@
 # Steps exercise.
 - alias: Process Steps Exercise
   id: 'process_steps_exercise'
+  
   use_blueprint:
     path: health/process_exercise.yaml
     input:

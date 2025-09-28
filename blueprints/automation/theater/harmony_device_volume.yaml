@@ -12,19 +12,20 @@ blueprint:
       name: Harmony Device Name
       description: The name of the Harmony device, for example 'BD Player'.
 
+# The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_device_name: !input device_name
   
   selected_device: "{{ input_device_name.replace(' ', '_') | lower }}"
   selected_device_volume: "{{ states('input_number.' ~ selected_device ~ '_volume') | float(0.60) }}"
 
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: sensor.harmony_hub
     to: !input device_name
 
-action:
-  - service: script.set_receiver_volume
+actions:
+  - action: script.set_receiver_volume
     data:
       target_name: "{{ input_device_name }}"
       volume: "{{ selected_device_volume }}"

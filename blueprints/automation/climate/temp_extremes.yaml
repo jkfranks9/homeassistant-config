@@ -35,15 +35,15 @@ variables:
   input_result_entity: !input result_entity
 
 # Trigger on any change to the temperature sensor.
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: !input sensor_entity
 
 # It's possible that the temperature sensor can't be contacted, resulting (I believe) in the entity having a state
 # of 0.0, so ignore such a value and just wait for the next sensor update.
-condition: "{{ trigger.to_state.state | float(0) != 0.0 }}"
+conditions: "{{ trigger.to_state.state | float(0) != 0.0 }}"
 
-action:
+actions:
   
   # Proceed according to the requested calculation type.
   - choose:
@@ -54,7 +54,7 @@ action:
       sequence:
     
         # Set the (possible) new minimum value.
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: !input result_entity
           data:
@@ -66,7 +66,7 @@ action:
       sequence:
     
         # Set the (possible) new maximum value.
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: !input result_entity
           data:
@@ -74,7 +74,7 @@ action:
     
     # Invalid type, log it.
     default:
-      - service: system_log.write
+      - action: system_log.write
         data:
           message: "Invalid calculation type {{ input_type }} specified"
           level: error

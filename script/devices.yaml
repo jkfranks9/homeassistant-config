@@ -7,11 +7,11 @@ lock_pc:
   alias: Lock PC
   
   sequence:
-    - service: button.press
+    - action: button.press
       target:
         entity_id: button.legion_t530_lock
     
-    - service: button.press
+    - action: button.press
       target:
         entity_id: button.legion_t530_monitorsleep
 
@@ -20,7 +20,7 @@ turn_off_pc:
   alias: Turn Off PC
   
   sequence:
-    - service: button.press
+    - action: button.press
       target:
         entity_id: button.legion_t530_shutdown
 
@@ -31,14 +31,14 @@ turn_off_pc:
 # Restart Fire TV stick.
 restart_fire_tv:
   alias: Restart Fire TV
-  sequence:
-    
-    - service: switch.turn_off
+  
+  sequence:    
+    - action: switch.turn_off
       entity_id: switch.fire_tv_plug
     
     - delay: '00:00:05'
     
-    - service: switch.turn_on
+    - action: switch.turn_on
       entity_id: switch.fire_tv_plug
 
 #===================#
@@ -48,14 +48,14 @@ restart_fire_tv:
 # Restart Shield TV.
 restart_shield_tv:
   alias: Restart Shield TV
-  sequence:
-    
-    - service: switch.turn_off
+  
+  sequence:    
+    - action: switch.turn_off
       entity_id: switch.shield_tv_plug
     
     - delay: '00:00:05'
     
-    - service: switch.turn_on
+    - action: switch.turn_on
       entity_id: switch.shield_tv_plug
 
 #========================#
@@ -66,8 +66,7 @@ restart_shield_tv:
 enable_family_room_av:
   alias: Enable Family Room AV
   
-  sequence:
-    
+  sequence:    
     - action: switch.turn_on
       entity_id:
         - switch.fire_tv_plug
@@ -76,8 +75,8 @@ enable_family_room_av:
 # Turn off family room AV.
 disable_family_room_av:
   alias: Disable Family Room AV
-  sequence:
-    
+  
+  sequence:    
     - action: switch.turn_off
       entity_id:
         - switch.fire_tv_plug
@@ -174,13 +173,13 @@ update_laundry_history_time_ranges:
     
     # Set the new start/stop times. Note that we add 60 seconds to the stop time, in order to be able to see any final 
     # transitions of the debug entities.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: "{{ start_entity_prefix ~ '1' }}"
       data_template:
         timestamp: "{{ start_time }}"
     
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: "{{ stop_entity_prefix ~ '1' }}"
       data_template:
@@ -248,9 +247,8 @@ suspend_deep_sleep:
     topic:
       description: 'The battery sensor MQTT topic.'
   
-  sequence:
-  
-  - service: mqtt.publish
+  sequence:  
+  - action: mqtt.publish
     data:
       topic:   "{{ topic }}"
       payload: 'ON'
@@ -264,14 +262,13 @@ resume_deep_sleep:
     topic:
       description: 'The battery sensor MQTT topic.'
   
-  sequence:
-  
-  - service: mqtt.publish
+  sequence:  
+  - action: mqtt.publish
     data:
       topic:   "{{ topic }}"
       payload: 'OFF'
   
-  - service: mqtt.publish
+  - action: mqtt.publish
     data:
       topic:   "{{ topic }}"
       payload: ''
@@ -329,7 +326,7 @@ set_fan_to_speed:
       
       then:    
         # Set the fan to the specified speed. 
-        - service: fan.turn_on
+        - action: fan.turn_on
           target:
             entity_id: "{{ entity_id }}"
           data:
@@ -337,7 +334,7 @@ set_fan_to_speed:
     
     # To calculate estimated power consumption, we need to keep track of the specified speed. We do this
     # using a unique input number for each fan. Lovely.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: "{{ fan_speed_entity }}"
       data:
@@ -383,7 +380,7 @@ control_fan_for_temperature:
       - conditions: "{{ states(temperature_entity_id) | float(0) >= high_threshold }}"
       
         sequence:
-          - service: script.set_fan_to_speed
+          - action: script.set_fan_to_speed
             data:
               entity_id: "{{ fan_entity_id }}"
               speed: 99
@@ -391,7 +388,7 @@ control_fan_for_temperature:
       - conditions: "{{ states(temperature_entity_id) | float(0) >= med_threshold }}"
       
         sequence:
-          - service: script.set_fan_to_speed
+          - action: script.set_fan_to_speed
             data:
               entity_id: "{{ fan_entity_id }}"
               speed: 66
@@ -399,13 +396,13 @@ control_fan_for_temperature:
       - conditions: "{{ states(temperature_entity_id) | float(0) >= low_threshold }}"
       
         sequence:
-          - service: script.set_fan_to_speed
+          - action: script.set_fan_to_speed
             data:
               entity_id: "{{ fan_entity_id }}"
               speed: 33
       
       default:
-        - service: script.set_fan_to_speed
+        - action: script.set_fan_to_speed
           data:
             entity_id: "{{ fan_entity_id }}"
             speed: 0
@@ -417,7 +414,7 @@ control_fan_for_temperature:
     - delay: "{{ timeout }}" 
     
     # Then turn the fan off.
-    - service: script.set_fan_to_speed
+    - action: script.set_fan_to_speed
       data:
         entity_id: "{{ fan_entity_id }}"
         speed: 0

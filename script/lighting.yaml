@@ -5,6 +5,7 @@
 # Turn off extended away mode if Jon returns home early.
 turn_off_extended_away_mode:
   alias: Turn Off Extended Away Mode  
+  
   sequence:
 
     # Continue only if extended away mode is currently on.  
@@ -14,7 +15,7 @@ turn_off_extended_away_mode:
     
     # Set the extended away end 2 minutes from now (the extra time is just to make sure the timing satifies my paranoia).
     # This in turn will trigger the Disable Extended Away Mode automation.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.extended_away_end
       data:
@@ -176,12 +177,11 @@ turn_off_christmas_lights:
 start_bath_time:
   alias: Start Bath Time
   
-  sequence:
-    
-    - service: automation.turn_off
+  sequence:    
+    - action: automation.turn_off
       entity_id: automation.run_studio_motion_based_light
     
-    - service: timer.start
+    - action: timer.start
       data:
         entity_id: timer.bath_time
         duration: '00:45:00'
@@ -278,9 +278,8 @@ operate_preferred_studio_night_lights:
 turn_on_kitchen_lights:
   alias: Turn On Kitchen Lights
   
-  sequence:
-    
-    - service: light.turn_on
+  sequence:    
+    - action: light.turn_on
       entity_id:
         - light.kitchen_island
         - light.kitchen_sink
@@ -288,17 +287,15 @@ turn_on_kitchen_lights:
 turn_on_bright_kitchen_lights:
   alias: Turn On Bright Kitchen Lights
   
-  sequence:
-    
-    - service: light.turn_on
+  sequence:    
+    - action: light.turn_on
       entity_id: light.kitchen_lights
 
 turn_off_kitchen_lights:
   alias: Turn Off Kitchen Lights
   
-  sequence:
-    
-    - service: light.turn_off
+  sequence:    
+    - action: light.turn_off
       entity_id: light.kitchen_lights
 
 #====================#
@@ -312,8 +309,7 @@ turn_off_fan_lights:
     light_entity:
       description: List of fan light entities to be turned off.
   
-  sequence:
-    
+  sequence:    
     - repeat:
         for_each: "{{ light_entity }}"
         

@@ -21,7 +21,7 @@ set_thermostat_preset:
         - "{{ climate_name != 'upstairs' or is_state('binary_sensor.penthouse_occupied', 'off') }}"
       
       then:    
-        - service: climate.set_preset_mode
+        - action: climate.set_preset_mode
           target:
             entity_id: "{{ thermostat_entity }}"
           data:
@@ -51,7 +51,7 @@ set_temporary_thermostat_hold:
   sequence:
     
     # Create a vacation to simulate a hold, using today's date/time, plus the input days for the end. 
-    - service: ecobee.create_vacation
+    - action: ecobee.create_vacation
       data_template:
         entity_id: "{{ thermostat_entity }}"
         vacation_name: "Temporary"
@@ -82,7 +82,7 @@ set_extended_thermostat_holds:
     
     # Create vacations to simulate a hold, using the extended away dates/times. 
     # We should remove the vacations when the extended away ends.
-    - service: ecobee.create_vacation
+    - action: ecobee.create_vacation
       data_template:
         entity_id: climate.downstairs
         vacation_name: "{{ start_date }}"
@@ -93,7 +93,7 @@ set_extended_thermostat_holds:
         heat_temp: "{{ heat_temp }}"
         cool_temp: "{{ cool_temp }}"
     
-    - service: ecobee.create_vacation
+    - action: ecobee.create_vacation
       data_template:
         entity_id: climate.upstairs
         vacation_name: "{{ start_date }}"
@@ -126,7 +126,7 @@ remove_thermostat_hold:
         vacation_name: "{{ iif (extended == true, states('input_datetime.extended_away_start').split(' ')[0], 'Temporary') }}"
     
     # Remove the vacation on the thermostat.
-    - service: ecobee.delete_vacation
+    - action: ecobee.delete_vacation
       data_template:
         entity_id: "{{ thermostat_entity }}"
         vacation_name: "{{ vacation_name }}"

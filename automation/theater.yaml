@@ -9,8 +9,8 @@
   trace:
     stored_traces: 20
 
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: media_player.shield_tv
       from:
         - 'paused'
@@ -19,15 +19,15 @@
       for: 00:00:02
   
   # Sanity check to prevent false triggers.
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.theater_open
       state: 'on'
   
-  action:  
+  actions:  
     
     # Restore theater lighting.
-    - service: script.restore_lighting_on_resume
+    - action: script.restore_lighting_on_resume
 
 #======================#
 #     Cinema Close     #
@@ -36,19 +36,20 @@
 # Close the cinema when the Harmony is powered off.   
 - alias: Close Cinema
   id: close_cinema
-  trigger:
-    - platform: state
+  
+  triggers:
+    - trigger: state
       entity_id: sensor.harmony_hub
       to: 'PowerOff'
   
   # Sanity check to prevent false triggers.
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.theater_open
       state: 'on'
   
-  action:
-    - service: script.close_cinema
+  actions:
+    - action: script.close_cinema
 
 #===================================#
 #     Cinema Open/Close Control     #
@@ -60,21 +61,21 @@
 - alias: Handle Cinema Usage Delay
   id: handle_cinema_usage_delay
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.cinema_usage_delay
   
-  action:
+  actions:
     - if:
         - "{{ states('input_boolean.theater_open') == 'off' }}"
       
       then:
-        - service: script.open_cinema
+        - action: script.open_cinema
       
       else:
-        - service: script.close_cinema
+        - action: script.close_cinema
 
 #==================================#
 #     Projector Error Handling     #
@@ -332,15 +333,17 @@
 # This automation sets the volume to a default level a short time after the receiver is powered on.
 - alias: Initialize Turn On Volume
   id: initialize_turn_on_volume
-  trigger:
-    - platform: state
+  
+  triggers:
+    - trigger: state
       entity_id: media_player.marantz_sr7012
       from: 'off'
       to: 'on'
   
-  action:
+  actions:
     - delay: '00:00:30'
-    - service: media_player.volume_set
+    
+    - action: media_player.volume_set
       data:
         entity_id: media_player.marantz_sr7012
         volume_level: 0.60
@@ -351,12 +354,12 @@
   id: initialize_application_volume
   
   # Trigger on the state only, not any attributes.
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_number.selected_app_volume
       to:
   
-  action:
+  actions:
     
     # Get the selected app/device volume.
     #
@@ -368,7 +371,7 @@
         selected_app: "{{ states('input_select.volume_application').replace(' ', '_') | lower }}"
         selected_app_volume_entity: "{{ 'input_number.' ~ selected_app ~ '_volume' }}"
     
-    - service: script.set_application_volume
+    - action: script.set_application_volume
       data:
         volume_entity: "{{ selected_app_volume_entity }}"
         volume: "{{ trigger.to_state.state }}"
@@ -514,24 +517,24 @@
 - alias: Save Feature Movie Name
   id: save_feature_movie_name
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_select.kodi_movies
   
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.kodi_movie_list_restoration
       state: 'off'
     
     - "{{ ( trigger.to_state.state ) != ( 'Select' ) and ( trigger.to_state.state ) != ( 'unknown' ) }}"
   
-  action:
-    - service: system_log.write
+  actions:
+    - action: system_log.write
       data:
         message: "feature movie name: '{{ trigger.to_state.state }}'"
         level: debug
     
-    - service: input_text.set_value
+    - action: input_text.set_value
       data_template:
         entity_id: input_text.current_feature
         value: "{{ ( trigger.to_state.state ) }}"

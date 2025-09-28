@@ -413,8 +413,8 @@ update_last_alexa_device:
         
           # The Alexa Media Player integration kindly provides an event that indicates the above call has completed, so wait for it.
           - wait_for_trigger:
-            - trigger: event
-              event_type: alexa_media_last_called_event
+              - trigger: event
+                event_type: alexa_media_last_called_event
             timeout: "{{ wait_seconds }}"
         
           # If we didn't time out, update the Last Alexa sensor, using an event trigger. Otherwise, try again.

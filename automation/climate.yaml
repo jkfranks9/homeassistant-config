@@ -66,6 +66,7 @@
 # Attic temperatures.
 - alias: Set Minimum Attic Temperature
   id: set_minimum_attic_temperature
+  
   use_blueprint:
     path: climate/temp_extremes.yaml
     input:
@@ -75,6 +76,7 @@
 
 - alias: Set Maximum Attic Temperature
   id: set_maximum_attic_temperature
+  
   use_blueprint:
     path: climate/temp_extremes.yaml
     input:
@@ -85,6 +87,7 @@
 # Garage temperatures.
 - alias: Set Minimum Garage Temperature
   id: set_minimum_garage_temperature
+  
   use_blueprint:
     path: climate/temp_extremes.yaml
     input:
@@ -94,6 +97,7 @@
 
 - alias: Set Maximum Garage Temperature
   id: set_maximum_garage_temperature
+  
   use_blueprint:
     path: climate/temp_extremes.yaml
     input:
@@ -104,6 +108,7 @@
 # Outdoor temperatures.
 - alias: Set Minimum Outdoor Temperature
   id: set_minimum_outdoor_temperature
+  
   use_blueprint:
     path: climate/temp_extremes.yaml
     input:
@@ -113,6 +118,7 @@
 
 - alias: Set Maximum Outdoor Temperature
   id: set_maximum_outdoor_temperature
+  
   use_blueprint:
     path: climate/temp_extremes.yaml
     input:
@@ -128,15 +134,15 @@
 - alias: Turn Off Downstairs HVAC
   id: turn_off_downstairs_hvac
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.downstairs_doors_windows
       from: 'off'
       to: 'on'
       for: '00:02:00'
 
-  action:
-    - service: climate.turn_off
+  actions:
+    - action: climate.turn_off
       target:
         entity_id: climate.downstairs
 
@@ -144,19 +150,19 @@
 - alias: Turn On Downstairs HVAC
   id: turn_on_downstairs_hvac
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.downstairs_doors_windows
       from: 'on'
       to: 'off'
 
-  condition:
+  conditions:
     - condition: state
       entity_id: climate.downstairs
       state: 'off'
   
-  action:
-    - service: climate.turn_on
+  actions:
+    - action: climate.turn_on
       target:
         entity_id: climate.downstairs
 

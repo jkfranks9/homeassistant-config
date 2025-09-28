@@ -103,10 +103,10 @@ actions:
   
   # Wait for no motion detected.
   - wait_for_trigger:
-      platform: state
-      entity_id: !input motion_entity
-      from: "on"
-      to: "off"
+      - trigger: state
+        entity_id: !input motion_entity
+        from: "on"
+        to: "off"
   
   # Turn off the light (and fan) based on fan usage.
   - if:

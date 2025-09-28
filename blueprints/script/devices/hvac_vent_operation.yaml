@@ -33,7 +33,7 @@ sequence:
         - variables:
             vent_name: "{{ state_attr(repeat.item, 'friendly_name') }}"
         
-        - service: mqtt.publish
+        - action: mqtt.publish
           data_template:
             topic: "zigbee2mqtt/{{ vent_name }}/set"
             payload: "{\"position\": {{ input_position }}}"

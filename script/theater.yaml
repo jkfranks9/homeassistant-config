@@ -176,7 +176,7 @@ open_cinema:
   sequence:
     
     # Activate the cinema.
-    - service: script.activate_cinema
+    - action: script.activate_cinema
       data:
         activity: Open Cinema
         need_kodi: false
@@ -208,7 +208,7 @@ play_feature_movie:
   sequence:
     
     # Activate the cinema.
-    - service: script.activate_cinema
+    - action: script.activate_cinema
       data:
         activity: Enable Streaming
         need_kodi: true
@@ -223,7 +223,7 @@ play_feature_movie:
   
     # Send the GetMovies command to Kodi, with the target movie name. The Handle Kodi Movies Result script calls 
     # Process Single Kodi Movie Result below with the command result.
-    - service: kodi.call_method
+    - action: kodi.call_method
       data:
         entity_id: media_player.kodi
         method: VideoLibrary.GetMovies
@@ -653,7 +653,7 @@ check_cinema_usage_control:
       then:
         
         # Turn off the allowed toggle.
-        - service: input_boolean.turn_off
+        - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.cinema_usage_allowed
         
@@ -673,7 +673,7 @@ check_cinema_usage_control:
                 room: ['family_room', 'theater']
                 voice_type: announce
         
-            - service: timer.start
+            - action: timer.start
               data:
                 entity_id: timer.cinema_usage_delay
                 duration: "{{ delay }}"
@@ -681,12 +681,12 @@ check_cinema_usage_control:
       else:
         
         # Turn on the allowed toggle.
-        - service: input_boolean.turn_on
+        - action: input_boolean.turn_on
           target:
             entity_id: input_boolean.cinema_usage_allowed
     
         # Set the usage control timestamp.
-        - service: input_datetime.set_datetime
+        - action: input_datetime.set_datetime
           target:
             entity_id: input_datetime.cinema_usage_control
           data_template:
@@ -788,12 +788,12 @@ set_receiver_volume:
           max: 0.64
   
   sequence:
-    - service: system_log.write
+    - action: system_log.write
       data:
         message: "Setting volume for {{ target_name }} to {{ volume }}"
         level: debug
   
-    - service: media_player.volume_set
+    - action: media_player.volume_set
       data:
         entity_id: media_player.marantz_sr7012
         volume_level: "{{ volume | float(0.60) }}"
@@ -827,7 +827,7 @@ set_application_volume:
         activity: "{{ states('sensor.harmony_hub') }}"
     
     # Set the app-specific number, so the app will get set to this volume the next time it is opened/used.
-    - service: input_number.set_value
+    - action: input_number.set_value
       target:
         entity_id: "{{ volume_entity }}"
       data:
@@ -840,7 +840,7 @@ set_application_volume:
               (activity == 'BD Player' or activity == 'LD Player') }}"
       
       then:
-        - service: script.set_receiver_volume
+        - action: script.set_receiver_volume
           data:
             target_name: "{{ target_name }}"
             volume: "{{ volume }}"
@@ -853,7 +853,7 @@ raise_theater_volume:
   alias: Raise Theater Volume
   
   sequence:
-    - service: script.change_theater_volume
+    - action: script.change_theater_volume
       data:
         raise: true
 
@@ -861,7 +861,7 @@ lower_theater_volume:
   alias: Lower Theater Volume
   
   sequence:
-    - service: script.change_theater_volume
+    - action: script.change_theater_volume
       data:
         raise: false
 
@@ -893,13 +893,13 @@ change_theater_volume:
         - "{{ raise == true }}"
       
       then:
-        - service: script.set_application_volume
+        - action: script.set_application_volume
           data:
             volume_entity: "{{ volume_entity }}"
             volume: "{{ current_volume + 0.01 }}"
       
       else:
-        - service: script.set_application_volume
+        - action: script.set_application_volume
           data:
             volume_entity: "{{ volume_entity }}"
             volume: "{{ current_volume - 0.01 }}"
@@ -1083,6 +1083,7 @@ change_downstairs_lighting:
 # Worker script
 resume_worker:
   alias: Resume Worker
+  
   fields:
     device:
       description: 'The Harmony device name to be resumed.'
@@ -1091,14 +1092,14 @@ resume_worker:
   sequence:
   
     # Send the play command to the target device.
-    - service: remote.send_command
+    - action: remote.send_command
       entity_id: remote.harmony_hub
       data:
         command: Play
         device: "{{ device }}"
     
     # Restore theater lighting.
-    - service: script.restore_lighting_on_resume
+    - action: script.restore_lighting_on_resume
 
 # Call the worker script with the appropriate device based on the Harmony activity.
 # Note: The turntable cannot be controlled, so all we do is turn on some lights.
@@ -1110,32 +1111,32 @@ resume_cinema:
       - conditions: "{{ is_state('sensor.harmony_hub', 'Stream Player') or is_state('sensor.harmony_hub', 'Enable Streaming') }}"
         
         sequence:
-          - service: script.resume_worker
+          - action: script.resume_worker
             data:
               device: 'NVIDIA Shield TV'
       
       - conditions: "{{ is_state('sensor.harmony_hub', 'BD Player') }}"
         
         sequence:
-          - service: script.resume_worker
+          - action: script.resume_worker
             data:
               device: 'Sony DVD/Blu-ray Player'
       
       - conditions: "{{ is_state('sensor.harmony_hub', 'LD Player') }}"
         
         sequence:
-          - service: script.resume_worker
+          - action: script.resume_worker
             data:
               device: 'Panasonic Laserdisc Player'
       
       - conditions: "{{ is_state('sensor.harmony_hub', 'LP Player') }}"
         
         sequence:
-          - service: script.turn_on
+          - action: script.turn_on
             entity_id: script.set_theater_dim
       
       default:
-        - service: system_log.write
+        - action: system_log.write
           data:
             message: Current activity does not support resume command.
             level: warning
@@ -1147,11 +1148,11 @@ restore_lighting_on_resume:
   sequence:
   
     # Establish 'dark' theater lighting.
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.set_theater_dark
     
     # Turn off some downstairs lights.
-    - service: script.change_downstairs_lighting
+    - action: script.change_downstairs_lighting
       data:
         operation: resume
 
@@ -1203,7 +1204,7 @@ get_all_kodi_videos:
           # Send the command to Kodi to get all available videos. If all is well this drives the
           # Process Kodi Video Result automation, which selects random videos from the result and 
           # builds a Kodi playlist.
-          - service: kodi.call_method
+          - action: kodi.call_method
             target:
               entity_id: media_player.kodi
             data:
@@ -1279,8 +1280,7 @@ process_kodi_videos_result:
     result:
       description: The result from the GetMovies Kodi call.
   
-  sequence:
-  
+  sequence:  
     - variables:
         video_list_type: "{{ states('input_select.kodi_videos_type') }}"
         max_videos: "{{ states('input_number.kodi_videos_max_number_' ~ video_list_type ) | int(0) }}"
@@ -1531,7 +1531,7 @@ build_kodi_video_playlist:
   sequence:
   
     # Ensure the playlist is clear.
-    - service: kodi.call_method
+    - action: kodi.call_method
       target:
         entity_id: media_player.kodi
       data:
@@ -1546,7 +1546,7 @@ build_kodi_video_playlist:
         sequence:
           
           # Add the video to the playlist.
-          - service: kodi.call_method
+          - action: kodi.call_method
             target:
               entity_id: media_player.kodi
             data:
@@ -1560,7 +1560,7 @@ play_kodi_playlist:
   alias: Play Kodi Playlist
   
   sequence:
-    - service: kodi.call_method
+    - action: kodi.call_method
       target:
         entity_id: media_player.kodi
       data:
@@ -1643,13 +1643,13 @@ get_all_kodi_movies:
   sequence:
     
     # Activate Kodi on the Shield TV.
-    - service: script.activate_kodi
+    - action: script.activate_kodi
     
     - delay: '00:00:10'
   
     # Send the GetMovies command to Kodi. The Handle Kodi Movies Result script calls Process All Kodi Movies Result
     # below with the command result.
-    - service: kodi.call_method
+    - action: kodi.call_method
       data:
         entity_id: media_player.kodi
         method: VideoLibrary.GetMovies
@@ -1662,8 +1662,7 @@ process_all_kodi_movies_result:
     result:
       description: The result from the GetMovies Kodi call.
   
-  sequence:
-    
+  sequence:    
     - variables:
         movie_list: >
           {% set movies = result.get('movies') %}
@@ -1675,14 +1674,14 @@ process_all_kodi_movies_result:
           {{ ns.list | sort }}
     
     # Call the python script to populate the input select.
-    - service: pyscript.save_input_select_options
+    - action: pyscript.save_input_select_options
       data:
         entity: input_select.kodi_movies
         list: "{{ movie_list }}"
         file: '/config/all_movies_backup'
   
     # Exit the Kodi application.
-    - service: remote.send_command
+    - action: remote.send_command
       entity_id: remote.harmony_hub
       data:
         command: 'Home'
@@ -1690,6 +1689,6 @@ process_all_kodi_movies_result:
     - delay: '00:00:01'
   
     # Turn the Shield TV off again.
-    - service: media_player.turn_off
+    - action: media_player.turn_off
       data:
         entity_id: media_player.shield_tv

@@ -277,7 +277,7 @@ register_mobile_notification:
         - "{{ channel == 'temporary' }}"
       
       then:
-        - service: timer.start
+        - action: timer.start
           data:
             entity_id: "{{ 'timer.' ~ tag }}"
             duration: "{{ timeout }}"
@@ -298,7 +298,7 @@ register_mobile_notification:
         - "{{ problem > 0 }}"
       
       then:
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: input_number.vacuum_problems
           data:
@@ -329,8 +329,7 @@ remove_manual_mobile_notification:
       selector:
         entity:
   
-  sequence:
-    
+  sequence:    
     - variables:
         num_manual: "{{ states('sensor.mobile_tag_registry_manual_clear') }}"
         device_domain: "{{ voice_device.split('.')[0] }}"
@@ -413,15 +412,17 @@ remove_manual_mobile_notification:
             
               # Wait for the user to press a button.
               - wait_for_trigger:
-                  - platform: event
+                  - trigger: event
                     event_type: mobile_app_notification_action
                     event_data:
                       action: "{{ action_yes }}"
-                  - platform: event
+                  
+                  - trigger: event
                     event_type: mobile_app_notification_action
                     event_data:
                       action: "{{ action_yes_quit }}"
-                  - platform: event
+                  
+                  - trigger: event
                     event_type: mobile_app_notification_action
                     event_data:
                       action: "{{ action_no }}"

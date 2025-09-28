@@ -23,17 +23,17 @@
 - alias: Handle Device Initialization Catch 22
   id: handle_device_initialization_catch_22
   
-  trigger:
-    - platform: homeassistant
+  triggers:
+    - trigger: homeassistant
       event: start
   
-  action:
-    - service: input_boolean.turn_on
+  actions:
+    - action: input_boolean.turn_on
       entity_id: input_boolean.device_initialization_catch_22
     
     - delay: '00:01:30'
     
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.device_initialization_catch_22
 
 
@@ -47,20 +47,21 @@
   
   # Trigger if the battery is discharging for a short time. I want to ignore the frequent short power glitches,
   # but not leave the PC on too long.
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.cyber1_status_data
       to: 'OB DISCHRG'
       for: '00:01:00'
-    - platform: homeassistant
+    
+    - trigger: homeassistant
       event: start
   
-  condition:
+  conditions:
     - condition: state
       entity_id: sensor.cyber1_status_data
       state: 'OB DISCHRG'
   
-  action:
+  actions:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
        
@@ -107,19 +108,20 @@
 - alias: Handle UPS Critical
   id: 'handle_ups_critical'
   
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id: sensor.cyber1_battery_runtime
       below: 420
-    - platform: homeassistant
+    
+    - trigger: homeassistant
       event: start
   
-  condition:
+  conditions:
     - condition: numeric_state
       entity_id: sensor.cyber1_battery_runtime
       below: 420
   
-  action:
+  actions:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
        
@@ -154,20 +156,21 @@
 - alias: Handle Power Restoration
   id: 'handle_power_restoration'
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.cyber1_status_data
       to: 'OL CHRG'
       for: '00:02:00'
-    - platform: homeassistant
+    
+    - trigger: homeassistant
       event: start
   
-  condition:
+  conditions:
     - condition: state
       entity_id: sensor.cyber1_status_data
       state: 'OL CHRG'
   
-  action:
+  actions:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
        
@@ -234,22 +237,23 @@
 # Restart the NUT server service if it becomes unavailable.
 - alias: Reboot NUT Service
   id: reboot_nut_service
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.cyber1_status
       to: 'unavailable'
-    - platform: homeassistant
+    
+    - trigger: homeassistant
       event: start
   
-  condition:
+  conditions:
     - condition: state
       entity_id: sensor.cyber1_status
       state: 'unavailable'
   
-  action:
+  actions:
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
-    - service: shell_command.reboot_nut_service
+    - action: shell_command.reboot_nut_service
 
 #====================#
 #     House: Jon     #
@@ -435,14 +439,14 @@
 - alias: Handle Guest Arrival Cleanup
   id: handle_guest_arrival_cleanup
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.guest_arrival_cleanup
   
-  action:
-    - service: script.turn_on
+  actions:
+    - action: script.turn_on
       target:
         entity_id: script.close_garage_door_north
       data:
@@ -568,15 +572,15 @@
 - alias: Turn Off Penthouse Fan
   id: turn_off_penthouse_fan
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: switch.penthouse_fan
       from: 'off'
       to: 'on'
       for: '00:40:00'
   
-  action:
-    - service: switch.turn_off
+  actions:
+    - action: switch.turn_off
       entity_id: switch.penthouse_fan
 
 #===================#
@@ -588,29 +592,29 @@
   id: 'start_treadmill'
   
   # Trigger when the power usage of the treadmill rises above a threshold that indicates typical usage.
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id: sensor.treadmill_current_consumption
       above: 200
   
   # If the treadmill is paused during a workout, the power usage drops below the above threshold then rises again.
   # This re-triggers this automation, so this condition prevents overwriting the start time.
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.treadmill_triggered
       state: 'off'
   
-  action:
+  actions:
     
     # Set the treadmill start time.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.treadmill_start
       data_template:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Set the flag used in the above condition that prevents re-triggers on pause.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       target:
         entity_id: input_boolean.treadmill_triggered
 
@@ -624,18 +628,18 @@
   id: detect_treadmill_power_unavailable
   
   # Trigger when the power plug becomes unavailable.
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.treadmill_current_consumption
       to: 'unavailable'
   
   # Only continue if the start automation was previously triggered.
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.treadmill_triggered
       state: 'on'
   
-  action:
+  actions:
     - variables:
         minutes_since_start: >
           {% from 'utilities.jinja' import calc_time_diff %}
@@ -649,13 +653,13 @@
         - "{{ minutes_since_start <= (default_minutes - offset_minutes) }}"
       
       then:    
-        - service: timer.start
+        - action: timer.start
           data:
             entity_id: timer.treadmill_power
             duration: "{{ (default_minutes - minutes_since_start) * 60 }}"
       
       else:
-        - service: automation.trigger
+        - action: automation.trigger
           data:
             entity_id: automation.stop_treadmill
             skip_condition: false
@@ -665,12 +669,12 @@
   id: detect_treadmill_power_available
   
   # Trigger when the power plug becomes available.
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.treadmill_current_consumption
       from: 'unavailable'
   
-  action:
+  actions:
     
     # If the start automation was previously triggered, cancel the timer if it's running.
     - if:
@@ -685,7 +689,7 @@
               state: 'active'
           
           then:
-            - service: timer.cancel
+            - action: timer.cancel
               entity_id: timer.treadmill_power
       
       # The treadmill is not currently in use.
@@ -693,7 +697,7 @@
     
         # Turn off the treadmill power to conserve energy. Normally this happens in Stop Treadmill,
         # but if the power plug was unavailable at that time, we do it here.
-        - service: switch.turn_off
+        - action: switch.turn_off
           target:
             entity_id: switch.treadmill
 
@@ -701,14 +705,14 @@
 - alias: Handle Treadmill Power Timer
   id: handle_treadmill_power_timer
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: timer.finished
       event_data:
         entity_id: timer.treadmill_power
   
-  action:
-    - service: automation.trigger
+  actions:
+    - action: automation.trigger
       data:
         entity_id: automation.stop_treadmill
         skip_condition: false
@@ -822,6 +826,7 @@
 # Check if certain devices are somehow off.
 - alias: Check Refrigerator Off
   id: check_refrigerator_off
+  
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
@@ -831,6 +836,7 @@
 
 - alias: Check Microwave Off
   id: check_microwave_off
+  
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
@@ -840,6 +846,7 @@
 
 - alias: Check Projector Off
   id: check_projector_off
+  
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
@@ -993,36 +1000,36 @@
 - alias: Start Washer
   id: 'start_washer'
   
-  trigger:
-    - platform: state 
+  triggers:
+    - trigger: state 
       entity_id: sensor.washer_power_state
       from:
         - 'stop'
         - 'unknown'
       to: 'fill'
   
-  action:
+  actions:
     
     # Set the washer start time.
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.washer_start
       data_template:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     
     # Indicate load size is sensing.
-    - service: input_select.select_option
+    - action: input_select.select_option
       target:
         entity_id: input_select.washer_load_size
       data:
         option: '*sensing*'
     
     # Remember to backup the log tomorrow morning.
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       entity_id: input_boolean.backup_laundry_log
     
     # Log the start in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: basic
         prefix: Washer
@@ -1088,23 +1095,23 @@
 - alias: Start Washer Wash Blackout Timer
   id: 'start_washer_wash_blackout_timer'
   
-  trigger:
-    - platform: state 
+  triggers:
+    - trigger: state 
       entity_id: input_select.washer_state
       from: 'Wash Fill'
       to: 'Wash'
   
-  action:
+  actions:
     - variables:
         duration: '00:01:00'
     
-    - service: timer.start
+    - action: timer.start
       data:
         entity_id: timer.washer_wash_blackout
         duration: "{{ duration }}"
     
     # Log the event in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: timer
         prefix: Washer
@@ -1116,18 +1123,18 @@
 - alias: Start Washer Rinse Fill Blackout Timer
   id: 'start_washer_rinse_fill_blackout_timer'
   
-  trigger:
-    - platform: state 
+  triggers:
+    - trigger: state 
       entity_id: input_select.washer_state
       from: 'Wash Drain'
       to: 'Rinse Fill'
   
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.washer_fabric_softener
       state: 'on'
   
-  action:
+  actions:
     - variables:
         
         # The timer amount is based on the washer load size. If it's invalid, use the medium value and hope for the best.
@@ -1135,13 +1142,13 @@
           {% set load_size = states('input_select.washer_load_size') %}
           {{ iif(load_size == 'Small', '00:03:00', iif(load_size == 'Large', '00:05:00', '00:04:00')) }}
     
-    -  service: timer.start
-       data:
-         entity_id: timer.washer_rinse_fill_blackout
-         duration: "{{ duration }}"
+    - action: timer.start
+      data:
+        entity_id: timer.washer_rinse_fill_blackout
+        duration: "{{ duration }}"
     
     # Log the event in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: timer
         prefix: Washer
@@ -1153,23 +1160,23 @@
 - alias: Start Washer Rinse Blackout Timer
   id: 'start_washer_rinse_blackout_timer'
   
-  trigger:
-    - platform: state 
+  triggers:
+    - trigger: state 
       entity_id: input_select.washer_state
       from: 'Rinse Fill'
       to: 'Rinse'
   
-  action:
+  actions:
     - variables:
         duration: '00:01:00'
     
-    - service: timer.start
+    - action: timer.start
       data:
         entity_id: timer.washer_rinse_blackout
         duration: "{{ duration }}"
     
     # Log the event in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: timer
         prefix: Washer
@@ -1192,13 +1199,13 @@
   trace:
     stored_traces: 20
   
-  trigger:
-    - platform: state 
+  triggers:
+    - trigger: state 
       entity_id: sensor.washer_power_state
   
-  condition: "{{ trigger.from_state and trigger.from_state.state != 'unavailable' }}"
+  conditions: "{{ trigger.from_state and trigger.from_state.state != 'unavailable' }}"
   
-  action:
+  actions:
     
     # Delay one second so automations (above) that determine the load size have a chance to run before we do.
     - delay: '00:00:01'
@@ -1207,7 +1214,7 @@
         s: "{{ states('input_select.washer_state') }}"
     
     # Determine the washer state.
-    - service: input_select.select_option
+    - action: input_select.select_option
       data:
         entity_id: input_select.washer_state
         option: >
@@ -1245,7 +1252,7 @@
       then:
         
         # Log the state change in the laundry events log.
-        - service: script.log_laundry_event
+        - action: script.log_laundry_event
           data:
             event_type: basic
             prefix: Washer
@@ -1258,14 +1265,14 @@
           then:
             
             # Log the washer stop event.
-            - service: script.log_laundry_event
+            - action: script.log_laundry_event
               data:
                 event_type: basic
                 prefix: Washer
                 message: stopped
             
             # Update the washer history time ranges.
-            - service: script.update_laundry_history_time_ranges
+            - action: script.update_laundry_history_time_ranges
               data:
                 is_washer: true
                 start_time: "{{ state_attr('input_datetime.washer_start', 'timestamp') | int(0) }}"
@@ -1434,35 +1441,35 @@
 - alias: Turn Off Dryer Running
   id: turn_off_dryer_running
   
-  trigger:
+  triggers:
     
     # Trigger when the dryer done binary sensor turns on, indicating that both temperature and humidity have fallen.
-    - platform: state
+    - trigger: state
       entity_id: binary_sensor.dryer_done
       to: 'on'
 
-  condition:
+  conditions:
 
     # Make sure the dryer is running.
     - condition: state
       entity_id: input_boolean.dryer_running
       state: 'on'
   
-  action:
+  actions:
     
     # Turn off the dryer running flag.
-    - service: input_boolean.turn_off
+    - action: input_boolean.turn_off
       entity_id: input_boolean.dryer_running
     
     # Log the stop in the laundry events log.
-    - service: script.log_laundry_event
+    - action: script.log_laundry_event
       data:
         event_type: basic
         prefix: Dryer
         message: stopped
             
     # Update the dryer history time ranges.
-    - service: script.update_laundry_history_time_ranges
+    - action: script.update_laundry_history_time_ranges
       data:
         is_washer: false
         start_time: "{{ state_attr('input_datetime.dryer_start', 'timestamp') | int(0) }}"
@@ -1475,20 +1482,22 @@
 # Control the treadmill fan based on temperature.
 - alias: Turn On Treadmill Fan
   id: 'turn_on_treadmill_fan'
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_boolean.treadmill_triggered
       to: 'on'
-  action:
+  
+  actions:
     - choose:
       - conditions:
         - condition: numeric_state
           entity_id: climate.downstairs
           attribute: current_temperature
           below: 70.0
+        
         sequence:
           - delay: '00:10:00'
-          - service: switch.turn_on
+          - action: switch.turn_on
             entity_id: switch.treadmill_fan
       
       - conditions:
@@ -1496,34 +1505,35 @@
           entity_id: climate.downstairs
           attribute: current_temperature
           below: 75.0
+        
         sequence:
           - delay: '00:05:00'
-          - service: switch.turn_on
+          - action: switch.turn_on
             entity_id: switch.treadmill_fan
       
       default:
-        - service: switch.turn_on
+        - action: switch.turn_on
           entity_id: switch.treadmill_fan
 
 - alias: Turn Off Treadmill Fan
   id: 'turn_off_treadmill_fan'
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_boolean.treadmill_triggered
       to: 'off'
   
-  action:
+  actions:
     
     # Allow a nice cooldown period.
     - delay: '00:02:00'
     
     # Turn off the treadmill fan.
-    - service: switch.turn_off
+    - action: switch.turn_off
       entity_id: switch.treadmill_fan
     
     # Now turn on the office fan so I can continue cooling down.
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.control_fan_for_temperature
       data:
         variables:
@@ -1592,15 +1602,15 @@
 - alias: Update PC Lastboot
   id: update_pc_lastboot
   
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.legion_t530_lastboot
       to:
   
-  condition: "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
+  conditions: "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
   
-  action:
-    - service: input_datetime.set_datetime
+  actions:
+    - action: input_datetime.set_datetime
       target:
         entity_id: input_datetime.pc_lastboot
       data:

@@ -1,0 +1,45 @@
+#================#
+#     Covers     #
+#================#
+
+- cover:
+
+    #------------------------#
+    #   -- Garage Doors --   #
+    #------------------------#
+    
+    - name: Garage Door North
+      state: >
+        {% if is_state('binary_sensor.shelly1_garage_north_contact', 'on') %}
+          closed
+        {% else %}
+          open
+        {% endif %}
+      device_class: garage
+      open_cover:
+        action: switch.turn_on
+        entity_id: switch.shelly1_garage_north
+      close_cover:
+        action: switch.turn_on
+        entity_id: switch.shelly1_garage_north
+      stop_cover:
+        action: switch.turn_on
+        entity_id: switch.shelly1_garage_north
+    
+    - name: Garage Door South
+      state: >
+        {% if is_state('binary_sensor.shelly1_garage_south_contact', 'on') %}
+          closed
+        {% else %}
+          open
+        {% endif %}
+      device_class: garage
+      open_cover:
+        action: switch.turn_on
+        entity_id: switch.shelly1_garage_south
+      close_cover:
+        action: switch.turn_on
+        entity_id: switch.shelly1_garage_south
+      stop_cover:
+        action: switch.turn_on
+        entity_id: switch.shelly1_garage_south

@@ -25,7 +25,7 @@ variables:
 sequence:
     
   # Activate the Harmony activity in the cinema.
-  - service: script.activate_cinema
+  - action: script.activate_cinema
     data:
       activity: "{{ input_activity }}"
       need_kodi: false
@@ -40,4 +40,4 @@ sequence:
       - stop: "Cinema usage is denied."
   
   # Establish the target lighting.
-  - service: "{{ input_lighting }}"
+  - action: "{{ input_lighting }}"

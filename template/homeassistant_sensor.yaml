@@ -8,11 +8,11 @@
 #   -- Global Variables Hack --   #
 #---------------------------------#
 
-- trigger:
-    - platform: event
+- triggers:
+    - trigger: event
       event_type: set_variable
   
-    - platform: event
+    - trigger: event
       event_type: remove_variable
   
   sensor:
@@ -36,14 +36,14 @@
 
 # Mini todo list. This contains a daily suggested list of items to work on, including calendar events, cleaning, yard work,
 # office tasks, major/minor projects, etc. Basically everything I need to help organize my life.
-- trigger:
-    - platform: event
+- triggers:
+    - trigger: event
       event_type: add_mini_todo_item
     
-    - platform: event
+    - trigger: event
       event_type: remove_mini_todo_item
     
-    - platform: event
+    - trigger: event
       event_type: reset_mini_todo_items
   
   sensor:
@@ -76,14 +76,14 @@
 # mini-todo list automation throughout the week.
 
 # Weekly cleaning list
-- trigger:
-    - platform: event
+- triggers:
+    - trigger: event
       event_type: add_cleaning_item
     
-    - platform: event
+    - trigger: event
       event_type: remove_cleaning_item
     
-    - platform: event
+    - trigger: event
       event_type: reset_cleaning_items
   
   sensor:
@@ -112,14 +112,14 @@
           {{ var1.current }}
 
 # Weekly yard work list
-- trigger:
-    - platform: event
+- triggers:
+    - trigger: event
       event_type: add_yard_work_item
     
-    - platform: event
+    - trigger: event
       event_type: remove_yard_work_item
     
-    - platform: event
+    - trigger: event
       event_type: reset_yard_work_items
   
   sensor:
@@ -148,14 +148,14 @@
           {{ var1.current }}
 
 # Weekly other list
-- trigger:
-    - platform: event
+- triggers:
+    - trigger: event
       event_type: add_other_item
     
-    - platform: event
+    - trigger: event
       event_type: remove_other_item
     
-    - platform: event
+    - trigger: event
       event_type: reset_other_items
   
   sensor:
@@ -289,6 +289,6 @@
       state: Select
       options: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
       select_option:
-        - service: script.remove_mobile_notification
+        - action: script.remove_mobile_notification
           data:
             tag:  "{{ option }}"

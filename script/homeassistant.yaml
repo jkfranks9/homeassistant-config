@@ -442,15 +442,18 @@ send_mini_todo_event:
   sequence:
     - choose:
       - conditions: "{{ event_type == 'add' }}"
+        
         sequence:
           - choose:
             - conditions: "{{ item_type == 'cleaning' }}"
+              
               sequence:
                 - event: add_cleaning_item
                   event_data:
                     value: "{{ value }}"
             
             - conditions: "{{ item_type == 'yard_work' }}"
+              
               sequence:
                 - event: add_yard_work_item
                   event_data:
@@ -462,15 +465,18 @@ send_mini_todo_event:
                   value: "{{ value }}"
       
       - conditions: "{{ event_type == 'remove' }}"
+        
         sequence:
           - choose:
             - conditions: "{{ item_type == 'cleaning' }}"
+              
               sequence:
                 - event: remove_cleaning_item
                   event_data:
                     value: "{{ value }}"
             
             - conditions: "{{ item_type == 'yard_work' }}"
+              
               sequence:
                 - event: remove_yard_work_item
                   event_data:
@@ -484,10 +490,12 @@ send_mini_todo_event:
       default:
         - choose:
           - conditions: "{{ item_type == 'cleaning' }}"
+            
             sequence:
               - event: reset_cleaning_items
             
           - conditions: "{{ item_type == 'yard_work' }}"
+            
             sequence:
               - event: reset_yard_work_items
           
@@ -514,7 +522,7 @@ add_mini_todo_calendar_items:
   sequence:
     
     # Get all events on the calendar for my normal available time period.
-    - service: calendar.get_events
+    - action: calendar.get_events
       target:
         entity_id: calendar.calendar
       data:
@@ -529,7 +537,7 @@ add_mini_todo_calendar_items:
           state: 'on'
       
       then:
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: input_number.mini_todo_available_minutes
           data:
@@ -568,7 +576,7 @@ add_mini_todo_calendar_items:
                         all_day_type: "{{ iif('(visit)' in summary, 'visit', 'trip') }}"
                         cal_tag: "{{ '(' ~ all_day_type ~ ')' }}"
                     
-                    - service: input_number.set_value
+                    - action: input_number.set_value
                       target:
                         entity_id: input_number.mini_todo_available_minutes
                       data:
@@ -579,7 +587,7 @@ add_mini_todo_calendar_items:
                         value: "{{ 'ca:' ~ summary.split(cal_tag)[0] ~ 'all day' }}"
                     
                     # Bump the tasks counter.
-                    - service: counter.increment
+                    - action: counter.increment
                       target:
                         entity_id: counter.mini_todo_tasks
           
@@ -607,7 +615,7 @@ add_mini_todo_calendar_items:
                       {{ var.minutes }}
                 
                 # Subtract the calculated time for this event from the current available time.
-                - service: input_number.set_value
+                - action: input_number.set_value
                   target:
                     entity_id: input_number.mini_todo_available_minutes
                   data:
@@ -618,7 +626,7 @@ add_mini_todo_calendar_items:
                     value: "{{ 'ca:' ~ summary.split(cal_tag)[0] }}"
                     
                 # Bump the tasks counter.
-                - service: counter.increment
+                - action: counter.increment
                   target:
                     entity_id: counter.mini_todo_tasks
 
@@ -642,7 +650,7 @@ add_mini_todo_project_item:
         project_todo_list: "{{ 'todo.' ~ type ~ '_projects' }}"
     
     # Get the list of items from the project todo list.
-    - service: todo.get_items
+    - action: todo.get_items
       target:
         entity_id: "{{ project_todo_list }}"
       data:
@@ -714,7 +722,7 @@ add_mini_todo_project_item:
             est_minutes: "{{ project.split(':')[1] | int(0) }}"
         
         # Insert the selected item.
-        - service: script.insert_mini_todo_item
+        - action: script.insert_mini_todo_item
           data:
             value: "{{ value }}"
             item_time: "{{ est_minutes }}"
@@ -850,7 +858,7 @@ insert_mini_todo_item:
         level: info
     
     # Bump the attempts counter.
-    - service: counter.increment
+    - action: counter.increment
       target:
         entity_id: counter.mini_todo_attempts
         
@@ -873,12 +881,12 @@ insert_mini_todo_item:
             value: "{{ value }}"
                     
         # Bump the tasks counter.
-        - service: counter.increment
+        - action: counter.increment
           target:
             entity_id: counter.mini_todo_tasks
                         
         # Subtract the estimated time for this event from the current available time.
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: input_number.mini_todo_available_minutes
           data:
@@ -889,7 +897,7 @@ insert_mini_todo_item:
             - "{{ major_item }}"
           
           then:
-            - service: input_boolean.turn_off
+            - action: input_boolean.turn_off
               data:
                 entity_id: input_boolean.mini_todo_major_item_added
             
@@ -901,14 +909,16 @@ insert_mini_todo_item:
 # Concatenate a set of backup log files into one file for easier examination.
 concat_log_files:
   alias: Concat Log Files
+  
   sequence:
-    - service: shell_command.concat_log_files
+    - action: shell_command.concat_log_files
 
 # Concatenate a set of automation/script log files into one file for easier examination.
 concat_auto_scripts_log_files:
   alias: Concat Auto Scripts Log Files
+  
   sequence:
-    - service: shell_command.concat_auto_scripts_log_files
+    - action: shell_command.concat_auto_scripts_log_files
 
 #===================#
 #     Reminders     #
@@ -1081,7 +1091,7 @@ set_datetime_offset_days:
           max: 100
   
   sequence:
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       data:
         entity_id: "{{ entity }}"
         datetime: "{{ now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days = amount) }}"
@@ -1105,7 +1115,7 @@ set_datetime_offset_weeks:
           max: 52
   
   sequence:
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       data:
         entity_id: "{{ entity }}"
         datetime: "{{ now().today().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(weeks = amount) }}"
@@ -1136,7 +1146,7 @@ set_datetime_offset_months:
           max: 31
   
   sequence:
-    - service: input_datetime.set_datetime
+    - action: input_datetime.set_datetime
       data:
         entity_id: '{{ entity }}'
         datetime: >
@@ -1178,7 +1188,7 @@ set_number_offset:
           max: 6000
   
   sequence:
-    - service: input_number.set_value
+    - action: input_number.set_value
       data:
         entity_id: "{{ entity }}"
         value: "{{ states(base_entity) | int(0) + amount }}"
@@ -1237,10 +1247,10 @@ publish_mqtt_automated_states:
       } }}
 
   sequence:
-    - service: mqtt.publish
+    - action: mqtt.publish
       data: "{{ service_data }}"
   
-    - service: system_log.write
+    - action: system_log.write
       data:
         message: "Publish MQTT state: {{ service_data }}"
         level: debug
@@ -1281,7 +1291,7 @@ set_up_mqtt_automated_config:
       } }}
   
   sequence:
-    - service: mqtt.publish
+    - action: mqtt.publish
       data: "{{ service_data }}"
 
 #=======================#

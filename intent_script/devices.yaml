@@ -4,16 +4,16 @@
 
 ResetSmartBulbs:
   action:
-    service: script.reset_smart_bulbs
+    - action: script.reset_smart_bulbs
 
 RestartFireTV:
   action:
-    service: script.restart_fire_tv
+    - action: script.restart_fire_tv
 
 TVOff:
   action:
-    service: script.disable_family_room_av
+    - action: script.disable_family_room_av
 
 TVOn:
   action:
-    service: script.enable_family_room_av
+    - action: script.enable_family_room_av

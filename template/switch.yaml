@@ -1,0 +1,18 @@
+#==================#
+#     Switches     #
+#==================#
+
+- switch:
+
+  # Amazon Smart Plug ... copies the input boolean of the same name, allowing the plug to be a switch (and thus a light),
+  # which in turn allows it to be placed in a group.
+  - name: Alexa HA Plug
+    state: "{{ is_state('input_boolean.alexa_ha_plug', 'on') }}"
+    turn_on:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.alexa_ha_plug
+    turn_off:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.alexa_ha_plug

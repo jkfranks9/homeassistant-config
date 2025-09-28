@@ -38,12 +38,12 @@ variables:
 
 # Due to the catch-22 with triggers and variables, just trigger on the proximity entity state changing. 
 # We test when the person crosses the input threshold in the condition, using their proximity value (in meters).
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: !input proximity_entity
     to:
 
-condition:
+conditions:
   
   # Continue only if the person has just crossed the input threshold.
   - condition: template
@@ -57,13 +57,13 @@ condition:
   - "{{ direction == 'towards' }}"
 
 # Write a log message, and announce using all Alexa media players.
-action:
-  - service: system_log.write
+actions:
+  - action: system_log.write
     data:
       message: "{{ input_person_name }} will be arriving soon (from: {{ trigger.from_state.state }}, to: {{ trigger.to_state.state }})"
       level: info
     
-  - service: script.send_notification
+  - action: script.send_notification
     data:
       destination:
         - voice_assistant

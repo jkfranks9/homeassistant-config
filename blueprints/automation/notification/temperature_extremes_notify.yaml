@@ -18,18 +18,18 @@ variables:
   input_temperature_entity: !input temperature_entity
 
 # Trigger on just the state changing, not any attributes.
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: !input temperature_entity
 
 # Send a persistent notification. This is never dismissed automatically.
-action:
+actions:
   - variables:
       entity_name: "{{ input_temperature_entity.split('.')[1] }}"
       area: "{{ entity_name.split('_')[1] | title }}"
       type: "{{ iif(entity_name.split('_')[0] == 'min', 'minimum', 'maximum') }}"
     
-  - service: script.send_notification
+  - action: script.send_notification
     data:
       destination:
         - persistent

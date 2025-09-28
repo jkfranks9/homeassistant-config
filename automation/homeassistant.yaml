@@ -143,14 +143,14 @@
 - alias: Perform Shutdown Chores
   id: perform_shutdown_chores
   
-  trigger:
-    - platform: homeassistant
+  triggers:
+    - trigger: homeassistant
       event: shutdown
   
-  action:
+  actions:
     
     # Backup the current HA log file on shutdown, so we don't lose possible debugging information.
-    - service: shell_command.backup_log
+    - action: shell_command.backup_log
 
 #======================#
 #     Daily Chores     #
@@ -557,15 +557,15 @@
   id: remove_saved_notifications_on_dismiss
   mode: queued
   
-  trigger:
+  triggers:
     - trigger: persistent_notification
       update_type:
         - removed
   
-  condition: "{{ trigger.notification.notification_id != 'config_entry_discovery' }}"
+  conditions: "{{ trigger.notification.notification_id != 'config_entry_discovery' }}"
   
-  action:
-    - service: mqtt.publish
+  actions:
+    - action: mqtt.publish
       data_template:
         topic: "homeassistant/notifications/{{ trigger.notification.notification_id }}"
         retain: true
@@ -924,7 +924,7 @@
             exercise_minutes: "{{ iif(last_treadmill > last_workout, states('input_number.variables_workout_time') | int(0) + 10, states('input_number.default_treadmill_minutes') | int(0) + 10) }}"
                 
         # Subtract the exercise time for this event from the current available time.
-        - service: input_number.set_value
+        - action: input_number.set_value
           target:
             entity_id: input_number.mini_todo_available_minutes
           data:
@@ -1039,16 +1039,16 @@
 - alias: Reload Unifi Integration
   id: reload_unifi_integration
   
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         name: 'homeassistant.components.unifi'
         level: 'WARNING'
   
-  condition: "{{ 'received 401 Unauthorized' in trigger.event.data.message[0] }}"
+  conditions: "{{ 'received 401 Unauthorized' in trigger.event.data.message[0] }}"
   
-  action:
+  actions:
     - action: counter.increment
       target:
         entity_id: counter.unifi_integration_errors
