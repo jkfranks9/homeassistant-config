@@ -8,7 +8,7 @@ blueprint:
   input:
     appl_name:
       name: Shield Application Name
-      description: The name of the application on the Shield TV, for example 'Youtube TV'.
+      description: The name of the application on the Shield TV, for example 'Hulu'.
 
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:

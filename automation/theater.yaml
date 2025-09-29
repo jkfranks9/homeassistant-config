@@ -308,7 +308,7 @@
 # Afterwards, they can be changed by using the UI, or by raising/lowering the volume for any app/device using voice control.
 #
 # Mapping of db levels to percentages. These are the min/max levels we support - if this ever changes, update all of the 
-# volume number helpers as well, for example 'Youtube TV Volume'. Also update the generic number used by the UI:
+# volume number helpers as well, for example 'Hulu Volume'. Also update the generic number used by the UI:
 # 'Selected App Volume'.
 #
 # -16 db = 64%
@@ -473,15 +473,6 @@
     path: theater/shield_app_volume.yaml
     input:
       appl_name: Peacock
-
-# Youtube TV
-- alias: Initialize Youtube TV Volume
-  id: initialize_youtube_tv_volume
-  
-  use_blueprint:
-    path: theater/shield_app_volume.yaml
-    input:
-      appl_name: Youtube TV
 
 #   -- Harmony Activities --   #
 

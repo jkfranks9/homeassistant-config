@@ -516,15 +516,6 @@ watch_peacock:
     input:
       appl_name: Peacock
 
-# Youtube TV
-watch_youtube_tv:
-  alias: Watch Youtube TV
-  
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Youtube TV
-
 #=======================#
 #     Cinema Close      #
 #=======================#
@@ -778,7 +769,7 @@ set_receiver_volume:
   
   fields:
     target_name:
-      description: The name of the application on the Shield TV (example 'Youtube TV'), or the Harmony device (example 'BD Player').
+      description: The name of the application on the Shield TV (example 'Hulu'), or the Harmony device (example 'BD Player').
     
     volume:
       description: The receiver volume.
