@@ -2,9 +2,9 @@
 #     Calories History      #
 #===========================#
 
-# Save the monthly calories used to maintain a history for the front end.
+# Save the monthly calories used to maintain a history for the dashboard.
 - alias: Save Monthly Calories
-  id: 'save_monthly_calories'
+  id: save_monthly_calories
   
   # Trigger when the total monthly calories sensor changes.
   triggers:
@@ -20,61 +20,15 @@
   
   # Determine the previous month using the 'from' state's last changed value.
   variables:
+    value: "{{ trigger.from_state.state | float(0) }}"
     month: "{{ as_timestamp(trigger.from_state.last_changed) | timestamp_custom('%b') | lower() }}"
   
   actions:
-    - action: system_log.write
-      data:
-        message: "{{ 'calories from state last changed/month: ' ~ trigger.from_state.last_changed ~ ' / ' ~ month }}"
-        level: debug
-    
-    # Set the correct history value using the month variable to complete the target entity ID.
     - action: input_number.set_value
       target:
-        entity_id: "input_number.calories_curr_year_{{ month }}"
+        entity_id: "input_number.calories_{{ month }}"
       data:
-        value: "{{ trigger.from_state.state | float(0) }}"
-    
-    # If we've started a new year (previous month is December), copy the current year's history to the previous year.
-    # We only keep two year's worth of history.
-    - if:
-        - "{{ month == 'dec' }}"
-      
-      then:
-        - variables:
-            months:
-              - jan
-              - feb
-              - mar
-              - apr
-              - may
-              - jun
-              - jul
-              - aug
-              - sep
-              - oct
-              - nov
-              - dec
-    
-        # Repeat for all months.
-        - repeat:
-            count: 12
-            
-            sequence:
-              
-              # Copy the current year value to the previous year for the corresponding month.
-              - action: input_number.set_value
-                target:
-                  entity_id: "input_number.calories_prev_year_{{ months[repeat.index-1] }}"
-                data:
-                  value: "{{ states('input_number.calories_curr_year_' + months[repeat.index-1]) }}"
-              
-              # Rest the current year value to zero.
-              - action: input_number.set_value
-                target:
-                  entity_id: "input_number.calories_curr_year_{{ months[repeat.index-1] }}"
-                data:
-                  value: 0
+        value: "{{ value }}"
 
 #==========================#
 #     Manual Exercise      #
