@@ -111,6 +111,11 @@ voice_modify_fan:
       description: Fan speed to be used (see fan_settings variable).
       selector:
         select:
+          options:
+            - 'off'
+            - low
+            - medium
+            - high
   
   sequence:
     
@@ -170,6 +175,9 @@ voice_operate_light:
       description: Whether to turn the light on or off.
       selector:
         select:
+          options:
+            - 'on'
+            - 'off'
   
   sequence:
     
