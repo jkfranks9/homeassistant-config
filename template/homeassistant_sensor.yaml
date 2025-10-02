@@ -277,6 +277,8 @@
               {% break %}
             {% endif %}
           {% endfor %}
+          
+          {{ vars.name }}
 
 #---------- Miscellaneous ----------#
 
