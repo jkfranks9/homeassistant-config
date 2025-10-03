@@ -328,6 +328,12 @@
             - action: script.operate_preferred_studio_lamps
               data:
                 operation: 'on'
+            
+        # Start a timer to close the garage and turn off outdoor lights after a short period of time.
+        - action: timer.start
+          data:
+            entity_id: timer.jon_arrival_cleanup
+            duration: '00:15:00'
 
 # Close up the house when needed.
 - alias: Close House
@@ -435,29 +441,42 @@
 #     Guest Arrival Cleanup     #
 #===============================#
 
-# Clean up stuff once a delay has occurred after family has arrived after sunset.
-- alias: Handle Guest Arrival Cleanup
-  id: handle_guest_arrival_cleanup
+# Clean up stuff for arrivals after dark.
+- alias: Handle Arrival Cleanup
+  id: handle__arrival_cleanup
   
   triggers:
     - trigger: event
       event_type: timer.finished
       event_data:
+        entity_id: timer.jon_arrival_cleanup
+      id: jon
+    
+    - trigger: event
+      event_type: timer.finished
+      event_data:
         entity_id: timer.guest_arrival_cleanup
+      id: guest
   
   actions:
-    - action: script.turn_on
-      target:
-        entity_id: script.close_garage_door_north
-      data:
-        variables:
-          use_info_message: true
-        
-    - action: light.turn_off
-      target:
-        entity_id:
-          - light.driveway
-          - light.front_floodlight
+    
+    # This conditional is here in case I need to someday do different things per trigger.
+    - if:
+        - "{{ trigger.id in ['jon', 'guest'] }}"
+      
+      then:
+        - action: script.turn_on
+          target:
+            entity_id: script.close_garage_door_north
+          data:
+            variables:
+              use_info_message: true
+            
+        - action: light.turn_off
+          target:
+            entity_id:
+              - light.driveway
+              - light.front_floodlight
 
 #========================#
 #     Family Room AV     #
