@@ -9,6 +9,7 @@
     #------------------------#
     
     - name: Garage Door North
+      unique_id: garage_door_north
       state: >
         {% if is_state('binary_sensor.shelly1_garage_north_contact', 'on') %}
           closed
@@ -27,6 +28,7 @@
         entity_id: switch.shelly1_garage_north
     
     - name: Garage Door South
+      unique_id: garage_door_south
       state: >
         {% if is_state('binary_sensor.shelly1_garage_south_contact', 'on') %}
           closed
