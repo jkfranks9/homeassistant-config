@@ -364,7 +364,6 @@
       tag: 'upstairs_entry_sensor_battery'
 
 # Porch battery powered sensor needs recharging.
-# NOTE: This is a persistent notification, to help me remember to charge the battery before trying an update all operation.
 - alias: Notify Porch Sensor Battery Low
   id: 'notify_porch_sensor_battery_low'
   
@@ -379,11 +378,16 @@
       entity_id: sensor.porch_sensor_last_updated_minutes
       above: 30
   
+  conditions:
+    - condition: numeric_state
+      entity_id: sensor.porch_sensor_battery_level
+      below: 20
+  
   actions:    
     - action: script.send_notification
       data:
         destination:
-          - persistent
+          - mobile
         title: 'ESPHome Device Alert'
         message: 'Porch sensor battery needs recharging.'
         notification_id: 'porch_battery'
@@ -904,11 +908,17 @@
       clear_type: assisted
       title: attention
       message: >
-          {% if states('sensor.flyers_game_status') == 'Home' %}
-            {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }}
-          {% else %}
-            Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }}
-          {% endif %}
+        {% set vars = namespace(tv = '') %}
+        {% if states.sensor.flyers_game_status.attributes.tv_networks is defined %}
+          {% for network in state_attr('sensor.flyers_game_status', 'tv_networks') %}
+            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+          {% endfor %}
+        {% endif %}
+        {% if states('sensor.flyers_game_status') == 'Home' %}
+          {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% else %}
+          Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% endif %}
       channel: standard
       tag: 'next_flyers_game'
 
