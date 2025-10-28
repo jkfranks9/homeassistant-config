@@ -29,7 +29,7 @@
   <<: &base_anchor
     unit_of_measurement: kWh
     column: change
-    value_template: "{{(value/90)|round(2)}}"
+    value_template: "{{(value)|round(2)}}"
 
 - name: Total Cleaning Energy L90d
   unique_id: total_cleaning_energy_l90d
