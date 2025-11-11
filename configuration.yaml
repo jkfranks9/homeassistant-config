@@ -15,6 +15,9 @@ homeassistant:
   allowlist_external_dirs:
     - /config/debug_logs
 
+# Add back log file in config directory, needed for 2025.11.0 ... I hope this gets reverted in HA so this custom integration can be removed.
+a_file_logger:
+
 #========================#
 #     Included Files     #
 #========================#
