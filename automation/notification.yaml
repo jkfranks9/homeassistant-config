@@ -524,7 +524,7 @@
         
         # The target day of month. We expect this to be either 8 or 22 (our specific half-month days). But this template
         # tolerates other days if they somehow exist.
-        next_day_of_month: "{{ iif(current_day_of_month | int(0) <= 15, 22, 8) }}"
+        next_day_of_month: "{{ iif(current_day_of_month | int(0) <= 15, 25, 11) }}"
         
         # The next target as a datetime, which is the target as determined by the dashboard, with the day replaced.
         next_target: "{{ as_datetime(trigger.to_state.state).replace(day = next_day_of_month) }}"
