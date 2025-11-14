@@ -560,15 +560,16 @@
                   volume_level: "{{ volume }}"
     
     # The Nighttime toggle being reset (above) causes the Manage Echo Do Not Disturb automation to run. We need to ensure
-    # that the master bedroom echo has been unmuted before trying to send the announcement below.
+    # that the master bedroom echo has been unmuted before trying to send the announcement below. But only wait for 30 seconds
+    # to avoid an infinite loop if the echo mute state is bad.
     - repeat:
-        until: "{{ is_state('switch.master_bedroom_echo_do_not_disturb_switch', 'off') }}"
+        until: "{{ is_state('switch.master_bedroom_echo_do_not_disturb_switch', 'off') or repeat.index >= 300 }}"
         
         sequence:
           - event: unused_event
           
           - delay:
-              milliseconds: 10
+              milliseconds: 100
     
     # Now we can set the various notification data.
     - variables:
