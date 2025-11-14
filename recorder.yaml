@@ -80,7 +80,6 @@ include:
     - sensor.cpap_average
     - sensor.cpap_usage_hours
     - sensor.cpap_usage_minutes
-    - sensor.cpu_temp
     - sensor.downstairs_humidity
     - sensor.dryer_sensor_humidity
     - sensor.jon_galaxy_detected_activity
@@ -89,6 +88,7 @@ include:
     - sensor.processor_use_percent
     - sensor.sleep_average
     - sensor.sleep_duration
+    - sensor.system_monitor_processor_temperature
     - sensor.washer_power_state
     - weather.astroweather_white_rabbit_gardens
   
