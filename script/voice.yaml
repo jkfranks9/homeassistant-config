@@ -2,6 +2,12 @@
 #     Alexa Front Ends     #
 #==========================#
 
+# Alexa routines (set up in the Alexa app) contain the phrase(s) used to trigger the routine. The routines then call the
+# scripts here (known as scenes in the Alexa app). So the scripts must be exposed to voice assistants.
+#
+# For Nabu devices, the phrase(s) are contained in files in the custom_sentences config directory. They in turn call the
+# associated intent scripts.
+
 # NOTE: The following scripts require knowing the most recently spoken to device. So all the scripts called here must call
 # Get Voice Device Data as the first step.
 
@@ -75,6 +81,14 @@ alexa_bedtime_front_end:
   
   sequence:
     - action: script.bedtime_front_end
+      data:
+        caller: alexa
+
+alexa_report_house_status:
+  alias: Alexa Report House Status
+  
+  sequence:
+    - action: script.voice_report_house_status
       data:
         caller: alexa
 
@@ -321,6 +335,62 @@ bedtime_front_end:
     - action: script.Bedtime
       data:
         studio_guests_awake: "{{ studio_guests_awake }}" 
+
+# Report house status, such as lights/fans on, doors/windows open, etc.
+voice_report_house_status:
+  alias: Voice Report House Status
+  
+  fields:
+    caller:
+      name: Caller
+      description: The family of the voice device that was spoken to.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+  
+  sequence:
+    
+    # Get the room containing the voice assistant device that was used.
+    - action: script.get_voice_device_data
+      data:
+        caller: "{{ caller }}"
+      response_variable: result
+    
+    - variables:
+        
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
+        
+        # Status report raw data.
+        lights_on: "{{ states('sensor.lights_on') }}"
+        fans_on: "{{ states('sensor.fans_on') }}"
+        covers_open: "{{ states('sensor.covers_open') }}"
+        
+        # Message segments, with singular/plural considerations.
+        lights_plurality: "{{ iif(lights_on == 1, 'light', 'lights' ) }}"
+        fans_plurality: "{{ iif(fans_on == 1, 'fan', 'fans' ) }}"
+        covers_plurality: "{{ iif(covers_open == 1, 'door or window', 'doors or windows' ) }}"
+        
+        # The completed message.
+        message: >
+          {% set msg = namespace(text = 'House status: ') %}
+          {% set lights = namespace(text = lights_on | string() + ' ' + lights_plurality + ' ') %}
+          {% set fans = namespace(text = 'and ' + fans_on | string() + ' ' + fans_plurality + ' on, ') %}
+          {% set covers = namespace(text = covers_open | string() + ' ' + covers_plurality + ' open.') %}
+          {% set msg.text = msg.text + lights.text + fans.text + covers.text %}
+          
+          {{ msg.text }}
+          
+    # Inform the user.
+    - action: script.send_notification
+      data:
+        destination:
+          - voice_assistant
+        message: "{{ message }}"
+        room: "{{ [room] }}"
+        voice_type: tts
 
 #=======================#
 #     Conversations     #

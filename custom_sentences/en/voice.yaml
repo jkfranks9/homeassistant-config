@@ -15,8 +15,7 @@ intents:
   FanHigh:
     data:
       - sentences:
-          - "([(set the | set)] fan high | tea earl grey hot)
-"
+          - "([(set the | set)] fan high | tea earl grey hot)"
 
   FanLow:
     data:
@@ -47,3 +46,8 @@ intents:
     data:
       - sentences:
           - "remove notification"
+
+  ReportHouseStatus:
+    data:
+      - sentences:
+          - "status report"

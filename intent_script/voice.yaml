@@ -59,9 +59,15 @@ LightOff:
         caller: nabu
         operation: 'off'
 
-# Notifications ...
+# Other ...
 RemoveNotification:
   action:
     - action: script.voice_mobile_notification
+      data:
+        caller: nabu
+
+ReportHouseStatus:
+  action:
+    - action: script.voice_report_house_status
       data:
         caller: nabu
