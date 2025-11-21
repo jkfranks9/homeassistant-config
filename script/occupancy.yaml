@@ -445,19 +445,28 @@ establish_bedtime_environment:
   sequence:
     
     # Modify the master suite for bedtime.
-    - action: script.modify_master_suite
+    - action: script.turn_on
+      target:
+        entity_id: script.modify_master_suite
       data:
-        reason: bedtime
+        variables:
+          reason: bedtime
         
     # Modify the studio for bedtime.
-    - action: script.modify_studio
+    - action: script.turn_on
+      target:
+        entity_id: script.modify_studio
       data:
-        reason: bedtime
+        variables:
+          reason: bedtime
         
     # Modify the penthouse for bedtime.
-    - action: script.modify_penthouse
+    - action: script.turn_on
+      target:
+        entity_id: script.modify_penthouse
       data:
-        reason: bedtime
+        variables:
+          reason: bedtime
       
     # Wait a bit before turning off lights.
     - delay: '00:00:07'
@@ -490,19 +499,28 @@ reset_bedtime_environment:
   sequence:
     
     # Modify the master suite for bedtime.
-    - action: script.modify_master_suite
+    - action: script.turn_on
+      target:
+        entity_id: script.modify_master_suite
       data:
-        reason: wakeup
+        variables:
+          reason: wakeup
         
     # Modify the studio for bedtime.
-    - action: script.modify_studio
+    - action: script.turn_on
+      target:
+        entity_id: script.modify_studio
       data:
-        reason: wakeup
+        variables:
+          reason: wakeup
         
     # Modify the penthouse for bedtime.
-    - action: script.modify_penthouse
+    - action: script.turn_on
+      target:
+        entity_id: script.modify_penthouse
       data:
-        reason: wakeup
+        variables:
+          reason: wakeup
 
 #==========================#
 #     Suite Management     #
