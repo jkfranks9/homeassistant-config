@@ -91,3 +91,45 @@
     input:
       exercise_type: steps
       units_entity: input_number.steps_daily
+
+#================#
+#     Sleep      #
+#================#
+
+# Log daily sleep data for help with sleep apnea monitoring.
+- alias: Log Daily Sleep Data
+  id: log_daily_sleep_data
+
+  triggers:
+    
+    # Trigger on the CPAP last collected sensor, which should change every day.
+    - trigger: state
+      entity_id: sensor.cpap_sleep_data_last_collected
+      to:
+  
+  actions:
+            
+    - action: notify.send_message
+      target:
+        entity_id: notify.sleep_data
+      data:
+        message: >
+          {% set date = states('sensor.cpap_current_data_date') %}
+          {% set sleep_dur = states('sensor.sleep_duration_display') %}
+          {% set sleep_avg = states('sensor.sleep_average_display') %}
+          {% set cpap_dur = states('sensor.cpap_usage_time') %}
+          {% set cpap_avg = states('sensor.cpap_average_display') %}
+          {% set ahi_num = states('sensor.cpap_ahi_events_per_hour') %}
+          {% set ahi_avg = states('sensor.ahi_average') %}
+          {% set score = states('sensor.cpap_total_myair_score') %}
+          {% set score_avg = states('sensor.cpap_score_average') %}
+          {% set on_off = states('sensor.cpap_mask_on_off') %}
+          {% set leak = states('sensor.cpap_mask_leak') %}
+          
+          {{ as_timestamp(now()) | timestamp_custom('%b %d %Y %X') ~ 
+             ': Data for ' ~ date ~
+             '; Sleep hours/average: ' ~ sleep_dur ~ '/' ~ sleep_avg ~ 
+             '; CPAP hours/average: ' ~ cpap_dur ~ '/' ~ cpap_avg ~ 
+             '; AHI number/average: ' ~ ahi_num ~ '/' ~ ahi_avg ~ 
+             '; Score/average: ' ~ score ~ '/' ~ score_avg ~ 
+             '; Mask on/off: ' ~ on_off ~ '; Leak: ' ~ leak ~ '%' }}

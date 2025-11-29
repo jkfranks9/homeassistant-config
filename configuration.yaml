@@ -5,11 +5,6 @@
 # Default setup of Home Assistant (frontend, api, etc)
 default_config:
 
-# Front end
-frontend:
-  extra_module_url:
-    - /local/community/lovelace-card-mod/card-mod.js
-
 # We need to specify allowed directories for the file notification service here.
 homeassistant:
   allowlist_external_dirs:
@@ -207,6 +202,7 @@ shell_command:
   backup_auto_scripts_log:        'python /config/python/backup_logs.py /config/debug_logs/automations_scripts.log'
   backup_laundry_log:             'python /config/python/backup_logs.py /config/debug_logs/laundry_events.log'
   backup_exercise_log:            'python /config/python/backup_logs.py /config/debug_logs/exercise_activity.log'
+  backup_sleep_log:               'python /config/python/backup_logs.py /config/debug_logs/sleep_data.log'
   concat_log_files:               'python /config/python/concat_logs.py /config/home-assistant'
   concat_auto_scripts_log_files:  'python /config/python/concat_logs.py /config/debug_logs/automations_scripts'
   delete_junk_log_files:          'rm -f /config/home-assistant.log.1'

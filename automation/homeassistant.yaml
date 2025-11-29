@@ -404,6 +404,9 @@
         
         # Backup the exercise activity log.
         - action: shell_command.backup_exercise_log
+        
+        # Backup the sleep data log.
+        - action: shell_command.backup_sleep_log
 
 #=========================#
 #     Automations Log     #
