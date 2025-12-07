@@ -123,27 +123,6 @@ activate_cinema:
         - action: script.set_theater_idle
           data:
             operation: activation
-    
-        # Announce the grand opening.
-        - action: script.send_notification
-          data:
-            destination:
-              - voice_assistant
-            message: >
-              {{ ["I'm waiting a bit for the projector to warm up.", 
-                  "You have a minute or so before the theater is ready.", 
-                  "I'll let you know when things are ready.",
-                  "Hopefully the projector won't explode. Stay tuned.",
-                  "Lights are on, just waiting on the projection equipment.",
-                  "Loading the film canister now.",
-                  "Theater is waking up.",
-                  "Popcorn is popping. Cokes are bubbling. Grab a seat and relax.",
-                  "I'm flipping on all the switches. Hope that works.",
-                  "What's this big red button do? Let's find out!"
-                 ] | random }}
-            speak: excited
-            room: ['family_room', 'theater']
-            voice_type: tts
       
         # Define a few variables for debugging (they can be seen in the trace).
         - variables:
@@ -710,6 +689,8 @@ perform_post_open_tasks:
               "Watch for weeping angels!",
               "Come relax in our state of the art theater!",
               "Prepare to laugh and weep in equal measure!",
+              "Loading the film canister now!",
+              "Popcorn is popping! Cokes are bubbling! Grab a seat and relax!",
               "Time to vegetate on the couch!"
              ] | random }}
         speak: excited
