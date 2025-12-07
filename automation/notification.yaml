@@ -1137,6 +1137,9 @@
     - trigger: state
       entity_id: sensor.jon_s25_last_reboot
       to:
+
+  # Weed out junk.
+  conditions: "{{ trigger.from_state.state not in ['unavailable', 'unknown'] and trigger.to_state.state not in ['unavailable', 'unknown'] }}"
   
   actions:
     
