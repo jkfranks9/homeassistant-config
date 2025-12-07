@@ -7,6 +7,9 @@ mobile_notification_worker:
   alias: Mobile Notification Worker
   
   fields:
+    mobile_name:
+      description: Name of the mobile user.
+    
     message:
       description: 'The message to be issued.'
     
@@ -45,24 +48,60 @@ mobile_notification_worker:
           {% endif %}
             
           {{ dict(vars, **additional) }}
+          
+        # We can notify via the companion app or Gmail. Get the configured type for the input mobile name.
+        notify_type_entity: "{{ mobile_name | lower ~ '_phone_notification_type' }}"
+        notify_type: "{{ states('input_select.' ~ notify_type_entity) }}"
     
-    # Send notification to Jon.
-    - action: notify.mobile_app_jon_galaxy
-      data:
-        title: "{{ title }}"
-        message: "{{ message }}"
-        data: "{{ notification_data }}"
+    # Send notification to the user according to the notification type.
+    - choose:
     
-    # For some tags, we also notify Sarah.
-    - if:
-        - "{{ tag in state_attr('sensor.variables', 'variables').sarah_notification_tags }}"
-      
-      then:
-        - action: notify.mobile_app_sarah_pixel
-          data:
-            title: "{{ title }}"
-            message: "{{ message }}"
-            data: "{{ notification_data }}"
+        # Via companion app on the user's phone.
+        - conditions: "{{ notify_type == 'Companion' }}"
+        
+          sequence:
+            - variables:
+                
+                # Get the configured ID, which forms part of the notification entity.
+                notify_id_entity: "{{ mobile_name | lower ~ '_phone_notification_id' }}"
+                notify_id: "{{ states('input_text.' ~ notify_id_entity) }}"
+    
+            - action: notify.mobile_app_{{ notify_id }}
+              data:
+                title: "{{ title }}"
+                message: "{{ message }}"
+                data: "{{ notification_data }}"
+        
+        # Via Gmail. Get the secret phone number for the mobile name to use as the Gmail target.
+        # NOTE: We need to use choose here for each user because !secret does not appear to support
+        # templates.
+        - conditions: "{{ notify_type == 'Gmail' }}"
+        
+          sequence:
+            - choose:
+                - conditions: "{{ mobile_name == 'Jon' }}"
+                  
+                  sequence:
+                    - variables:
+                        number: !secret jon_phone
+    
+                    - action: notify.gmail
+                      data:
+                        title: ' '
+                        target: "{{ number ~ '@vtext.com' }}"
+                        message: "{{ message }}"
+                
+                - conditions: "{{ mobile_name == 'Sarah' }}"
+                  
+                  sequence:
+                    - variables:
+                        number: !secret sarah_phone
+    
+                    - action: notify.gmail
+                      data:
+                        title: ' '
+                        target: "{{ number ~ '@vtext.com' }}"
+                        message: "{{ message }}"
 
 # Send a notification to one or more destinations.
 send_notification:
@@ -71,6 +110,9 @@ send_notification:
   max: 10
   
   fields:
+    mobile_name:
+      description: (Optional) Name of the mobile user (defaults to Jon).
+    
     destination:
       description: Where to send the notification.
       selector:
@@ -126,6 +168,9 @@ send_notification:
   sequence:
     - variables:
         
+        # Use the default mobile name if it isn't defined.
+        name_option: "{{ iif(mobile_name is defined, mobile_name, 'Jon') }}"
+        
         # Use the default speak option if it isn't defined.
         speak_option: "{{ iif(speak is defined, speak, 'normal') }}"
     
@@ -142,6 +187,7 @@ send_notification:
               sequence:
                 - action: script.mobile_notification_worker
                   data:
+                    mobile_name: "{{ name_option }}"
                     title: "{{ title }}"
                     message: "{{ message }}"
                     channel: "{{ channel }}"
@@ -189,7 +235,7 @@ remove_mobile_notification:
   sequence:
       
     # Clear the notification.
-    - action: notify.mobile_app_jon_galaxy
+    - action: notify.mobile_app_jon_s25
       data:
         message: 'clear_notification'
         data:
@@ -398,7 +444,7 @@ remove_manual_mobile_notification:
                   action_no: "{{ 'No_' ~ tag }}"
     
               # Send a notification with response buttons for this tag.
-              - action: notify.mobile_app_jon_galaxy
+              - action: notify.mobile_app_jon_s25
                 data:
                   message: "{{ 'Remove notification ' ~ tag ~ '?' }}"
                   data:

@@ -41,6 +41,11 @@ blueprint:
   domain: automation
   
   input:
+    mobile_name:
+      name: Mobile Name
+      description: (Optional) Name of the mobile user.
+      default: 'Jon'
+    
     trigger_type:
       name: Trigger Type
       description: Type of trigger(s) that should be enabled.
@@ -242,6 +247,7 @@ trigger_variables:
 
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
+  input_mobile_name: !input mobile_name
   input_calendar_tag: !input calendar_tag
   input_voice_assistant_rooms: !input voice_assistant_rooms
   input_extract_tag_type: !input extract_tag_type
@@ -410,7 +416,7 @@ actions:
               message: !input message
               tag_registry_value: "{{ {'tag': tag, 'clear_type': input_clear_type, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} }}"
               notification_data: >
-                {% set vars = {'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} %}
+                {% set vars = {'mobile_name': input_mobile_name, 'destination': destination, 'title': title_text, 'message': input_message, 'channel': input_channel, 'timeout': input_timeout} %}
                 {% if voice_assistant_enabled == true %}
                   {% set additional = {'room': input_voice_assistant_rooms, 'voice_type': 'announce', 'tag': tag} %}
                 {% else %}

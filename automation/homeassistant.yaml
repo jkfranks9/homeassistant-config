@@ -718,13 +718,13 @@
   # Trigger on any state change to the last notification sensor.
   triggers:
     - trigger: state
-      entity_id: sensor.jon_galaxy_last_notification
+      entity_id: sensor.jon_s25_last_notification
       to:
   
   variables:
-    title: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.title') }}"
-    text: "{{ state_attr('sensor.jon_galaxy_last_notification', 'android.text') }}"
-    category: "{{ state_attr('sensor.jon_galaxy_last_notification', 'category') }}"
+    title: "{{ state_attr('sensor.jon_s25_last_notification', 'android.title') }}"
+    text: "{{ state_attr('sensor.jon_s25_last_notification', 'android.text') }}"
+    category: "{{ state_attr('sensor.jon_s25_last_notification', 'category') }}"
     
     # This could be a group text, so create a list.
     persons: >
@@ -751,6 +751,12 @@
     on_treadmill: "{{ states('input_boolean.treadmill_triggered') == 'on' }}"
     sleeping: "{{ states('input_boolean.sleeptime') == 'on' }}"
     driving: "{{ states('binary_sensor.jon_driving') == 'on' }}"
+    
+    # Phone numbers.
+    mike_phone: !secret mike_phone
+    maryam_phone: !secret maryam_phone
+    sarah_phone: !secret sarah_phone
+    david_phone: !secret david_phone
   
   conditions:
     - and:
@@ -789,13 +795,13 @@
           - variables:
               number: >
                 {% if repeat.item == 'Michael' %}
-                  9199246845
+                  {{ mike_phone }}
                 {% elif repeat.item == 'Maryam' %}
-                  9197571974
+                  {{ maryam_phone }}
                 {% elif repeat.item == 'Sarah' %}
-                  2522302146
+                  {{ sarah_phone }}
                 {% elif repeat.item == 'David' %}
-                  2522991689
+                  {{ david_phone }}
                 {% else %}
                   0000000000
                 {% endif %}

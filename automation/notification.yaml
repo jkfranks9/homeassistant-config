@@ -201,7 +201,7 @@
     path: notification/mobile_notify.yaml
     input:
       trigger_type: numeric_state_below
-      entity: sensor.jon_galaxy_battery_level
+      entity: sensor.jon_s25_battery_level
       numeric_notify_threshold: 15
       numeric_clear_threshold: 50
       enable_clear_trigger: true
@@ -843,19 +843,54 @@
 #     Hobbies     #
 #=================#
 
-# Next Canes game
-- alias: Notify Next Canes Game
-  id: 'notify_next_canes_game'
+# Next Canes game ... this is sent to Jon & Sarah, but with different offsets before game time, and using different text methods. 
+# Unfortunately, this requires some duplication here.
+- alias: Notify Next Canes Game Jon
+  id: 'notify_next_canes_game_jon'
   
   use_blueprint:
     path: notification/mobile_notify.yaml
     input:
+      mobile_name: Jon
       trigger_type: template
       template: >
         {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
           {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), utcnow()) %}
           {% set now =  as_timestamp(utcnow()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600)) <= 15, false) }}
+        {% else %}
+          false
+        {% endif %}
+      clear_type: assisted
+      title: attention
+      message: >
+        {% set vars = namespace(tv = '') %}
+        {% if states.sensor.canes_game_status.attributes.tv_networks is defined %}
+          {% for network in state_attr('sensor.canes_game_status', 'tv_networks') %}
+            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+          {% endfor %}
+        {% endif %}
+        {% if states('sensor.canes_game_status') == 'Home' %}
+          {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% else %}
+          Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% endif %}
+      channel: standard
+      tag: 'next_canes_game'
+
+- alias: Notify Next Canes Game Sarah
+  id: 'notify_next_canes_game_sarah'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      mobile_name: Sarah
+      trigger_type: template
+      template: >
+        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
+          {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), utcnow()) %}
+          {% set now =  as_timestamp(utcnow()) %}
+          {{ iif((next - now) > 0, (((next - now) / 3600)) <= 1, false) }}
         {% else %}
           false
         {% endif %}
@@ -1096,11 +1131,11 @@
   
   triggers:
     - trigger: state
-      entity_id: sensor.jon_galaxy_current_version
+      entity_id: sensor.jon_s25_current_version
       to:
     
     - trigger: state
-      entity_id: sensor.jon_galaxy_last_reboot
+      entity_id: sensor.jon_s25_last_reboot
       to:
   
   actions:

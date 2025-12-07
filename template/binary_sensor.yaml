@@ -63,7 +63,7 @@
     # but it's better than nothing.
     - name: Jon Companion Driving
       unique_id: jon_companion_driving
-      state: "{{ state_attr('device_tracker.jon_companion', 'speed') > 10 }}"
+      state: "{{ state_attr('device_tracker.jon_s25', 'speed') > 10 }}"
       delay_off:
         minutes: 2
 
@@ -75,7 +75,7 @@
     # of the devices from doing things like waking me up 10 minutes after I fall asleep.
     - name: Jon Devices Charging
       unique_id: jon_devices_charging
-      state: "{{ is_state('binary_sensor.jon_galaxy_is_charging', 'on') and is_state('binary_sensor.lenovo_tablet_is_charging', 'on') }}"
+      state: "{{ is_state('binary_sensor.jon_s25_is_charging', 'on') and is_state('binary_sensor.lenovo_tablet_is_charging', 'on') }}"
       delay_on:
         seconds: 30
       delay_off:

@@ -82,7 +82,7 @@ include:
     - sensor.cpap_usage_minutes
     - sensor.downstairs_humidity
     - sensor.dryer_sensor_humidity
-    - sensor.jon_galaxy_detected_activity
+    - sensor.jon_s25_detected_activity
     - sensor.memory_use_percent
     - sensor.porch_sensor_humidity
     - sensor.processor_use_percent
