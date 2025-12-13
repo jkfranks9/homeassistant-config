@@ -1,6 +1,6 @@
-#===============================================#
-#     Ecobee Thermostat Preset Mode Control     #
-#===============================================#
+#====================================#
+#     Ecobee Thermostat Controls     #
+#====================================#
 
 # Ecobee climate/preset modes:
 #
@@ -58,6 +58,35 @@
     path: climate/get_thermostat_temps.yaml
     input:
       climate_entity: climate.upstairs
+
+# Control upstairs thermostat fan minimum on time. I want this to be 0 when the theater is open, since an HVAC vent
+# is directly above my main seating position, which makes me cold.
+- alias: Control Upstairs Thermostat Fan Run Time
+  id: control_upstairs_thermostat_fan_run_time
+  
+  triggers:
+    - trigger: state
+      entity_id: input_boolean.theater_open
+      from: 'off'
+      to: 'on'
+  
+    - trigger: state
+      entity_id: input_boolean.theater_open
+      from: 'on'
+      to: 'off'
+  
+  actions:
+    - variables:
+        action: "{{ trigger.to_state.state }}"
+        
+        # Minimum run time.
+        # NOTE: The non-zero time amount should be coordinated with the ecobee system settings, using the app or the thermostat.
+        run_time: "{{ iif(action == 'on', 0, 5) }}"
+    
+    - action: ecobee.set_fan_min_on_time
+      data:
+        entity_id: climate.upstairs
+        fan_min_on_time: "{{ run_time }}"
 
 #============================================#
 #     Temperature High / Low Water Marks     #
