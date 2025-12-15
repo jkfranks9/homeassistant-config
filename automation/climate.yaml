@@ -271,8 +271,7 @@
         # The last hour is either midnight (if we triggered while awake) or noon (if we triggered at bedtime).
         last_hour: "{{ iif(trigger.id == 'awake', 0, 12) }}"
     
-    # Calculate the minimum outdoor temperature for the time span and set it in a number. The notification automation
-    # triggers on the low temperature number being below a threshold.
+    # Calculate the minimum outdoor temperature for the time span and set it in a number.
     - action: script.calculate_weather_metrics
       data:
         weather_entity: weather.openweathermap

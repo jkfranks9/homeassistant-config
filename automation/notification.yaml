@@ -1094,8 +1094,6 @@
       temperature_entity: input_number.max_outdoor_temp
 
 # Notify about freezing temperatures so I can leave a faucet on trickle.
-# NOTE: The trigger entity is set at bedtime by the Check Overnight Freezing automation. It's also reset 
-# to a high value at each morning.
 - alias: Notify Freezing Temperature
   id: notify_freezing_temperature
   
@@ -1110,7 +1108,7 @@
       voice_assistant_rooms: "{{ states('sensor.announcement_rooms') }}"
       clear_type: auto
       title: attention
-      message: "{{ 'Pipes might freeze tonight, (low temp = ' ~ states(input_number.minimum_outdoor_temperature) ~ ').' }}"
+      message: "{{ 'Pipes might freeze soon, (low temperature = ' ~ states('input_number.minimum_outdoor_temperature') | round(0) ~ ').' }}"
       channel: standard
       tag: 'freezing_temperature'
 
