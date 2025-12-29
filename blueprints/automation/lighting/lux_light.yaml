@@ -51,6 +51,9 @@ blueprint:
       selector:
         boolean:
 
+# Allow for multiple simultaneous changes.
+mode: queued
+
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
   input_lux_sensor: !input lux_sensor

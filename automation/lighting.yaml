@@ -35,7 +35,7 @@
         - "{{ is_state_attr('sun.sun', 'rising', false) and is_state('sun.sun', 'above_horizon') }}"
       
       then:
-        - action: automation.turn_{{ iif(toggle_operation == 'on', 'off', 'on') }}
+        - action: automation.turn_{{ iif(toggle_operation == 'on' and is_state('input_boolean.christmas_family_room_lamp', 'off'), 'off', 'on') }}
           entity_id: automation.control_family_room_lamp
         
         - action: automation.turn_{{ iif(toggle_operation == 'on', 'on', 'off') }}
@@ -64,8 +64,14 @@
       # However, don't enable the Christmas lights automation itself if the all day sensor is on, because then
       # the lights can turn off during the day based on the sensor. Complications! Devilish details!
       then:
-        - action: automation.turn_off
-          entity_id: automation.control_family_room_lamp
+        - if:
+            - condition: state
+              entity_id: input_boolean.christmas_family_room_lamp
+              state: 'off'
+          
+          then:
+            - action: automation.turn_off
+              entity_id: automation.control_family_room_lamp
         
         - if:
             - condition: state
@@ -463,7 +469,7 @@
       motion_entity: binary_sensor.master_bath_motion_detector_occupancy
       light_entity: light.master_vanity
       fan_entity: switch.master_bath_fan
-      no_motion_wait_fan_off: 240
+      no_motion_wait_fan_off: 300
       no_motion_wait_fan_on:  420
       additional_fan_wait:    300
       lux_entity: sensor.downstairs_sensor_ambient_light
@@ -721,17 +727,23 @@
           after: '07:30:00'
           before: '22:29:59'
       
-      # Turn on Christmas lights, and turn off the family room lamp just in case. Also, deactivate the
-      # automation that controls Christmas lights, so they don't turn off based on the downstairs light sensor.
+      # Turn on Christmas lights, and turn off the family room lamp just in case (unless we want it on along with the Christmas lights).
+      # Also, deactivate the automation that controls Christmas lights, so they don't turn off based on the downstairs light sensor.
       then:
         - action: automation.turn_off
           entity_id: automation.control_christmas_lights
         
         - action: script.turn_on_christmas_lights
         
-        - action: light.turn_off
-          target:
-            entity_id: light.family_room_lamp
+        - if:
+            - condition: state
+              entity_id: input_boolean.christmas_family_room_lamp
+              state: 'off'
+          
+          then:
+            - action: light.turn_off
+              target:
+                entity_id: light.family_room_lamp
       
       # Turn off Christmas lights and reactivate the Christmas lights automation.
       else:
