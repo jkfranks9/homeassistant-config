@@ -241,17 +241,6 @@ remove_mobile_notification:
         data:
           tag: "{{ tag }}"
     
-    # For some tags, we also notify Sarah.
-    - if:
-        - "{{ tag in state_attr('sensor.variables', 'variables').sarah_notification_tags }}"
-      
-      then:
-        - action: notify.mobile_app_sarah_pixel
-          data:
-            message: 'clear_notification'
-            data:
-              tag: "{{ tag }}"
-    
     # Unregister the tag.
     - action: script.unregister_mobile_notification
       data:
