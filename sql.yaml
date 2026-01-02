@@ -539,137 +539,137 @@
 
 #------------------------#
 #   -- HVAC Devices --   #
-#------------------------#
+# #------------------------#
 
-- name: Upstairs Air Handler Energy L90d
-  unique_id: upstairs_air_handler_energy_l90d
-  query: >
-    SELECT
-      (SELECT 
-        round(max(s.state) - min(s.state),2)
-      FROM 
-        statistics_meta sm 
-        INNER JOIN statistics s ON 
-          s.metadata_id = sm.id 
-        WHERE 
-          sm.statistic_id='sensor.energy_mon_2_air_handler_energy' 
-        AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
-        LIMIT 1)
-    AS `change`
-  <<: *base_anchor
+# - name: Upstairs Air Handler Energy L90d
+  # unique_id: upstairs_air_handler_energy_l90d
+  # query: >
+    # SELECT
+      # (SELECT 
+        # round(max(s.state) - min(s.state),2)
+      # FROM 
+        # statistics_meta sm 
+        # INNER JOIN statistics s ON 
+          # s.metadata_id = sm.id 
+        # WHERE 
+          # sm.statistic_id='sensor.energy_mon_2_air_handler_energy' 
+        # AND
+          # s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        # LIMIT 1)
+    # AS `change`
+  # <<: *base_anchor
 
-#------------------------#
-#   -- Misc Devices --   #
-#------------------------#
+# #------------------------#
+# #   -- Misc Devices --   #
+# #------------------------#
 
-- name: Upstairs Bed/Bath Energy L90d
-  unique_id: upstairs_bed_bath_energy_l90d
-  query: >
-    SELECT
-      (SELECT 
-        round(max(s.state) - min(s.state),2)
-      FROM 
-        statistics_meta sm 
-        INNER JOIN statistics s ON 
-          s.metadata_id = sm.id 
-        WHERE 
-          sm.statistic_id='sensor.energy_mon_2_bed_bath_energy' 
-        AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
-        LIMIT 1)
-    AS `change`
-  <<: *base_anchor
+# - name: Upstairs Bed/Bath Energy L90d
+  # unique_id: upstairs_bed_bath_energy_l90d
+  # query: >
+    # SELECT
+      # (SELECT 
+        # round(max(s.state) - min(s.state),2)
+      # FROM 
+        # statistics_meta sm 
+        # INNER JOIN statistics s ON 
+          # s.metadata_id = sm.id 
+        # WHERE 
+          # sm.statistic_id='sensor.energy_mon_2_bed_bath_energy' 
+        # AND
+          # s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        # LIMIT 1)
+    # AS `change`
+  # <<: *base_anchor
 
-- name: Upstairs Snack Bar Energy L90d
-  unique_id: upstairs_snack_bar_energy_l90d
-  query: >
-    SELECT
-      (SELECT 
-        round(max(s.state) - min(s.state),2)
-      FROM 
-        statistics_meta sm 
-        INNER JOIN statistics s ON 
-          s.metadata_id = sm.id 
-        WHERE 
-          sm.statistic_id='sensor.energy_mon_2_snack_bar_energy' 
-        AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
-        LIMIT 1)
-    AS `change`
-  <<: *base_anchor
+# - name: Upstairs Snack Bar Energy L90d
+  # unique_id: upstairs_snack_bar_energy_l90d
+  # query: >
+    # SELECT
+      # (SELECT 
+        # round(max(s.state) - min(s.state),2)
+      # FROM 
+        # statistics_meta sm 
+        # INNER JOIN statistics s ON 
+          # s.metadata_id = sm.id 
+        # WHERE 
+          # sm.statistic_id='sensor.energy_mon_2_snack_bar_energy' 
+        # AND
+          # s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        # LIMIT 1)
+    # AS `change`
+  # <<: *base_anchor
 
-- name: Upstairs Theater/Hall Energy L90d
-  unique_id: upstairs_theater_hall_energy_l90d
-  query: >
-    SELECT
-      (SELECT 
-        round(max(s.state) - min(s.state),2)
-      FROM 
-        statistics_meta sm 
-        INNER JOIN statistics s ON 
-          s.metadata_id = sm.id 
-        WHERE 
-          sm.statistic_id='sensor.energy_mon_2_theater_hall_energy' 
-        AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
-        LIMIT 1)
-    AS `change`
-  <<: *base_anchor
+# - name: Upstairs Theater/Hall Energy L90d
+  # unique_id: upstairs_theater_hall_energy_l90d
+  # query: >
+    # SELECT
+      # (SELECT 
+        # round(max(s.state) - min(s.state),2)
+      # FROM 
+        # statistics_meta sm 
+        # INNER JOIN statistics s ON 
+          # s.metadata_id = sm.id 
+        # WHERE 
+          # sm.statistic_id='sensor.energy_mon_2_theater_hall_energy' 
+        # AND
+          # s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        # LIMIT 1)
+    # AS `change`
+  # <<: *base_anchor
 
-- name: Upstairs Utility Misc Energy L90d
-  unique_id: upstairs_utility_misc_energy_l90d
-  query: >
-    SELECT
-      (SELECT 
-        round(max(s.state) - min(s.state),2)
-      FROM 
-        statistics_meta sm 
-        INNER JOIN statistics s ON 
-          s.metadata_id = sm.id 
-        WHERE 
-          sm.statistic_id='sensor.energy_mon_2_utility_misc_energy' 
-        AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
-        LIMIT 1)
-    AS `change`
-  <<: *base_anchor
+# - name: Upstairs Utility Misc Energy L90d
+  # unique_id: upstairs_utility_misc_energy_l90d
+  # query: >
+    # SELECT
+      # (SELECT 
+        # round(max(s.state) - min(s.state),2)
+      # FROM 
+        # statistics_meta sm 
+        # INNER JOIN statistics s ON 
+          # s.metadata_id = sm.id 
+        # WHERE 
+          # sm.statistic_id='sensor.energy_mon_2_utility_misc_energy' 
+        # AND
+          # s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        # LIMIT 1)
+    # AS `change`
+  # <<: *base_anchor
 
-- name: Upstairs Utility Rack Energy L90d
-  unique_id: upstairs_utility_rack_energy_l90d
-  query: >
-    SELECT
-      (SELECT 
-        round(max(s.state) - min(s.state),2)
-      FROM 
-        statistics_meta sm 
-        INNER JOIN statistics s ON 
-          s.metadata_id = sm.id 
-        WHERE 
-          sm.statistic_id='sensor.energy_mon_2_utility_rack_energy' 
-        AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
-        LIMIT 1)
-    AS `change`
-  <<: *base_anchor
+# - name: Upstairs Utility Rack Energy L90d
+  # unique_id: upstairs_utility_rack_energy_l90d
+  # query: >
+    # SELECT
+      # (SELECT 
+        # round(max(s.state) - min(s.state),2)
+      # FROM 
+        # statistics_meta sm 
+        # INNER JOIN statistics s ON 
+          # s.metadata_id = sm.id 
+        # WHERE 
+          # sm.statistic_id='sensor.energy_mon_2_utility_rack_energy' 
+        # AND
+          # s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        # LIMIT 1)
+    # AS `change`
+  # <<: *base_anchor
 
-- name: Ego Battery Charger Energy L90d
-  unique_id: ego_battery_charger_energy_l90d
-  query: >
-    SELECT
-      (SELECT 
-        round(max(s.state) - min(s.state),2)
-      FROM 
-        statistics_meta sm 
-        INNER JOIN statistics s ON 
-          s.metadata_id = sm.id 
-        WHERE 
-          sm.statistic_id='sensor.ego_battery_charger_energy' 
-        AND
-          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
-        LIMIT 1)
-    AS `change`
-  <<: *base_anchor
+# - name: Ego Battery Charger Energy L90d
+  # unique_id: ego_battery_charger_energy_l90d
+  # query: >
+    # SELECT
+      # (SELECT 
+        # round(max(s.state) - min(s.state),2)
+      # FROM 
+        # statistics_meta sm 
+        # INNER JOIN statistics s ON 
+          # s.metadata_id = sm.id 
+        # WHERE 
+          # sm.statistic_id='sensor.ego_battery_charger_energy' 
+        # AND
+          # s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        # LIMIT 1)
+    # AS `change`
+  # <<: *base_anchor
 
 - name: Toro 135 Battery Charger Energy L90d
   unique_id: toro_135_battery_charger_energy_l90d
