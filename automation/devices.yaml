@@ -1011,90 +1011,6 @@
     - action: input_boolean.turn_on
       entity_id: input_boolean.vacuum_finished
 
-#=================#
-#     Laundry     #
-#=================#
-  
-# We have a generic laundry room button that supports single, double and long presses. Handle those here.
-- alias: Handle Laundry Room Button Action
-  id: handle_laundry_room_button_action
-  
-  triggers:
-    - trigger: mqtt
-      topic: zigbee2mqtt/Laundry Room Button/action
-      payload: 'single'
-      id: single
-  
-    - trigger: mqtt
-      topic: zigbee2mqtt/Laundry Room Button/action
-      payload: 'double'
-      id: double
-  
-    - trigger: mqtt
-      topic: zigbee2mqtt/Laundry Room Button/action
-      payload: 'release'
-      id: long
-  
-  actions:   
-    
-    # Handle different button actions.
-    - choose:
-      
-        # For a single button push, turn off driveway area lights that might be on because I just arrived home after dark.
-        # This is optional: an automation will turn them off after a delay.
-        - conditions: "{{ trigger.id == 'single' }}"
-        
-          sequence:
-            - action: light.turn_off
-              target:
-                entity_id:
-                  - light.driveway
-                  - light.front_floodlight
-      
-        # For a double button push, reset certain laundry controls. This is only needed if a cycle got stuck somehow.
-        - conditions: "{{ trigger.id == 'double' }}"
-        
-          sequence:
-            - action: input_boolean.turn_off
-              target:
-                entity_id:
-                  - input_boolean.dryer_started
-                  - input_boolean.dryer_running
-            
-            - action: counter.reset
-              target:
-                entity_id:
-                  - counter.dryer_humidity_count
-                  - counter.dryer_temperature_count
-      
-        # For a long button push, initiate a dryer cycle. This is optional, but helps with debugging.
-        - conditions: "{{ trigger.id == 'long' }}"
-        
-          sequence:
-    
-            # Indicate the dryer has started. This is the initial state before the temperature has been detected (in Turn On Dryer Running).
-            - action: input_boolean.turn_on
-              entity_id: input_boolean.dryer_started
-            
-            # Remember to backup the log tomorrow morning.
-            - action: input_boolean.turn_on
-              entity_id: input_boolean.backup_laundry_log
-            
-            # Log the start in the laundry events log.
-            - action: script.log_laundry_event
-              data:
-                event_type: basic
-                prefix: Dryer
-                message: >
-                  {% set intemp  = states('sensor.downstairs_temperature') %}
-                  {% set inhum   = states('sensor.downstairs_humidity') %}
-                  {% set outtemp = states('sensor.porch_sensor_temperature') %}
-                  {% set outhum  = states('sensor.porch_sensor_humidity') %}
-                  {% set drytemp = states('sensor.dryer_sensor_temperature') %}
-                  {% set dryhum  = states('sensor.dryer_sensor_humidity') %}
-                  
-                  environment: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%); dryer ({{ drytemp }}°, {{ dryhum }}%)
-
 #================#
 #     Washer     #
 #================#
@@ -1733,3 +1649,263 @@
         entity_id: input_datetime.pc_lastboot
       data:
         timestamp: "{{ as_timestamp(states('sensor.legion_t530_lastboot')) }}"
+
+#=========================#
+#     Generic Buttons     #
+#=========================#
+  
+# We have a laundry room button that supports single, double and long presses. Handle those here.
+- alias: Handle Laundry Room Button Action
+  id: handle_laundry_room_button_action
+  
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/Laundry Room Button/action
+      payload: 'single'
+      id: single
+  
+    - trigger: mqtt
+      topic: zigbee2mqtt/Laundry Room Button/action
+      payload: 'double'
+      id: double
+  
+    - trigger: mqtt
+      topic: zigbee2mqtt/Laundry Room Button/action
+      payload: 'release'
+      id: long
+  
+  actions:   
+    
+    # Handle different button actions.
+    - choose:
+      
+        # For a single button push, turn off driveway area lights that might be on because I just arrived home after dark.
+        # This is optional: an automation will turn them off after a delay.
+        - conditions: "{{ trigger.id == 'single' }}"
+        
+          sequence:
+            - action: light.turn_off
+              target:
+                entity_id:
+                  - light.driveway
+                  - light.front_floodlight
+      
+        # For a double button push, reset certain laundry controls. This is only needed if a cycle got stuck somehow.
+        - conditions: "{{ trigger.id == 'double' }}"
+        
+          sequence:
+            - action: input_boolean.turn_off
+              target:
+                entity_id:
+                  - input_boolean.dryer_started
+                  - input_boolean.dryer_running
+            
+            - action: counter.reset
+              target:
+                entity_id:
+                  - counter.dryer_humidity_count
+                  - counter.dryer_temperature_count
+      
+        # For a long button push, initiate a dryer cycle. This is optional, but helps with debugging.
+        - conditions: "{{ trigger.id == 'long' }}"
+        
+          sequence:
+    
+            # Indicate the dryer has started. This is the initial state before the temperature has been detected (in Turn On Dryer Running).
+            - action: input_boolean.turn_on
+              entity_id: input_boolean.dryer_started
+            
+            # Remember to backup the log tomorrow morning.
+            - action: input_boolean.turn_on
+              entity_id: input_boolean.backup_laundry_log
+            
+            # Log the start in the laundry events log.
+            - action: script.log_laundry_event
+              data:
+                event_type: basic
+                prefix: Dryer
+                message: >
+                  {% set intemp  = states('sensor.downstairs_temperature') %}
+                  {% set inhum   = states('sensor.downstairs_humidity') %}
+                  {% set outtemp = states('sensor.porch_sensor_temperature') %}
+                  {% set outhum  = states('sensor.porch_sensor_humidity') %}
+                  {% set drytemp = states('sensor.dryer_sensor_temperature') %}
+                  {% set dryhum  = states('sensor.dryer_sensor_humidity') %}
+                  
+                  environment: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%); dryer ({{ drytemp }}°, {{ dryhum }}%)
+
+# We have a 4-way button for the guest studio that supports single, double, triple and long presses for each button. Handle those here.
+- alias: Handle Guest 4 Way Button
+  id: handle_guest_4_way_button
+  
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/Guest 4 Way Button/action
+  
+  actions:
+    - variables:
+        payload: "{{ trigger.payload }}"
+        action: "{{ payload.split('_')[0] }}"
+        button: "{{ payload.split('_')[-1] }}"
+        
+        domain: ''
+        name: ''
+        operation: ''
+    
+    # Handle different button actions.
+    - choose:
+      
+        # Button 1, single push...
+        - conditions: "{{ button == 1 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                domain: light
+                name: studio_side_window_lamp
+                operation: toggle
+      
+        # Button 1, double push...
+        - conditions: "{{ button == 1 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                domain: light
+                name: studio_front_window_lamp
+                operation: toggle
+      
+        # Button 1, triple push...
+        - conditions: "{{ button == 1 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                domain: light
+                name: studio_night_light
+                operation: toggle
+      
+        # Button 1, long push...
+        - conditions: "{{ button == 1 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                domain: light
+                name: hallway_lamp
+                operation: toggle
+      
+        # Button 2, single push...
+        - conditions: "{{ button == 2 and action == 'single' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 2, double push...
+        - conditions: "{{ button == 2 and action == 'double' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 2, triple push...
+        - conditions: "{{ button == 2 and action == 'triple' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 2, long push...
+        - conditions: "{{ button == 2 and action == 'long' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 3, single push...
+        - conditions: "{{ button == 3 and action == 'single' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 3, double push...
+        - conditions: "{{ button == 3 and action == 'double' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 3, triple push...
+        - conditions: "{{ button == 3 and action == 'triple' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 3, long push...
+        - conditions: "{{ button == 3 and action == 'long' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 4, single push...
+        - conditions: "{{ button == 4 and action == 'single' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 4, double push...
+        - conditions: "{{ button == 4 and action == 'double' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 4, triple push...
+        - conditions: "{{ button == 4 and action == 'triple' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+      
+        # Button 4, long push...
+        - conditions: "{{ button == 4 and action == 'long' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+    
+    - variables:
+        entity: "{{ domain ~ '.' ~ name }}"
+    
+    - choose:
+        - conditions: "{{ domain == 'light' and operation == 'toggle' }}"
+          
+          sequence:
+            - action: light.toggle
+              target:
+                entity_id: "{{ entity }}"
