@@ -104,6 +104,21 @@
       check_theater: false
       check_christmas: false
 
+# Control the master bedroom lamp based on ambient lux level. Note that we only automate turning the light off.
+- alias: Control Master Bedroom Lamp
+  id: control_master_bedroom_lamp
+
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      trigger_type: 'off'
+      lux_sensor: sensor.downstairs_sensor_ambient_light
+      light_target: light.master_bedroom_lamp
+      min_lux_level: input_number.master_suite_ambient_min  # unused
+      max_lux_level: input_number.master_suite_ambient_max
+      check_theater: false
+      check_christmas: false
+
 # Control the hallway lamp based on ambient lux level.
 - alias: Control Hallway Lamp
   id: control_hallway_lamp

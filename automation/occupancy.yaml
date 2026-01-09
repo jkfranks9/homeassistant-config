@@ -411,35 +411,35 @@
       ssid: White Rabbit
       topic_suffix: jon_phone_stationary
 
-- alias: Toggle Mike Phone Stationary Tracker
-  id: toggle_mike_phone_stationary_tracker
+# - alias: Toggle Mike Phone Stationary Tracker
+  # id: toggle_mike_phone_stationary_tracker
   
-  use_blueprint:
-    path: devices/update_phone_tracker.yaml
-    input:
-      wifi_entity: sensor.mike_galaxy_wifi_connection
-      ssid: White Rabbit
-      topic_suffix: mike_phone_stationary
+  # use_blueprint:
+    # path: devices/update_phone_tracker.yaml
+    # input:
+      # wifi_entity: sensor.mike_galaxy_wifi_connection
+      # ssid: White Rabbit
+      # topic_suffix: mike_phone_stationary
 
-- alias: Toggle Sarah Phone Stationary Tracker
-  id: toggle_sarah_phone_stationary_tracker
+# - alias: Toggle Sarah Phone Stationary Tracker
+  # id: toggle_sarah_phone_stationary_tracker
   
-  use_blueprint:
-    path: devices/update_phone_tracker.yaml
-    input:
-      wifi_entity: sensor.sarah_pixel_wi_fi_connection
-      ssid: White Rabbit
-      topic_suffix: sarah_phone_stationary
+  # use_blueprint:
+    # path: devices/update_phone_tracker.yaml
+    # input:
+      # wifi_entity: sensor.sarah_pixel_wi_fi_connection
+      # ssid: White Rabbit
+      # topic_suffix: sarah_phone_stationary
 
-- alias: Toggle David Phone Stationary Tracker
-  id: toggle_david_phone_stationary_tracker
+# - alias: Toggle David Phone Stationary Tracker
+  # id: toggle_david_phone_stationary_tracker
   
-  use_blueprint:
-    path: devices/update_phone_tracker.yaml
-    input:
-      wifi_entity: sensor.david_s_latest_phone_wi_fi_connection
-      ssid: White Rabbit
-      topic_suffix: david_phone_stationary
+  # use_blueprint:
+    # path: devices/update_phone_tracker.yaml
+    # input:
+      # wifi_entity: sensor.david_s_pixel_9_pro_xl_wi_fi_connection
+      # ssid: White Rabbit
+      # topic_suffix: david_phone_stationary
   
 # Children without personal devices use NFC tags to scan in and out.
 - alias: Handle Child Tag Scan
@@ -613,10 +613,12 @@
             entity_id: scene.voice_assistants_on_bright
     
     # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.
-    # The Reset Bedtime Environment script (called above) calls Modify Master Suite for wakeup. That script in turn waits 
-    # until downstairs motion is detected before turning off master suite lights. So we can use that to manage the island 
-    # light and echo volume here.
-    - wait_template: "{{ is_state('script.modify_master_suite', 'off') }}"
+    # Note that if family members are home this can be triggered before I arise, but oh well.
+    - wait_template: >
+        {% set motion = states('binary_sensor.downstairs_motion') %}
+        {% set devices = state_attr('binary_sensor.downstairs_motion', 'devices') %}
+        {% set master = 'binary_sensor.master_bath_motion_detector_occupancy' in devices %}
+        {{ motion == 'on' and master == false }}
                   
     # Normalize the master bedroom echo volume.
     - action: media_player.volume_set

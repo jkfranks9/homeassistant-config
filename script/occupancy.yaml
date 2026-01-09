@@ -592,17 +592,6 @@ modify_master_suite:
             lux_entity: sensor.downstairs_sensor_ambient_light
             min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
 
-        # Turn off the master suite lights when motion is detected downstairs.
-        - wait_template: >
-            {% set motion = states('binary_sensor.downstairs_motion') %}
-            {% set devices = state_attr('binary_sensor.downstairs_motion', 'devices') %}
-            {% set master = 'binary_sensor.master_bath_motion_detector_occupancy' in devices %}
-            {{ motion == 'on' and master == false }}
-
-        - action: homeassistant.turn_off
-          target:
-            entity_id: light.master_suite_lights
-
 # Perform tasks for the studio for certain events.
 modify_studio:
   alias: Modify Studio

@@ -6,6 +6,17 @@ blueprint:
   domain: automation
   
   input:
+    trigger_type:
+      name: Trigger Type
+      description: Type of trigger(s) that should be enabled.
+      default: 'onoff'
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+            - 'onoff'
+    
     lux_sensor:
       name: Lux Sensor Entity
       description: The lux sensor that controls the light.
@@ -54,6 +65,10 @@ blueprint:
 # Allow for multiple simultaneous changes.
 mode: queued
 
+# Trigger variables. These are assigned when the automation is saved, and allow us to only enable the required triggers.
+trigger_variables:
+  tv_trigger_type: !input trigger_type
+
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
   input_lux_sensor: !input lux_sensor
@@ -68,18 +83,21 @@ triggers:
     entity_id: !input lux_sensor
     below: !input min_lux_level
     for: '00:02:00'
+    enabled: "{{ tv_trigger_type in ['onoff', 'on'] }}"
     id: turn_on_1
   
   - trigger: numeric_state
     entity_id: !input lux_sensor
     above: !input max_lux_level
     for: '00:02:00'
+    enabled: "{{ tv_trigger_type in ['onoff', 'off'] }}"
     id: turn_off
     
   - trigger: state
     entity_id: input_boolean.nighttime
     from: 'on'
     to: 'off'
+    enabled: "{{ tv_trigger_type in ['onoff', 'on'] }}"
     id: turn_on_2
 
 actions:
