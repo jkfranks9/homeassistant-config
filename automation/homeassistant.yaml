@@ -11,6 +11,12 @@
   
   actions:
     
+    # See https://community.home-assistant.io/t/2024-5-tracking-down-instability-issues-caused-by-integrations/724441
+    # Typically used to debug instability issues.
+    # Also, see configuration.yaml to enable HA debug.
+    # NOTE: Comment this out when not needed.
+    #- action: profiler.set_asyncio_debug
+    
     # Delete junk log files left over from backing up the logs on shutdown.
     - action: shell_command.delete_junk_log_files 
     
