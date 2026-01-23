@@ -53,6 +53,7 @@ logs:
   # custom_components.sonoff.sonoff_cloud:             info
 
   # Other
+  # aioharmony:                              debug
   aiounifi:                                warning
   alexapy.alexaapi:                        warning
   androidtv.adb_manager.adb_manager_async: warning
