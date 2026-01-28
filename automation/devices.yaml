@@ -1581,7 +1581,8 @@
 #======================#
 
 # Echo devices have a do not disturb (DND) switch, which supposedly blocks unsolicited notifications from Amazon.
-# Turn on DND in all occupied bedrooms when the Bedtime script is run. Note that the master bedroom is always occupied.
+# Turn on DND in all occupied bedrooms when the Bedtime or Sleeptime script is run. Note that the master bedroom is always 
+# occupied, and DND is only turned on at Sleeptime.
 # Turn off DND when the Handle Jon Awake automation is run.
 - alias: Manage Echo Do Not Disturb
   id: 'manage_echo_do_not_disturb'
@@ -1591,7 +1592,13 @@
       entity_id: input_boolean.nighttime
       from: 'off'
       to: 'on'
-      id: 'on'
+      id: 'night_on'
+  
+    - trigger: state
+      entity_id: input_boolean.sleeptime
+      from: 'off'
+      to: 'on'
+      id: 'sleep_on'
   
     - trigger: state
       entity_id: input_boolean.nighttime
@@ -1601,6 +1608,7 @@
   
   actions:
     - variables:
+        operation: "{{ iif('on' in trigger.id, 'on', 'off') }}"
         
         # Since there are only 3 bedrooms in the house, now and forever, this is just hardcoded, rather than something more sophisticated.
         bedroom_echoes: "{{ ['switch.master_bedroom_echo_do_not_disturb_switch', 'switch.studio_echo_do_not_disturb_switch', 'switch.penthouse_echo_do_not_disturb_switch'] }}"
@@ -1612,18 +1620,32 @@
         sequence:
           - variables:
               name: "{{ repeat.item.split('.')[1].split('_')[0] }}"
-              
-              # Note that for the master bedroom, this resolves to a non-existent entity. But we don't care because it isn't used below.
-              occupied_sensor: "{{ 'binary_sensor.' ~ name ~ '_occupied' }}"
+              occupied: "{{ name != 'master' and states('binary_sensor.' ~ name ~ '_occupied') == 'on' }}"
           
-          # Continue if we need to take action for this bedroom.
-          - if:
-              - "{{ iif(name == 'master' or states(occupied_sensor) == 'on') }}"
+          # We need different processing for the master and guest bedrooms..
+          - choose:
             
-            then:
-              - action: switch.turn_{{ trigger.id }}
-                target:
-                  entity_id: "{{ repeat.item }}"
+            # Handle the master bedroom.
+            - conditions: "{{ name == 'master' }}"
+              
+              sequence:
+                - if:
+                    - "{{ trigger.id != 'night_on' }}"
+            
+                  then:
+                    - action: switch.turn_{{ operation }}
+                      target:
+                        entity_id: "{{ repeat.item }}"
+            
+            # Handle an occupied guest bedroom.
+            default:
+              - if:
+                  - "{{ occupied == true }}"
+                
+                then:
+                  - action: switch.turn_{{ operation }}
+                    target:
+                      entity_id: "{{ repeat.item }}"
 
 #========================#
 #     Legion T530 PC     #
