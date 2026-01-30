@@ -5,13 +5,15 @@
 # Default setup of Home Assistant (frontend, api, etc)
 default_config:
 
-# We need to specify allowed directories for the file notification service here.
 homeassistant:
+  
+  # Set to true to debug instability issues. See https://community.home-assistant.io/t/2024-5-tracking-down-instability-issues-caused-by-integrations/724441
+  # Also, enable asyncio debug mode at runtime, from the same page referenced above.
+  # debug: true
+
+  # We need to specify allowed directories for the file notification service here.
   allowlist_external_dirs:
     - /config/debug_logs
-
-# Add back log file in config directory, needed for 2025.11.0 ... I hope this gets reverted in HA so this custom integration can be removed.
-a_file_logger:
 
 #========================#
 #     Included Files     #
