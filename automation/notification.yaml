@@ -964,6 +964,9 @@
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
+        - condition: numeric_state
+          entity_id: sensor.astroweather_white_rabbit_gardens_cloud_cover
+          below: 30
       voice_assistant_rooms: "{{ states('sensor.announcement_rooms') }}"
       clear_type: assisted
       title: attention
@@ -1111,6 +1114,23 @@
       message: "{{ 'Pipes might freeze soon, (low temperature = ' ~ states('input_number.minimum_outdoor_temperature') | round(0) ~ ').' }}"
       channel: standard
       tag: 'freezing_temperature'
+
+#====================#
+#     Time Based     #
+#====================#
+- alias: Notify Account Balance
+  id: 'notify_account_balance'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: template
+      template: "{{ states('sensor.current_day_of_month') | int == 20 }}"
+      clear_type: assisted
+      title: attention
+      message: 'Check account balance'
+      channel: standard
+      tag: 'account_balance'
 
 #=====================================#
 #     Notification Tag Management     #
@@ -1280,7 +1300,7 @@
         for_each: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         sequence:
           - if:
-              - "{{ repeat.item in ['washer_done', 'dryer_done', 'next_canes_game', 'next_flyers_game', 'astronomy_friendly'] }}"
+              - "{{ repeat.item in state_attr('sensor.variables', 'variables').single_day_notification_tags }}"
             
             then:
         

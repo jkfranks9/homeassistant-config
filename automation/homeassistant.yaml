@@ -316,10 +316,10 @@
       entity_id: automation.control_christmas_lights
       
     # Run a daily Watchman report.
-    - action: watchman.report
-      data:
-        parse_config: false
-        create_file: true
+    # - action: watchman.report
+      # data:
+        # parse_config: false
+        # create_file: true
     
     # Reset the default guest suite preferences for all guests not currently home.
     - repeat:
@@ -701,7 +701,8 @@
     # Toggle the notification automations.
     - action: automation.turn_{{ trigger.id }}
       entity_id:
-        - automation.notify_next_canes_game
+        - automation.notify_next_canes_game_jon
+        - automation.notify_next_canes_game_sarah
         - automation.notify_next_flyers_game
     
     # Toggle the team active toggles. These can be turned off using the dashboard if a team doesn't make the playoffs :(

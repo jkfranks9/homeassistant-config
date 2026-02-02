@@ -118,11 +118,11 @@ initialize_global_variables:
                  "{{ state_attr('input_datetime.periodic_other_trash', 'friendly_name').split('Periodic Other ')[-1] }}": 40
                }
     
-    # Mobile notification tags to be sent to Sarah in addition to Jon.
+    # Single day notification tags.
     - event: set_variable
       event_data:
-        key: sarah_notification_tags
-        value: ['next_canes_game', 'test_notify_sarah']
+        key: single_day_notification_tags
+        value: ['account_balance', 'astronomy_friendly', 'dryer_done', 'next_canes_game', 'next_flyers_game', 'washer_done']
 
 #========================#
 #     Mini ToDo List     #

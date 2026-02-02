@@ -87,6 +87,9 @@ filters:
     - ".*AlexapyTooManyRequestsError.*"
     - ".*Too Many Requests.*"
   
+  custom_components.epson_projector_link.projector.projector:
+    - "_handle_imevent: imevent warning=\"No signal\""
+  
   custom_components.mail_and_packages:
     - "Timeout fetching Mail and Packages .* data"
     - "Error updating sensor data"
@@ -111,7 +114,7 @@ filters:
     - "Watchman sensors updated"
   
   homeassistant.bootstrap:
-    - "Waiting on integrations to complete setup"
+    - "Waiting for integrations to complete setup"
 
   homeassistant.components.alexa.auth:
     - "Timeout calling LWA to get auth token"
@@ -142,6 +145,7 @@ filters:
 
   homeassistant.components.media_player:
     - "Updating .* took longer than the scheduled update interval .*"
+    - "Setup of media_player platform .* is taking over 10 seconds"
   
   homeassistant.components.recorder.db_schema:
     - "Event data for system_log_event exceed maximum size of 32768 bytes"
