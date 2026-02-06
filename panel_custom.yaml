@@ -23,3 +23,14 @@
   require_admin: true
   config:
     ingress: core_configurator
+  
+# Developer Tools
+- name: Developer Tools
+  sidebar_title: Developer Tools
+  sidebar_icon: mdi:hammer
+  js_url: /api/hassio/app/entrypoint.js
+  url_path: developer-tools/yaml
+  embed_iframe: true
+  require_admin: true
+  config:
+    ingress: core_configurator
