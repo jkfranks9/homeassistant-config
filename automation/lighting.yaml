@@ -119,6 +119,21 @@
       check_theater: false
       check_christmas: false
 
+# Control the kitchen lights based on ambient lux level. Note that we only automate turning the lights off.
+- alias: Control Kitchen Lights
+  id: control_kitchen_lights
+
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      trigger_type: 'off'
+      lux_sensor: sensor.downstairs_sensor_ambient_light
+      light_target: light.kitchen_lights
+      min_lux_level: input_number.kitchen_ambient_min  # unused
+      max_lux_level: input_number.kitchen_ambient_max
+      check_theater: false
+      check_christmas: false
+
 # Control the hallway lamp based on ambient lux level.
 - alias: Control Hallway Lamp
   id: control_hallway_lamp
