@@ -35,11 +35,18 @@ activate_cinema:
       description: True if we need to start the Kodi app.
   
   variables:
-    cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' }}"
+    #cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' }}"
+    cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' or states('input_boolean.cinema_harmony_initiation') == 'on'}}"
     plugs: "{{ label_entities('theater_off') }}"
     num_plugs: "{{ plugs | length }}"
   
   sequence:
+    
+    # Turn off the harmony initiation toggle. We only need this for the cinema_off_upon_entry variable, and leaving it on
+    # can cause chaos later.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.cinema_harmony_initiation
     
     # Ensure the cinema has not been closed recently, if it was off upon entry.
     - if:

@@ -29,6 +29,37 @@
     # Restore theater lighting.
     - action: script.restore_lighting_on_resume
 
+#=====================#
+#     Cinema Open     #
+#=====================#
+
+# Open the cinema when the Harmony is powered on.   
+- alias: Open Cinema
+  id: open_cinema
+  
+  triggers:
+    - trigger: state
+      entity_id: sensor.harmony_hub
+      from: 'PowerOff'
+      to:
+  
+  # Sanity check to prevent false triggers.
+  conditions:
+    - condition: state
+      entity_id: input_boolean.theater_open
+      state: 'off'
+  
+  actions:
+    # The Open Cinema script calls Activate Cinema, which in turn needs to know if the cinema was just opened. If the script
+    # was called via voice or the UI, then checking if the Harmony hub is in 'PowerOff' state works. But this automation is 
+    # triggered when the remote is used to start an activity, so that doesn't work. So turn on a toggle that can be used for
+    # the same purpose in the Activate Cinema script.
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.cinema_harmony_initiation
+    
+    - action: script.open_cinema
+
 #======================#
 #     Cinema Close     #
 #======================#
