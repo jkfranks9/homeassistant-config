@@ -145,17 +145,9 @@ register_exercise_metrics:
             - "{{ exercise_type == 'workout' }}"
           
           then:
-            
-            - variables:
-                next_group: >
-                  {% set curr_group = states('input_number.workout_group') | int(0) %}
-                  {{ iif(curr_group > 3, 1, curr_group + 1) }}
-            
-            - action: input_number.set_value
+            - action: input_boolean.toggle
               target:
-                entity_id: input_number.workout_group
-              data:
-                value: "{{ next_group }}"
+                entity_id: input_boolean.workout_group
         
         - variables:
             
