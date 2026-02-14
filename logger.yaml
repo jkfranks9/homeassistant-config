@@ -48,7 +48,7 @@ logs:
   # Custom components
   # custom_components.alexa_media:                     info
   # custom_components.epson_projector_link:            info
-  custom_components.mail_and_packages:               error
+  custom_components.mail_and_packages.camera:        error
   custom_components.resmed_myair.client.rest_client: warning
   # custom_components.sonoff.sonoff_cloud:             info
 
