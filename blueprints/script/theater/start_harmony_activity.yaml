@@ -9,18 +9,10 @@ blueprint:
     activity:
       name: Harmony Activity
       description: The Harmony activity name to be started.
-    
-    lighting:
-      name: Desired Lighting
-      description: Script that establishes the desired type of lighting once the activity starts.
-      selector:
-        entity:
-          domain: script
 
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
   input_activity: !input activity
-  input_lighting: !input lighting
 
 sequence:
     
@@ -38,6 +30,3 @@ sequence:
       
     then:
       - stop: "Cinema usage is denied."
-  
-  # Establish the target lighting.
-  - action: "{{ input_lighting }}"

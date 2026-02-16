@@ -93,6 +93,12 @@ activate_cinema:
       
       then:
         - stop: "Cinema plugs failed to turn on."
+        
+    # Indicate the cinema is open. We need to do this before turning on the Harmony remote, because when the Harmony
+    # starts, the Open Cinema automation runs. That automation verifies the cinema is off before proceeding, so if we don't
+    # turn the toggle on here, we get called again and chaos reigns.
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.theater_open
     
     # Start the input Harmony activity, which ensures the correct devices are on.
     # However, if Enable Streaming is requested but the cinema is currently on, then use the Stream Player
@@ -121,10 +127,6 @@ activate_cinema:
         - "{{ cinema_off_upon_entry }}"
     
       then:
-        
-        # Indicate the cinema is open.
-        - action: input_boolean.turn_on
-          entity_id: input_boolean.theater_open
     
         # Turn on some lights.
         - action: script.set_theater_idle
@@ -385,7 +387,6 @@ start_streaming:
     path: theater/start_harmony_activity.yaml
     input:
       activity: Stream Player
-      lighting: script.set_theater_dark_delay
 
 # Blu-ray
 start_bluray:
@@ -395,7 +396,6 @@ start_bluray:
     path: theater/start_harmony_activity.yaml
     input:
       activity: BD Player
-      lighting: script.set_theater_dark_delay
 
 # Laserdisc
 start_laserdisc:
@@ -405,7 +405,6 @@ start_laserdisc:
     path: theater/start_harmony_activity.yaml
     input:
       activity: LD Player
-      lighting: script.set_theater_dark_delay
 
 # Turntable
 start_turntable:
@@ -415,7 +414,6 @@ start_turntable:
     path: theater/start_harmony_activity.yaml
     input:
       activity: LP Player
-      lighting: script.set_theater_dim
 
 #=================================#
 #     5) Watch Shield TV App      #

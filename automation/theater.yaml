@@ -10,8 +10,25 @@
     stored_traces: 20
 
   triggers:
+    
+    # We have 4 integrations related to the Shield TV box:
+    #
+    # 1) Android Debug Bridge (media player entity = shield_tv)
+    # 2) Google Cast (media player entity = shield_tv_cast)
+    # 3) Universal media player (media player entity = theater_shield)
+    # 4) Android TV Remote (media player entity = shield_android_tv)
+    #
+    # We need to trigger on the first 3 of these, since the Shield apps seem to behave very differently,
+    # causing some of the entities to switch between 'playing' and 'paused' states, while others remain in 
+    # 'on' (or even 'off') state.
+    #
+    # The last of the above entities is used for easier remote control of the Shield, and just stays in 
+    # 'on' state once the device is turned on.
     - trigger: state
-      entity_id: media_player.shield_tv
+      entity_id:
+        - media_player.shield_tv
+        - media_player.shield_tv_cast
+        - media_player.theater_shield
       from:
         - 'paused'
         - 'idle'
