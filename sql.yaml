@@ -706,3 +706,21 @@
         LIMIT 1)
     AS `change`
   <<: *base_anchor
+
+- name: Office Plug Energy L90d
+  unique_id: office_plug_energy_l90d
+  query: >
+    SELECT
+      (SELECT 
+        round(max(s.state) - min(s.state),2)
+      FROM 
+        statistics_meta sm 
+        INNER JOIN statistics s ON 
+          s.metadata_id = sm.id 
+        WHERE 
+          sm.statistic_id='sensor.office_plug_energy' 
+        AND
+          s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
+        LIMIT 1)
+    AS `change`
+  <<: *base_anchor
