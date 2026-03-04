@@ -956,9 +956,17 @@
             entity_id: counter.mini_todo_tasks
     
     # If this is a free time day, just add that to the list and go away. Weekly Free Time Days is a bitmask, where the 
-    # least significant bit is Sunday.
+    # least significant bit is Sunday. Certain special days and roving holidays are also treated as free time.
+    - variables:
+        free_time: >
+          {% set free_day = states('input_number.mini_todo_weekly_free_time_days') | int(0) | bitwise_and(2 ** now().isoweekday()) > 0 %}
+          {% set roving_holiday = states('sensor.easter_day') == true or states('sensor.thanksgiving_day') == true %}
+          {% set special_day = now().strftime('%m-%d') in state_attr('sensor.variables', 'variables').special_days %}
+          
+          {{ free_day == true or roving_holiday == true or special_day == true }}
+    
     - if:
-        - "{{ states('input_number.mini_todo_weekly_free_time_days') | int(0) | bitwise_and(2 ** now().isoweekday()) > 0 }}"
+        - "{{ free_time == true }}"
       
       then:
         - event: add_mini_todo_item

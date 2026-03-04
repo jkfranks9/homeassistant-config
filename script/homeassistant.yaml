@@ -118,6 +118,12 @@ initialize_global_variables:
                  "{{ state_attr('input_datetime.periodic_other_trash', 'friendly_name').split('Periodic Other ')[-1] }}": 40
                }
     
+    # Mini todo list special days - treated as free time.
+    - event: set_variable
+      event_data:
+        key: special_days
+        value: ['01-01', '02-09', '02-28', '10-30', '10-31', '11-18', '12-24', '12-25']
+    
     # Single day notification tags.
     - event: set_variable
       event_data:
