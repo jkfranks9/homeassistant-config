@@ -45,30 +45,30 @@ mqtt:
   
   device_tracker:
     
-    # Stationary phone device trackers, based on the wifi SSID.
+    # Stationary phone device trackers, based on the wifi SSID reported by the companion app.
     - name: Jon Phone Stationary
       state_topic: "homeassistant/device_tracker/jon_phone_stationary"
       source_type: router
       payload_home: "home"
       payload_not_home: "not_home"
     
-    - name: Mike Phone Stationary
-      state_topic: "homeassistant/device_tracker/mike_phone_stationary"
-      source_type: router
-      payload_home: "home"
-      payload_not_home: "not_home"
+    # - name: Mike Phone Stationary
+      # state_topic: "homeassistant/device_tracker/mike_phone_stationary"
+      # source_type: router
+      # payload_home: "home"
+      # payload_not_home: "not_home"
     
-    - name: Sarah Phone Stationary
-      state_topic: "homeassistant/device_tracker/sarah_phone_stationary"
-      source_type: router
-      payload_home: "home"
-      payload_not_home: "not_home"
+    # - name: Sarah Phone Stationary
+      # state_topic: "homeassistant/device_tracker/sarah_phone_stationary"
+      # source_type: router
+      # payload_home: "home"
+      # payload_not_home: "not_home"
     
-    - name: David Phone Stationary
-      state_topic: "homeassistant/device_tracker/david_phone_stationary"
-      source_type: router
-      payload_home: "home"
-      payload_not_home: "not_home"
+    # - name: David Phone Stationary
+      # state_topic: "homeassistant/device_tracker/david_phone_stationary"
+      # source_type: router
+      # payload_home: "home"
+      # payload_not_home: "not_home"
     
     # Pseudo stationary device trackers based on NFC tags.
     - name: Skylar NFC Tag
