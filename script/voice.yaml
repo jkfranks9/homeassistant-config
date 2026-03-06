@@ -517,3 +517,25 @@ update_last_alexa_device:
             message: "I'm sorry, but Amazon failed to tell me what echo was just spoken to."
             room: ['everywhere']
             voice_type: announce
+
+# Manage companion app wake work listening.
+manage_companion_wake_word_listen:
+  alias: Manage Companion Wake Word Listen
+  
+  fields:
+    operation:
+      name: Operation
+      description: Whether to turn the feature on or off.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+  
+  sequence:
+    - action: notify.mobile_app_jon_s25
+      data:
+        message: command_wake_word_detection
+        data:
+          command: turn_{{ operation }}
+
