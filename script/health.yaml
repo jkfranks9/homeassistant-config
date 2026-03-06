@@ -385,7 +385,7 @@ set_up_yard_work_devices:
             variables:
               fan_entity_id: fan.office_fan
               temperature_entity_id: sensor.main_floor_temperature
-              thresholds: [76, 73, 71]
+              thresholds: [78, 76, 73]
               timeout: 600
         
         - action: light.turn_off

@@ -559,7 +559,7 @@
       sensor_off_state: 'off'
       temperature_entity: sensor.office_sensor_temperature
       fan_entity: fan.office_fan
-      thresholds: [80, 78, 76]
+      thresholds: [80.5, 79, 77.5]
 
 # Operate the family room fan when the AV system is on.
 - alias: Operate Family Room Fan
@@ -1573,8 +1573,8 @@
         variables:
           fan_entity_id: fan.office_fan
           temperature_entity_id: sensor.main_floor_temperature
-          thresholds: [76, 74, 72]
-          timeout: 360
+          thresholds: [78, 76, 73]
+          timeout: 300
 
 #======================#
 #     Echo Devices     #
