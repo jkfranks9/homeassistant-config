@@ -579,6 +579,7 @@
                       'input_datetime.reminder_misc_cleanfridge',
                       'input_datetime.reminder_misc_cleanmicrowavegreasefilter',
                       'input_datetime.reminder_misc_cleanoven',
+                      'input_datetime.reminder_misc_cleanvacuums',
                       'input_datetime.reminder_misc_lubegaragedoors',
                       'input_datetime.reminder_misc_poolcleaning',
                       'input_datetime.reminder_misc_rechargeclipper',
@@ -964,9 +965,13 @@
         - condition: state
           entity_id: input_boolean.nighttime
           state: 'off'
-        - condition: numeric_state
-          entity_id: sensor.astroweather_white_rabbit_gardens_cloud_cover
-          below: 30
+        - or:
+            - condition: numeric_state
+              entity_id: sensor.astroweather_white_rabbit_gardens_cloud_cover
+              below: 30
+            - condition: numeric_state
+              entity_id: sensor.openweathermap_cloud_coverage
+              below: 30
       voice_assistant_rooms: "{{ states('sensor.announcement_rooms') }}"
       clear_type: assisted
       title: attention
@@ -1216,7 +1221,7 @@
     - trigger: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.next_iss_pass					
+        entity_id: timer.next_iss_pass
     
     - trigger: event
       event_type: timer.finished
@@ -1239,7 +1244,7 @@
   
   triggers:
     - trigger: state
-      entity_id: vacuum.ecovacs_deebot_none
+      entity_id: vacuum.ecovacs_deebot
       not_from: docked
       to: docked
   

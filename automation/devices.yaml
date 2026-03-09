@@ -102,7 +102,7 @@
       
       then:        
         - action: vacuum.stop
-          entity_id: vacuum.ecovacs_deebot_none 
+          entity_id: vacuum.ecovacs_deebot 
 
 # Shut down the host if UPS runtime reaches critical level.
 - alias: Handle UPS Critical
@@ -223,7 +223,7 @@
     
     # Instruct the vacuum to return home.
     - action: vacuum.return_to_base
-      entity_id: vacuum.ecovacs_deebot_none
+      entity_id: vacuum.ecovacs_deebot
     
     # The theater might have been on when power went out; reset the flag so it will open the next time.
     - action: input_boolean.turn_off
@@ -900,20 +900,20 @@
     # Sometimes the Ecovacs integration needs to be reloaded to function properly. If the vacuum state isn't docked, try
     # reloading it, then wait for the state to change to docked.
     - if:
-        - "{{ states('vacuum.ecovacs_deebot_none') != 'docked' }}"
+        - "{{ states('vacuum.ecovacs_deebot') != 'docked' }}"
       
       then:    
         - action: homeassistant.reload_config_entry
           target:
-            entity_id: vacuum.ecovacs_deebot_none
+            entity_id: vacuum.ecovacs_deebot
         
-        - wait_template: "{{ is_state('vacuum.ecovacs_deebot_none', 'docked') }}"
+        - wait_template: "{{ is_state('vacuum.ecovacs_deebot', 'docked') }}"
           timeout:
             seconds: 10
         
         # Still no good? We're done.
         - if:
-            - "{{ states('vacuum.ecovacs_deebot_none') != 'docked' }}"
+            - "{{ states('vacuum.ecovacs_deebot') != 'docked' }}"
           
           then:
             - action: script.send_notification
@@ -942,7 +942,7 @@
         milliseconds: 100
     
     - action: vacuum.start
-      entity_id: vacuum.ecovacs_deebot_none
+      entity_id: vacuum.ecovacs_deebot
 
 # Land the vacuum.
 - alias: Stop Vacuum
@@ -965,7 +965,7 @@
   
   actions:
     - action: vacuum.return_to_base
-      entity_id: vacuum.ecovacs_deebot_none
+      entity_id: vacuum.ecovacs_deebot
 
 # Detect the vacuum running.
 - alias: Detect Vacuum Running
@@ -973,7 +973,7 @@
   
   triggers:
     - trigger: state
-      entity_id: vacuum.ecovacs_deebot_none
+      entity_id: vacuum.ecovacs_deebot
       to: 'cleaning'
   
   conditions:
@@ -995,7 +995,7 @@
   
   triggers:
     - trigger: state
-      entity_id: vacuum.ecovacs_deebot_none
+      entity_id: vacuum.ecovacs_deebot
       to: 'docked'
   
   conditions:
