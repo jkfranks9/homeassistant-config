@@ -325,6 +325,13 @@ bedtime:
     # Turn on nighttime mode.
     - action: input_boolean.turn_on
       entity_id: input_boolean.nighttime
+    
+    # Initialize the accumulated sleep pause time.
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.sleep_pause_total
+      data:
+        value: 0
 
     # Perform tasks if no studio guests are awake.
     - if:
@@ -375,6 +382,32 @@ sleeptime:
     - action: input_boolean.turn_on
       entity_id: input_boolean.sleeptime
     
+    # Accumulate the sleep pause time during the night if necessary.
+    - if:
+        - condition: state
+          entity_id: input_boolean.sleep_pause
+          state: 'on'
+      
+      then:
+        - variables:
+        
+            # Sleep pause duration in minutes.
+            duration: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.sleep_pause'))) / 60) | round(0) }}"
+            
+            # Accumulated total.
+            sleep_pause_total: "{{ states('input_number.sleep_pause_total') | int(0) + duration }}"
+    
+        # Set the accumulated sleep pause duration time.
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.sleep_pause_total
+          data:
+            value: "{{ sleep_pause_total }}"
+    
+        # Turn off the sleep pause flag.
+        - action: input_boolean.turn_off
+          entity_id: input_boolean.sleep_pause
+    
     # Verify all devices are charging. If not, the Jon Sleeping sensor won't function properly. I can't send a message to the
     # voice assistant device, because we turn on do not disturb at bedtime. So just leave the master bedroom lamp on as an
     # indication that the devices are not charging. Lame.
@@ -389,9 +422,9 @@ sleeptime:
         - action: light.turn_off
           entity_id: light.master_suite_lights
 
-# Turn on the bathroom light during the night.
-turn_on_bathroom_light:
-  alias: Turn On Bathroom Light
+# Temporarily pause sleep, to use the bathroom or if I can't fall asleep easily.
+temporarily_pause_sleep:
+  alias: Temporarily Pause Sleep
   
   sequence:
     
@@ -400,9 +433,16 @@ turn_on_bathroom_light:
       entity_id: input_boolean.nighttime
       state: 'on'
     
-    # Turn on bathroom flag.
+    # Set the current sleep pause start time.
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.sleep_pause
+      data:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    
+    # Turn on the sleep pause flag.
     - action: input_boolean.turn_on
-      entity_id: input_boolean.bathroom
+      entity_id: input_boolean.sleep_pause
     
     # Turn on master bedroom lamp.
     - action: light.turn_on
@@ -414,15 +454,6 @@ turn_on_bathroom_light:
     
     # Turn on bath light.
     - action: light.turn_on
-      entity_id: light.master_vanity
-    
-    # Wait a few minutes then turn off the bathroom flag and light.
-    - delay: '00:15:00'
-    
-    - action: input_boolean.turn_off
-      entity_id: input_boolean.bathroom
-    
-    - action: light.turn_off
       entity_id: light.master_vanity
 
 #=============================#

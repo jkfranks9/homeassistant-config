@@ -4,11 +4,6 @@
 
 intents:
   
-  Bathroom:
-    data:
-      - sentences:
-          - "bathroom"
-  
   KitchenBright:
     data:
       - sentences:
@@ -28,6 +23,11 @@ intents:
     data:
       - sentences:
           - "lights out"
+  
+  PauseSleep:
+    data:
+      - sentences:
+          - "(bathroom | [I] can't (fall asleep | sleep))"
   
   SleepTime:
     data:

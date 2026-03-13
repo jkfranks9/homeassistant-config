@@ -98,8 +98,8 @@ reset_smart_bulb_nighttime:
 
   sequence:
         
-    # Perform the reset if nighttime mode is off, or sleeptime mode is on and the bathroom flag is off. 
-    # This disables the reset during the time I'm in bed reading, or using the bathroom.
+    # Perform the reset if nighttime mode is off, or sleeptime mode is on and the sleep pause flag is off. 
+    # This disables the reset during the time I'm in bed reading, or are temporarily awake.
     - or:
       - condition: state
         entity_id: input_boolean.nighttime
@@ -109,7 +109,7 @@ reset_smart_bulb_nighttime:
           entity_id: input_boolean.sleeptime
           state: 'on'
         - condition: state
-          entity_id: input_boolean.bathroom
+          entity_id: input_boolean.sleep_pause
           state: 'off'
     
     - action: light.turn_off

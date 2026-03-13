@@ -504,8 +504,14 @@
   actions:
     - variables:
         
-        # Sleep duration in seconds.
-        duration: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.sleep_start'))) / 3600) | round(2) }}"
+        # Sleep duration in minutes.
+        duration: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.sleep_start'))) / 60) | round(0) }}"
+        
+        # Sleep pause time in minutes.
+        sleep_pause: "{{ states('input_number.sleep_pause_total') | int(0) }}"
+        
+        # Total sleep time in fractional hours.
+        sleep_total: "{{ ((duration - sleep_pause) / 60) | round(2) }}"
         
         # List of echo devices.
         echo_list: "{{ expand(integration_entities('alexa_media') | select('search', 'media_player')) |
@@ -528,7 +534,7 @@
       target:
         entity_id: input_number.sleep_duration
       data:
-        value: "{{ duration }}"
+        value: "{{ sleep_total }}"
     
     # The sleep duration just set above is used to update the Sleep Duration Display sensor, which is used below.
     # Take a short nap to allow the sensor to be updated.
