@@ -61,8 +61,12 @@
       from: 'PowerOff'
       to:
   
-  # Sanity check to prevent false triggers.
   conditions:
+    
+    # Weed out changes to junk states.
+    - "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
+    
+    # Sanity check to prevent false triggers.
     - condition: state
       entity_id: input_boolean.theater_open
       state: 'off'
@@ -182,13 +186,13 @@
     
     # Turn off the power for a bit.
     - action: switch.turn_off
-      entity_id: switch.projector
+      entity_id: switch.projector_relay
     
     - delay: '00:00:30'
     
     # Turn the power back on.
     - action: switch.turn_on
-      entity_id: switch.projector
+      entity_id: switch.projector_relay
     
     # Reset the expected powered off flag.
     - delay: '00:00:01'

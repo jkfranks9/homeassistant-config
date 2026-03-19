@@ -79,6 +79,11 @@ blueprint:
       description: (Optional) The to state for the notify trigger. This is the from state for the clear trigger if it's enabled.
       default: ''
     
+    junk_states:
+      name: Junk States
+      description: (Optional) For state based triggers, the state(s) to be considered junk. Such states are automatically weeded out. The default is applicable for most entities, but some might naturally be unavailable, in which case we want to accept that state.
+      default: ['unknown', 'unavailable']      
+    
     numeric_notify_threshold:
       name: Trigger Threshold Value
       description: (Optional) Threshold value to trigger the notification.
@@ -248,6 +253,7 @@ trigger_variables:
 # The !input tag cannot be used in templates, so assign variables to any needed inputs.
 variables:
   input_mobile_name: !input mobile_name
+  input_junk_states: !input junk_states
   input_calendar_tag: !input calendar_tag
   input_voice_assistant_rooms: !input voice_assistant_rooms
   input_extract_tag_type: !input extract_tag_type
@@ -368,7 +374,7 @@ triggers:
 conditions: 
   
   # Weed out junk for triggers that contain states.
-  - "{{ trigger.from_state.state not in ['unknown', 'unavailable'] if trigger.from_state is defined else true }}"
+  - "{{ trigger.from_state.state not in input_junk_states if trigger.from_state is defined else true }}"
   
   # Ensure the event contains the calendar tag for a calendar trigger.
   - "{{ input_calendar_tag in trigger.calendar_event.summary if tv_trigger_type == 'calendar' else true }}"

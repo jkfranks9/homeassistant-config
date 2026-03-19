@@ -859,8 +859,8 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.microwave
-      component_name: tplink
+      device_entity: switch.microwave_relay
+      component_name: esphome
       device_name: Microwave
 
 - alias: Check Projector Off
@@ -869,8 +869,8 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.projector
-      component_name: sonoff
+      device_entity: switch.projector_relay
+      component_name: esphome
       device_name: Projector
       conditional_processing: "{{ states('input_boolean.projector_plug_powered_off') }}"
 
@@ -1756,13 +1756,13 @@
                   
                   environment: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%); dryer ({{ drytemp }}°, {{ dryhum }}%)
 
-# We have a 4-way button for the guest studio that supports single, double, triple and long presses for each button. Handle those here.
-- alias: Handle Guest 4 Way Button
-  id: handle_guest_4_way_button
+# We have a 4-way button for the studio that supports single, double, triple and long presses for each button. Handle those here.
+- alias: Handle Studio 4 Way Button
+  id: handle_studio_4_way_button
   
   triggers:
     - trigger: mqtt
-      topic: zigbee2mqtt/Guest 4 Way Button/action
+      topic: zigbee2mqtt/Studio 4 Way Button/action
   
   actions:
     - variables:

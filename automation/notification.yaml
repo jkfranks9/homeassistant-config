@@ -161,7 +161,7 @@
     path: notification/mobile_notify.yaml
     input:
       trigger_type: state
-      entity: [switch.kitchen_appliance_1, switch.kitchen_appliance_2, switch.kitchen_appliance_3, switch.microwave, switch.projector, switch.subwoofer_back, switch.subwoofer_front]
+      entity: [switch.kitchen_appliance_1_relay, switch.kitchen_appliance_2_relay, switch.kitchen_appliance_3_relay, switch.microwave_relay, switch.projector_relay, switch.subwoofer_back_relay, switch.subwoofer_front_relay]
       from_state: 'on'
       to_state: 'off'
       delay: 30
@@ -413,6 +413,23 @@
       message: 'Master BR vent 2 batteries need replacing.'
       channel: standard
       tag: 'master_br_vent_2_battery'
+
+# Studio 4-way button battery is too low.
+- alias: Notify Studio 4-way Button Battery Low
+  id: 'notify_studio_4_way_button_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.studio_4_way_button_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      message: 'Studio 4-way button battery needs replacing.'
+      channel: standard
+      tag: 'studio_4_way_button_battery'
 
 # Ego battery charge is complete.
 - alias: Notify Ego Battery Charge Complete
@@ -1018,6 +1035,7 @@
     input:
       trigger_type: numeric_state_above
       entity: [sensor.mail_amazon_packages_delivered, sensor.mail_fedex_delivered, sensor.mail_ups_delivered, sensor.mail_usps_delivered]
+      junk_states: ['unknown']  # unavailable state could be normal
       numeric_notify_threshold: 0
       voice_assistant_rooms: "{{ states('sensor.announcement_rooms') }}"
       extract_tag_type: delivery
@@ -1136,6 +1154,38 @@
       message: 'Check account balance'
       channel: standard
       tag: 'account_balance'
+
+- alias: Water Back Yard
+  id: water_back_yard
+  
+  triggers:
+    - trigger: sun
+      event: sunset
+      offset: '-00:50:00'
+      id: first
+    
+    - trigger: sun
+      event: sunset
+      offset: '-00:25:00'
+      id: second
+    
+    - trigger: sun
+      event: sunset
+      id: third
+  
+  conditions: "{{ now().day is even }}"
+  
+  actions:    
+    - variables:
+        msg: "{{ iif(trigger.id == 'first', 'Water back yard', iif(trigger.id == 'second', 'Switch sprinklers', 'Stop watering')) }}"
+    
+    - action: script.send_notification
+      data:
+        destination:
+          - voice_assistant
+        message: "{{ msg }}"
+        room: "{{ states('sensor.announcement_rooms') }}"
+        voice_type: announce
 
 #=====================================#
 #     Notification Tag Management     #
