@@ -60,7 +60,10 @@
                                 ['binary_sensor.master_closet_sensor_contact', 'sensor.master_closet_sensor_last_seen'],
                                 ['binary_sensor.attic_door_sensor_contact', 'sensor.attic_door_sensor_last_seen'],
                                 ['binary_sensor.upstairs_entry_sensor_contact', 'sensor.upstairs_entry_sensor_last_seen'],
-                                ['switch.master_closet', 'sensor.master_closet_last_seen']
+                                ['switch.master_closet', 'sensor.master_closet_last_seen'],
+                                ['sensor.laundry_room_button_battery', 'sensor.laundry_room_button_last_seen'],
+                                ['sensor.studio_4_way_button_battery', 'sensor.studio_4_way_button_last_seen'],
+                                ['light.studio_night_light', 'sensor.studio_night_light_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -109,7 +112,10 @@
                                 'input_number.master_closet_sensor_door',
                                 'input_number.attic_door_sensor_door',
                                 'input_number.upstairs_entry_sensor_door',
-                                'input_number.master_closet'
+                                'input_number.master_closet',
+                                'input_number.laundry_room_button',
+                                'input_number.studio_4_way_button',
+                                'input_number.studio_night_light'
                                ] %}
                                
           {# --Create an empty list to start-- #}

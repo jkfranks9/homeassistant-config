@@ -414,6 +414,23 @@
       channel: standard
       tag: 'master_br_vent_2_battery'
 
+# Laundry room button battery is too low.
+- alias: Notify Laundry Room Button Battery Low
+  id: 'notify_laundry_room_button_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.laundry_room_button_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      message: 'Laundry room button battery needs replacing.'
+      channel: standard
+      tag: 'laundry_room_button_battery'
+
 # Studio 4-way button battery is too low.
 - alias: Notify Studio 4-way Button Battery Low
   id: 'notify_studio_4_way_button_battery_low'
