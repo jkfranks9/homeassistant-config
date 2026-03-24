@@ -492,26 +492,6 @@
       proximity_meters: 12000
       person_name: Jon
 
-- alias: Notify Mike Arriving Soon
-  id: 'notify_mike_arriving_soon'
-  
-  use_blueprint:
-    path: notification/proximity_notify.yaml
-    input:
-      proximity_entity: sensor.home_mike_distance
-      proximity_meters: 12000
-      person_name: Mike
-
-- alias: Notify Sarah Arriving Soon
-  id: 'notify_sarah_arriving_soon'
-  
-  use_blueprint:
-    path: notification/proximity_notify.yaml
-    input:
-      proximity_entity: sensor.home_sarah_distance
-      proximity_meters: 12000
-      person_name: Sarah
-
 #===============================#
 #     Maintenance Reminders     #
 #===============================#
