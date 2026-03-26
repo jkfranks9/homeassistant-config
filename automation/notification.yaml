@@ -161,7 +161,7 @@
     path: notification/mobile_notify.yaml
     input:
       trigger_type: state
-      entity: [switch.kitchen_appliance_1_relay, switch.kitchen_appliance_2_relay, switch.kitchen_appliance_3_relay, switch.microwave_relay, switch.projector_relay, switch.subwoofer_back_relay, switch.subwoofer_front_relay]
+      entity: [switch.kitchen_appliance_1, switch.kitchen_appliance_2, switch.kitchen_appliance_3, switch.microwave, switch.projector, switch.subwoofer_back, switch.subwoofer_front]
       from_state: 'on'
       to_state: 'off'
       delay: 30
@@ -390,7 +390,7 @@
       trigger_type: numeric_state_below
       entity: sensor.master_br_vent_1_battery
       numeric_notify_threshold: 26
-      numeric_clear_threshold: 74
+      numeric_clear_threshold: 49
       enable_clear_trigger: true
       clear_type: auto
       message: 'Master BR vent 1 batteries need replacing.'
@@ -407,7 +407,7 @@
       trigger_type: numeric_state_below
       entity: sensor.master_br_vent_2_battery
       numeric_notify_threshold: 26
-      numeric_clear_threshold: 74
+      numeric_clear_threshold: 49
       enable_clear_trigger: true
       clear_type: auto
       message: 'Master BR vent 2 batteries need replacing.'

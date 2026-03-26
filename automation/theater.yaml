@@ -182,13 +182,13 @@
     
     # Turn off the power for a bit.
     - action: switch.turn_off
-      entity_id: switch.projector_relay
+      entity_id: switch.projector
     
     - delay: '00:00:30'
     
     # Turn the power back on.
     - action: switch.turn_on
-      entity_id: switch.projector_relay
+      entity_id: switch.projector
     
     # Reset the expected powered off flag.
     - delay: '00:00:01'

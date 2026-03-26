@@ -859,7 +859,7 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.microwave_relay
+      device_entity: switch.microwave
       component_name: esphome
       device_name: Microwave
 
@@ -869,7 +869,7 @@
   use_blueprint:
     path: devices/monitor_device.yaml
     input:
-      device_entity: switch.projector_relay
+      device_entity: switch.projector
       component_name: esphome
       device_name: Projector
       conditional_processing: "{{ states('input_boolean.projector_plug_powered_off') }}"

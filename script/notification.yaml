@@ -509,7 +509,7 @@ extract_notification_tag_from_entity:
           {% if type == 'delivery' %}
             {{ state_attr(entity, 'friendly_name') | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | replace('USPS', 'US_PS') | lower ~ '_package_delivered' }}
           {% elif type == 'sonoff_power' %}
-            {{ entity.split('.')[1].replace('_relay', '') }}
+            {{ entity.split('.')[1] }}
           {% elif type == 'tplink_power' %}
             {{ entity.split('.')[1] }}
           {% else %}

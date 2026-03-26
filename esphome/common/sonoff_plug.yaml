@@ -1,0 +1,20 @@
+# Sonoff S31 hardware
+
+sensor:
+  - platform: cse7766
+    current:
+      name: "Current"
+      accuracy_decimals: 2
+      filters:
+        - throttle_average: 60s
+    voltage:
+      name: "Voltage"
+      accuracy_decimals: 2
+      filters:
+        - throttle_average: 60s
+    power:
+      name: "Power"
+      accuracy_decimals: 2
+      id: my_power
+      filters:
+        - throttle_average: 60s
