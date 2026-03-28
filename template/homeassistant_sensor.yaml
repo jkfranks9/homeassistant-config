@@ -325,7 +325,6 @@
 - select:
     - name: Mobile Tag Keys
       unique_id: mobile_tag_keys
-      state: Select
       options: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
       select_option:
         - action: script.remove_mobile_notification
