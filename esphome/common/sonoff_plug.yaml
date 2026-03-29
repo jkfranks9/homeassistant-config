@@ -1,4 +1,34 @@
 # Sonoff S31 hardware
+uart:
+  rx_pin: RX
+  baud_rate: 4800
+  parity: EVEN
+
+switch:
+  - platform: gpio
+    name: None
+    pin: GPIO12
+    id: relay
+    #restore_mode: ALWAYS_OFF # Use when flashing using a programmer
+    restore_mode: RESTORE_DEFAULT_OFF # Use when flashing using OTA
+
+light:
+  - platform: status_led
+    name: "LED"
+    id: StatusLED
+    pin:
+      number: GPIO13
+      inverted: true
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Button"
+    on_press:
+      - switch.toggle: relay
 
 sensor:
   - platform: cse7766
