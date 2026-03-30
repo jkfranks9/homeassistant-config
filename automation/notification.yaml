@@ -325,23 +325,6 @@
       channel: standard
       tag: 'upstairs_entry_sensor_battery'
 
-# Porch battery powered sensor needs recharging.
-- alias: Notify Porch Sensor Battery Low
-  id: 'notify_porch_sensor_battery_low'
-  
-  use_blueprint:
-    path: notification/mobile_notify.yaml
-    input:
-      trigger_type: numeric_state_below
-      entity: sensor.porch_sensor_battery_level
-      numeric_notify_threshold: 20
-      numeric_clear_threshold: 95
-      enable_clear_trigger: true
-      clear_type: auto
-      message: "{{ 'Porch sensor battery might need recharging (' ~ states('sensor.porch_sensor_battery_level') ~ '%).' }}"
-      channel: standard
-      tag: 'porch_battery'
-
 # Master BR Vent 1 batteries are too low.
 - alias: Notify Master BR Vent 1 Batteries Low
   id: 'notify_master_br_vent_1_batteries_low'
