@@ -729,9 +729,15 @@
       to:
   
   variables:
-    title: "{{ state_attr('sensor.jon_s25_last_notification', 'android.title') }}"
-    text: "{{ state_attr('sensor.jon_s25_last_notification', 'android.text') }}"
-    category: "{{ state_attr('sensor.jon_s25_last_notification', 'category') }}"
+    title: >
+      {% set n_title = state_attr('sensor.jon_s25_last_notification', 'android.title') %}
+      {{ iif(n_title != None, n_title, 'empty') }}
+    text: >
+      {% set n_text = state_attr('sensor.jon_s25_last_notification', 'android.text') %}
+      {{ iif(n_text != None, n_text, 'empty') }}
+    category: >
+      {% set n_category = state_attr('sensor.jon_s25_last_notification', 'category') %}
+      {{ iif(n_category != None, n_category, 'empty') }}
     
     # This could be a group text, so create a list.
     persons: >
