@@ -307,11 +307,11 @@ bedtime:
     # Lock the PC.
     - action: script.turn_on
       entity_id: script.lock_pc
-    
+        
     # Turn off certain plugs. These are plugs that are turned on only when needed.
     - action: switch.turn_off
       target:
-        entity_id: "{{ label_entities('off_at_night') }}"
+        entity_id: "{{ label_entities('sleeping_or_away_off') }}"
     
     # Turn off theater plugs if the theater is not in use.
     - if:
@@ -320,7 +320,7 @@ bedtime:
       then:    
         - action: switch.turn_off
           target:
-            entity_id: "{{ label_entities('theater_off') }}"
+            entity_id: "{{ label_entities('theater_inactive_off') }}"
     
     # Turn on nighttime mode.
     - action: input_boolean.turn_on
@@ -363,9 +363,12 @@ bedtime:
             entity_id: scene.fans_off_upstairs
       
     # Establish the proper bedtime environment (lights, thermostats, echo devices).
-    - action: script.establish_bedtime_environment
+    - action: script.turn_on
+      target:
+        entity_id: script.establish_bedtime_environment
       data:
-        studio_guests_awake: "{{ studio_guests_awake }}"
+        variables:
+          studio_guests_awake: "{{ studio_guests_awake }}"
   
 # Going to sleep now.
 sleeptime:

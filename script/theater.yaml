@@ -37,7 +37,7 @@ activate_cinema:
   variables:
     #cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' }}"
     cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' or states('input_boolean.cinema_harmony_initiation') == 'on'}}"
-    plugs: "{{ label_entities('theater_off') }}"
+    plugs: "{{ label_entities('theater_equipment') }}"
     num_plugs: "{{ plugs | length }}"
   
   sequence:
@@ -71,7 +71,7 @@ activate_cinema:
       target:
         entity_id: input_boolean.projector_error_handling
         
-    # Turn on plugs needed for some equipment. Other equipment plugs are turned on every day at wakeup time.
+    # Turn on plugs needed for the equipment. Some of these are expected to already be on, but let's make sure.
     - action: switch.turn_on
       target:
         entity_id: "{{ plugs }}"

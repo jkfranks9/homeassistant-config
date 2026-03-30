@@ -14,7 +14,7 @@ blueprint:
     
     conditional_processing:
       name: Conditional Processing
-      description: Flag that must be true in order to proceed. This allows a device's state to be ignored during expected power off periods.
+      description: Condition that must be true in order to proceed. This allows a device's state to be ignored during expected power off periods.
       default: true
       selector:
         boolean:

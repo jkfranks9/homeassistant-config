@@ -500,18 +500,12 @@ extract_notification_tag_from_entity:
         select:
           options:
             - delivery
-            - sonoff_power
-            - tplink_power
   
   sequence:
     - variables:
         tag: >
           {% if type == 'delivery' %}
             {{ state_attr(entity, 'friendly_name') | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | replace('USPS', 'US_PS') | lower ~ '_package_delivered' }}
-          {% elif type == 'sonoff_power' %}
-            {{ entity.split('.')[1] }}
-          {% elif type == 'tplink_power' %}
-            {{ entity.split('.')[1] }}
           {% else %}
             unknown
           {% endif %}

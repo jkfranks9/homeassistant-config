@@ -402,6 +402,20 @@
         # Lock the PC.
         - action: script.turn_on
           entity_id: script.lock_pc
+        
+        # Turn off certain plugs. These are plugs that are turned on only when needed.
+        - action: switch.turn_off
+          target:
+            entity_id: "{{ label_entities('sleeping_or_away_off') }}"
+    
+        # Turn off theater plugs if the theater is not in use.
+        - if:
+            - "{{ states('input_boolean.theater_open') == 'off' or states('sensor.harmony_hub') == 'PowerOff' }}"
+          
+          then:    
+            - action: switch.turn_off
+              target:
+                entity_id: "{{ label_entities('theater_inactive_off') }}"
     
         - if:
           
@@ -503,8 +517,12 @@
           state: 'on'
         - condition: trigger
           id: 'morning'
-      - condition: trigger
-        id: 'afternoon'
+      - and:
+        - condition: state
+          entity_id: person.jon
+          state: 'home'
+        - condition: trigger
+          id: 'afternoon'
   
   actions:
     - condition: state
@@ -872,7 +890,7 @@
       device_entity: switch.projector
       component_name: esphome
       device_name: Projector
-      conditional_processing: "{{ states('input_boolean.projector_plug_powered_off') }}"
+      conditional_processing: "{{ states('input_boolean.projector_plug_powered_off') == 'off' }}"
 
 #======================#
 #     Robot Vacuum     #

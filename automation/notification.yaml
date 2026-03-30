@@ -151,44 +151,6 @@
       channel: standard
       tag: 'vacuum_maintenance'
 
-# Some Sonoff devices can be turned off but still reporting power usage. For the one case I know about, the plug could still be turned 
-# on/off by HA, but was not able to update its power usage (so HA continued to use the last value from when it was on). The plug was not 
-# connected to wifi at the time.
-- alias: Notify Sonoff Device Needs Maintenance
-  id: 'notify_sonoff_device_needs_maintenance'
-  
-  use_blueprint:
-    path: notification/mobile_notify.yaml
-    input:
-      trigger_type: state
-      entity: [switch.kitchen_appliance_1, switch.kitchen_appliance_2, switch.kitchen_appliance_3, switch.microwave, switch.projector, switch.subwoofer_back, switch.subwoofer_front]
-      from_state: 'on'
-      to_state: 'off'
-      delay: 30
-      conditions: "{{ states(trigger.entity_id) == 'off' and states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_power') | float(0) > 0 }}"
-      extract_tag_type: sonoff_power
-      clear_type: manual
-      message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' plug is off but reporting power usage.' }}"
-      channel: standard
-
-# Let's do the same thing for TP Link devices that monitor power, just in case.
-- alias: Notify TPLink Device Needs Maintenance
-  id: 'notify_tplink_device_needs_maintenance'
-  
-  use_blueprint:
-    path: notification/mobile_notify.yaml
-    input:
-      trigger_type: state
-      entity: [switch.family_room_av, switch.ego_battery_charger, switch.toro_135_battery_charger, light.master_bedroom_lamp, light.office_lamp, switch.refrigerator, switch.theater_av, switch.treadmill, switch.washer]
-      from_state: 'on'
-      to_state: 'off'
-      delay: 30
-      conditions: "{{ states(trigger.entity_id) == 'off' and states('sensor.' ~ trigger.entity_id.split('.')[1] ~ '_current_consumption') | float(0) > 0 }}"
-      extract_tag_type: tplink_power
-      clear_type: manual
-      message: "{{ state_attr(trigger.entity_id, 'friendly_name') ~ ' is off but reporting power usage.' }}"
-      channel: standard
-
 #===============================#
 #     Battery Notifications     #
 #===============================#
