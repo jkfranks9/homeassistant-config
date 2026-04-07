@@ -741,7 +741,9 @@ modify_studio:
                 thermostat_entity: climate.downstairs
                 extended: false
                     
-            # Turn off studio lights.
+            # Turn off studio lights once it is light enough.
+            - wait_template: "{{ states('sensor.downstairs_sensor_ambient_light') | int(0) > states('input_number.studio_bedroom_ambient_max') | int(0) }}"
+            
             - action: light.turn_off
               entity_id: light.studio_lights
 

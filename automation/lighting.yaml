@@ -194,18 +194,9 @@
       id: bright
     
   actions:
-    - if:
-        - "{{ trigger.id == 'dim' }}"
-      
-      then:
-        - action: scene.turn_on
-          target:
-            entity_id: scene.voice_assistants_on_dim
-      
-      else:
-        - action: scene.turn_on
-          target:
-            entity_id: scene.voice_assistants_on_bright
+    - action: script.turn_on_voice_assistant_screens
+      data:
+        brightness: "{{ trigger.id }}"
 
 #============================#
 #     Extended Away Mode     #

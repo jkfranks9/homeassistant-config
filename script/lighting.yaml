@@ -328,3 +328,24 @@ turn_off_fan_lights:
                 data:
                   message: "Turned off {{ repeat.item }}"
                   level: debug
+
+#=================================#
+#     Voice Assistant Screens     #
+#=================================#
+
+turn_on_voice_assistant_screens:
+  alias: Turn On Voice Assistant Screens 
+  
+  fields:
+    brightness:
+      description: Brightness level for the screens.
+      selector:
+        select:
+          options:
+            - 'dim'
+            - 'bright'
+  
+  sequence:
+    - action: scene.turn_on
+      target:
+        entity_id: "{{ 'scene.voice_assistants_on_' ~ brightness }}"

@@ -542,19 +542,13 @@
         milliseconds: 500
     
     # Normalize the volume on all echoes in case they were modified yesterday or during the night.
-    # However, we're about to send an announcement to the master bedroom, and I want that to be quieter, so use a lower
-    # volume for that one device for now. We normalize it after the announcement.
     - variables:
-        normal_volume: 0.5
-        quiet_volume: 0.3
+        volume: 0.5
     
     - repeat:
         for_each: "{{ echo_list }}"
         
         sequence:
-          - variables:
-              volume: "{{ iif((repeat.item).split('.')[1] == 'master_bedroom_echo', quiet_volume, normal_volume) }}"
-              
           - if:
               - "{{ not is_state_attr(repeat.item, 'volume_level', volume) }}"
             
@@ -565,19 +559,7 @@
                 data:
                   volume_level: "{{ volume }}"
     
-    # The Nighttime toggle being reset (above) causes the Manage Echo Do Not Disturb automation to run. We need to ensure
-    # that the master bedroom echo has been unmuted before trying to send the announcement below. But only wait for 30 seconds
-    # to avoid an infinite loop if the echo mute state is bad.
-    - repeat:
-        until: "{{ is_state('switch.master_bedroom_echo_do_not_disturb_switch', 'off') or repeat.index >= 300 }}"
-        
-        sequence:
-          - event: unused_event
-          
-          - delay:
-              milliseconds: 100
-    
-    # Now we can set the various notification data.
+    # Set the various notification data.
     - variables:
         time: "{{ states('sensor.sleep_duration_display') }}"
         hours: "{{ time.split(':')[0] | int(0) }}"
@@ -587,6 +569,11 @@
         keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
         calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
           
+    # Wait until the master bedroom DND toggle is turned off. That happens in the Manage Bedroom Do Not Disturb
+    # automation as a result of turning off the Nighttime toggle (above). We require the toggle to be off in order
+    # to deliver the announcement.
+    - wait_template: "{{ states('input_boolean.master_bedroom_do_not_disturb') == 'off' }}"
+    
     # Notify about the sleep duration and possible short term calendar items.
     - action: script.send_notification
       data:
@@ -603,20 +590,12 @@
         voice_type: tts
     
     # Turn on voice assistant screens.
-    - if:
-        - condition: numeric_state
-          entity_id: sensor.downstairs_sensor_ambient_light
-          below: input_number.family_room_ambient_max
-      
-      then:
-        - action: scene.turn_on
-          target:
-            entity_id: scene.voice_assistants_on_dim
-      
-      else:    
-        - action: scene.turn_on
-          target:
-            entity_id: scene.voice_assistants_on_bright
+    - variables:
+        brightness: "{{ iif(states('sensor.downstairs_sensor_ambient_light') | int(0) < states('input_number.family_room_ambient_max') | int(0), 'dim', 'bright') }}"
+    
+    - action: script.turn_on_voice_assistant_screens
+      data:
+        brightness: "{{ brightness }}"
     
     # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.
     # Note that if family members are home this can be triggered before I arise, but oh well.
@@ -625,13 +604,6 @@
         {% set devices = state_attr('binary_sensor.downstairs_motion', 'devices') %}
         {% set master = 'binary_sensor.master_bath_motion_detector_occupancy' in devices %}
         {{ motion == 'on' and master == false }}
-                  
-    # Normalize the master bedroom echo volume.
-    - action: media_player.volume_set
-      target:
-        entity_id: media_player.master_bedroom_echo
-      data:
-        volume_level: "{{ normal_volume }}"
     
     # Turn on island light if needed (lets me get breakfast).
     - action: script.turn_on_lights_per_conditions

@@ -563,9 +563,9 @@ send_message_to_room_voice_device:
       
         sequence:
           - variables:
-              dnd_entity: "{{ 'switch.' ~ repeat.item ~ '_echo_do_not_disturb_switch' }}"
+              dnd_entity: "{{ 'input_boolean.' ~ repeat.item ~ '_do_not_disturb' }}"
           
-          # Bypass any rooms with the do not disturb (DND) switch on. These are automatically set for all occupied bedrooms during the
+          # Bypass any rooms with the do not disturb (DND) toggle on. These are automatically set for all occupied bedrooms during the
           # nighttime window, but can also be set manually for any device.
           - if:
               - "{{ states(dnd_entity) == 'off' }}"

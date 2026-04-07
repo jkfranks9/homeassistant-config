@@ -107,18 +107,18 @@
 - id: 'voice_assistants_off'
   name: Voice Assistants Off
   entities:  
-    light.family_room_nabu_screen: 'off'  
+    light.master_bedroom_nabu_screen: 'off'  
 
 - id: 'voice_assistants_on_bright'
   name: Voice Assistants On Bright
   entities:  
-    light.family_room_nabu_screen:
+    light.master_bedroom_nabu_screen:
       state: 'on'
       brightness: 255
 
 - id: 'voice_assistants_on_dim'
   name: Voice Assistants On Dim
   entities:  
-    light.family_room_nabu_screen:
+    light.master_bedroom_nabu_screen:
       state: 'on'
       brightness: 64
