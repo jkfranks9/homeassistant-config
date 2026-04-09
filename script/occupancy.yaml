@@ -506,7 +506,16 @@ establish_bedtime_environment:
     - delay: '00:00:07'
     
     - variables:
-        scene: "{{ iif(studio_guests_awake == false, 'non_bedroom_lights_out', 'studio_guests_awake_lights_out') }}"
+        scene: >
+          {% set scene = 'non_bedroom_lights_out' %}
+          {% if studio_guests_awake == true %}
+            {% set scene = 'studio_guests_awake_lights_out' %}
+          {% elif is_state('input_select.studio_guests', 'Skylar') and is_state('input_select.penthouse_guests', 'Empty') %}
+            {% set scene = 'studio_child_alone_lights_out' %}
+          {% endif %}
+          
+          {{ scene }}
+        
         fan_light_entities: >
           {% set var = namespace(lights = ['light.office_fan']) %}
           {% if studio_guests_awake == false %}
@@ -515,8 +524,8 @@ establish_bedtime_environment:
           
           {{ var.lights }}
         
-    # Turn off non-bedroom lights, but leave some on if studio guests are still awake. Individual suite lights are
-    # handled by the suite-specific scripts directly above.
+    # Turn off non-bedroom lights, but leave some on if studio guests are still awake or a child is home alone. 
+    # Individual suite lights are handled by the suite-specific scripts directly above.
     - action: scene.turn_on
       target:
         entity_id: "{{ 'scene.' ~ scene }}"

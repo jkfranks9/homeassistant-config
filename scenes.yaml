@@ -43,6 +43,26 @@
     light.storage_lights:                 'off'
     light.outdoor_lights:                 'off'
 
+#=======================================#
+#     Studio Child Alone Lights Out     #
+#=======================================#
+
+- id: 'studio_child_alone_lights_out'
+  name: Studio Child Alone Lights Out
+  entities:
+    
+    # Downstairs
+    light.dining_room_lights:             'off'
+    light.downstairs_common_lights:       'off'
+    light.stairway:                       'off' # Leave family room lamp on
+    light.kitchen_lights:                 'off'
+    light.office_lights:                  'off'
+    
+    # Misc
+    light.all_christmas_lights:           'off'
+    light.storage_lights:                 'off'
+    light.outdoor_lights:                 'off'
+
 #========================================#
 #     Studio Guests Awake Lights Out     #
 #========================================#
