@@ -1097,38 +1097,6 @@
       channel: standard
       tag: 'account_balance'
 
-- alias: Water Back Yard
-  id: water_back_yard
-  
-  triggers:
-    - trigger: sun
-      event: sunset
-      offset: '-00:50:00'
-      id: first
-    
-    - trigger: sun
-      event: sunset
-      offset: '-00:25:00'
-      id: second
-    
-    - trigger: sun
-      event: sunset
-      id: third
-  
-  conditions: "{{ now().day is even }}"
-  
-  actions:    
-    - variables:
-        msg: "{{ iif(trigger.id == 'first', 'Water back yard', iif(trigger.id == 'second', 'Switch sprinklers', 'Stop watering')) }}"
-    
-    - action: script.send_notification
-      data:
-        destination:
-          - voice_assistant
-        message: "{{ msg }}"
-        room: "{{ states('sensor.announcement_rooms') }}"
-        voice_type: announce
-
 #=====================================#
 #     Notification Tag Management     #
 #=====================================#
