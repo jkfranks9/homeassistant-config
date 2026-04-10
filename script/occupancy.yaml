@@ -53,7 +53,7 @@ add_guest_to_suite:
               conflict: true
       
       # The only valid guest combination is Skylar + Sarah.
-      - conditions: "{{ guest in ['Sarah', 'Skylar'] and suite_entry_state != 'Empty' }}"
+      - conditions: "{{ guest in ['Sarah', 'Skylar'] and suite_entry_state != 'Empty' and suite_entry_state != guest }}"
         
         sequence:
           - action: input_select.select_option
