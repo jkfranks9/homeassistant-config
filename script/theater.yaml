@@ -48,11 +48,30 @@ activate_cinema:
       target:
         entity_id: input_boolean.cinema_harmony_initiation
     
-    # Ensure the cinema has not been closed recently, if it was off upon entry.
+    # Perform a few initialization tasks if the cinema was off upon entry.
     - if:
         - "{{ cinema_off_upon_entry }}"
     
       then:
+        
+        # Ensure the cinema devices are available.
+        - if:
+            - condition: state
+              entity_id: binary_sensor.cinema_devices_available
+              state: 'off'
+          
+          then:
+            - action: script.send_notification
+              data:
+                destination:
+                  - voice_assistant
+                message: "One or more cinema devices are unavailable."
+                room: ['family_room', 'theater']
+                voice_type: announce
+            
+            - stop: "One or more devices are unavailable."
+          
+        # Ensure the cinema has not been closed recently.
         - action: script.check_cinema_usage_control
           data:
             opening: true
@@ -759,7 +778,7 @@ set_receiver_volume:
   
     - action: media_player.volume_set
       data:
-        entity_id: media_player.marantz_sr7012
+        entity_id: media_player.marantz_receiver
         volume_level: "{{ volume | float(0.60) }}"
 
 # Set the volume for an app/device into an app-specific number, and also set the live volume if the theater is open

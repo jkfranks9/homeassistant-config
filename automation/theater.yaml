@@ -385,7 +385,7 @@
   
   triggers:
     - trigger: state
-      entity_id: media_player.marantz_sr7012
+      entity_id: media_player.marantz_receiver
       from: 'off'
       to: 'on'
   
@@ -394,7 +394,7 @@
     
     - action: media_player.volume_set
       data:
-        entity_id: media_player.marantz_sr7012
+        entity_id: media_player.marantz_receiver
         volume_level: 0.60
 
 # Initialize the volume for Shield TV applications and Harmony devices. This is triggered by UI changes to the
