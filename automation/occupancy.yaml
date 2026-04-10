@@ -457,19 +457,18 @@
   actions:
     - variables:
         tracker_entity: "{{ 'device_tracker.' ~ trigger.id.split('_')[0] ~ '_nfc_tag' }}"
-        new_state: >
-          {% if states(tracker_entity) != 'home' %}
-            home
-          {% else %}
-            not_home
-          {% endif %}
-        topic_suffix: "{{ tracker_entity.split('.')[1] }}"
+        new_state: "{{ iif(states(tracker_entity) != 'home', 'home', 'not_home') }}"
+        topic_suffix: "{{ tracker_entity.split('.')[1] | lower }}"
         toggle_action: "{{ iif(new_state == 'home', 'on', 'off') }}"
     
     - action: mqtt.publish
       data:
         topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
         payload: "{{ new_state }}"
+    
+    - action: input_boolean.turn_{{ toggle_action }}
+      target:
+        entity_id: "{{ 'input_boolean.' ~ topic_suffix }}"
 
 #=========================#
 #     Sleep Detection     #

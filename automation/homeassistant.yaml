@@ -87,12 +87,7 @@
         vtrack_entities: >
           {% set var = namespace(vtrack = []) %}
           {% for state in states.input_boolean %}
-            {% if 'Virtual' in state.name %}
-              {% set var.vtrack = var.vtrack + [state.entity_id] %}
-            {% endif %}
-          {% endfor %}
-          {% for state in states.input_boolean %}
-            {% if 'NFC Tag' in state.name %}
+            {% if state.name | contains('Virtual') or state.name | contains('NFC Tag') %}
               {% set var.vtrack = var.vtrack + [state.entity_id] %}
             {% endif %}
           {% endfor %}
@@ -105,21 +100,12 @@
         sequence:
           - variables:
               topic_suffix: "{{ repeat.item | replace('input_boolean.', '') }}"
+              new_state: "{{ iif(states(repeat.item) == 'on', 'home', 'not_home') }}"
           
-          - if:
-              - "{{ states(repeat.item) == 'on' }}"
-            
-            then:          
-              - action: mqtt.publish
-                data:
-                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
-                  payload: home
-            
-            else:          
-              - action: mqtt.publish
-                data:
-                  topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
-                  payload: not_home 
+          - action: mqtt.publish
+            data:
+              topic: "{{ 'homeassistant/device_tracker/' ~ topic_suffix }}"
+              payload: "{{ new_state }}"
     
     # Set up MQTT discovery sensors to keep track of the last changed time for interesting entities.
     - variables:
