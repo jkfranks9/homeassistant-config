@@ -141,6 +141,7 @@ filters:
   
   homeassistant.components.kodi.media_player:
     - "Error calling async_update on entity media_player.kodi"
+    - "TransportError trying to run API method media_player.kodi.VideoLibrary.GetMovieSets"
 
   homeassistant.components.media_player:
     - "Updating .* took longer than the scheduled update interval .*"
