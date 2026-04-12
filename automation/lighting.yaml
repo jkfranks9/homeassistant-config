@@ -185,12 +185,12 @@
   triggers:
     - trigger: numeric_state
       entity_id: sensor.downstairs_sensor_ambient_light
-      below: input_number.family_room_ambient_min
+      below: input_number.master_suite_ambient_min
       id: dim
   
     - trigger: numeric_state
       entity_id: sensor.downstairs_sensor_ambient_light
-      above: input_number.family_room_ambient_max
+      above: input_number.master_suite_ambient_max
       id: bright
     
   actions:

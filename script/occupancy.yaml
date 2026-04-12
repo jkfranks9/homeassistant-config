@@ -347,12 +347,10 @@ bedtime:
         # Turn off the Family Room AV system.
         - action: script.disable_family_room_av
     
-        # Turn off voice assistant screens and downstairs fans.
+        # Turn off downstairs fans.
         - action: scene.turn_on
           target:
-            entity_id:
-              - scene.voice_assistants_off
-              - scene.fans_off_downstairs
+            entity_id: scene.fans_off_downstairs
     
     # Perform tasks if the penthouse is not occupied.
     - if:

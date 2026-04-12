@@ -124,11 +124,6 @@
 #=================================#
 #     Voice Assistant Screens     #
 #=================================#
-- id: 'voice_assistants_off'
-  name: Voice Assistants Off
-  entities:  
-    light.master_bedroom_nabu_screen: 'off'  
-
 - id: 'voice_assistants_on_bright'
   name: Voice Assistants On Bright
   entities:  

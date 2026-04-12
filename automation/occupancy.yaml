@@ -588,14 +588,6 @@
         room: ['master_bedroom']
         voice_type: tts
     
-    # Turn on voice assistant screens.
-    - variables:
-        brightness: "{{ iif(states('sensor.downstairs_sensor_ambient_light') | int(0) < states('input_number.family_room_ambient_max') | int(0), 'dim', 'bright') }}"
-    
-    - action: script.turn_on_voice_assistant_screens
-      data:
-        brightness: "{{ brightness }}"
-    
     # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.
     # Note that if family members are home this can be triggered before I arise, but oh well.
     - wait_template: >
