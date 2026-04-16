@@ -29,7 +29,7 @@ triggers:
 conditions:
   
   # Weed out junk.
-  - "{{ trigger.from_state.state not in ['unknown', 'unavailable'] }}"
+  - "{{ has_value(trigger.from_state.entity_id) }}"
 
 actions:
   - action: script.set_receiver_volume

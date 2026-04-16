@@ -53,7 +53,7 @@ conditions:
   - "{{ input_conditional_processing }}"
   
   # Continue if the device is not on. Weed out changing to unavailable or unknown states.
-  - "{{ trigger.to_state.state not in ['unavailable', 'unknown'] and not is_state(input_device_entity, 'on') }}"
+  - "{{ has_value(trigger.to_state.entity_id) and not is_state(input_device_entity, 'on') }}"
 
 actions:
     

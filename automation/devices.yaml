@@ -1327,7 +1327,7 @@
     # Trigger when the dryer temperature rises a bit above ambient.
     - trigger: template
       value_template: >
-        {{ states('sensor.dryer_sensor_temperature') not in ['unavailable', 'unknown'] and states('sensor.downstairs_temperature') not in ['unavailable', 'unknown'] and
+        {{ has_value('sensor.dryer_sensor_temperature') and has_value('sensor.downstairs_temperature') and
            states('sensor.dryer_sensor_temperature') | int(0) > (states('sensor.downstairs_temperature') | int(0) + 30) }}
       
   actions:
@@ -1680,7 +1680,7 @@
       entity_id: sensor.legion_t530_lastboot
       to:
   
-  conditions: "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
+  conditions: "{{ has_value(trigger.to_state.entity_id) }}"
   
   actions:
     - action: input_datetime.set_datetime

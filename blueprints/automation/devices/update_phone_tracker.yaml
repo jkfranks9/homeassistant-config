@@ -35,7 +35,7 @@ triggers:
 conditions:
   
   # Weed out junk.
-  - "{{ trigger.from_state.state not in ['unavailable', 'unknown'] and trigger.to_state.state not in ['unavailable', 'unknown'] }}"
+  - "{{ has_value(trigger.from_state.entity_id) and has_value(trigger.to_state.entity_id) }}"
   
   # Weed out changes within a short period of time.
   - "{{ as_timestamp(as_datetime(trigger.to_state.last_updated)) - as_timestamp(as_datetime(trigger.from_state.last_updated)) > (5 * 60) }}"

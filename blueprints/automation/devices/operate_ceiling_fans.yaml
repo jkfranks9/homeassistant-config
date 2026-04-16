@@ -52,8 +52,10 @@ triggers:
     entity_id: !input sensor_entity
     to:
 
-# Weed out junk.
-conditions: "{{ trigger.from_state.state not in ['unavailable', 'unknown'] and trigger.to_state.state not in ['unavailable', 'unknown'] }}"
+conditions: 
+  
+  # Weed out junk.
+  - "{{ has_value(trigger.from_state.entity_id) and has_value(trigger.to_state.entity_id) }}"
 
 actions:
     

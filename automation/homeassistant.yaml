@@ -861,7 +861,7 @@
         
         sequence:
           - if:
-              - "{{ states(repeat.item) in ['unknown', 'unavailable'] }}"
+              - "{{ not has_value(repeat.item) }}"
             
             then:
               - variables:

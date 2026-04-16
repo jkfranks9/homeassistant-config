@@ -60,7 +60,7 @@
   conditions:
     
     # Weed out changes to junk states.
-    - "{{ trigger.to_state.state not in ['unknown', 'unavailable'] }}"
+    - "{{ has_value(trigger.to_state.entity_id) }}"
     
     # Sanity check to prevent false triggers.
     - condition: state
