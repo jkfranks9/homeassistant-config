@@ -74,17 +74,17 @@ initialize_global_variables:
       event_data:
         key: mini_todo_cleaning_times
         value: { "{{ state_attr('input_datetime.periodic_cleaning_dining_foyer', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45, 
-                 "{{ state_attr('input_datetime.periodic_cleaning_family_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [30, 60],
-                 "{{ state_attr('input_datetime.periodic_cleaning_kitchen', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [45, 30],
+                 "{{ state_attr('input_datetime.periodic_cleaning_family_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ state_attr('input_datetime.periodic_cleaning_kitchen', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
                  "{{ state_attr('input_datetime.periodic_cleaning_laundry_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
                  "{{ state_attr('input_datetime.periodic_cleaning_master_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
-                 "{{ state_attr('input_datetime.periodic_cleaning_master_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [45, 45],
-                 "{{ state_attr('input_datetime.periodic_cleaning_office', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [30, 50],
+                 "{{ state_attr('input_datetime.periodic_cleaning_master_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45,
+                 "{{ state_attr('input_datetime.periodic_cleaning_office', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
                  "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
                  "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
                  "{{ state_attr('input_datetime.periodic_cleaning_snack_bar', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
                  "{{ state_attr('input_datetime.periodic_cleaning_studio_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 20,
-                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": [15, 45],
+                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
                  "{{ state_attr('input_datetime.periodic_cleaning_theater', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
                  "{{ state_attr('input_datetime.periodic_cleaning_utility', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15
                }
@@ -769,38 +769,10 @@ add_mini_todo_periodic_item:
             # Pick a random item from the list.
             item: "{{ list[range(0, list | length) | random] }}"
             
-            # Extract the estimated time from the item. For the cleaning type, this is a list of 2 values for certain rooms: 
-            # normal and deep clean times. All other rooms contain just the normal time as a single value.
+            # Extract the estimated time from the item.
             times_variable: "{{ 'mini_todo_' ~ type ~ '_times' }}"
             name: "{{ item.split(':')[1] }}"
-            time: "{{ state_attr('sensor.variables', 'variables')[times_variable][name] }}"
-            time_is_list: "{{ iif(time is list, true, false) }}"
-            
-            # For deep clean rooms, determine if the last deep clean was six months ago or more.
-            deep_clean: >
-              {% set var = namespace(dc = false) %}
-              {% if time_is_list %}
-                {% set last_deep_clean = states('input_datetime.last_deep_clean_' ~ name.replace(' ', '_') | lower) %}
-                {% set delta_seconds = as_timestamp(now()) - as_timestamp(last_deep_clean) %}
-                {% if delta_seconds / 3600 / 24 / 30.4167 >= 6 %}
-                  {% set var.dc = true %}
-                {% endif %}
-              {% endif %}
-              
-              {{ var.dc }}
-            
-            # Use the normal or deep clean time as appropriate.
-            est_minutes: >
-              {% if time_is_list %}
-                {% if deep_clean == true %}
-                  {% set minutes = time | sum %}
-                {% else %}
-                  {% set minutes = time[0] %}
-                {% endif %}
-              {% else %}
-                {% set minutes = time %}
-              {% endif %}
-              {{ minutes }}
+            est_minutes: "{{ state_attr('sensor.variables', 'variables')[times_variable][name] }}"
             
             # Determine if it's OK to pick yard work items.
             outdoor_friendly: "{{ states('binary_sensor.outdoor_work_friendly') }}"
@@ -810,11 +782,6 @@ add_mini_todo_periodic_item:
             - "{{ type != 'yard_work' or outdoor_friendly == 'on' }}"
           
           then:
-            - variables:
-                
-                # Indicate a deep clean item if appropriate.
-                item: "{{ iif(deep_clean == true, item ~ ' (deep)', item) }}"
-            
             - action: script.insert_mini_todo_item
               data:
                 value: "{{ item }}"
@@ -988,7 +955,6 @@ handle_completed_reminder_or_periodic_item:
         normalized_period: "{{ iif(period[-1] != 's', period ~ 's', period) }}"
         domain: "{{ states[entity].domain }}"
         entity_name: "{{ entity.split('.')[-1] }}"
-        last_deep_clean_entity: "{{ 'input_datetime.last_deep_clean_' ~ entity_name.replace('periodic_cleaning_', '') }}"
         
         # This is the input to the datetime offset script. For days and weeks offsets it includes just the datetime entity
         # and the amount. But for months offset it also includes a target day. This allows us to set the next interval
@@ -1007,19 +973,6 @@ handle_completed_reminder_or_periodic_item:
           {% else %}
             {{ ns.val }}
           {% endif %}
-            
-        # For deep clean rooms, determine if the last deep clean was six months ago or more.
-        deep_clean: >
-          {% set var = namespace(dc = false) %}
-          {% if states(last_deep_clean_entity) != 'unknown' %}
-            {% set last_deep_clean = states(last_deep_clean_entity) %}
-            {% set delta_seconds = as_timestamp(now()) - as_timestamp(last_deep_clean) %}
-            {% if delta_seconds / 3600 / 24 / 30.4167 >= 6 %}
-              {% set var.dc = true %}
-            {% endif %}
-          {% endif %}
-          
-          {{ var.dc }}
     
     # Call one of the datetime offset scripts (per the period), or the number offset script.
     - if:
@@ -1066,17 +1019,6 @@ handle_completed_reminder_or_periodic_item:
                 event_type: remove
                 item_type: "{{ type }}"
                 value: "{{ item_name }}"
-        
-        # If we just performed a deep clean on a room, update the last deep clean timestamp.
-        - if:
-            - "{{ deep_clean == true }}"
-          
-          then:
-            - action: input_datetime.set_datetime
-              target:
-                entity_id: "{{ last_deep_clean_entity }}"
-              data:
-                timestamp: "{{ now().timestamp() }}"
     
 # Set an input datetime entity with an offset in days.
 set_datetime_offset_days:
