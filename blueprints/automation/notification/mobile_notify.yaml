@@ -403,12 +403,7 @@ actions:
       - variables:
           
           # This is either the extracted or input tag.
-          tag: >
-            {% if input_extract_tag_type | length > 0 %}
-              {{ result.tag }}
-            {% else %}
-              {{ input_tag }}
-            {% endif %}
+          tag: "{{ iif(input_extract_tag_type | length > 0, result.tag, input_tag) }}"
       
       # Notification trigger.
       - if:

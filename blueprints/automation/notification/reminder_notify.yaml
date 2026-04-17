@@ -105,12 +105,7 @@ actions:
           sequence:
             - variables:
                 entity_category: "{{ (repeat.item).split('_')[-2] }}"
-                friendly_category: >
-                  {% if input_category_uppercase == true %}
-                    {{ entity_category | upper }}
-                  {% else %}
-                    {{ entity_category | capitalize }}
-                  {% endif %}
+                friendly_category: "{{ iif(input_category_uppercase == true, entity_category | upper, entity_category | capitalize) }}"
                 entity_suffix: "{{ (repeat.item).split('_')[-1] }}"
                 friendly_name: "{{ state_attr(repeat.item, 'friendly_name') }}"
                 friendly_short_name: "{{ friendly_name.split('Reminder ' ~ friendly_category ~ ' ')[-1] }}"

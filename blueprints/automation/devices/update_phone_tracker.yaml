@@ -42,12 +42,7 @@ conditions:
 
 actions:
   - variables:
-      new_state: >
-        {% if input_ssid in trigger.to_state.state %}
-          home
-        {% else %}
-          not_home
-        {% endif %}
+      new_state: "{{ iif(input_ssid in trigger.to_state.state, 'home', 'not_home') }}"
           
   - action: mqtt.publish
     data:

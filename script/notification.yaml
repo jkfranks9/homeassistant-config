@@ -369,12 +369,7 @@ remove_manual_mobile_notification:
         num_manual: "{{ states('sensor.mobile_tag_registry_manual_clear') }}"
         device_domain: "{{ voice_device.split('.')[0] }}"
         device_name: "{{ voice_device.split('.')[1] }}"
-        room: >
-          {% if device_domain == 'media_player' %}
-            {{ [device_name.replace('_echo', '')] }}
-          {% else %}
-            {{ [device_name.replace('_nabu_assist_satellite', '')] }}
-          {% endif %}
+        room: "{{ iif(device_domain == 'media_player', [device_name.replace('_echo', '')], [device_name.replace('_nabu_assist_satellite', '')]) }}"
     
     - choose:
       
