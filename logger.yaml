@@ -166,6 +166,9 @@ filters:
   homeassistant.components.switch:
     - "Updating .* switch took longer than the scheduled update interval .*"
   
+  homeassistant.components.switchbot.coordinator:
+    - "Device Indoor/Outdoor Meter 6515 is online"
+  
   homeassistant.components.todo:
     - "Setup of todo platform .* is taking over 10 seconds"
   
