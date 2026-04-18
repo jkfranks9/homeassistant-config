@@ -820,7 +820,7 @@
 #     Hobbies     #
 #=================#
 
-# Next Canes game ... this is sent to Jon & Sarah, but with different offsets before game time, and using different text methods. 
+# Next Canes game ... hockey notifications are sent to Jon & Sarah, but with different offsets before game time, and using different text methods. 
 # Unfortunately, this requires some duplication here.
 - alias: Notify Next Canes Game Jon
   id: 'notify_next_canes_game_jon'
@@ -888,19 +888,54 @@
       channel: standard
       tag: 'next_canes_game'
 
-# Next Flyers game (bypass the notification if the opponent is the Hurricanes, because we already have the notification above for that)
-- alias: Notify Next Flyers Game
-  id: 'notify_next_flyers_game'
+# Next Flyers game (bypass the notification if the opponent is the Hurricanes, because we already have the notification above for that).
+- alias: Notify Next Flyers Game Jon
+  id: 'notify_next_flyers_game_jon'
   
   use_blueprint:
     path: notification/mobile_notify.yaml
     input:
+      mobile_name: Jon
       trigger_type: template
       template: >
         {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.startTimeUTC is defined %}
           {% set next = as_timestamp(state_attr('sensor.next_flyers_game', 'startTimeUTC'), utcnow()) %}
           {% set now =  as_timestamp(utcnow()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600)) <= 13, false) }}
+        {% else %}
+          false
+        {% endif %}
+      conditions: "{{ state_attr('sensor.flyers_opponent', 'friendly_opponent') != 'Hurricanes' }}"
+      clear_type: assisted
+      title: attention
+      message: >
+        {% set vars = namespace(tv = '') %}
+        {% if states.sensor.flyers_game_status.attributes.tv_networks is defined %}
+          {% for network in state_attr('sensor.flyers_game_status', 'tv_networks') %}
+            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+          {% endfor %}
+        {% endif %}
+        {% if states('sensor.flyers_game_status') == 'Home' %}
+          {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% else %}
+          Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+        {% endif %}
+      channel: standard
+      tag: 'next_flyers_game'
+
+- alias: Notify Next Flyers Game Sarah
+  id: 'notify_next_flyers_game_sarah'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      mobile_name: Sarah
+      trigger_type: template
+      template: >
+        {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.startTimeUTC is defined %}
+          {% set next = as_timestamp(state_attr('sensor.next_flyers_game', 'startTimeUTC'), utcnow()) %}
+          {% set now =  as_timestamp(utcnow()) %}
+          {{ iif((next - now) > 0, (((next - now) / 3600)) <= 1, false) }}
         {% else %}
           false
         {% endif %}
