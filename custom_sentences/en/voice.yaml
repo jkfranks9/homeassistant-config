@@ -10,7 +10,7 @@ intents:
   Bedtime:
     data:
       - sentences:
-          - "bedtime"
+          - "(bedtime | bed time | time for bed)"
 
   FanHigh:
     data:
