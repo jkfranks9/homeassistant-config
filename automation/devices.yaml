@@ -1375,12 +1375,14 @@
             event_type: basic
             prefix: Dryer
             message: >
-              {% set intemp  = states('sensor.downstairs_temperature') %}
-              {% set inhum   = states('sensor.downstairs_humidity') %}
-              {% set outtemp = states('sensor.porch_sensor_temperature') %}
-              {% set outhum  = states('sensor.openweathermap_humidity') %}
+              {% set intemp  = states('sensor.downstairs_temperature') | round(2) %}
+              {% set inhum   = states('sensor.downstairs_humidity') | round(2) %}
+              {% set outtemp = states('sensor.porch_sensor_temperature') | round(2) %}
+              {% set outhum  = states('sensor.porch_sensor_humidity') | round(2) %}
+              {% set drytemp = states('sensor.dryer_sensor_temperature') | round(2) %}
+              {% set dryhum  = states('sensor.dryer_sensor_humidity') | round(2) %}
               
-              environment: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }} %)
+              environment(detected): indoor ({{ intemp }}°, {{ inhum }} %); outdoor ({{ outtemp }}°, {{ outhum }} %); dryer ({{ drytemp }}°, {{ dryhum }} %)
     
     # Log temperature detected in the laundry events log.
     - action: script.log_laundry_event
@@ -1389,29 +1391,6 @@
         prefix: Dryer
         message: temperature detected
         entity_id_1: sensor.dryer_sensor_temperature
-    
-    # Start a timer to ensure the Dryer Done binary sensor gets turned off at a failsafe time. This is accomplished
-    # by resetting the temperature & humidity counts.
-    - action: timer.start
-      data:
-        entity_id: timer.dryer_done_failsafe
-        duration: '02:00:00'
-
-# Ensure the Dryer Done binary sensor gets turned off at a failsafe time.
-- alias: Reset Dryer Done Failsafe
-  id: reset_dryer_done_failsafe
-  
-  triggers:
-    - trigger: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.dryer_done_failsafe
-  
-  actions:
-    - action: counter.reset
-      entity_id:
-        - counter.dryer_temperature_count
-        - counter.dryer_humidity_count
 
 # This is the basic dryer control. We trigger on 2 trend sensors, counting each of them: when they are both above 0 we indicate the
 # dryer is done. The trend sensors are defined in the UI, but here is the original YAML configuration for reference.
@@ -1764,14 +1743,14 @@
                 event_type: basic
                 prefix: Dryer
                 message: >
-                  {% set intemp  = states('sensor.downstairs_temperature') %}
-                  {% set inhum   = states('sensor.downstairs_humidity') %}
-                  {% set outtemp = states('sensor.porch_sensor_temperature') %}
-                  {% set outhum  = states('sensor.porch_sensor_humidity') %}
-                  {% set drytemp = states('sensor.dryer_sensor_temperature') %}
-                  {% set dryhum  = states('sensor.dryer_sensor_humidity') %}
+                  {% set intemp  = states('sensor.downstairs_temperature') | round(2) %}
+                  {% set inhum   = states('sensor.downstairs_humidity') | round(2) %}
+                  {% set outtemp = states('sensor.porch_sensor_temperature') | round(2) %}
+                  {% set outhum  = states('sensor.porch_sensor_humidity') | round(2) %}
+                  {% set drytemp = states('sensor.dryer_sensor_temperature') | round(2) %}
+                  {% set dryhum  = states('sensor.dryer_sensor_humidity') | round(2) %}
                   
-                  environment: indoor ({{ intemp }}°, {{ inhum }}%); outdoor ({{ outtemp }}°, {{ outhum }}%); dryer ({{ drytemp }}°, {{ dryhum }}%)
+                  environment(button): indoor ({{ intemp }}°, {{ inhum }} %); outdoor ({{ outtemp }}°, {{ outhum }} %); dryer ({{ drytemp }}°, {{ dryhum }} %)
 
 # We have a 4-way button for the studio that supports single, double, triple and long presses for each button. Handle those here.
 - alias: Handle Studio 4 Way Button
