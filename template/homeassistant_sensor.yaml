@@ -183,6 +183,82 @@
           
           {{ var1.current }}
 
+#---------------------------#
+#   -- Calendar Events --   #
+#---------------------------#
+
+# This is a list of calendar events for today.
+- triggers:
+    
+    # Trigger early in the morning (this is the normal expected trigger).
+    - trigger: time
+      at: '05:00:00'
+    
+    # Trigger at HA start, just in case something has changed.
+    - trigger: homeassistant
+      event: start
+
+    # Trigger when templates are reloaded, to pick up any changes here.
+    - trigger: event
+      event_type: event_template_reloaded
+
+    # Trigger if the calendar changes.
+    - trigger: state
+      entity_id: calendar.calendar
+  
+  actions:
+    
+    # Grab calendar events for 24 hours, starting early in the morning. I can't use now() because of the multiple triggers, 
+    # so keep the start time here in sync with the first trigger. The idea is to get a list of events for the current day and 
+    # overnight, to cover any astronomy events in the middle of the night.
+    - action: calendar.get_events
+      target:
+        entity_id: calendar.calendar
+      data:
+        start_date_time: "{{ today_at('05:00').strftime('%Y-%m-%d %H:%M') }}"
+        duration:
+          days: 1
+      response_variable: agenda
+
+    - variables:
+        events: "{{ agenda['calendar.calendar']['events'] }}"
+  
+  sensor:
+    - name: "Upcoming Events"
+      unique_id: upcoming_events
+      icon: mdi:calendar-star
+      state: "{{ this.events | count }}"
+      
+      attributes:
+        events: >
+          {% set ns = namespace(events = []) %}
+          {% set today_date = now() | as_timestamp | timestamp_custom('%m/%d') %}
+          {% for event in events %}
+            {% set event_date = event.start | as_timestamp | timestamp_custom('%m/%d') %}
+            {% set day_str = iif(event_date == today_date, 'Today at ', 'Tomorrow at ') %}
+            {% if event.summary | contains('(appt') or event.summary | contains('(home') or event.summary | contains('(astro') %}
+              {% set ns.events = ns.events + [day_str ~ event.start | as_timestamp | timestamp_custom('%-I:%M %p') ~ ': ' ~ event.summary] %}
+            {% endif %}
+          {% endfor %}
+          
+          {{ ns.events }}
+  
+- triggers:
+    - trigger: event
+      event_type: "imap_content"
+      id: "custom_event"
+  sensor:
+    - name: imap_content
+      state: "{{ trigger.event.data['subject'] }}"
+      attributes:
+        Message: "{{ trigger.event.data['text'] }}"
+        Server: "{{ trigger.event.data['server'] }}"
+        Username: "{{ trigger.event.data['username'] }}"
+        Sender: "{{ trigger.event.data['sender'] }}"
+        Date: "{{ trigger.event.data['date'] }}"
+        Subject: "{{ trigger.event.data['subject'] }}"
+        Initial: "{{ trigger.event.data['initial'] }}"
+
 #---------- Normal Sensors ----------#
 
 - sensor:
@@ -219,8 +295,6 @@
                 {% set vars.tv = vars.tv + ['FanDuel'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ABC' %}
                 {% set vars.tv = vars.tv + ['ABC'] %}
-              {% elif network['countryCode'] == 'US' and network['network'] == 'NBCSP' %}
-                {% set vars.tv = vars.tv + ['NBC'] %}
               {% endif %}
             {% endfor %}
           {% else %}
@@ -282,8 +356,6 @@
                 {% set vars.tv = vars.tv + ['FanDuel'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ABC' %}
                 {% set vars.tv = vars.tv + ['ABC'] %}
-              {% elif network['countryCode'] == 'US' and network['network'] == 'NBCSP' %}
-                {% set vars.tv = vars.tv + ['NBC'] %}
               {% endif %}
             {% endfor %}
           {% else %}

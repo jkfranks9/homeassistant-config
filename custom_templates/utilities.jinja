@@ -1,5 +1,4 @@
 {# Add a new element to a comma-delimited list. #}
-
 {% macro build_list(list, element) %}
 
 	{% set current = states(list) %}
@@ -12,7 +11,6 @@
 {% endmacro %}
 
 {# Calculate a time difference in minutes between a datetime and now. #}
-
 {% macro calc_time_diff(datetime) %}
 
 	{% set start = as_timestamp(strptime(states(datetime), '%Y-%m-%d %H:%M:%S')) %}
@@ -22,9 +20,9 @@
 
 {% endmacro %}
 
-{# easter day as an iso timestamp #}
-
+{# Easter day as an iso timestamp. #}
 {%- macro easter() %}
+
 {%- set year = now().year %}
 {%- set special_years = ['1954', '1981', '2049', '2076'] %}
 {%- set special_year_sub = 7 %}
@@ -37,15 +35,31 @@
 {%- set month = 4 if day > 31 else 3 %}
 {%- set day = day - 31 if day > 31 else day -%}
 {{ today_at().replace(month=month, day=day).isoformat() }}
+
 {%- endmacro %}
 
-{# create an iso timestamp from month number, week number, day number #}
+{# Create an iso timestamp from month number, week number, day number. #}
 {# Thanksgiving is 11, 4, 3 #}
-
 {%- macro month_week_day(month, week, weekday) -%}
+
 {%- set today = today_at() %}
 {%- set temp = today.replace(month=month, day=1) %}
 {%- set adjust = (weekday - temp.isoweekday()) % 7 %}
 {%- set temp = temp + timedelta(days=adjust) -%}
 {{ (temp + timedelta(weeks = week - 1)).isoformat() }}
+
 {%- endmacro %}
+
+{# Count the number of items in a list containing a search term. #}
+{%- macro count_list_items_matching_search(list, search) -%}
+
+  {% set ns = namespace(count = 0) %}
+  {% for item in list %}
+    {% if search in item %}
+      {% set ns.count = ns.count + 1 %}
+    {% endif %}
+  {% endfor %}
+  {{ ns.count }}
+
+{%- endmacro %}
+
