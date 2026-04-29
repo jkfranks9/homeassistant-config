@@ -689,7 +689,8 @@
       entity_id:
         - automation.notify_next_canes_game_jon
         - automation.notify_next_canes_game_sarah
-        - automation.notify_next_flyers_game
+        - automation.notify_next_flyers_game_jon
+        - automation.notify_next_flyers_game_sarah
     
     # Toggle the team active toggles. These can be turned off using the dashboard if a team doesn't make the playoffs :(
     - action: input_boolean.turn_{{ trigger.id }}
