@@ -555,13 +555,70 @@
     
     # Set the various notification data.
     - variables:
+        
+        # Today's date.
+        friendly_date: "{{ states('sensor.friendly_date') }}"
+        
+        # Time slept.
         time: "{{ states('sensor.sleep_duration_display') }}"
         hours: "{{ time.split(':')[0] | int(0) }}"
         minutes: "{{ time.split(':')[1] | int(0) }}"
         hours_str: "{{ iif(hours == 1, 'hour', 'hours') }}"
         minutes_str: "{{ iif(minutes == 1, 'minute', 'minutes') }}"
-        keys: "{{ state_attr('sensor.mobile_tag_registry_keys', 'tags') }}"
-        calendar: "{{ iif('calendar_appointment' in keys or 'calendar_home' in keys, true, false) }}"
+        
+        # Calendar events.
+        events: "{{ state_attr('sensor.upcoming_events', 'events') }}"
+        cal_appt_count: >
+          {% from 'utilities.jinja' import count_list_items_matching_search %}
+          {{ count_list_items_matching_search(events, '(appt') }}
+        cal_home_count: >
+          {% from 'utilities.jinja' import count_list_items_matching_search %}
+          {{ count_list_items_matching_search(events, '(home') }}
+        cal_astro_count: >
+          {% from 'utilities.jinja' import count_list_items_matching_search %}
+          {{ count_list_items_matching_search(events, '(astro') }}
+        cal_appt_str: "{{ cal_appt_count ~ ' away' ~ iif(cal_appt_count > 1, ' appointments', ' appointment') }}"
+        cal_home_str: "{{ cal_home_count ~ ' home' ~ iif(cal_home_count > 1, ' appointments', ' appointment') }}"
+        cal_astro_str: "{{ cal_astro_count ~ ' astronomy' ~ iif(cal_astro_count > 1, ' events', ' event') }}"
+        
+        # The complete calendar text, if any.
+        calendar_msg: >
+          {% set ns = namespace(msg = '') %}
+          
+          {# Leave the message empty if we don't have any calendar events. #}
+          {% if cal_appt_count + cal_home_count + cal_astro_count > 0 %}
+            {% set ns.msg = 'You have ' %}
+            
+            {# Add away appointment(s) if any. #}
+            {% if cal_appt_count > 0 %}
+              {% set ns.msg = ns.msg ~ cal_appt_str  %}
+            {% endif %}
+            
+            {# Add home appointment(s) if any. #}
+            {% if cal_home_count > 0 %}
+              {% if cal_appt_count > 0 %}
+                {% if cal_astro_count == 0 %}
+                  {% set ns.msg = ns.msg ~ ' & ' %}
+                {% else %}
+                  {% set ns.msg = ns.msg ~ ', ' %}
+                {% endif %}
+              {% endif %}
+              {% set ns.msg = ns.msg ~ cal_home_str %}
+            {% endif %}
+            
+            {# Add astronomy event(s) if any. #}
+            {% if cal_astro_count > 0 %}
+              {% if cal_appt_count + cal_home_count > 0 %}
+                {% set ns.msg = ns.msg ~ ' & ' ~ cal_astro_str %}
+              {% else %}
+                {% set ns.msg = ns.msg ~ cal_astro_str %}
+              {% endif %}
+            {% endif %}
+            
+            {% set ns.msg = ns.msg ~ ' on your calendar.' %}
+          {% endif %}
+          
+          {{ ns.msg }}
           
     # Wait until the master bedroom DND toggle is turned off. That happens in the Manage Bedroom Do Not Disturb
     # automation as a result of turning off the Nighttime toggle (above). We require the toggle to be off in order
@@ -574,9 +631,9 @@
         destination:
           - voice_assistant
         message: >
-          {% set msg = 'Good morning. You slept ' ~ hours ~ ' ' ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' ' ~ minutes_str ~ '.', '.') %}
-          {% if calendar == true %}
-            {% set msg = msg + ' Also, check your phone for upcoming calendar items.' %}
+          {% set msg = 'Good morning, today is ' ~ friendly_date ~ '. You slept ' ~ hours ~ ' ' ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' ' ~ minutes_str ~ '.', '.') %}
+          {% if calendar_msg | length > 0 %}
+            {% set msg = msg ~ ' ' ~ calendar_msg %}
           {% endif %}
           
           {{ msg }}
