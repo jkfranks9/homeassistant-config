@@ -228,6 +228,18 @@
           - ['input_number.average_astro_cloudless_percentage', 'cloudless_percentage', 50, 0]
           - ['input_number.average_astro_seeing_percentage', 'seeing_percentage', 50, 0]
           - ['input_number.average_astro_transparency_percentage', 'transparency_percentage', 50, 0]
+    
+    # Log the data for posterity.
+    - variables:
+        condition: "{{ states('input_number.average_astro_condition') }}"
+        cloudless: "{{ states('input_number.average_astro_cloudless_percentage') }}"
+        seeing: "{{ states('input_number.average_astro_seeing_percentage') }}"
+        transparency: "{{ states('input_number.average_astro_transparency_percentage') }}"
+    
+    - action: system_log.write
+      data:
+        message: "{{ 'Astro weather: condition ' ~ condition ~ ', cloudless ' ~ cloudless ~ ', seeing ' ~ seeing ~ ', transparency ' ~ transparency }}"
+        level: info
 
 #======================#
 #     Temperatures     #
