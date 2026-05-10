@@ -100,11 +100,8 @@ add_guest_to_suite:
         - "{{ suite_entry_state == 'Empty' }}"
       
       then:
-        - repeat:
-            until: "{{ is_state('binary_sensor.' ~ suite | lower ~ '_occupied', 'on') }}"
-            
-            sequence:
-              - event: unused_event
+        - wait_template: "{{ is_state('binary_sensor.' ~ suite | lower ~ '_occupied', 'on') }}"
+          timeout: 5
     
     # Prepare the suite for occupancy.    
     - action: script.modify_{{ suite | lower }}
@@ -156,11 +153,8 @@ remove_guest_from_suite:
 
         # Since the suite is now empty, wait for the associated binary sensor to change before continuing, as the
         # binary sensor could be used when modifying the suite.
-        - repeat:
-            until: "{{ is_state('binary_sensor.' ~ suite | lower ~ '_occupied', 'off') }}"
-            
-            sequence:
-              - event: unused_event
+        - wait_template: "{{ is_state('binary_sensor.' ~ suite | lower ~ '_occupied', 'off') }}"
+          timeout: 5
     
     # Clean up the suite if needed.
     - choose:
