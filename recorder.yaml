@@ -65,6 +65,7 @@ include:
     - input_boolean.projector_active
     
     - binary_sensor.adults_home
+    - binary_sensor.astronomy_friendly
     - binary_sensor.children_home
     - binary_sensor.jon_devices_charging
     - binary_sensor.jon_sleeping
