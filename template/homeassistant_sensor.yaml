@@ -259,6 +259,46 @@
         Subject: "{{ trigger.event.data['subject'] }}"
         Initial: "{{ trigger.event.data['initial'] }}"
 
+#---------------------------#
+#   -- Pending Updates --   #
+#---------------------------#
+
+- triggers:
+    - trigger: event
+      event_type: add_pending_update
+  
+    - trigger: event
+      event_type: remove_pending_update
+    
+    - trigger: event
+      event_type: reset_pending_updates
+  
+  sensor:
+    - name: Pending Updates
+      unique_id: pending_updates
+      state: Updates
+      
+      attributes:
+        items: >
+          {% set ns = namespace(current = this.attributes.get('items', []), new = []) %}
+          {% if trigger.event.event_type == 'add_pending_update' %}
+            {% if not ns.current | contains(trigger.event.data.value) %}
+              {% set ns.current = ns.current + [trigger.event.data.value] %}
+            {% endif %}
+          {% elif trigger.event.event_type == 'remove_pending_update' %}
+            {% set idx = ns.current.index(trigger.event.data.value) %}
+            {% for item in ns.current %}
+              {% if loop.index0 != idx %}
+                {% set ns.new = ns.new + [item] %}
+              {% endif %}
+            {% endfor %}
+            {% set ns.current = ns.new %}
+          {% elif trigger.event.event_type == 'reset_pending_updates' %}
+            {% set ns.current = [] %}
+          {% endif %}
+          
+          {{ ns.current }}
+
 #---------- Normal Sensors ----------#
 
 - sensor:

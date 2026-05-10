@@ -636,31 +636,100 @@
         state: "{{ timestamp }}"
         attributes: {}
 
-#========================#
-#     Zigbee Devices     #
-#========================#
+#=========================#
+#     Pending Updates     #
+#=========================#
 
-# The Zigbee device unavailable notification is triggered unintentionally when the Zigbee2MQTT add-on is updated.
-# Detect that here and disable the notification automation; re-enable it after the update is complete.
-- alias: Toggle Zigbee Unavailable Notification
-  id: toggle_zigbee_unavailable_notification
+# For some app updates, special processing is required. An example is the need to temporarily disable the Notify Zigbee Device Unavailable
+# automation for certain app updates, so as to prevent false notifications about unavailable Zigbee devices. Since the update entities for 
+# these apps can be turned on for long periods before I perform the updates, the Notify Zigbee Device Unavailable automation can be disabled
+# for those long periods.
+#
+# This automation skips such app updates, adds them to the Pending Updates trigger sensor and sends a persistent notification.
+# This allows me to call the Install Pending Updates script when I'm ready to do the actual install.
+#
+# Currently, this only handles the situation used as an example above. More thought will need to go in this if additional
+# cases are discovered.
+#
+# NOTE: I suppose there is an extremely unlikely event where multiple apps could be updated at the same time. I considered
+# using queued mode for this automation, but that went quickly down a rabbit hole. So I'm basically cheating, by setting a variable
+# (apps) with all potential update entity triggers that are in on state, and processing them all. Could I still get into
+# trouble with this approach? Probably.
+- alias: Handle Pending Updates
+  id: handle_pending_updates
   
   triggers:
     - trigger: state
-      entity_id: update.zigbee2mqtt_update
+      entity_id:
+        - update.zigbee2mqtt_update
+        - update.mosquitto_broker_update
       from: 'off'
       to: 'on'
-      id: 'off'
+  
+  conditions:
     
-    - trigger: state
-      entity_id: update.zigbee2mqtt_update
-      from: 'on'
-      to: 'off'
-      id: 'on'
+    # We don't want to do anything while the Install Pending Updates script is running, hence this toggle.
+    - condition: state
+      entity_id: input_boolean.installing_pending_updates
+      state: 'off'
   
   actions:
-    - action: automation.turn_{{ trigger.id }}
-      entity_id: automation.notify_zigbee_device_unavailable
+    - variables:
+        apps: >
+          {% set ns = namespace(applist = []) %}
+          {% if is_state('update.zigbee2mqtt_update', 'on') %}
+            {% set ns.applist = ns.applist + ['zigbee2mqtt'] %}
+          {% endif %}
+          {% if is_state('update.mosquitto_broker_update', 'on') %}
+            {% set ns.applist = ns.applist + ['mosquitto'] %}
+          {% endif %}
+          {{ ns.applist }}
+    
+    - repeat:
+        for_each: "{{ apps }}"
+        
+        sequence:
+          - variables:
+              app: "{{ repeat.item }}"
+              app_ident: >
+                {% if app == 'zigbee2mqtt' %}
+                  Zigbee2MQTT
+                {% elif app == 'mosquitto' %}
+                  Mosquitto Broker
+                {% endif %}
+    
+          # Skip the update, which sets the state of the update to off.
+          - choose:
+            
+            # Zigbee2MQTT update
+            - conditions: "{{ app == 'zigbee2mqtt' }}"
+            
+              sequence:
+                - action: update.skip
+                  target:
+                    entity_id: update.zigbee2mqtt_update
+          
+            # Mosquitto Broker update
+            - conditions: "{{ app == 'mosquitto' }}"
+            
+              sequence:
+                - action: update.skip
+                  target:
+                    entity_id: update.mosquitto_broker_update
+        
+          # Add the app to the Pending Updates sensor.
+          - event: add_pending_update
+            event_data:
+              value: "{{ app }}"
+        
+          # Send a persistent notification.
+          - action: script.send_notification
+            data:
+              destination:
+                - persistent
+              title: "Pending Update"
+              message: "{{ app_ident ~ ' has pending update.' }}"
+              notification_id: "{{ app }}"
 
 #=======================#
 #     Hockey Season     #

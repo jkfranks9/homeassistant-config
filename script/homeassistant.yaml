@@ -873,7 +873,6 @@ insert_mini_todo_item:
             - action: input_boolean.turn_off
               data:
                 entity_id: input_boolean.mini_todo_major_item_added
-            
 
 #===================#
 #     Utilities     #
@@ -892,6 +891,99 @@ concat_auto_scripts_log_files:
   
   sequence:
     - action: shell_command.concat_auto_scripts_log_files
+
+#=========================#
+#     Pending Updates     #
+#=========================#
+
+# Install pending updates. This is only used for updates that we automatically skip in the Handle Pending Updates
+# automation. That automation skips the updates and sends persistent notifications for each associated app. When I
+# want to install the updates, I call this script.
+install_pending_updates:
+  alias: Install Pending Updates
+  
+  sequence:
+    
+    # Prevent the Handle Pending Updates automation from running. I could have turned it off and on in here,
+    # but wanted it to be more obvious.
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.installing_pending_updates
+    
+    - variables:
+        
+        # The Pending Updates trigger sensor contains the list of apps that require installation.
+        apps: "{{ state_attr('sensor.pending_updates', 'items') }}"
+        
+        # Indicate Zigbee processing required if needed.
+        zigbee_processing_required: "{{ apps | contains('zigbee2mqtt') or apps | contains('mosquitto') }}"
+    
+    # Perform Zigbee pre-processing if needed.
+    - if:
+        - "{{ zigbee_processing_required }}"
+      
+      then:
+        - action: automation.turn_off
+          entity_id: automation.notify_zigbee_device_unavailable
+    
+    - repeat:
+        for_each: "{{ apps }}"
+        
+        sequence:
+          - variables:
+              app: "{{ repeat.item }}"
+    
+          # Clear the skipped update and perform the installation for each app.
+          - choose:
+            
+            # Zigbee2MQTT update
+            - conditions: "{{ app == 'zigbee2mqtt' }}"
+            
+              sequence:
+                - action: update.clear_skipped
+                  target:
+                    entity_id: update.zigbee2mqtt_update
+                  
+                - action: update.install
+                  target:
+                    entity_id: update.zigbee2mqtt_update
+                
+                - action: persistent_notification.dismiss
+                  data:
+                    notification_id: 'zigbee2mqtt'
+          
+            # Mosquitto Broker update
+            - conditions: "{{ app == 'mosquitto' }}"
+            
+              sequence:
+                - action: update.clear_skipped
+                  target:
+                    entity_id: update.mosquitto_broker_update
+                  
+                - action: update.install
+                  target:
+                    entity_id: update.mosquitto_broker_update
+                
+                - action: persistent_notification.dismiss
+                  data:
+                    notification_id: 'mosquitto'
+    
+    # Remove the processed apps from the Pending Apps sensor. Since we should have processed everything, and the
+    # Handle Pending Updates automation is still off, we can just empty the list.
+    - event: reset_pending_updates
+    
+    # Perform Zigbee post-processing if needed.
+    - if:
+        - "{{ zigbee_processing_required }}"
+      
+      then:
+        - action: automation.turn_on
+          entity_id: automation.notify_zigbee_device_unavailable
+    
+    # Re-enable the Handle Pending Updates automation.
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.installing_pending_updates
 
 #===================#
 #     Reminders     #
