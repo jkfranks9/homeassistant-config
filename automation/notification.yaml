@@ -551,6 +551,7 @@
     input:
       trigger_time: '06:02:00'
       date_entities: [
+                      'input_datetime.reminder_misc_checksharkfilters',
                       'input_datetime.reminder_misc_cleandishwasher',
                       'input_datetime.reminder_misc_cleanfridge',
                       'input_datetime.reminder_misc_cleanmicrowavegreasefilter',
