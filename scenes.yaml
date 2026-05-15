@@ -7,10 +7,10 @@
   entities:
     
     # Downstairs
-    light.dining_room_lights:             'off'
-    light.downstairs_common_lights:       'off'
+    light.dining_room_foyer_lights:       'off'
     light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
+    light.laundry_room_lights:            'off'
     light.master_suite_lights:            'off'
     light.office_lights:                  'off'
     light.studio_lights:                  'off'
@@ -32,10 +32,10 @@
   entities:
     
     # Downstairs
-    light.dining_room_lights:             'off'
-    light.downstairs_common_lights:       'off'
+    light.dining_room_foyer_lights:       'off'
     light.family_room_lights:             'off'
     light.kitchen_lights:                 'off'
+    light.laundry_room_lights:            'off'
     light.office_lights:                  'off'
     
     # Misc
@@ -52,10 +52,10 @@
   entities:
     
     # Downstairs
-    light.dining_room_lights:             'off'
-    light.downstairs_common_lights:       'off'
+    light.dining_room_foyer_lights:       'off'
     light.stairway:                       'off' # Leave family room lamp on
     light.kitchen_lights:                 'off'
+    light.laundry_room_lights:            'off'
     light.office_lights:                  'off'
     
     # Misc
@@ -72,8 +72,8 @@
   entities:
     
     # Downstairs
-    light.dining_room_lights:             'off'
-    light.downstairs_common_lights:       'off'
+    light.dining_room_foyer_lights:       'off'
+    light.laundry_room_lights:            'off'
     light.office_lights:                  'off'
     
     # Misc
@@ -91,16 +91,18 @@
 - id: 'theater_aux_dark'
   name: Theater Aux Dark
   entities:
-    light.upstairs_common_lights: 'off'
-    light.stairway:               'off'
+    light.penthouse_hall: 'off'
+    light.snack_bar:      'off'
+    light.stairway:       'off'
+    light.utility:        'off'
 
 # Turn on partial theater auxiliary lights. Note that the stairway light is controlled by a script in this
 # scenario, so is missing here.
 - id: 'theater_aux_partial'
   name: Theater Aux Partial
   entities:
-    light.snack_bar:      'off'
     light.penthouse_hall: 'on'
+    light.snack_bar:      'off'
     light.utility:        'off'
 
 #===============================#
