@@ -32,11 +32,22 @@
       to: 'playing'
       for: 00:00:02
   
-  # Sanity check to prevent false triggers.
   conditions:
+    
+    # Sanity check to prevent false triggers.
     - condition: state
       entity_id: input_boolean.theater_open
       state: 'on'
+    
+    # Ensure the projector is ready; otherwise this could run early and turn off all the lights.
+    - or:
+      - condition: state
+        entity_id: media_player.epson_projector
+        state: 'on'
+      
+      - condition: state
+        entity_id: input_boolean.projector_active
+        state: 'on'
   
   actions:  
     
@@ -105,7 +116,7 @@
 #===================================#
 
 # To prevent the projector and other components from frequent on/off cycles, the cinema can only be opened or closed
-# about 10 minutes after being closed or opened. This is largely controlled by the Check Cinema Usage Control script,
+# a few minutes after being closed or opened. This is largely controlled by the Check Cinema Usage Control script,
 # but it uses a timer to delay the actual open or close. We handle the timer expiration here.
 - alias: Handle Cinema Usage Delay
   id: handle_cinema_usage_delay
@@ -392,10 +403,10 @@
   actions:
     - delay: '00:00:30'
     
-    - action: media_player.volume_set
+    - action: script.set_receiver_volume
       data:
-        entity_id: media_player.marantz_receiver
-        volume_level: 0.60
+        target_name: Initial
+        volume: 0.60
 
 # Initialize the volume for Shield TV applications and Harmony devices. This is triggered by UI changes to the
 # 'Selected App Volume' number.
