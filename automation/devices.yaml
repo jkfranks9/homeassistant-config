@@ -427,10 +427,13 @@
             # Turn off all lights and fans.
             - action: scene.turn_on
               target:
-                entity_id:
-                  - scene.lights_out
-                  - scene.fans_off_downstairs
-                  - scene.fans_off_upstairs
+                entity_id: scene.lights_out
+            
+            - action: fan.turn_off
+              target:
+                label_id:
+                  - downstairs_fans
+                  - upstairs_fans
             
             # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
             - action: script.turn_off_fan_lights

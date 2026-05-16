@@ -226,51 +226,6 @@ operate_preferred_studio_lamps:
           target:
             entity_id: "{{ light_entity_list }}"
 
-# Turn the preferred studio night lights on or off.
-operate_preferred_studio_night_lights:
-  alias: Operate Preferred Studio Night Lights
-  
-  fields:
-    operation:
-      description: Whether to turn the light(s) on or off.
-      selector:
-        select:
-          options:
-            - 'on'
-            - 'off'
-  
-  sequence:
-    - variables:
-        preference: "{{ states('input_select.preferred_studio_night_lights') }}"
-        light_entity_list: >
-          {% set var = namespace(list = []) %}
-          {% if preference in ['Night', 'Both'] %}
-            {% set var.list = var.list + ['light.studio_night_light'] %}
-          {% endif %}
-          {% if preference in ['Hallway Lamp', 'Both'] %}
-            {% set var.list = var.list + ['light.hallway_lamp'] %}
-          {% endif %}
-          
-          {{ var.list }}
-    
-    # Perform the operation unless the preference is 'Neither'.
-    - if:
-        - "{{ light_entity_list | length > 0 }}"
-      
-      then:    
-        - action: light.turn_{{ operation }}
-          target:
-            entity_id: "{{ light_entity_list }}"
-                    
-    # Also turn off non-night lights if the operation is 'on'.
-    - if:
-        - "{{ operation == 'on' }}"
-      
-      then:
-        - action: light.turn_off
-          target:
-            entity_id: light.studio_minus_night_lights
-
 #========================#
 #     Kitchen Lights     #
 #========================#

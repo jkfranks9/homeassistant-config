@@ -105,24 +105,6 @@
     light.snack_bar:      'off'
     light.utility:        'off'
 
-#===============================#
-#     Ceiling and Bath Fans     #
-#===============================#
-- id: 'fans_off_downstairs'
-  name: Fans Off Downstairs
-  entities:
-    fan.family_room_fan:    'off'
-    fan.office_fan:         'off'
-    switch.master_bath_fan: 'off'
-    switch.studio_fan:      'off'
-    switch.treadmill_fan:   'off'
-
-- id: 'fans_off_upstairs'
-  name: Fans Off Upstairs
-  entities:
-    fan.theater_fan:        'off'
-    switch.penthouse_fan:   'off'
-
 #=================================#
 #     Voice Assistant Screens     #
 #=================================#

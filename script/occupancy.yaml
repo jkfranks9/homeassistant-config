@@ -355,9 +355,9 @@ bedtime:
       then:
         
         # Turn off upstairs fans.
-        - action: scene.turn_on
+        - action: fan.turn_off
           target:
-            entity_id: scene.fans_off_upstairs
+            label_id: upstairs_fans
       
     # Establish the proper bedtime environment (lights, thermostats, echo devices).
     - action: script.turn_on
@@ -709,18 +709,6 @@ modify_studio:
                     # - action: script.turn_off_fan_lights
                       # data:
                         # light_entity: [light.studio_bedroom_fan]
-                
-                # Make sure only the night lights are on if the studio is in use by a child only.
-                - conditions: "{{ is_state('input_select.studio_guests', 'Skylar') }}"
-              
-                  sequence:
-                    - action: script.operate_preferred_studio_night_lights
-                      data:
-                        operation: 'on'
-                    
-                    - action: light.turn_off
-                      target:
-                        entity_id: light.studio_minus_night_lights
         
             # Set a temporary temperature hold downstairs if needed.
             - if:
@@ -863,16 +851,15 @@ modify_penthouse:
                         light_entity: [light.theater_fan]
                 
                 # Set up the penthouse lights if a child is sleeping upstairs.
+                # TODO: If needed, add physical night light to penthouse and operate it here.
                 - conditions: "{{ 'Skylar' in states('input_select.penthouse_guests') }}"
               
                   sequence:
                     - action: scene.apply
                       data:
                         entities:
-                          light.penthouse_vanity:             'on'
-                          light.penthouse_minus_night_lights: 'off'
-                          light.upstairs_common_lights:       'off'
-                          light.theater_lights:               'off'
+                          light.penthouse_lights: 'off'
+                          light.theater_lights:   'off'
                           
             # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
             - action: script.turn_off_fan_lights
