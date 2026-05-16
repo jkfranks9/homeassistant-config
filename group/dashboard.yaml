@@ -2,18 +2,23 @@
 #     Dashboard Assistance    #
 #=============================#
 
-# These provide a single entity to use on a tile card to link to a subview.
+# These provide a single entity to use on a tile card.
   
 # Miscellaneous devices
 miscellaneous_devices:
+  name: Miscellaneous Devices
   entities:
     - cover.master_br_vent_1
     - cover.master_br_vent_2
     - binary_sensor.back_door_sensor_contact
     - binary_sensor.studio_window_sensor_contact
+    - binary_sensor.master_closet_sensor_contact
+    - binary_sensor.upstairs_entry_sensor_contact
+    - binary_sensor.attic_door_sensor_contact
   
 # Christmas plugs
 christmas_plugs:
+  name: Christmas Plugs
   entities:
     - input_boolean.christmas_tree_family_room
     - input_boolean.christmas_tree_kitchen
@@ -21,9 +26,11 @@ christmas_plugs:
     - input_boolean.christmas_outdoor
     - input_boolean.christmas_stair_railing
     - input_boolean.christmas_village
+    - input_boolean.christmas_family_room_lamp
   
 # Virtual device trackers
 virtual_device_trackers:
+  name: Virtual Device Trackers
   entities:
     - input_boolean.virtual_mike
     - input_boolean.virtual_maryam
