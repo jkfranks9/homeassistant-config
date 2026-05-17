@@ -26,7 +26,6 @@ logger:         !include logger.yaml
 panel_custom:   !include panel_custom.yaml
 recorder:       !include recorder.yaml
 script:         !include_dir_merge_named script
-scene:          !include scenes.yaml
 sensor:         !include_dir_merge_list sensor
 sql:            !include sql.yaml
 template:       !include_dir_merge_list template

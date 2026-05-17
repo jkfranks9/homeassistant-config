@@ -16,9 +16,17 @@ KitchenOn:
 
 LightsOut:
   action:
-    - action: scene.turn_on
+    - action: light.turn_off
       target:
-        entity_id: scene.lights_out
+        label_id:
+          - non_bedroom_lights
+          - bedroom_lights
+          - family_room_lights
+          - kitchen_lights
+    
+    - action: script.turn_off_fan_lights
+      data:
+        light_entity: "{{ expand(state_attr('light.ceiling_fan_lights', 'entity_id')) | map(attribute = 'entity_id') | list }}"
 
 PauseSleep:
   action:

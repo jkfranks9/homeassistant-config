@@ -178,26 +178,6 @@
       check_theater: true
       check_christmas: true
 
-# Control voice assistant screens based on ambient lux level.
-- alias: Control Voice Assistant Screens
-  id: control_voice_assistant_screens
-  
-  triggers:
-    - trigger: numeric_state
-      entity_id: sensor.downstairs_sensor_ambient_light
-      below: input_number.master_suite_ambient_min
-      id: dim
-  
-    - trigger: numeric_state
-      entity_id: sensor.downstairs_sensor_ambient_light
-      above: input_number.master_suite_ambient_max
-      id: bright
-    
-  actions:
-    - action: script.turn_on_voice_assistant_screens
-      data:
-        brightness: "{{ trigger.id }}"
-
 #============================#
 #     Extended Away Mode     #
 #============================#

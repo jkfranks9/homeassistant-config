@@ -425,9 +425,13 @@
           then:
         
             # Turn off all lights and fans.
-            - action: scene.turn_on
+            - action: light.turn_off
               target:
-                entity_id: scene.lights_out
+                label_id:
+                  - non_bedroom_lights
+                  - bedroom_lights
+                  - family_room_lights
+                  - kitchen_lights
             
             - action: fan.turn_off
               target:
