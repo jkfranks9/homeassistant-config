@@ -342,9 +342,9 @@ bedtime:
         - action: script.disable_family_room_av
     
         # Turn off downstairs fans.
-        - action: scene.turn_on
+        - action: fan.turn_off
           target:
-            entity_id: scene.fans_off_downstairs
+            label_id: downstairs_fans
     
     # Perform tasks if the penthouse is not occupied.
     - if:
@@ -454,7 +454,7 @@ temporarily_pause_sleep:
     
     # Turn on bath light.
     - action: light.turn_on
-      entity_id: light.master_vanity
+      entity_id: light.master_bath_vanity
 
 #=============================#
 #     Bedtime Environment     #
@@ -531,7 +531,7 @@ establish_bedtime_environment:
           then:
             - action: light.turn_off
               target:
-                entity_id: light.stairway
+                entity_id: light.family_room_stairway
           
           else:
             - action: light.turn_off
@@ -619,9 +619,9 @@ modify_master_suite:
         - action: scene.apply
           data:
             entities:
-              light.master_closet: 'off'
-              light.master_shower: 'off'
-              light.master_vanity: 'on'
+              light.master_closet_ceiling: 'off'
+              light.master_bath_shower:    'off'
+              light.master_bath_vanity:    'on'
     
         # PLACE HOLDER
         # I intend to someday add a ceiling fan to the master bedroom.
@@ -800,7 +800,7 @@ modify_penthouse:
               then:
                 - action: light.turn_on
                   target:
-                    entity_id: light.penthouse_bed_lamp
+                    entity_id: light.penthouse_bedroom_lamp
         
         # Departure tasks.
         - conditions: "{{ reason == 'departure' }}"
@@ -896,7 +896,7 @@ modify_penthouse:
               then:    
                 - action: light.turn_off
                   target:
-                    entity_id: light.penthouse_vanity
+                    entity_id: light.penthouse_bath_vanity
 
 # Set a thermostat hold for the penthouse, that uses a unique temperature range for each family member.
 set_penthouse_thermostat_hold:

@@ -142,7 +142,7 @@
     path: lighting/lux_light.yaml
     input:
       lux_sensor: sensor.downstairs_sensor_ambient_light
-      light_target: light.hallway_lamp
+      light_target: light.studio_hall_lamp
       min_lux_level: input_number.hallway_ambient_min
       max_lux_level: input_number.hallway_ambient_max
       check_theater: true
@@ -450,7 +450,7 @@
     input:
       motion_entity: binary_sensor.laundry_room_motion_detector_occupancy
       light_target: 
-        entity_id: light.Laundry_room
+        entity_id: light.laundry_room_ceiling
       no_motion_wait: 180
 
 - alias: Run Master Bath Motion Based Light
@@ -463,7 +463,7 @@
     path: lighting/motion_light_with_fan.yaml
     input:
       motion_entity: binary_sensor.master_bath_motion_detector_occupancy
-      light_entity: light.master_vanity
+      light_entity: light.master_bath_vanity
       fan_entity: switch.master_bath_fan
       no_motion_wait_fan_off: 300
       no_motion_wait_fan_on:  420
@@ -483,7 +483,7 @@
     path: lighting/sensor_light.yaml
     input:
       sensor_entity: binary_sensor.attic_door_sensor_contact
-      light_target: light.attic
+      light_target: light.storage_attic
       close_toggle: input_boolean.attic_door_close_toggle
 
 - alias: Control Upstairs Entry Light
@@ -493,7 +493,7 @@
     path: lighting/sensor_light.yaml
     input:
       sensor_entity: binary_sensor.upstairs_entry_sensor_contact
-      light_target: light.penthouse_hall
+      light_target: light.penthouse_hall_ceiling
       close_toggle: input_boolean.upstairs_entry_close_toggle
 
 - alias: Control Master Closet Light
@@ -503,7 +503,7 @@
     path: lighting/sensor_light.yaml
     input:
       sensor_entity: binary_sensor.master_closet_sensor_contact
-      light_target: light.master_closet
+      light_target: light.master_closet_ceiling
 
 # For lights above that use the close toggle, turn the toggle off when the light turns off. This allows a case where the user
 # opens the door (light turns on) but manually turns the light off before closing the door. For example a quick trip in and out
@@ -515,7 +515,7 @@
   
   triggers:
     - trigger: state
-      entity_id: light.attic
+      entity_id: light.storage_attic
       from: 'on'
       to: 'off'
   
@@ -531,7 +531,7 @@
   
   triggers:
     - trigger: state
-      entity_id: light.penthouse_hall
+      entity_id: light.penthouse_hall_ceiling
       from: 'on'
       to: 'off'
   

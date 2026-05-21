@@ -48,7 +48,7 @@ variables:
     {{ ns.lights }}
   
   # Additional lights for 'daytime'.
-  additional_daytime_lights: "{{ ['light.office_lamp', 'light.hallway_lamp'] }}"
+  additional_daytime_lights: "{{ ['light.office_lamp', 'light.studio_hall_lamp'] }}"
 
 sequence:
     

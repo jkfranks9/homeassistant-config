@@ -296,8 +296,8 @@
           target:
             entity_id:
               - light.office_lamp
-              - light.driveway
-              - light.front_floodlight
+              - light.outdoor_driveway
+              - light.outdoor_front_flood
         
         # Daytime or Christmas lights.
         - if:
@@ -310,7 +310,7 @@
               target:
                 entity_id:
                   - light.family_room_lamp
-                  - light.hallway_lamp
+                  - light.studio_hall_lamp
           
           else:
             - action: script.turn_on_christmas_lights
@@ -496,8 +496,8 @@
         - action: light.turn_off
           target:
             entity_id:
-              - light.driveway
-              - light.front_floodlight
+              - light.outdoor_driveway
+              - light.outdoor_front_flood
 
 #========================#
 #     Family Room AV     #
@@ -1712,8 +1712,8 @@
             - action: light.turn_off
               target:
                 entity_id:
-                  - light.driveway
-                  - light.front_floodlight
+                  - light.outdoor_driveway
+                  - light.outdoor_front_flood
       
         # For a double button push, reset certain laundry controls. This is only needed if a cycle got stuck somehow.
         - conditions: "{{ trigger.id == 'double' }}"
@@ -1813,7 +1813,7 @@
           sequence:
             - variables:
                 domain: light
-                name: hallway_lamp
+                name: studio_hall_lamp
                 operation: toggle
       
         # Button 2, single push...

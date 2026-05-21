@@ -68,8 +68,8 @@
             - action: light.turn_on
               target:
                 entity_id:
-                  - light.driveway
-                  - light.front_floodlight
+                  - light.outdoor_driveway
+                  - light.outdoor_front_flood
             
             - action: timer.start
               data:
