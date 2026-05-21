@@ -17,6 +17,9 @@ variables:
 sequence:
     
   # Activate Shield TV streaming in the cinema.
+  # NOTE: We always specify need_kodi false here, even if the input application is Kodi. That's because Activate cinema
+  # calls Activate Kodi, which in addition to starting Kodi on the Shield TV, ensures that we can send commands to Kodi
+  # and receive results. When we're just starting Kodi for no specific reason, we don't need or want that to happen.
   - action: script.activate_cinema
     data:
       activity: Enable Streaming
@@ -45,6 +48,3 @@ sequence:
     data:
       command: 'InputCbl/Sat'
       device: Marantz Receiver
-  
-  # Establish the target lighting.
-  - action: script.set_theater_dark_delay
