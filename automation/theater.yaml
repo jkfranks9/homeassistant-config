@@ -331,8 +331,8 @@
         # We could have a timing situation where the 2 triggers happen nearly simultaneously. In that case we want to ignore the timer
         # expiration.
         - if:
-            - "{{ not (states('media_player.epson_projector') in ['warmup', 'on'] and is_state('input_boolean.projector_error_handling', 'off')) 
-                          or is_state('input_boolean.projector_active', 'on') }}"
+            - "{{ not ((states('media_player.epson_projector') in ['warmup', 'on'] and is_state('input_boolean.projector_error_handling', 'off')) 
+                          or is_state('input_boolean.projector_active', 'on')) }}"
           
           then:        
             - action: script.send_notification
