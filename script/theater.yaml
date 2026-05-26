@@ -35,7 +35,6 @@ activate_cinema:
       description: True if we need to start the Kodi app.
   
   variables:
-    #cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' }}"
     cinema_off_upon_entry: "{{ states('sensor.harmony_hub') == 'PowerOff' or states('input_boolean.cinema_harmony_initiation') == 'on'}}"
     plugs: "{{ label_entities('theater_equipment') }}"
     num_plugs: "{{ plugs | length }}"
@@ -53,6 +52,14 @@ activate_cinema:
         - "{{ cinema_off_upon_entry }}"
     
       then:
+        
+        # Initialize the current receiver volume to zero; the Marantz receiver is set to turn on muted, so we
+        # want the current volume to match.
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.current_volume
+          data:
+            value: 0
         
         # Ensure the cinema devices are available.
         - if:
@@ -125,21 +132,18 @@ activate_cinema:
     # Enable Streaming and CBL/SAT for Stream Player). This allows us to keep the screen dark when the
     # cinema is first opened, but not switch inputs if it's already open. I probably haven't explained
     # this very well. Sorry.
-    - if:
-        - "{{ activity == 'Enable Streaming' and not cinema_off_upon_entry }}"
+    - variables:
+        activity_name: "{{ iif(activity == 'Enable Streaming' and not cinema_off_upon_entry, 'Stream Player', activity) }}"
     
-      then:
+    - action: system_log.write
+      data:
+        message: "{{ 'Starting Harmony activity: ' ~ activity_name }}"
+        level: info
     
-        - action: remote.turn_on
-          entity_id: remote.harmony_hub
-          data:
-            activity: Stream Player
-      
-      else:
-        - action: remote.turn_on
-          entity_id: remote.harmony_hub
-          data:
-            activity: "{{ activity }}"
+    - action: remote.turn_on
+      entity_id: remote.harmony_hub
+      data:
+        activity: "{{ activity_name }}"
   
     # Do a few things if the cinema was off upon entry.
     - if:
@@ -164,7 +168,7 @@ activate_cinema:
           data:
             entity_id: timer.projector_status
             duration:
-              minutes: 10
+              minutes: "{{ states('input_number.projector_startup_timeout') }}"
   
     # Activate Kodi if requested.
     - if:
@@ -294,31 +298,12 @@ process_single_kodi_movie_result:
             message: 'Kodi videos could not be retrieved.'
             level: warning
   
-    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
-    - action: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'InputCbl/Sat'
-        device: Marantz Receiver
-  
     # Play either the playlist or the single movie.
-    - if:
-        - "{{ include_videos }}"
+    - action: script.play_prepared_kodi_media
+      data:
+        include_videos: "{{ include_videos }}"
+        movieid: "{{ movieid }}"
       
-      then:
-        - action: script.play_kodi_playlist
-      
-      else:
-        - action: kodi.call_method
-          data_template:
-            entity_id: media_player.kodi
-            method: Player.Open
-            item:
-              movieid: "{{ movieid }}"
-  
-    # Darken the theater.
-    - action: script.turn_on
-      entity_id: script.set_theater_dark_delay
 
 #=====================================#
 #     3) Play Random Music Videos     #
@@ -380,19 +365,10 @@ play_random_kodi_videos:
     
         - stop: 'Kodi videos could not be retrieved'
   
-    # Now switch the receiver to the proper input so Kodi can be viewed on screen.
-    - action: remote.send_command
-      entity_id: remote.harmony_hub
-      data:
-        command: 'InputCbl/Sat'
-        device: Marantz Receiver
-        
     # Play the playlist.
-    - action: script.play_kodi_playlist
-  
-    # Darken the theater.
-    - action: script.turn_on
-      entity_id: script.set_theater_dark_delay
+    - action: script.play_prepared_kodi_media
+      data:
+        include_videos: true
 
 #====================================#
 #     4) Start Harmony Activity      #
@@ -679,6 +655,119 @@ check_cinema_usage_control:
           data_template:
             datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
 
+#==============================#
+#     Play Prepared Media      #
+#==============================#
+
+# This is used when playing a feature movie or a set of videos. Once the appropriate media are prepared, we
+# want to wait for the projector to be ready (it might fail and need to be retried, or just take a long time
+# to come up). We also want to wait long enough to allow the theater to be occupied. For now, that's just a 
+# fixed offset from when the theater was first activated. At some point I'd like to use motion detection
+# instead.
+play_prepared_kodi_media:
+  alias: Play Prepared Kodi Media
+  
+  fields:
+    include_videos:
+      description: Do we have a playlist of videos? This is always true when playing videos, but may be false when playing a feature movie.
+      selector:
+        boolean:
+  
+    movieid:
+      description: (Optional) If playing a feature movie without a set of videos, this is the movie ID.
+    
+  sequence:
+    - variables:
+        occupation_wait_seconds: 90
+        interval: 5
+        
+        # This is the number of seconds remaining since the projector status timer was started in Activate Cinema.
+        # If for some reason the timer has finished (not really sure how), just use the full value of the startup
+        # timeout.
+        timeout: >
+          {% set timer = 'timer.projector_status' %}
+          {% set timer_state = states(timer) %}
+          {% set timeout = states('input_number.projector_startup_timeout') %}
+          {% if timer_state == 'active' %}
+            {{ (as_datetime(state_attr(timer, 'finishes_at')) - now()).total_seconds() | round() }}
+          {% else %}
+            {{ timeout }}
+          {% endif %}
+        
+        iterations: "{{ (timeout / interval) | int(0) }}"
+  
+    # Wait for the projector to be ready before continuing.
+    - action: counter.reset
+      target:
+        entity_id: counter.prepared_media_loop_counter
+    
+    - repeat:
+        while: "{{ (is_state('media_player.epson_projector', 'off') and is_state('input_boolean.projector_active', 'off')) and states('counter.prepared_media_loop_counter') | int(0) <= iterations }}"
+        
+        sequence:
+          - event: unused_event
+          
+          - delay: "{{ interval }}"
+    
+          - action: counter.increment
+            target:
+              entity_id: counter.prepared_media_loop_counter
+    
+    # Continue if the wait completed, otherwise announce an error.
+    - if:
+        - "{{ states('counter.prepared_media_loop_counter') | int(0) <= iterations }}"
+      
+      then:
+    
+        # Wait a fixed amount of time since opening the theater.
+        - variables:
+            seconds_since_open: "{{ (now() - states.input_datetime.cinema_usage_control.last_changed).total_seconds() }}"
+        
+        - if:
+            - "{{ occupation_wait_seconds > seconds_since_open }}"
+          
+          then:
+            - delay: "{{ occupation_wait_seconds - seconds_since_open }}"
+        
+        # Now switch the receiver to the proper input so Kodi can be viewed on screen.
+        - action: remote.send_command
+          entity_id: remote.harmony_hub
+          data:
+            command: 'InputCbl/Sat'
+            device: Marantz Receiver
+      
+        # Play either the playlist or the single movie.
+        - if:
+            - "{{ include_videos == true }}"
+          
+          then:
+            - action: script.play_kodi_playlist
+          
+          else:
+            - action: kodi.call_method
+              data_template:
+                entity_id: media_player.kodi
+                method: Player.Open
+                item:
+                  movieid: "{{ movieid }}"
+      
+        # Darken the theater.
+        - action: script.turn_on
+          target:
+            entity_id: script.set_theater_dark
+          data:
+            variables:
+              delay: "{{ states('input_number.theater_dark_delay') }}"
+      
+      else:
+        - action: script.send_notification
+          data:
+            destination:
+              - voice_assistant
+            message: "I'm sorry, but the projector did not start properly."
+            room: ['family_room', 'theater']
+            voice_type: announce
+
 #==========================#
 #     Post-Open Tasks      #
 #==========================#
@@ -686,33 +775,10 @@ check_cinema_usage_control:
 # The cinema can be opened for general usage (Open Cinema), a feature film (Play Feature) or to play a set
 # of random music videos (Play Random Kodi Videos). In all of these cases there are some common tasks, which
 # we perform here.
-
 perform_post_open_tasks:
   alias: Perform Post-Open Tasks
   
   sequence:
-    
-    # Say something appropriate.
-    - action: script.send_notification
-      data:
-        destination:
-          - voice_assistant
-        message: >
-          {{ ["Cinema is now open to the public!", 
-              "Hope you enjoy the show!", 
-              "White Rabbit Theater is ready!",
-              "Don't forget to silence your phones!",
-              "Please don't lose your children in the dark!",
-              "Watch for weeping angels!",
-              "Come relax in our state of the art theater!",
-              "Prepare to laugh and weep in equal measure!",
-              "Loading the film canister now!",
-              "Popcorn is popping! Cokes are bubbling! Grab a seat and relax!",
-              "Time to vegetate on the couch!"
-             ] | random }}
-        speak: excited
-        room: ['family_room', 'theater']
-        voice_type: tts
     
     # Set the upstairs Ecobee to home mode if the penthouse is not occupied.
     - if:
@@ -759,9 +825,13 @@ perform_post_open_tasks:
 set_receiver_volume:
   alias: Set Receiver Volume
   
+  mode: queued
+  
   fields:
     target_name:
-      description: The name of the application on the Shield TV (example 'Hulu'), or the Harmony device (example 'BD Player').
+      description: >
+        The name of the application on the Shield TV (example 'Hulu'), or the Harmony device (example 'BD Player'), or
+        'Initial' to indicate the turn on volume.
     
     volume:
       description: The receiver volume.
@@ -771,15 +841,32 @@ set_receiver_volume:
           max: 0.64
   
   sequence:
-    - action: system_log.write
-      data:
-        message: "Setting volume for {{ target_name }} to {{ volume }}"
-        level: debug
-  
-    - action: media_player.volume_set
-      data:
-        entity_id: media_player.marantz_receiver
-        volume_level: "{{ volume | float(0.60) }}"
+    
+    # Special case: If the target name is 'Initial' make sure the current volume is zero before proceeding. This is
+    # because the Marantz receiver turns on muted, but can be set to a valid value by one of the Initialize <app> Volume
+    # automations at any time. So we only want to continue for the 'Initial' case if it's still zero.
+    #
+    # NOTE: We use mode queued to handle collisions between the 'Initial' case and an app trying to set the volume
+    # simultaneously: if the app goes first, the 'Initial' case won't do anything.
+    - if:
+        - "{{ target_name != 'Initial' or states('input_number.current_volume') | float(0) == 0 }}"
+      
+      then:
+        - action: system_log.write
+          data:
+            message: "Setting volume for {{ target_name }} to {{ volume }}"
+            level: debug
+      
+        - action: media_player.volume_set
+          data:
+            entity_id: media_player.marantz_receiver
+            volume_level: "{{ volume | float(0.60) }}"
+        
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.current_volume
+          data:
+            value: "{{ volume | float(0.60) }}"
 
 # Set the volume for an app/device into an app-specific number, and also set the live volume if the theater is open
 # and the target app/device is currently in use.
@@ -891,27 +978,32 @@ change_theater_volume:
 #     Theater Lighting      #
 #===========================#
 
-# Make the theater dark.
+# Make the theater dark, with an optional delay.
 set_theater_dark:
   alias: Set Theater Dark
   
-  sequence:
-    - action: scene.turn_on
-      target:
-        entity_id:
-          - scene.theater_aux_dark
-          - scene.lutron_dark
-
-# Make the theater dark, with a delay.
-set_theater_dark_delay:
-  alias: Set Theater Dark Delay
+  fields:
+    delay:
+      description: Delay in seconds before darkening the theater room.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 10
   
   sequence:
-    - action: scene.turn_on
-      target:
-        entity_id: scene.theater_aux_dark
+    - variables:
+        input_delay: "{{ iif(delay is defined, delay, 0) }}"
     
-    - delay: '00:00:12'
+    - action: scene.apply
+      data:
+        entities:
+          light.penthouse_hall_ceiling:  'off'
+          light.penthouse_snack_bar:     'off'
+          light.family_room_stairway:    'off'
+          light.theater_utility_ceiling: 'off'
+    
+    - delay: "{{ input_delay }}"
     
     - action: scene.turn_on
       target:
@@ -922,11 +1014,17 @@ set_theater_dim:
   alias: Set Theater Dim
   
   sequence:
+    - action: scene.apply
+      data:
+        entities:
+          light.penthouse_hall_ceiling:  'off'
+          light.penthouse_snack_bar:     'off'
+          light.family_room_stairway:    'off'
+          light.theater_utility_ceiling: 'off'
+    
     - action: scene.turn_on
       target:
-        entity_id:
-          - scene.theater_aux_dark
-          - scene.lutron_dim
+        entity_id: scene.lutron_dim
 
 # Make the theater idle, meaning it's on but we need lights to see.
 set_theater_idle:
@@ -944,11 +1042,18 @@ set_theater_idle:
             - 'close'
   
   sequence:
+    
+    # Note that the stairway light is controlled by the Change Downstairs Lighting script in this scenario, so is missing here.
+    - action: scene.apply
+      data:
+        entities:
+          light.penthouse_hall_ceiling:  'on'
+          light.penthouse_snack_bar:     'off'
+          light.theater_utility_ceiling: 'off'
+    
     - action: scene.turn_on
       target:
-        entity_id:
-          - scene.theater_aux_partial
-          - scene.lutron_idle
+        entity_id: scene.lutron_idle
     
     - if:
         - "{{ not operation is defined }}"
@@ -1001,8 +1106,8 @@ change_downstairs_lighting:
         test_lights: "{{ iif(is_state('input_boolean.christmas_mode', 'off'), 'light.family_room_lamp', 'light.all_christmas_lights') }}"
         ambient_min: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
         ambient_value: "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) }}"
-        activation_lights: "{{ ['light.stairway', 'light.kitchen_island'] }}"
-        non_activation_lights: "{{ ['light.office_lamp', 'light.family_room_lamp', 'light.hallway_lamp'] + activation_lights }}"
+        activation_lights: "{{ ['light.family_room_stairway', 'light.kitchen_island'] }}"
+        non_activation_lights: "{{ ['light.office_lamp', 'light.family_room_lamp', 'light.studio_hall_lamp'] + activation_lights }}"
     
     - if:
         - "{{ turn_on == true }}"
@@ -1154,7 +1259,7 @@ get_all_kodi_videos:
         max_retries: 3
         
         # Wait timeout.
-        timeout_secs: 7
+        timeout_secs: 90
     
     # This is a flag to know when we're done.
     - action: input_boolean.turn_off
@@ -1565,13 +1670,13 @@ activate_kodi:
     # Turn on the Shield TV if needed so we can host the Kodi application.
     - if:
         - condition: state
-          entity_id: media_player.shield_tv
+          entity_id: media_player.shield_android_tv
           state: 'off'
       
       then:    
         - action: media_player.turn_on
           data:
-            entity_id: media_player.shield_tv
+            entity_id: media_player.shield_android_tv
         
     # Wait until the Shield media player is on.
     # NOTES:
@@ -1579,13 +1684,13 @@ activate_kodi:
     #    but I don't trust that will always be true.
     # 2) We can't use wait_for_trigger because of timing between the state we want and the associated trigger being initialized.
     - repeat:
-        until: "{{ is_state('media_player.shield_android_tv', 'on') }}"
+        while: "{{ not is_state('media_player.shield_android_tv', 'on') }}"
         
         sequence:
           - event: unused_event
           
           - delay:
-              milliseconds: 10
+              milliseconds: 100
           
     # Initialize the toggle that indicates Kodi is responding to commands.
     - action: input_boolean.turn_off
@@ -1603,11 +1708,10 @@ activate_kodi:
     # the Process Kodi Command Result automation turns on the toggle that indicates Kodi is responding to commands.    
     # If this doesn't work within the timeout period, then whatever we need Kodi for will also probably fail. Oh well.
     - variables:
-        delay_milliseconds: 500
-        timeout_seconds: 10
+        timeout_seconds: 30
     
     - repeat:
-        until: "{{ is_state('input_boolean.kodi_activated', 'on') or repeat.index > timeout_seconds * 1000 / delay_milliseconds }}"
+        until: "{{ is_state('input_boolean.kodi_activated', 'on') or repeat.index > timeout_seconds }}"
         
         sequence:
           - action: kodi.call_method
@@ -1616,7 +1720,20 @@ activate_kodi:
               method: VideoLibrary.GetMovieSets
           
           - delay:
-              milliseconds: "{{ delay_milliseconds }}"
+              seconds: 1
+    
+    # Let the user know if we failed.
+    - if:
+        - "{{ is_state('input_boolean.kodi_activated', 'off') }}"
+      
+      then:
+        - action: script.send_notification
+          data:
+            destination:
+              - voice_assistant
+            message: "I was unable to activate Kodi within the timeout period."
+            room: ['theater', 'family_room']
+            voice_type: announce
 
 # Get the list of all movies known by Kodi.
 # This script is only needed when the Kodi movie library is updated.
