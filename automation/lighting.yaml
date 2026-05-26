@@ -349,7 +349,12 @@
           - variables:
               lights_on_count: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | list | length }}"
               lights_on_entities: "{{ expand(group_id) | selectattr('state', 'eq', 'on') | map(attribute = 'entity_id') | list }}"
-              toggle_entity: "{{ iif(lights_on_count > max_on, lights_on_entities | random, group_lights_entities | random) }}"
+              toggle_entity: >
+                {% if lights_on_count > max_on %}
+                  {{ lights_on_entities | random }}
+                {% else %}
+                  {{ group_lights_entities | random }}
+                {% endif %}
         
           # Toggle a random light from the away group. We picked an entity above as follows:
           #
