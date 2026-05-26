@@ -8,13 +8,13 @@
 miscellaneous_devices:
   name: Miscellaneous Devices
   entities:
-    - cover.master_br_vent_1
-    - cover.master_br_vent_2
-    - binary_sensor.back_door_sensor_contact
-    - binary_sensor.studio_window_sensor_contact
-    - binary_sensor.master_closet_sensor_contact
-    - binary_sensor.upstairs_entry_sensor_contact
+    - cover.master_bedroom_vent_1
+    - cover.master_bedroom_vent_2
     - binary_sensor.attic_door_sensor_contact
+    - binary_sensor.back_door_sensor_contact
+    - binary_sensor.master_closet_sensor_contact
+    - binary_sensor.studio_window_sensor_contact
+    - binary_sensor.upstairs_entry_sensor_contact
   
 # Christmas plugs
 christmas_plugs:

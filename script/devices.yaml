@@ -246,8 +246,8 @@ open_hvac_vents:
     path: devices/hvac_vent_operation.yaml
     input:
       vent_entity:
-        - cover.master_br_vent_1
-        - cover.master_br_vent_2
+        - cover.master_bedroom_vent_1
+        - cover.master_bedroom_vent_2
       position: 100
 
 close_hvac_vents:
@@ -257,8 +257,8 @@ close_hvac_vents:
     path: devices/hvac_vent_operation.yaml
     input:
       vent_entity:
-        - cover.master_br_vent_1
-        - cover.master_br_vent_2
+        - cover.master_bedroom_vent_1
+        - cover.master_bedroom_vent_2
       position: 0
 
 #======================#

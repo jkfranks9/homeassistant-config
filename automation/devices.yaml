@@ -815,7 +815,7 @@
     #   - My cooldown period is always 1 minute at 2.0 MPH (ctime and ckph variables).
     - variables:
         daily_calories: >
-          {% set weight  = states('sensor.smart_scale_p1_weight') | float(0) %}
+          {% set weight  = states('sensor.master_bath_smart_scale_p1_weight') | float(0) %}
           {% set speed   = states('input_number.treadmill_speed') | float(0) %}
           {% set incline = states('input_number.treadmill_incline') | int(0) %}
           {% set time    = states('input_number.treadmill_daily_time') | int(0) / 60 %}
