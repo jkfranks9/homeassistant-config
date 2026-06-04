@@ -19,16 +19,20 @@ homeassistant:
 #     Included Files     #
 #========================#
 
-automation:     !include_dir_merge_list automation
-group:          !include_dir_merge_named group
-intent_script:  !include_dir_merge_named intent_script
-logger:         !include logger.yaml
-panel_custom:   !include panel_custom.yaml
-recorder:       !include recorder.yaml
-script:         !include_dir_merge_named script
-sensor:         !include_dir_merge_list sensor
-sql:            !include sql.yaml
-template:       !include_dir_merge_list template
+# Allow automations and scripts to exist using both YAML and the UI.
+automation manual: !include_dir_merge_list automation
+automation ui:     !include automations.yaml
+script manual:     !include_dir_merge_named script
+script ui:         !include scripts.yaml
+
+group:             !include_dir_merge_named group
+intent_script:     !include_dir_merge_named intent_script
+logger:            !include logger.yaml
+panel_custom:      !include panel_custom.yaml
+recorder:          !include recorder.yaml
+sensor:            !include_dir_merge_list sensor
+sql:               !include sql.yaml
+template:          !include_dir_merge_list template
 
 #======================#
 #     Conversation     #
