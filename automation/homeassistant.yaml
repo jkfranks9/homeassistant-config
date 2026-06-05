@@ -697,6 +697,14 @@
                 {% elif app == 'mosquitto' %}
                   Mosquitto Broker
                 {% endif %}
+              update_entity: >
+                {% if app == 'zigbee2mqtt' %}
+                  {{ 'update.' ~ app ~ '_update' }}
+                {% elif app == 'mosquitto' %}
+                  {{ 'update.' ~ app ~ '_broker_update' }}
+                {% endif %}
+              installed_version: "{{ state_attr(update_entity, 'installed_version') }}"
+              latest_version: "{{ state_attr(update_entity, 'latest_version') }}"
     
           # Skip the update, which sets the state of the update to off.
           - choose:
@@ -728,7 +736,7 @@
               destination:
                 - persistent
               title: "Pending Update"
-              message: "{{ app_ident ~ ' has pending update.' }}"
+              message: "{{ app_ident ~ ' has pending update: ' ~ installed_version ~ ' -> ' ~ latest_version }}"
               notification_id: "{{ app }}"
 
 #=======================#
@@ -1021,7 +1029,7 @@
     # least significant bit is Sunday. Certain special days and roving holidays are also treated as free time.
     - variables:
         free_time: >
-          {% set free_day = states('input_number.mini_todo_weekly_free_time_days') | int(0) | bitwise_and(2 ** now().isoweekday()) > 0 %}
+          {% set free_day = states('input_number.mini_todo_weekly_free_time_days') | int(0) | bitwise_and(2 ** (7 - now().isoweekday())) > 0 %}
           {% set roving_holiday = states('sensor.easter_day') == true or states('sensor.thanksgiving_day') == true %}
           {% set special_day = now().strftime('%m-%d') in state_attr('sensor.variables', 'variables').special_days %}
           

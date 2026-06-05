@@ -17,11 +17,9 @@ blueprint:
     
     num_days:
       name: Num Days
-      description: How many days to generate.
+      description: How many days to generate. This is a list whose length is the number of times to loop.
       selector:
-        number:
-          min: 1
-          max: 7
+        object:
 
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
@@ -45,13 +43,7 @@ sequence:
             {% set v.value = v.value | bitwise_or(day_on) %}
             
             {# Remove the day we just picked from the days list. #}
-            {% set var = namespace(new = []) %}
-            {% for item in d.days %}
-              {% if loop.index0 != idx %}
-                {% set var.new = var.new + [item] %}
-              {% endif %}
-            {% endfor %}
-            {% set d.days = var.new %}
+            {% set d.days = d.days | reject('equalto', d.days[idx]) | list %}
             
             {# Decrement the days length for the next iteration. #}
             {% set l.len = l.len - 1 %}
