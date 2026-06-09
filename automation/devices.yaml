@@ -334,6 +334,13 @@
           data:
             entity_id: timer.jon_arrival_cleanup
             duration: '00:15:00'
+    
+    # Turn on family room AV system if appropriate.
+    - if:
+        - "{{ 15 < now().hour < 20 and is_state('binary_sensor.family_room_av_system', 'off') }}"
+      
+      then:
+        - action: script.enable_family_room_av
 
 # Close up the house when needed.
 - alias: Close House
@@ -443,6 +450,9 @@
             - action: script.turn_off_fan_lights
               data:
                 light_entity: "{{ expand(state_attr('light.ceiling_fan_lights', 'entity_id')) | map(attribute = 'entity_id') | list }}"
+        
+            # Turn off the Family Room AV system.
+            - action: script.disable_family_room_av
       
     - if:
       
