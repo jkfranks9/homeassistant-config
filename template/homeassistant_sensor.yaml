@@ -242,22 +242,6 @@
           {% endfor %}
           
           {{ ns.events }}
-  
-- triggers:
-    - trigger: event
-      event_type: "imap_content"
-      id: "custom_event"
-  sensor:
-    - name: imap_content
-      state: "{{ trigger.event.data['subject'] }}"
-      attributes:
-        Message: "{{ trigger.event.data['text'] }}"
-        Server: "{{ trigger.event.data['server'] }}"
-        Username: "{{ trigger.event.data['username'] }}"
-        Sender: "{{ trigger.event.data['sender'] }}"
-        Date: "{{ trigger.event.data['date'] }}"
-        Subject: "{{ trigger.event.data['subject'] }}"
-        Initial: "{{ trigger.event.data['initial'] }}"
 
 #---------------------------#
 #   -- Pending Updates --   #
