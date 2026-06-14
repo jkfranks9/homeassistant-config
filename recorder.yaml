@@ -80,6 +80,8 @@ include:
     - sensor.ahi_average
     - sensor.cpap_ahi_events_per_hour
     - sensor.cpap_average
+    - sensor.cpap_score_average
+    - sensor.cpap_total_myair_score
     - sensor.cpap_usage_hours
     - sensor.cpap_usage_minutes
     - sensor.downstairs_humidity
