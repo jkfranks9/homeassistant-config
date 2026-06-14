@@ -1440,43 +1440,42 @@ log_laundry_event:
 gather_upcoming_reminders:
   alias: Gather Upcoming Reminders
   
-  variables:
-    
-    # List of all reminder datetimes of interest.
-    # On hiatus: add this to date_entities to reestablish: 'input_datetime.reminder_payment_disney',
-    reminder_dates: >
-      {% set reminder_dates = [
-                               'input_datetime.reminder_payment_amazon',
-                               'input_datetime.reminder_payment_creditunion',
-                               'input_datetime.reminder_payment_mortgage',
-                               'input_datetime.reminder_payment_randolph',
-                               'input_datetime.reminder_medication_eliquis',
-                               'input_datetime.reminder_medication_metoprolol',
-                               'input_datetime.reminder_medication_rosuvastatin'
-                              ] %}
-       
-       {{ reminder_dates }}
-  
   sequence:
-          
+  
+    - variables:
+        reminder_dates: >
+          {% set reminder_dates = [
+                                   'input_datetime.reminder_payment_amazon',
+                                   'input_datetime.reminder_payment_creditunion',
+                                   'input_datetime.reminder_payment_mortgage',
+                                   'input_datetime.reminder_payment_randolph',
+                                   'input_datetime.reminder_medication_eliquis',
+                                   'input_datetime.reminder_medication_metoprolol',
+                                   'input_datetime.reminder_medication_rosuvastatin'
+                                  ] %}
+            
+          {{ reminder_dates }}
+    
     # Set the appropriate items in the result dropdown.
     - action: input_select.set_options
       target:
         entity_id: input_select.reminder_lookahead_items
       data:
         options: >
-          {% set vars = namespace(items = []) %}
-          {% set days = (states('input_number.reminder_lookahead_days') | int(0)) %}
+          {% set ns = namespace(items = []) %}
+          {% set start_date = as_datetime(states('input_datetime.extended_away_start')) %}
+          {% set end_date = as_datetime(states('input_datetime.extended_away_end')) %}
+          {% set num_days = (end_date - start_date).days %}
           
-          {% if days > 0 %}
+          {% if num_days > 0 %}
             {% for date in reminder_dates %}
-              {% if (now().date() + timedelta(days=days)) | string >= states(date) %}
-                {% set vars.items = vars.items + [ state_attr(date, 'friendly_name') ]  %}
+              {% if (start_date + timedelta(days = num_days)) >= as_datetime(states(date)) %}
+                {% set ns.items = ns.items + [ state_attr(date, 'friendly_name') ]  %}
               {% endif %}
             {% endfor %}
           
           {% else %}
-            {% set vars.items = vars.items + [ 'Empty' ]  %}
+            {% set ns.items = ns.items + [ 'Empty' ]  %}
           {% endif %}
           
-          {{ vars.items }}
+          {{ ns.items }}
