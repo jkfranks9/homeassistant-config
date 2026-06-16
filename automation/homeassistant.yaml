@@ -302,10 +302,9 @@
       entity_id: automation.control_christmas_lights
       
     # Run a daily Watchman report.
-    # - action: watchman.report
-      # data:
-        # parse_config: false
-        # create_file: true
+    - action: watchman.report
+      data:
+        create_file: true
     
     # Reset the default guest suite preferences for all guests not currently home.
     - repeat:
@@ -906,6 +905,104 @@
             data:
               entity_id: "{{ timer_entity }}"
               duration: 300
+
+#=====================#
+#     IMAP Emails     #
+#=====================#
+
+# Other family members share my Disney+ account. Occasionally, they need to revalidate, which results in me getting an 
+# email with a new passcode. The IMAP integration sends an event for every received email, which is what we trigger on.
+# We only process emails with key words in the subject that indicate the email is the one containing the Disney+ passcode.
+#
+# We then extract the 6 digit code and send it via text to all family members sharing the account. There is no way to 
+# identify which family member needs the code.
+
+- alias: Process Disney Passcode
+  id: process_disney_passcode
+  
+  triggers:
+    - trigger: event
+      event_type: imap_content
+      event_data:
+        entry_id: 01KPKG3NQX7C5NZ717D9P47MCW
+        
+  actions:
+    
+    # Fetch the IMAP data and place it in a response variable. The message text is placed in the 'text' keyword in the response.
+    - action: imap.fetch
+      data:
+        entry: 01KPKG3NQX7C5NZ717D9P47MCW
+        uid: "{{ trigger.event.data['uid'] }}"
+      response_variable: message_text
+    
+    # Ignore emails we're not looking for.    
+    - if:
+        - "{{ 'passcode for Disney+' not in message_text['subject'] }}"
+      
+      then:
+        - stop: "Email is not for Disney+ passcode"
+    
+    - variables:
+        pre_text: 'It will expire'
+        post_text: 'If you did not make this request'
+        
+        # Extract a 6 digit numerical value preceded by whitespace from the text. This should be the passcode. The preceding
+        # whitespace ensures we ignore HTML color codes. We also abbreviate the very long HTML message by looking for key texts
+        # before and after the passcode. The use of a list of possible codes allows us to error off if we don't get just one,
+        # so I can debug this if the format of the message ever changes.
+        passcode: >
+          {% set ns = namespace(code = []) %}
+          {% set message_abbrev = message_text['text'].split(pre_text)[1].split(post_text)[0] %}
+          {% set numlist = message_abbrev | regex_findall("\\s\\d{6}") %}
+          {% for num in numlist %}
+            {% if num | trim | length == 6 %}
+              {% set ns.code = ns.code + [num | int] %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.code }}
+        
+        # Family members sharing my account.
+        persons: ['mike', 'sarah']
+        mike_phone: !secret mike_phone
+        sarah_phone: !secret sarah_phone
+    
+    # We expect only one possible passcode to be extracted.
+    - if:
+        - "{{ passcode | length == 1 }}"
+      
+      then:
+          
+        # Send to all family members.
+        - repeat:
+            for_each: "{{ persons }}"
+            
+            sequence:          
+              - variables:
+                  number: >
+                    {% if repeat.item == 'mike' %}
+                      {{ mike_phone }}
+                    {% elif repeat.item == 'sarah' %}
+                      {{ sarah_phone }}
+                    {% else %}
+                      0000000000
+                    {% endif %}
+              
+              - action: notify.gmail
+                data:
+                  title: ' '
+                  target: "{{ number ~ '@vtext.com' }}"
+                  message: "{{ 'If you just requested a Disney+ code, here it is: ' ~ passcode[0] }}"
+      
+      # This is unexpected - send a persistent notification.
+      else:
+        
+        - action: script.send_notification
+          data:
+            destination:
+              - persistent
+            title: "Disney+ Passcode Problem"
+            message: "{{ passcode | length ~ ' possible passcodes extracted.' }}"
+            notification_id: Disney+
 
 #========================#
 #     Mini ToDo List     #
