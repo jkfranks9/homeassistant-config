@@ -163,20 +163,20 @@ powercalc:
 system_log:
   fire_event: true
 
-# Notify service
-notify:
-  - name: gmail
-    platform: smtp
-    server: "smtp.gmail.com"
-    port: 587
-    timeout: 15
-    sender: !secret gmail_email_address
-    encryption: starttls
-    username: !secret gmail_email_address
-    password: !secret gmail_app_password
-    recipient:
-      - !secret gmail_email_address
-    sender_name: Jon Franks
+# # Notify service
+# notify:
+  # - name: gmail
+    # platform: smtp
+    # server: "smtp.gmail.com"
+    # port: 587
+    # timeout: 15
+    # sender: !secret gmail_email_address
+    # encryption: starttls
+    # username: !secret gmail_email_address
+    # password: !secret gmail_app_password
+    # recipient:
+      # - !secret gmail_email_address
+    # sender_name: Jon Franks
 
 # Command line
 command_line:

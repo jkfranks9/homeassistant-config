@@ -92,16 +92,6 @@ alexa_report_house_status:
       data:
         caller: alexa
 
-# NOTE: The following scripts do not require knowing the most recently spoken to device.
-
-alexa_studio_night_lights_on:
-  alias: Alexa Studio Night Lights On
-  
-  sequence:
-    - action: script.operate_preferred_studio_night_lights
-      data:
-        operation: 'on'
-
 #======================#
 #     Ceiling Fans     #
 #======================#
