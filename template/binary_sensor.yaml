@@ -80,3 +80,17 @@
         seconds: 30
       delay_off:
         seconds: 30
+    
+    - name: Family Room AV System
+      unique_id: family_room_av_system
+      state: >
+        {% set cstate = 'sensor.family_room_av_current_consumption' %}
+        {% if has_value(cstate) %}
+          {{ states(cstate) | float(0) > 10 }}
+        {% else %}
+          false
+        {% endif %}
+      delay_on:
+        seconds: 7
+      delay_off:
+        seconds: 7

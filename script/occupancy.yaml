@@ -408,19 +408,13 @@ sleeptime:
         - action: input_boolean.turn_off
           entity_id: input_boolean.sleep_pause
     
-    # Verify all devices are charging. If not, the Jon Sleeping sensor won't function properly. I can't send a message to the
-    # voice assistant device, because we turn on do not disturb at bedtime. So just leave the master bedroom lamp on as an
-    # indication that the devices are not charging. Lame.
-    - if:
-        - condition: state
-          entity_id: binary_sensor.jon_devices_charging
-          state: 'on'
-      
-      then:    
+    # Wait until all devices are charging. The Jon Devices Charging binary sensor uses delay_on for a short time so as not to 
+    # respond to glitches. However, if this wait doesn't complete fairly quickly, something is wrong with the charging mechanism.
+    - wait_template: "{{ is_state('binary_sensor.jon_devices_charging', 'on') }}"
         
-        # Turn off the master suite lights.
-        - action: light.turn_off
-          entity_id: light.master_suite_lights
+    # Turn off the master suite lights.
+    - action: light.turn_off
+      entity_id: light.master_suite_lights
 
 # Temporarily pause sleep, to use the bathroom or if I can't fall asleep easily.
 temporarily_pause_sleep:
