@@ -15,22 +15,22 @@ intents:
   FanHigh:
     data:
       - sentences:
-          - "([(set the | set)] fan high | tea earl grey hot)"
+          - "([(set the | set)] fan high | tea earl grey hot | (I am | I'm | it is | it's) very hot)"
 
   FanLow:
     data:
       - sentences:
-          - "([(set the | set)] fan low | tea earl grey cool)"
+          - "([(set the | set)] fan low | tea earl grey cool | (I am | I'm | it is | it's) [too] warm)"
 
   FanMedium:
     data:
       - sentences:
-          - "([(set the | set)] fan medium | tea earl grey lukewarm)"
+          - "([(set the | set)] fan medium | tea earl grey lukewarm | (I am | I'm | it is | it's) [too] hot)"
 
   FanOff:
     data:
       - sentences:
-          - "[(turn the | turn)] fan off"
+          - "([(turn the | turn)] fan off | (I am | I'm | it is | it's) [too] (cold | cool | chilly))"
 
   LightOff:
     data:
