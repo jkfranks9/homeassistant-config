@@ -72,36 +72,19 @@ mobile_notification_worker:
                 message: "{{ message }}"
                 data: "{{ notification_data }}"
         
-        # Via Gmail. Get the secret phone number for the mobile name to use as the Gmail target.
-        # NOTE: We need to use choose here for each user because !secret does not appear to support
-        # templates.
+        # Via Gmail.
         - conditions: "{{ notify_type == 'Gmail' }}"
         
           sequence:
-            - choose:
-                - conditions: "{{ mobile_name == 'Jon' }}"
-                  
-                  sequence:
-                    - variables:
-                        number: !secret jon_phone
-    
-                    - action: notify.gmail
-                      data:
-                        title: ' '
-                        target: "{{ number ~ '@vtext.com' }}"
-                        message: "{{ message }}"
-                
-                - conditions: "{{ mobile_name == 'Sarah' }}"
-                  
-                  sequence:
-                    - variables:
-                        number: !secret sarah_phone
-    
-                    - action: notify.gmail
-                      data:
-                        title: ' '
-                        target: "{{ number ~ '@vtext.com' }}"
-                        message: "{{ message }}"
+            - variables:
+                notify_id: "{{ 'notify.gmail_' ~ mobile_name | lower }}"
+            
+            - action: notify.send_message
+              data:
+                title: "{{ title }}"
+                message: "{{ message }}"
+              target:
+                entity_id: "{{ notify_id }}"
 
 # Send a notification to one or more destinations.
 send_notification:

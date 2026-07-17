@@ -827,12 +827,6 @@
     on_treadmill: "{{ states('input_boolean.treadmill_triggered') == 'on' }}"
     sleeping: "{{ states('input_boolean.sleeptime') == 'on' }}"
     driving: "{{ states('binary_sensor.jon_driving') == 'on' }}"
-    
-    # Phone numbers.
-    mike_phone: !secret mike_phone
-    maryam_phone: !secret maryam_phone
-    sarah_phone: !secret sarah_phone
-    david_phone: !secret david_phone
   
   conditions:
     - and:
@@ -862,25 +856,14 @@
         for_each: "{{ persons }}"
         
         sequence:
-          - variables:  
+          - variables:
               timer_entity: "{{ 'timer.text_response_delay_' ~ repeat.item | lower }}"
           
           # Verify the response delay timer for this person is not running.
           - condition: "{{ states(timer_entity) == 'idle' }}"
           
           - variables:
-              number: >
-                {% if repeat.item == 'Michael' %}
-                  {{ mike_phone }}
-                {% elif repeat.item == 'Maryam' %}
-                  {{ maryam_phone }}
-                {% elif repeat.item == 'Sarah' %}
-                  {{ sarah_phone }}
-                {% elif repeat.item == 'David' %}
-                  {{ david_phone }}
-                {% else %}
-                  0000000000
-                {% endif %}
+              notify_id: "{{ 'notify.gmail_' ~ repeat.item | lower }}"
             
               activity: >
                 {% if on_treadmill %}
@@ -893,12 +876,13 @@
                   unavailable for some unknown reason
                 {% endif %}
         
-          # Send the response via gmail to the mobile number.
-          - action: notify.gmail
+          # Send the response via gmail.
+          - action: notify.send_message
             data:
-              title: ' '
-              target: "{{ number ~ '@vtext.com' }}"
+              title: 'Jon is unable to respond to text'
               message: "{{ 'Sorry, I am ' ~ activity ~ '. I will respond when available.' }}"
+            target:
+              entity_id: "{{ notify_id }}"
             
           # Start the response delay timer for this person.
           - action: timer.start
@@ -962,9 +946,7 @@
           {{ ns.code }}
         
         # Family members sharing my account.
-        persons: ['mike', 'sarah']
-        mike_phone: !secret mike_phone
-        sarah_phone: !secret sarah_phone
+        persons: ['Michael', 'Sarah']
     
     # We expect only one possible passcode to be extracted.
     - if:
@@ -978,20 +960,14 @@
             
             sequence:          
               - variables:
-                  number: >
-                    {% if repeat.item == 'mike' %}
-                      {{ mike_phone }}
-                    {% elif repeat.item == 'sarah' %}
-                      {{ sarah_phone }}
-                    {% else %}
-                      0000000000
-                    {% endif %}
+                  notify_id: "{{ 'notify.gmail_' ~ repeat.item | lower }}"
               
-              - action: notify.gmail
+              - action: notify.send_message
                 data:
-                  title: ' '
-                  target: "{{ number ~ '@vtext.com' }}"
-                  message: "{{ 'If you just requested a Disney+ code, here it is: ' ~ passcode[0] }}"
+                  title: "{{ 'Disney+ code: ' ~ passcode[0] }}"
+                  message: 'If you just requested a Disney+ code, here it is.'
+                target:
+                  entity_id: "{{ notify_id }}"
       
       # This is unexpected - send a persistent notification.
       else:
