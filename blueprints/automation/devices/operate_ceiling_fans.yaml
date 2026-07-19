@@ -17,7 +17,7 @@ blueprint:
       name: Sensor Off State
       description: The sensor state that indicates off. For a binary sensor this is 'off', but for a non-binary sensor it could be, for example, 'PowerOff'.
       selector:
-        entity:
+        text:
     
     temperature_entity:
       name: Temperature Entity
@@ -32,14 +32,8 @@ blueprint:
       selector:
         entity:
           domain: fan
-    
-    thresholds:
-      name: Threshold List
-      description: List of thresholds for high, medium and low fan speeds.
-      selector:
-        number:
-          min: 0
-          max: 100
+  
+mode: queued
 
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
@@ -58,7 +52,7 @@ conditions:
   - "{{ has_value(trigger.from_state.entity_id) and has_value(trigger.to_state.entity_id) }}"
 
 actions:
-    
+  
   - choose:
       
     # Sensor turned on, and the fan is off. I'm assuming if the fan is already on it's being controlled manually.
@@ -74,7 +68,7 @@ actions:
             variables:
               fan_entity_id: !input fan_entity
               temperature_entity_id: !input temperature_entity
-              thresholds: !input thresholds
+              activity: normal
               timeout: 0
       
     # Sensor turned off, and the fan is on. I'm assuming if the fan is already off it's being controlled manually.

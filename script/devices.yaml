@@ -277,6 +277,8 @@ set_fan_to_speed:
       description: 'The desired fan speed (0 = off, 33 = low, 66 = medium, 99 = high).'
   
   variables:
+    fan_name: "{{ entity_id.split('.')[1] }}"
+    automatic_toggle_entity: "{{ 'input_boolean.' ~ fan_name ~ '_automatic' }}"
     fan_speed_entity: "{{ 'input_number.' ~ (state_attr(entity_id, 'friendly_name') | replace(' ', '_') | lower) ~ '_speed' }}"
   
   sequence:
@@ -293,13 +295,23 @@ set_fan_to_speed:
           data:
             percentage: "{{ speed }}"
     
-    # To calculate estimated power consumption, we need to keep track of the specified speed. We do this
-    # using a unique input number for each fan. Lovely.
-    - action: input_number.set_value
-      target:
-        entity_id: "{{ fan_speed_entity }}"
-      data:
-        value: "{{ speed }}"
+        # To calculate estimated power consumption, we need to keep track of the specified speed. We do this
+        # using a unique input number for each fan. Lovely.
+        - action: input_number.set_value
+          target:
+            entity_id: "{{ fan_speed_entity }}"
+          data:
+            value: "{{ speed }}"
+    
+    # Turn off the automatic control toggle if the fan was just turned off.
+    - if:
+        - "{{ speed == 0 }}"
+      
+      then:
+          
+        - action: input_boolean.turn_off
+          target:
+            entity_id: "{{ automatic_toggle_entity }}"
 
 # Control a fan based on temperature.
 control_fan_for_temperature:
@@ -319,22 +331,29 @@ control_fan_for_temperature:
         entity:
           domain: sensor
     
-    thresholds:
-      name: Threshold List
-      description: List of thresholds for high, medium and low fan speeds.
+    activity:
+      name: Activity
+      description: The reason (type of activity) for controlling the fan. Some activities require higher fan speeds than normal.
       selector:
-        number:
-          min: 0
-          max: 100
+        select:
+          options:
+            - normal
+            - treadmill_cooldown
+            - yard_work_cooldown
     
     timeout:
       description: 'Time to leave the fan on, in seconds. Zero means no timeout.'
   
   sequence:
     - variables:
-        high_threshold: "{{ thresholds[0] }}"
-        med_threshold:  "{{ thresholds[1] }}"
-        low_threshold:  "{{ thresholds[2] }}"
+        fan_name: "{{ fan_entity_id.split('.')[1] }}"
+        automatic_toggle_entity: "{{ 'input_boolean.' ~ fan_name ~ '_automatic' }}"
+        speed_entity: "{{ 'input_number.' ~ fan_name ~ '_speed' }}"
+      
+        # Speed thresholds, based on the input activity.        
+        high_threshold: "{{ states('input_number.' ~ fan_name ~ '_' ~ activity ~ '_high_threshold') | float(0) }}"
+        med_threshold:  "{{ states('input_number.' ~ fan_name ~ '_' ~ activity ~ '_medium_threshold') | float(0) }}"
+        low_threshold:  "{{ states('input_number.' ~ fan_name ~ '_' ~ activity ~ '_low_threshold') | float(0) }}"
     
     # Set the fan to a speed based on the temperature.
     - choose:
@@ -368,6 +387,17 @@ control_fan_for_temperature:
             entity_id: "{{ fan_entity_id }}"
             speed: 0
     
+    # Indicate whether or not the fan is under automatic control; true if the fan has been turned on for 
+    # normal activity. Note that fan voice control uses the Set Fan To Speed script directly, bypassing
+    # this script.
+    - variables:
+        fan_speed: "{{ states(speed_entity) | int(0) }}"
+        operation: "{{ iif(fan_speed > 0 and activity == 'normal', 'on', 'off') }}"
+          
+    - action: input_boolean.turn_{{ operation }}
+      target:
+        entity_id: "{{ automatic_toggle_entity }}"
+    
     # Continue if a valid timeout is specified.
     - condition: "{{ timeout > 0 if is_number(timeout) }}"
     
@@ -379,3 +409,34 @@ control_fan_for_temperature:
       data:
         entity_id: "{{ fan_entity_id }}"
         speed: 0
+
+# Turn off ceiling fans identified by a list of labels. We want to use the Set Fan To Speed script,
+# and not just turn off the fans, because the script includes additional functions.
+turn_off_ceiling_fans:
+  alias: Turn Off Ceiling Fans
+  
+  fields:
+    labels:
+      description: A list of labels that identify groups of ceiling fans.
+      selector:
+        label:
+  
+  sequence:
+    
+    # Process all labels.
+    - repeat:
+        for_each: "{{ labels }}"
+        
+        sequence:
+          - variables:
+              label: "{{ repeat.item }}"
+    
+          # Process all fans included in the current label.
+          - repeat:
+              for_each: "{{ label_entities(label) }}"
+                
+              sequence:
+                - action: script.set_fan_to_speed
+                  data:
+                    entity_id: "{{ repeat.item }}"
+                    speed: 0

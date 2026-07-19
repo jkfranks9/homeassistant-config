@@ -1,0 +1,72 @@
+# Handle the timer expiration for re-evaluating ceiling fan speed based on temperature (see the
+# Operate Ceiling Fan and Evaluate Ceiling Fan Operation blueprints).
+
+blueprint:
+  name: Handle Ceiling Fan Evaluation Timer Expiration
+  description: Handle the ceiling fan re-evaluation timer expiration.
+  domain: automation
+  
+  input:
+    timer_entity:
+      name: Timer Entity
+      description: Timer entity on which to trigger.
+      selector:
+        entity:
+          domain: timer
+    
+    temperature_entity:
+      name: Temperature Entity
+      description: Sensor entity for the current temperature.
+      selector:
+        entity:
+          domain: sensor
+    
+    fan_entity:
+      name: Fan Entity
+      description: Fan entity to be operated.
+      selector:
+        entity:
+          domain: fan
+    
+    automatic_entity:
+      name: Automatic Entity
+      description: Toggle entity that indicates if the fan is being automatically controlled.
+      selector:
+        entity:
+          domain: input_boolean
+  
+mode: queued
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_timer_entity: !input timer_entity
+
+# Trigger on the input timer expiration.
+triggers:
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: !input timer_entity
+
+# Ensure the fan is still under automatic control. This is no longer true when the fan is turned off.
+conditions:
+  - condition: state
+    entity_id: !input automatic_entity
+    state: 'on'
+
+actions:
+  
+  # Re-evaluate the fan speed based on the current temperature.
+  - action: script.turn_on
+    entity_id: script.control_fan_for_temperature
+    data:
+      variables:
+        fan_entity_id: !input fan_entity
+        temperature_entity_id: !input temperature_entity
+        activity: normal
+        timeout: 0
+  
+  # Restart the timer..
+  - action: timer.start
+    target:
+      entity_id: "{{ input_timer_entity }}"

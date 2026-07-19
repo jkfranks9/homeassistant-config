@@ -1,0 +1,54 @@
+# When a ceiling fan is being automatically controlled (see the Operate Ceiling Fan blueprint), we want to
+# periodically check if the fan speed should be changed based on current temperature. This blueprint kicks
+# off the process by starting a timer. When the timer expires, if the fan is still being automatically
+# controlled, it checks if the speed should be changed, then restarts the timer (see the Handle Ceiling Fan 
+# Evaluation Timer Expiration blueprint).
+
+blueprint:
+  name: Evaluate Ceiling Fan Operation
+  description: Kick off a speed re-evaluation for a ceiling fan that is being automatically controlled.
+  domain: automation
+  
+  input:
+    speed_entity:
+      name: Speed Entity
+      description: Fan speed entity for the fan to be evaluated.
+      selector:
+        entity:
+          domain: input_number
+    
+    automatic_control:
+      name: Is fan automatically controlled?
+      description: True if the fan is being automatically controlled. This lets us ignore fans turned on manually.
+      selector:
+        boolean:
+  
+mode: queued
+
+# The !input tag cannot be used in templates, so assign variables to the necessary inputs.
+variables:
+  input_automatic_control: !input automatic_control
+
+# Trigger when the speed entity indicates the fan is on.
+triggers:
+  - trigger: numeric_state
+    entity_id: !input speed_entity
+    above: 0
+    for: '00:00:10'
+
+conditions: 
+  
+  # Weed out junk.
+  - "{{ has_value(trigger.from_state.entity_id) and has_value(trigger.to_state.entity_id) }}"
+  
+  # Ensure the fan is being automatically controlled.
+  - "{{ input_automatic_control == true }}"
+
+actions:
+  - variables:
+      timer_entity: "{{ 'timer.' ~ trigger.from_state.entity_id.split('.')[1] | replace('_speed', '') ~ '_evaluation' }}"
+    
+  # Start a timer to re-evaluate the fan speed based on temperature. The timer duration is constant so is not specified here.
+  - action: timer.start
+    target:
+      entity_id: "{{ timer_entity }}"

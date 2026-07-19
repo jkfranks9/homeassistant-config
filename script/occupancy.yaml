@@ -341,10 +341,15 @@ bedtime:
         # Turn off the Family Room AV system.
         - action: script.disable_family_room_av
     
-        # Turn off downstairs fans.
+        # Turn off downstairs non-ceiling fans.
         - action: fan.turn_off
           target:
             label_id: downstairs_fans
+    
+        # Turn off downstairs ceiling fans.
+        - action: script.turn_off_ceiling_fans
+          data:
+            labels: ['downstairs_ceiling_fans']
     
     # Perform tasks if the penthouse is not occupied.
     - if:
@@ -354,10 +359,15 @@ bedtime:
       
       then:
         
-        # Turn off upstairs fans.
+        # Turn off upstairs non-ceiling fans.
         - action: fan.turn_off
           target:
             label_id: upstairs_fans
+    
+        # Turn off upstairs ceiling fans.
+        - action: script.turn_off_ceiling_fans
+          data:
+            labels: ['upstairs_ceiling_fans']
       
     # Establish the proper bedtime environment (lights, thermostats, echo devices).
     - action: script.turn_on

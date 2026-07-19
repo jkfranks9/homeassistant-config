@@ -431,7 +431,7 @@
         
           then:
         
-            # Turn off all lights and fans.
+            # Turn off all lights.
             - action: light.turn_off
               target:
                 label_id:
@@ -440,11 +440,17 @@
                   - family_room_lights
                   - kitchen_lights
             
+            # Turn off all non-ceiling fans.
             - action: fan.turn_off
               target:
                 label_id:
                   - downstairs_fans
                   - upstairs_fans
+    
+            # Turn off all ceiling fans.
+            - action: script.turn_off_ceiling_fans
+              data:
+                labels: ['downstairs_ceiling_fans', 'upstairs_ceiling_fans']
             
             # Fan lights are not included in light groups. They operate in optimistic mode and therefore use a script.
             - action: script.turn_off_fan_lights
@@ -594,7 +600,6 @@
       sensor_off_state: 'off'
       temperature_entity: sensor.office_sensor_temperature
       fan_entity: fan.office_fan
-      thresholds: [80.5, 79, 77.5]
 
 # Operate the family room fan when the AV system is on.
 - alias: Operate Family Room Fan
@@ -607,7 +612,6 @@
       sensor_off_state: 'off'
       temperature_entity: sensor.main_floor_temperature
       fan_entity: fan.family_room_fan
-      thresholds: [80, 78.5, 74]
 
 # Operate the theater fan when the AV system is on.
 - alias: Operate Theater Fan
@@ -620,7 +624,72 @@
       sensor_off_state: 'PowerOff'
       temperature_entity: sensor.theater_temperature
       fan_entity: fan.theater_fan
-      thresholds: [78, 76, 74]
+
+# Periodically check if the office fan speed needs to be changed.
+- alias: Evaluate Office Ceiling Fan Operation
+  id: evaluate_office_ceiling_fan_operation
+  
+  use_blueprint:
+    path: devices/evaluate_ceiling_fan_operation.yaml
+    input:
+      speed_entity: input_number.office_fan_speed
+      automatic_control: "{{ is_state('input_boolean.office_fan_automatic', 'on') }}"
+
+# Periodically check if the family room fan speed needs to be changed.
+- alias: Evaluate Family Room Ceiling Fan Operation
+  id: evaluate_family_room_ceiling_fan_operation
+  
+  use_blueprint:
+    path: devices/evaluate_ceiling_fan_operation.yaml
+    input:
+      speed_entity: input_number.family_room_fan_speed
+      automatic_control: "{{ is_state('input_boolean.family_room_fan_automatic', 'on') }}"
+
+# Periodically check if the theater fan speed needs to be changed.
+- alias: Evaluate Theater Ceiling Fan Operation
+  id: evaluate_theater_ceiling_fan_operation
+  
+  use_blueprint:
+    path: devices/evaluate_ceiling_fan_operation.yaml
+    input:
+      speed_entity: input_number.theater_fan_speed
+      automatic_control: "{{ is_state('input_boolean.theater_fan_automatic', 'on') }}"
+
+# Handle office fan evaluation timer expiration.
+- alias: Handle Office Fan Evaluation Timer Expiration
+  id: handle_office_fan_evaluation_timer_expiration
+  
+  use_blueprint:
+    path: devices/handle_ceiling_fan_evaluation_timer_expiration.yaml
+    input:
+      timer_entity: timer.office_fan_evaluation
+      temperature_entity: sensor.office_sensor_temperature
+      fan_entity: fan.office_fan
+      automatic_entity: input_boolean.office_fan_automatic
+
+# Handle family room fan evaluation timer expiration.
+- alias: Handle Family Room Fan Evaluation Timer Expiration
+  id: handle_family_room_fan_evaluation_timer_expiration
+  
+  use_blueprint:
+    path: devices/handle_ceiling_fan_evaluation_timer_expiration.yaml
+    input:
+      timer_entity: timer.family_room_fan_evaluation
+      temperature_entity: sensor.main_floor_temperature
+      fan_entity: fan.family_room_fan
+      automatic_entity: input_boolean.family_room_fan_automatic
+
+# Handle theater fan evaluation timer expiration.
+- alias: Handle Theater Fan Evaluation Timer Expiration
+  id: handle_theater_fan_evaluation_timer_expiration
+  
+  use_blueprint:
+    path: devices/handle_ceiling_fan_evaluation_timer_expiration.yaml
+    input:
+      timer_entity: timer.theater_fan_evaluation
+      temperature_entity: sensor.theater_temperature
+      fan_entity: fan.theater_fan
+      automatic_entity: input_boolean.theater_fan_automatic
 
 # Turn off penthouse fan after a while.
 - alias: Turn Off Penthouse Fan
@@ -1587,7 +1656,7 @@
         variables:
           fan_entity_id: fan.office_fan
           temperature_entity_id: sensor.main_floor_temperature
-          thresholds: [78, 76, 73]
+          activity: treadmill_cooldown
           timeout: 300
 
 #==================#
