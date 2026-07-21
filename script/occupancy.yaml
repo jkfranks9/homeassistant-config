@@ -618,6 +618,13 @@ modify_master_suite:
           data:
             color_temp_kelvin: 2700
             brightness_pct: 100
+        
+        # Dim the master bedroom nabu screen.
+        - action: light.turn_on
+          target:
+            entity_id: light.master_bedroom_nabu_screen
+          data:
+            brightness_pct: 3
                     
         # Set up other master lights.
         - action: scene.apply
@@ -646,6 +653,13 @@ modify_master_suite:
             light_entity: light.master_bedroom_lamp
             lux_entity: sensor.downstairs_sensor_ambient_light
             min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
+        
+        # Brighten the master bedroom nabu screen.
+        - action: light.turn_on
+          target:
+            entity_id: light.master_bedroom_nabu_screen
+          data:
+            brightness_pct: 50
 
 # Perform tasks for the studio for certain events.
 modify_studio:
