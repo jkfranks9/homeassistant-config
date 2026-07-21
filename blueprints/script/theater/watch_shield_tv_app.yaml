@@ -16,8 +16,43 @@ variables:
 
 sequence:
     
+  - variables:
+      
+      # Some apps open directly to the main menu.
+      # NOTE: Peacock used to show the profile menu, but recently doesn't for some reason, so is
+      # (temporarily?) in both places.
+      apps_without_profile_menu: >
+        {% set apps = ['AMC+', 'Kodi', 'Peacock'] %}
+        {{ apps }}
+      
+      # Other apps do have a profile, and/or have an additional screen before actually opening. For such apps, this contains instructions
+      # for how to select my profile:
+      #
+      # - For most apps, my profile should already be selected, but we still need a startup delay.
+      # - Otherwise, we need to know how to get to my profile, by issuing various Shield TV commands.
+      #
+      # - Each entry below contains the following:
+      #   - App name
+      #   - Startup delay, in seconds
+      #   - Command count
+      #   - Delay time after command entered, in milliseconds
+      #   - Shield TV command to use
+      #
+      # NOTE: This will need work if an app requires multiple different commands.
+      apps_profile_select_details: >
+        {% set apps = [
+                       ['Amazon Prime', 5, 1, 5000, 'Select'],
+                       ['Disney+', 10, 0, 0, ''],
+                       ['Hulu', 10, 0, 0, ''],
+                       ['HBO Max', 5, 1, 6000, 'Select'],
+                       ['Netflix', 10, 0, 0, ''],
+                       ['Paramount+', 10, 0, 0, ''],
+                       ['Peacock', 10, 4, 500, 'DirectionRight']
+                      ] %}
+        {{ apps }}
+  
   # Activate Shield TV streaming in the cinema.
-  # NOTE: We always specify need_kodi false here, even if the input application is Kodi. That's because Activate cinema
+  # NOTE: We always specify need_kodi false here, even if the input application is Kodi. That's because Activate Cinema
   # calls Activate Kodi, which in addition to starting Kodi on the Shield TV, ensures that we can send commands to Kodi
   # and receive results. When we're just starting Kodi for no specific reason, we don't need or want that to happen.
   - action: script.activate_cinema
@@ -48,3 +83,54 @@ sequence:
     data:
       command: 'InputCbl/Sat'
       device: Marantz Receiver
+  
+  # Select my profile for apps with a profile menu.
+  - if:
+      - "{{ input_appl_name not in apps_without_profile_menu }}"
+    
+    then:
+      - variables:
+          skip_details: >
+            {% set ns = namespace(startup_delay = 10, command_count = 0, post_command_delay = 0, command = '') %}
+            {% for app in apps_profile_select_details %}
+              {% if input_appl_name == app[0] %}
+                {% set ns.startup_delay = app[1] %}
+                {% set ns.command_count = app[2] %}
+                {% set ns.post_command_delay = app[3] %}
+                {% set ns.command = app[4] %}
+              {% endif %}
+            {% endfor %}
+            {{ [ns.startup_delay, ns.command_count, ns.post_command_delay, ns.command] }}
+          
+          startup_delay: "{{ skip_details[0] }}"
+          command_count: "{{ skip_details[1] }}"
+          post_command_delay: "{{ skip_details[2] }}"
+          command: "{{ skip_details[3] }}"
+  
+      # Wait a few seconds for the app to initialize. Wish I could detect this somehow.
+      - delay:
+          seconds: "{{ startup_delay }}"
+      
+      - if:
+          - "{{ command_count > 0 }}"
+        
+        then:
+          - repeat:
+              count: "{{ command_count }}"
+            
+              sequence:
+                - action: remote.send_command
+                  entity_id: remote.harmony_hub
+                  data:
+                    command: "{{ command }}"
+                    device: NVIDIA Shield TV
+              
+                - delay:
+                    milliseconds: "{{ post_command_delay }}"
+      
+      # Hopefully, my profile is the one selected, so whack the select key.
+      - action: remote.send_command
+        entity_id: remote.harmony_hub
+        data:
+          command: 'Select'
+          device: NVIDIA Shield TV
