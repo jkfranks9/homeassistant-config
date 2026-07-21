@@ -67,17 +67,17 @@ intents:
   WatchAmazonPrime:
     data:
       - sentences:
-          - "[watch] Amazon Prime"
+          - "[watch] Amazon [Prime]"
   
   WatchAMCPlus:
     data:
       - sentences:
-          - "[watch] AMC Plus"
+          - "[watch] AMC [Plus]"
   
   WatchDisneyPlus:
     data:
       - sentences:
-          - "[watch] Disney Plus"
+          - "[watch] Disney [Plus]"
   
   WatchHulu:
     data:
@@ -102,7 +102,7 @@ intents:
   WatchParamountPlus:
     data:
       - sentences:
-          - "[watch] Paramount Plus"
+          - "[watch] Paramount [Plus]"
   
   WatchPeacock:
     data:
