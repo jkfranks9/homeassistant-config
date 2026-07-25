@@ -126,7 +126,8 @@ actions:
             
             then:
               - action: light.turn_on
-                entity_id: !input light_target
+                target:
+                  entity_id: !input light_target
             
             else:
               - action: script.turn_on_christmas_lights
@@ -138,7 +139,8 @@ actions:
         
         then:
           - action: light.turn_off
-            entity_id: !input light_target
+            target:
+              entity_id: !input light_target
             
         else:
           - action: script.turn_off_christmas_lights
