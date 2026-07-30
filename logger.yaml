@@ -12,31 +12,35 @@ logs:
 
   # HA automations
   # NOTE: Keep this in sync with the skip list in the Log Automations automation.
-  homeassistant.components.automation.log_automations:                 warning
-  homeassistant.components.automation.log_scripts:                     warning
-  homeassistant.components.automation.set_maximum_attic_temperature:   warning
-  homeassistant.components.automation.set_maximum_garage_temperature:  warning
-  homeassistant.components.automation.set_maximum_outdoor_temperature: warning
-  homeassistant.components.automation.set_minimum_attic_temperature:   warning
-  homeassistant.components.automation.set_minimum_garage_temperature:  warning
-  homeassistant.components.automation.set_minimum_outdoor_temperature: warning
-  homeassistant.components.automation.set_washer_operation:            warning
+  homeassistant.components.automation.handle_family_room_fan_evaluation_timer_expiration: warning
+  homeassistant.components.automation.handle_office_fan_evaluation_timer_expiration:      warning
+  homeassistant.components.automation.handle_theater_fan_evaluation_timer_expiration:     warning
+  homeassistant.components.automation.log_automations:                                    warning
+  homeassistant.components.automation.log_scripts:                                        warning
+  homeassistant.components.automation.set_maximum_attic_temperature:                      warning
+  homeassistant.components.automation.set_maximum_garage_temperature:                     warning
+  homeassistant.components.automation.set_maximum_outdoor_temperature:                    warning
+  homeassistant.components.automation.set_minimum_attic_temperature:                      warning
+  homeassistant.components.automation.set_minimum_garage_temperature:                     warning
+  homeassistant.components.automation.set_minimum_outdoor_temperature:                    warning
+  homeassistant.components.automation.set_washer_operation:                               warning
 
   # HA scripts
   # NOTE: Keep this in sync with the skip list in the Log Scripts automation.
-  homeassistant.components.script.log_laundry_event:                  warning
-  homeassistant.components.script.mobile_notification_worker:         warning
-  homeassistant.components.script.restore_lighting_on_resume:         warning
-  homeassistant.components.script.resume_cinema:                      warning
-  homeassistant.components.script.resume_worker:                      warning
-  homeassistant.components.script.set_datetime_offset_days:           warning
-  homeassistant.components.script.set_datetime_offset_months:         warning
-  homeassistant.components.script.set_datetime_offset_weeks:          warning
-  homeassistant.components.script.set_fan_to_speed:                   warning
-  homeassistant.components.script.set_theater_dark:                   warning
-  homeassistant.components.script.set_theater_dark_delay:             warning
-  homeassistant.components.script.set_theater_dim:                    warning
-  homeassistant.components.script.set_theater_idle:                   warning
+  homeassistant.components.script.control_fan_for_temperature: warning
+  homeassistant.components.script.log_laundry_event:           warning
+  homeassistant.components.script.mobile_notification_worker:  warning
+  homeassistant.components.script.restore_lighting_on_resume:  warning
+  homeassistant.components.script.resume_cinema:               warning
+  homeassistant.components.script.resume_worker:               warning
+  homeassistant.components.script.set_datetime_offset_days:    warning
+  homeassistant.components.script.set_datetime_offset_months:  warning
+  homeassistant.components.script.set_datetime_offset_weeks:   warning
+  homeassistant.components.script.set_fan_to_speed:            warning
+  homeassistant.components.script.set_theater_dark:            warning
+  homeassistant.components.script.set_theater_dark_delay:      warning
+  homeassistant.components.script.set_theater_dim:             warning
+  homeassistant.components.script.set_theater_idle:            warning
 
   # HA misc components
   homeassistant.components.analytics:                     warning

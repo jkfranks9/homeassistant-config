@@ -422,7 +422,9 @@
   conditions:
     - condition: template
       value_template: >
-        {% set skip_list = [
+        {% set skip_list = ['handle_family_room_fan_evaluation_timer_expiration',
+                            'handle_office_fan_evaluation_timer_expiration',
+                            'handle_theater_fan_evaluation_timer_expiration',
                             'log_automations',
                             'log_scripts',
                             'set_maximum_attic_temperature', 
@@ -468,7 +470,7 @@
   conditions:
     - condition: template
       value_template: >
-        {% set skip_list = [
+        {% set skip_list = ['control_fan_for_temperature',
                             'log_laundry_event',
                             'mobile_notification_worker',
                             'restore_lighting_on_resume',
