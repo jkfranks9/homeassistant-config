@@ -21,7 +21,8 @@
                              'binary_sensor.laundry_room_motion_detector_occupancy',
                              'binary_sensor.studio_motion_detector_occupancy',
                              'binary_sensor.master_bath_motion_detector_occupancy',
-                             'binary_sensor.office_human_sensor_presence'
+                             'binary_sensor.office_human_sensor_presence',
+                             'binary_sensor.family_room_1_motion_sensor_occupancy'
                            ] %}
           
           {% set vars = namespace(motion = []) %}
@@ -42,7 +43,8 @@
       attributes:
         devices: >
           {% set devices = [ 'binary_sensor.upstairs_occupancy',
-                             'binary_sensor.theater_occupancy'
+                             'binary_sensor.theater_occupancy',
+                             'binary_sensor.theater_1_motion_sensor_occupancy'
                            ] %}
           
           {% set vars = namespace(motion = []) %}

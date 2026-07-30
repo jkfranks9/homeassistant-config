@@ -410,6 +410,40 @@
       channel: standard
       tag: 'studio_4_way_button_battery'
 
+# Family room motion sensor 1 battery is too low.
+- alias: Notify Family Room 1 Motion Battery Low
+  id: 'notify_family_room_1_motion_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.family_room_1_motion_sensor_battery
+      numeric_notify_threshold: 20
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      message: 'Family Room 1 motion sensor batteries need replacing.'
+      channel: standard
+      tag: 'family_room_1_motion_battery'
+
+# Theater motion sensor 1 battery is too low.
+- alias: Notify Theater 1 Motion Battery Low
+  id: 'notify_theater_1_motion_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.theater_1_motion_sensor_battery
+      numeric_notify_threshold: 20
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      message: 'Theater 1 motion sensor batteries need replacing.'
+      channel: standard
+      tag: 'theater_1_motion_battery'
+
 # Ego battery charge is complete.
 - alias: Notify Ego Battery Charge Complete
   id: notify_ego_battery_charge_complete
