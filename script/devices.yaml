@@ -280,12 +280,13 @@ set_fan_to_speed:
     fan_name: "{{ entity_id.split('.')[1] }}"
     automatic_toggle_entity: "{{ 'input_boolean.' ~ fan_name ~ '_automatic' }}"
     fan_speed_entity: "{{ 'input_number.' ~ (state_attr(entity_id, 'friendly_name') | replace(' ', '_') | lower) ~ '_speed' }}"
+    speed_name: "{{ iif(speed == 0, 'off', iif(speed == 33, 'low', iif(speed == 66, 'medium', iif(speed == 99, 'high', speed)))) }}"
   
   sequence:
     
     # Don't set the speed if the fan is already at the desired speed.
     - if:
-        - "{{ states(fan_speed_entity) != speed }}"
+        - "{{ states(fan_speed_entity) | int(0) != speed }}"
       
       then:    
         # Set the fan to the specified speed. 
@@ -294,6 +295,11 @@ set_fan_to_speed:
             entity_id: "{{ entity_id }}"
           data:
             percentage: "{{ speed }}"
+    
+        - action: system_log.write
+          data:
+            message: "{{ fan_name ~ ' set to ' ~ speed_name }}"
+            level: info
     
         # To calculate estimated power consumption, we need to keep track of the specified speed. We do this
         # using a unique input number for each fan. Lovely.
