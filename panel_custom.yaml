@@ -24,9 +24,9 @@
   config:
     ingress: core_configurator
   
-# Developer Tools
-- name: Developer Tools
-  sidebar_title: Developer Tools
+# Tools
+- name: Tools
+  sidebar_title: Tools
   sidebar_icon: mdi:hammer
   js_url: /api/hassio/app/entrypoint.js
   url_path: developer-tools/yaml
