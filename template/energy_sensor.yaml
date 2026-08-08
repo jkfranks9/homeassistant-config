@@ -129,7 +129,6 @@
         - sensor.studio_bath_energy
         - sensor.studio_front_window_lamp_energy
         - sensor.studio_hall_ceiling_energy
-        - sensor.studio_hall_lamp_energy
         - sensor.studio_side_window_lamp_energy
   
   sensor:

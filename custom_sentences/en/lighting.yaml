@@ -39,6 +39,16 @@ intents:
       - sentences:
           - "start bath time"
   
+  StudioNightLightingOff:
+    data:
+      - sentences:
+          - "(turn off studio night (lights | lighting) | studio night (lights | lighting)) off"
+  
+  StudioNightLightingOn:
+    data:
+      - sentences:
+          - "(turn on studio night (lights | lighting) | studio night (lights | lighting)) on"
+  
   TurnOffChristmasLights:
     data:
       - sentences:

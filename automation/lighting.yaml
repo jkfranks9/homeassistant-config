@@ -134,15 +134,30 @@
       check_theater: false
       check_christmas: false
 
-# Control the hallway lamp based on ambient lux level.
-- alias: Control Hallway Lamp
-  id: control_hallway_lamp
+# Control the studio lights based on ambient lux level. Note that we only automate turning the lights off.
+- alias: Control Studio Lights
+  id: control_studio_lights
+
+  use_blueprint:
+    path: lighting/lux_light.yaml
+    input:
+      trigger_type: 'off'
+      lux_sensor: sensor.downstairs_sensor_ambient_light
+      light_target: "{{ expand('light.studio_lights') | rejectattr('entity_id', 'eq', 'light.studio_bath') | map(attribute = 'entity_id') | list }}"
+      min_lux_level: input_number.studio_bedroom_ambient_min  # unused
+      max_lux_level: input_number.studio_bedroom_ambient_max
+      check_theater: false
+      check_christmas: false
+
+# Control the studio hall light based on ambient lux level.
+- alias: Control Studio Hall Light
+  id: control_studio_hall_light
 
   use_blueprint:
     path: lighting/lux_light.yaml
     input:
       lux_sensor: sensor.downstairs_sensor_ambient_light
-      light_target: light.studio_hall_lamp
+      light_target: light.studio_hall_ceiling
       min_lux_level: input_number.hallway_ambient_min
       max_lux_level: input_number.hallway_ambient_max
       check_theater: true
@@ -476,6 +491,25 @@
       lux_entity: sensor.downstairs_sensor_ambient_light
       min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
 
+- alias: Run Theater Motion Based Light
+  id: run_theater_motion_based_light
+  
+  trace:
+    stored_traces: 20
+
+  use_blueprint:
+    path: lighting/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.theater_1_motion_sensor_occupancy
+      light_target: 
+        entity_id: light.theater_recessed
+      light_data: {'transition': 4, 'brightness_pct': 50}
+      conditions:
+        - condition: state
+          entity_id: input_boolean.theater_open
+          state: 'off'
+      no_motion_wait: 180
+
 #=======================#
 #     Door Sensors      #
 #=======================#
@@ -547,13 +581,13 @@
       target:
         entity_id: input_boolean.upstairs_entry_close_toggle
 
-#======================#
-#     Guest Lights     #
-#======================#
+#===================================#
+#     Studio Preferred Lighting     #
+#===================================#
 
-# Turn on guest lights upon darkness when children are home.
-- alias: Turn On Guest Lights At Dark
-  id: 'turn_on_guest_lights_at_dark'
+# Turn on studio lights upon darkness when children are home.
+- alias: Turn On Studio Lights At Dark
+  id: 'turn_on_studio_lights_at_dark'
   
   triggers:
     
@@ -584,66 +618,40 @@
     - delay: 
         seconds: "{{ range(2, 15) | random }}"
     
-    # Always turn on the downstairs bedroom light(s); that's home base.
-    - action: script.operate_preferred_studio_lamps
+    - action: script.operate_preferred_studio_lights
       data:
         operation: 'on'
+        profile: normal
 
-# For some reason, the studio night light randomly turns on, but does not report its state. So we turn it on then off at intervals
-# if certain conditions exist. Strange but true.
-- alias: Turn Off Studio Night Light
-  id: turn_off_studio_night_light
+# Modify studio lights if either the normal or night preferred lighting are changed while the studio is occupied.
+- alias: Modify Active Studio Lighting
+  id: modify_active_studio_lighting
   
   triggers:
+    - trigger: state
+      entity_id: input_select.preferred_studio_normal_lights
+      to:
+      id: normal
     
-    # Trigger once per hour.
-    - trigger: time_pattern
-      minutes: 1
+    - trigger: state
+      entity_id: input_select.preferred_studio_night_lights
+      to:
+      id: night
   
-  conditions:
-    
-    # Continue if the studio is empty or it's not dark.
-    - or:
-      - condition: state
-        entity_id: input_select.studio_guests
-        state: Empty
-      
-      - "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) >= states('input_number.studio_bedroom_ambient_max') | float(0) }}"
-    
+  # The following must be true:
+  #
+  # 1) The studio must be occupied.
+  # 2) It must be dark enough according to the ambient light level.
+  conditions: "{{ is_state('binary_sensor.studio_occupied', 'on') and
+                  states('sensor.downstairs_sensor_ambient_light') | float(0) < states('input_number.studio_bedroom_ambient_min') | float(0) }}"
+  
   actions:
-    - action: light.turn_on
-      target:
-        entity_id: light.studio_night_light
     
-    - repeat:
-        
-        sequence:
-          - delay:
-              seconds: "{{ repeat.index * 5 }}"
-        
-          - action: light.turn_off
-            target:
-              entity_id: light.studio_night_light
-          
-          - variables:
-              state: "{{ states('light.studio_night_light') }}"
-        
-        until: "{{ is_state('light.studio_night_light', 'off') or repeat.index >= 3 }}"
-    
-    # Send a persistent notification if the light is still on.
-    - if:
-        - condition: state
-          entity_id: light.studio_night_light
-          state: 'on'
-      
-      then:    
-        - action: script.send_notification
-          data:
-            destination:
-              - persistent
-            title: Lighting Alert
-            message: Studio night light is still on. Perhaps millisecond delay is too short.
-            notification_id: 'studio_night_light_on'
+    # Call the script to do the dirty work. Note that we use the 'on' operation, which works even if the new preference is 'Neither'.
+    - action: script.operate_preferred_studio_lights
+      data:
+        operation: 'on'
+        profile: "{{ trigger.id }}"
 
 #==========================#
 #     Christmas Lights     #

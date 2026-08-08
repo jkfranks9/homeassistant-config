@@ -1107,7 +1107,7 @@ change_downstairs_lighting:
         ambient_min: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
         ambient_value: "{{ states('sensor.downstairs_sensor_ambient_light') | float(0) }}"
         activation_lights: "{{ ['light.family_room_stairway', 'light.kitchen_island'] }}"
-        non_activation_lights: "{{ ['light.office_lamp', 'light.family_room_lamp', 'light.studio_hall_lamp'] + activation_lights }}"
+        non_activation_lights: "{{ ['light.office_lamp', 'light.family_room_lamp', 'light.studio_hall_ceiling'] + activation_lights }}"
     
     - if:
         - "{{ turn_on == true }}"

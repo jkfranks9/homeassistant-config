@@ -323,48 +323,6 @@
       target:
         entity_id: input_boolean.thermostat_hold_delay_timer_started
 
-#===========================================#
-#     Studio Preferred Lamps Management     #
-#===========================================#
-
-# Modify studio lights if the preferred lamps are changed while the studio is occupied.
-- alias: Modify Active Studio Lamps
-  id: modify_active_studio_lamps
-  
-  triggers:
-    - trigger: state
-      entity_id: input_select.preferred_studio_lamps
-      to:
-  
-  # The following must be true:
-  #
-  # 1) The studio must be occupied.
-  # 2) It must be dark enough according to the ambient light level.
-  conditions: "{{ is_state('binary_sensor.studio_occupied', 'on') and
-                  states('sensor.downstairs_sensor_ambient_light') | float(0) < states('input_number.studio_bedroom_ambient_min') | float(0) }}"
-  
-  actions:
-    - variables:
-        
-        # The new (just changed) preference.
-        preference: "{{ states('input_select.preferred_studio_lamps') }}"
-        
-        # The operation to perform on each lamp.
-        front_window_lamp_operation: >
-          {{ iif(preference in ['Front Window', 'Both'], 'on', 'off') }}
-        side_window_lamp_operation: >
-          {{ iif(preference in ['Side Window', 'Both'], 'on', 'off') }}
-    
-    # Operate Sarah's lamp.
-    - action: light.turn_{{ front_window_lamp_operation }}
-      target:
-        entity_id: light.studio_front_window_lamp
-    
-    # Operate Skylar's lamp.
-    - action: light.turn_{{ side_window_lamp_operation }}
-      target:
-        entity_id: light.studio_side_window_lamp
-
 #=========================#
 #     Device Trackers     #
 #=========================#

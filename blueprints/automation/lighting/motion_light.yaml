@@ -31,6 +31,20 @@ blueprint:
           min: 0
           max: 3600
           unit_of_measurement: seconds
+    
+    conditions:
+      name: Conditions
+      description: (Optional) Conditions that must be true to execute.
+      default: "{{ 1 == 1 }}"
+      selector:
+        condition:
+          
+    light_data:
+      name: Light Data
+      description: (Optional) Dictionary of data for turning on the light.
+      default: {}
+      selector:
+        object:
 
 # If motion is detected within the delay, we restart.
 mode: restart
@@ -44,20 +58,26 @@ triggers:
 
 actions:
   
-  # Turn on the light.
-  - action: light.turn_on
-    target: !input light_target
+  # Ensure the input conditions are met.
+  - if: !input conditions
+    
+    then:
   
-  # Wait for no motion detected.
-  - wait_for_trigger:
-      - trigger: state
-        entity_id: !input motion_entity
-        from: "on"
-        to: "off"
-  
-  # Delay before turning off the light.
-  - delay: !input no_motion_wait
-  
-  # Turn off the light.
-  - action: light.turn_off
-    target: !input light_target
+      # Turn on the light.
+      - action: light.turn_on
+        target: !input light_target
+        data: !input light_data
+      
+      # Wait for no motion detected.
+      - wait_for_trigger:
+          - trigger: state
+            entity_id: !input motion_entity
+            from: "on"
+            to: "off"
+      
+      # Delay before turning off the light.
+      - delay: !input no_motion_wait
+      
+      # Turn off the light.
+      - action: light.turn_off
+        target: !input light_target

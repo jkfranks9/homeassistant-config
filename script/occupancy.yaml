@@ -691,9 +691,10 @@ modify_studio:
                   state: 'on'
               
               then:
-                - action: script.operate_preferred_studio_lamps
+                - action: script.operate_preferred_studio_lights
                   data:
                     operation: 'on'
+                    profile: normal
         
         # Departure tasks.
         - conditions: "{{ reason == 'departure' }}"
@@ -708,9 +709,10 @@ modify_studio:
               then:
             
                 # Turn off studio lights.
-                - action: light.turn_off
-                  target:
-                    entity_id: light.studio_lights
+                - action: script.operate_preferred_studio_lights
+                  data:
+                    operation: 'off'
+                    profile: normal
         
                 # PLACE HOLDER
                 # I intend to someday add a ceiling fan to the studio bedroom.

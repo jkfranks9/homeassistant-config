@@ -43,29 +43,30 @@
           {% set skip_time_check_entities = [] %}
           
           {# --List of device entities, associated last seen sensors-- #}
+          {# --Device entities are the most obvious ones, or any other entity for the device-- #}
           {% set device_list = [
+                                ['binary_sensor.attic_door_sensor_contact', 'sensor.attic_door_sensor_last_seen'],
                                 ['binary_sensor.back_door_sensor_contact', 'sensor.back_door_sensor_last_seen'],
-                                ['binary_sensor.studio_window_sensor_contact', 'sensor.studio_window_sensor_last_seen'],
-                                ['binary_sensor.studio_motion_detector_occupancy', 'sensor.studio_motion_detector_last_seen'],
+                                ['binary_sensor.cc2530_router_led', 'sensor.cc2530_router_last_seen'],
+                                ['switch.dining_room_table', 'sensor.dining_room_table_last_seen'],
+                                ['binary_sensor.family_room_1_motion_sensor_occupancy', 'sensor.family_room_1_motion_sensor_last_seen'],
+                                ['sensor.laundry_room_button_battery', 'sensor.laundry_room_button_last_seen'],
                                 ['binary_sensor.laundry_room_motion_detector_occupancy', 'sensor.laundry_room_motion_detector_last_seen'],
                                 ['binary_sensor.master_bath_motion_detector_occupancy', 'sensor.master_bath_motion_detector_last_seen'],
+                                ['switch.master_bath_vanity', 'sensor.master_bath_vanity_last_seen'],
                                 ['cover.master_bedroom_vent_1', 'sensor.master_bedroom_vent_1_last_seen'],
                                 ['cover.master_bedroom_vent_2', 'sensor.master_bedroom_vent_2_last_seen'],
-                                ['binary_sensor.cc2530_router_led', 'sensor.cc2530_router_last_seen'],
-                                ['switch.sonoff_router', 'sensor.sonoff_router_last_seen'],
-                                ['binary_sensor.office_human_sensor_presence', 'sensor.office_human_sensor_last_seen'],
-                                ['switch.studio_hall_ceiling', 'sensor.studio_hall_ceiling_last_seen'],
-                                ['switch.dining_room_table', 'sensor.dining_room_table_last_seen'],
-                                ['switch.master_bath_vanity', 'sensor.master_bath_vanity_last_seen'],
-                                ['binary_sensor.master_closet_sensor_contact', 'sensor.master_closet_sensor_last_seen'],
-                                ['binary_sensor.attic_door_sensor_contact', 'sensor.attic_door_sensor_last_seen'],
-                                ['binary_sensor.upstairs_entry_sensor_contact', 'sensor.upstairs_entry_sensor_last_seen'],
                                 ['switch.master_closet_ceiling', 'sensor.master_closet_ceiling_last_seen'],
-                                ['sensor.laundry_room_button_battery', 'sensor.laundry_room_button_last_seen'],
+                                ['binary_sensor.master_closet_sensor_contact', 'sensor.master_closet_sensor_last_seen'],
+                                ['binary_sensor.office_human_sensor_presence', 'sensor.office_human_sensor_last_seen'],
+                                ['switch.sonoff_router', 'sensor.sonoff_router_last_seen'],
                                 ['sensor.studio_4_way_button_battery', 'sensor.studio_4_way_button_last_seen'],
-                                ['light.studio_night_light', 'sensor.studio_night_light_last_seen'],
-                                ['binary_sensor.family_room_1_motion_sensor_occupancy', 'sensor.family_room_1_motion_sensor_last_seen'],
-                                ['binary_sensor.theater_1_motion_sensor_occupancy', 'sensor.theater_1_motion_sensor_last_seen']
+                                ['light.studio_front_window_lamp', 'sensor.studio_front_window_lamp_last_seen'],
+                                ['switch.studio_hall_ceiling', 'sensor.studio_hall_ceiling_last_seen'],
+                                ['binary_sensor.studio_motion_detector_occupancy', 'sensor.studio_motion_detector_last_seen'],
+                                ['binary_sensor.studio_window_sensor_contact', 'sensor.studio_window_sensor_last_seen'],
+                                ['binary_sensor.theater_1_motion_sensor_occupancy', 'sensor.theater_1_motion_sensor_last_seen'],
+                                ['binary_sensor.upstairs_entry_sensor_contact', 'sensor.upstairs_entry_sensor_last_seen']
                                ] %}
                                
           {# --Create an empty list to start-- #}
@@ -80,9 +81,10 @@
             {% set timeout_minutes = 150 %}
           
             {# --Add a device to the list if the device entity is unavailable, or hasn't been seen in the timeout window-- #}
+            {# --We use the device name in the list-- #}
             {% if states(device_entity) in ['unknown', 'unavailable']
                   or (device_entity not in skip_time_check_entities and as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (timeout_minutes * 60)) %}
-              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(device_entity, 'friendly_name')] %}
+              {% set unavail_device_list.list = unavail_device_list.list + [device_name(device_entity)] %}
             {% endif %}
           {% endfor %}
           
@@ -96,30 +98,30 @@
       
       attributes:
         device_list: >
-          {# --List of timestamp entities-- #}
+          {# --List of timestamp entities; the names match the device names-- #}
           {% set device_list = [
-                                'input_number.back_door_sensor_door',
-                                'input_number.studio_window_sensor_door',
-                                'input_number.studio_motion_detector_occupancy',
-                                'input_number.laundry_room_motion_detector_occupancy',
-                                'input_number.master_bath_motion_detector_occupancy',
+                                'input_number.attic_door_sensor',
+                                'input_number.back_door_sensor',
+                                'input_number.cc2530_router',
+                                'input_number.dining_room_table',
+                                'input_number.family_room_1_motion_sensor',
+                                'input_number.laundry_room_button',
+                                'input_number.laundry_room_motion_detector',
+                                'input_number.master_bath_motion_detector',
+                                'input_number.master_bath_vanity',
                                 'input_number.master_bedroom_vent_1',
                                 'input_number.master_bedroom_vent_2',
-                                'input_number.cc2530_router_led',
-                                'input_number.sonoff_router',
-                                'input_number.office_human_sensor_presence',
-                                'input_number.studio_hall_ceiling',
-                                'input_number.dining_room_table',
-                                'input_number.master_bath_vanity',
-                                'input_number.master_closet_sensor_door',
-                                'input_number.attic_door_sensor_door',
-                                'input_number.upstairs_entry_sensor_door',
                                 'input_number.master_closet_ceiling',
-                                'input_number.laundry_room_button',
+                                'input_number.master_closet_sensor',
+                                'input_number.office_human_sensor',
+                                'input_number.sonoff_router',
                                 'input_number.studio_4_way_button',
-                                'input_number.studio_night_light',
-                                'input_number.family_room_1_motion_detector_occupancy',
-                                'input_number.theater_1_motion_detector_occupancy'
+                                'input_number.studio_front_window_lamp',
+                                'input_number.studio_hall_ceiling',
+                                'input_number.studio_motion_detector',
+                                'input_number.studio_window_sensor',
+                                'input_number.theater_1_motion_sensor',
+                                'input_number.upstairs_entry_sensor'
                                ] %}
                                
           {# --Create an empty list to start-- #}

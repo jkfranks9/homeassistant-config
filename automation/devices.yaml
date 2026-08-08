@@ -310,7 +310,7 @@
               target:
                 entity_id:
                   - light.family_room_lamp
-                  - light.studio_hall_lamp
+                  - light.studio_hall_ceiling
           
           else:
             - action: script.turn_on_christmas_lights
@@ -318,16 +318,17 @@
                 variables:
                   additional_lights: daytime
         
-        # Studio lamp(s) if Skylar home alone.
+        # Studio lamp(s) if children home.
         - if:
             - condition: state
-              entity_id: person.skylar
-              state: 'home'
+              entity_id: binary_sensor.children_home
+              state: 'on'
           
           then:
-            - action: script.operate_preferred_studio_lamps
+            - action: script.operate_preferred_studio_lights
               data:
                 operation: 'on'
+                profile: normal
             
         # Start a timer to close the garage and turn off outdoor lights after a short period of time.
         - action: timer.start
@@ -1851,15 +1852,14 @@
         payload: "{{ trigger.payload }}"
         action: "{{ payload.split('_')[0] }}"
         button: "{{ payload.split('_')[-1] }}"
-        
-        domain: ''
-        name: ''
-        operation: ''
     
-    # Handle different button actions.
+    # Handle different button actions. Some actions set variables that are acted upon after this choose block.
+    # Others perform specific actions such as calling a script. Unused actions just write a log message.
     - choose:
       
-        # Button 1, single push...
+        #----- Button 1 -----#
+        
+        # Single push
         - conditions: "{{ button == 1 and action == 'single' }}"
         
           sequence:
@@ -1868,148 +1868,216 @@
                 name: studio_side_window_lamp
                 operation: toggle
       
-        # Button 1, double push...
+        # Double push
         - conditions: "{{ button == 1 and action == 'double' }}"
         
           sequence:
-            - variables:
-                domain: light
-                name: studio_front_window_lamp
-                operation: toggle
+            
+            # The front window lamp doubles as a normal light or a night light. This action is to toggle the normal light,
+            # so we need to turn it on (as normal) if it's currently off or if it's currently in night mode. If it's currently
+            # in normal mode, we want to turn it off.
+            - if:
+                - "{{ is_state('light.studio_front_window_lamp', 'off') or state_attr('light.studio_front_window_lamp', 'brightness') | int(0) < 100 }}"
+              
+              then:
+                - action: script.turn_on_studio_front_window_lamp
+                  data:
+                    profile: normal
+              
+              else:
+                - action: light.turn_off
+                  target:
+                    entity_id: light.studio_front_window_lamp
       
-        # Button 1, triple push...
+        # Triple push
         - conditions: "{{ button == 1 and action == 'triple' }}"
         
           sequence:
-            - variables:
-                domain: light
-                name: studio_night_light
-                operation: toggle
+            
+            # The front window lamp doubles as a normal light or a night light. This action is to toggle the night light,
+            # so we need to turn it on (as night) if it's currently off or if it's currently in normal mode. If it's currently
+            # in night mode, we want to turn it off.
+            - if:
+                - "{{ is_state('light.studio_front_window_lamp', 'off') or state_attr('light.studio_front_window_lamp', 'brightness') | int(0) > 100 }}"
+              
+              then:
+                - action: script.turn_on_studio_front_window_lamp
+                  data:
+                    profile: night
+              
+              else:
+                - action: light.turn_off
+                  target:
+                    entity_id: light.studio_front_window_lamp
       
-        # Button 1, long push...
+        # Long push
         - conditions: "{{ button == 1 and action == 'long' }}"
         
           sequence:
             - variables:
                 domain: light
-                name: studio_hall_lamp
+                name: studio_hall_ceiling
                 operation: toggle
       
-        # Button 2, single push...
+        #----- Button 2 -----#
+      
+        # Single push
         - conditions: "{{ button == 2 and action == 'single' }}"
         
           sequence:
-            - action: system_log.write
+            
+            # Turn on the preferred studio night lights.
+            - action: script.operate_preferred_studio_lights
               data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+                operation: 'on'
+                profile: night
       
-        # Button 2, double push...
+        # Double push
         - conditions: "{{ button == 2 and action == 'double' }}"
         
           sequence:
-            - action: system_log.write
+            
+            # Turn off the preferred studio night lights.
+            - action: script.operate_preferred_studio_lights
               data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+                operation: 'off'
+                profile: night
       
-        # Button 2, triple push...
+        # Triple push
         - conditions: "{{ button == 2 and action == 'triple' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: log
       
-        # Button 2, long push...
+        # Long push
         - conditions: "{{ button == 2 and action == 'long' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: log
       
-        # Button 3, single push...
+        #----- Button 3 -----#
+      
+        # Single push
         - conditions: "{{ button == 3 and action == 'single' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_normal_lights'
+                option: 'Side Window'
       
-        # Button 3, double push...
+        # Double push
         - conditions: "{{ button == 3 and action == 'double' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_normal_lights'
+                option: 'Front Window'
       
-        # Button 3, triple push...
+        # Triple push
         - conditions: "{{ button == 3 and action == 'triple' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_normal_lights'
+                option: 'Both'
       
-        # Button 3, long push...
+        # Long push
         - conditions: "{{ button == 3 and action == 'long' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_normal_lights'
+                option: 'Neither'
       
-        # Button 4, single push...
+        #----- Button 4 -----#
+      
+        # Single push
         - conditions: "{{ button == 4 and action == 'single' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_night_lights'
+                option: 'Front Window'
       
-        # Button 4, double push...
+        # Double push
         - conditions: "{{ button == 4 and action == 'double' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_night_lights'
+                option: 'Hall Ceiling'
       
-        # Button 4, triple push...
+        # Triple push
         - conditions: "{{ button == 4 and action == 'triple' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_night_lights'
+                option: 'Both'
       
-        # Button 4, long push...
+        # Long push
         - conditions: "{{ button == 4 and action == 'long' }}"
         
           sequence:
-            - action: system_log.write
-              data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
-                level: info
+            - variables:
+                operation: select_preference
+                pref_entity: 'input_select.preferred_studio_night_lights'
+                option: 'Neither'
     
-    - variables:
-        entity: "{{ domain ~ '.' ~ name }}"
-    
+    # Implementation for all actions that just set variables above.
     - choose:
-        - conditions: "{{ domain == 'light' and operation == 'toggle' }}"
+        
+        # Toggle a light.
+        - conditions: "{{ operation == 'toggle' }}"
           
           sequence:
             - action: light.toggle
               target:
-                entity_id: "{{ entity }}"
+                entity_id: "{{ domain ~ '.' ~ name }}"
+        
+        # Select a lighting preference.
+        - conditions: "{{ operation == 'select_preference' }}"
+        
+          sequence:
+            - variables:
+                current_state: "{{ states(pref_entity) }}"
+                msg_subject: "{{ iif('normal' in pref_entity.split('.')[1].split('_'), 'Normal', 'Night') }}"
+                msg_verbage: "{{ iif(current_state == option, 'already set', 'changed') }}"
+            
+            # No need to change anything if the current option is the one we want.
+            - if:
+                - "{{ current_state != option }}"
+              
+              then:
+                - action: input_select.select_option
+                  target:
+                    entity_id: "{{ pref_entity }}"
+                  data:
+                    option: "{{ option }}"
+            
+            # Tell the user what happened.
+            - action: script.send_notification
+              data:
+                destination:
+                  - voice_assistant
+                message: "{{ msg_subject ~ ' light preference ' ~ msg_verbage ~ ' to ' ~ option }}"
+                room: ['studio']
+                voice_type: announce
+        
+        # Log a message for an unused action.
+        - conditions: "{{ operation == 'log' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info

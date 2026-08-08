@@ -81,12 +81,6 @@ reset_smart_bulbs:
         light_entity: light.family_room_lamp
         lux_entity: sensor.downstairs_sensor_ambient_light
         lux_value: "{{ states('input_number.family_room_ambient_max') | int(0) }}"
-
-    - action: script.reset_smart_bulb_lux_sensor
-      data:
-        light_entity: light.studio_night_light
-        lux_entity: sensor.downstairs_sensor_ambient_light
-        lux_value: "{{ states('input_number.studio_bedroom_ambient_max') | int(0) }}"
           
 # Reset a smart bulb based on various sleep/wake modes.
 reset_smart_bulb_nighttime:
@@ -186,45 +180,196 @@ start_bath_time:
         entity_id: timer.bath_time
         duration: '00:45:00'
 
-#======================#
-#     Studio Lamps     #
-#======================#
+#=========================#
+#     Studio Lighting     #
+#=========================#
+turn_on_studio_front_window_lamp:
+  alias: Turn On Studio Front Window Lamp
+  
+  fields:
+    profile:
+      description: The color/brightness profile to use.
+      selector:
+        select:
+          options:
+            - 'normal'
+            - 'night'
+  
+  sequence:
+    - variables:
+        light_data: "{{ iif(profile == 'normal', {'color_temp_kelvin': 2202, 'brightness_pct': 75}, {'rgb_color': [255, 148, 144], 'brightness_pct': 10}) }}"
+    
+    - action: light.turn_on
+      target:
+        entity_id: light.studio_front_window_lamp
+      data: "{{ light_data }}"
 
-# Turn the preferred studio lamps on or off.
-operate_preferred_studio_lamps:
-  alias: Operate Preferred Studio Lamps
+# Turn the preferred studio lights on or off.
+operate_preferred_studio_lights:
+  alias: Operate Preferred Studio Lights
   
   fields:
     operation:
-      description: Whether to turn the light(s) on or off.
+      description: Operation to perform on the light(s).
       selector:
         select:
           options:
             - 'on'
             - 'off'
+    
+    profile:
+      description: The color/brightness profile to use for the front window lamp.
+      selector:
+        select:
+          options:
+            - 'normal'
+            - 'night'
   
   sequence:
     - variables:
-        preference: "{{ states('input_select.preferred_studio_lamps') }}"
-        light_entity_list: >
-          {% set var = namespace(list = []) %}
-          {% if preference in ['Front Window', 'Both'] %}
-            {% set var.list = var.list + ['light.studio_front_window_lamp'] %}
+        
+        # We have separate selections for normal and night lights. Pick the current preference
+        # based on the input profile.
+        normal_preference: "{{ states('input_select.preferred_studio_normal_lights') }}"
+        night_preference: "{{ states('input_select.preferred_studio_night_lights') }}"
+        preference: "{{ iif(profile == 'normal', normal_preference, night_preference) }}"
+        
+        # When turning normal lights on, we want to turn off all other normal lights. This is the list of those.
+        normal_off_entity_list: >
+          {% set ns = namespace(list = ['light.studio_side_window_lamp', 'light.studio_front_window_lamp']) %}
+          {% if normal_preference in ['Front Window', 'Both'] %}
+            {% set ns.list = ns.list | select('!=', 'light.studio_front_window_lamp') | list %}
           {% endif %}
-          {% if preference in ['Side Window', 'Both'] %}
-            {% set var.list = var.list + ['light.studio_side_window_lamp'] %}
+          {% if normal_preference in ['Side Window', 'Both'] %}
+            {% set ns.list = ns.list | select('!=', 'light.studio_side_window_lamp') | list %}
           {% endif %}
           
-          {{ var.list }}
+          {{ ns.list }}
+        
+        # When turning night lights on, we want to turn off all lights not used as night lights. 
+        # This is the list of those.
+        night_off_entity_list: >
+          {% set ns = namespace(list = ['light.studio_side_window_lamp', 'light.studio_front_window_lamp', 'light.studio_hall_ceiling']) %}
+          {% if night_preference in ['Front Window', 'Both'] %}
+            {% set ns.list = ns.list | select('!=', 'light.studio_front_window_lamp') | list %}
+          {% endif %}
+          {% if night_preference in ['Hall Ceiling', 'Both'] %}
+            {% set ns.list = ns.list | select('!=', 'light.studio_hall_ceiling') | list %}
+          {% endif %}
+          
+          {{ ns.list }}
     
-    # Perform the operation unless the preference is 'Neither'.
+    # Handle the various use cases...
+    
+    # ... normal profile, front window lamp.
     - if:
-        - "{{ light_entity_list | length > 0 }}"
+        - "{{ profile == 'normal' and preference in ['Front Window', 'Both'] }}"
       
-      then:    
+      then:
+          
+        # For turning on, we need a script for the front window lamp, since it doubles as both a normal
+        # and night light. We also turn off unused normal lights. For turning the light off, just do it.
+        - if:
+            - "{{ operation == 'on' }}"
+          
+          then:
+            - action: script.turn_on_studio_front_window_lamp
+              data:
+                profile: "{{ profile }}"
+          
+            - action: light.turn_off
+              target:
+                entity_id: "{{ normal_off_entity_list }}"
+          
+          else:
+            - action: light.turn_off
+              target:
+                entity_id: light.studio_front_window_lamp
+      
+    # ... normal profile, side window lamp.
+    - if:
+        - "{{ profile == 'normal' and preference in ['Side Window', 'Both'] }}"
+      
+      then:
+          
+        # For turning on or off, just do it. We also turn off unused normal lights for a turn on operation.
         - action: light.turn_{{ operation }}
           target:
-            entity_id: "{{ light_entity_list }}"
+            entity_id: light.studio_side_window_lamp
+          
+        - if:
+            - "{{ operation == 'on' }}"
+          
+          then:
+            - action: light.turn_off
+              target:
+                entity_id: "{{ normal_off_entity_list }}"
+      
+      # ... night profile, front window lamp.
+    - if:
+        - "{{ profile == 'night' and preference in ['Front Window', 'Both'] }}"
+      
+      then:
+          
+        # For turning on, we need a script for the front window lamp, since it doubles as both a normal
+        # and night light. We also turn off unused lights. For turning the light off, just do it.
+        - if:
+            - "{{ operation == 'on' }}"
+          
+          then:
+            - action: script.turn_on_studio_front_window_lamp
+              data:
+                profile: "{{ profile }}"
+          
+            - action: light.turn_off
+              target:
+                entity_id: "{{ night_off_entity_list }}"
+          
+          else:
+            - action: light.turn_off
+              target:
+                entity_id: light.studio_front_window_lamp
+      
+      # ... night profile, hall ceiling light.
+    - if:
+        - "{{ profile == 'night' and preference in ['Hall Ceiling', 'Both'] }}"
+      
+      then:
+          
+        # For turning on, we also need to turn off all non-night lights. For turning the light off, just do it.
+        - if:
+            - "{{ operation == 'on' }}"
+          
+          then:
+            - action: light.turn_on
+              target:
+                entity_id: light.studio_hall_ceiling
+          
+            - action: light.turn_off
+              target:
+                entity_id: "{{ night_off_entity_list }}"
+          
+          else:
+            - action: light.turn_off
+              target:
+                entity_id: light.studio_hall_ceiling
+      
+    # We get here for a preference of 'Neither', for all profiles. We still need to turn off all lights for the given
+    # profile, since none are selected to be on.
+    - if:
+        - "{{ preference == 'Neither' }}"
+      
+      then:
+        - variables:
+            off_entity_list: "{{ iif(profile == 'normal', normal_off_entity_list, night_off_entity_list) }}"
+        
+        - if:
+            - "{{ operation == 'on' }}"
+      
+          then:
+            - action: light.turn_off
+              target:
+                entity_id: "{{ off_entity_list }}"
 
 #========================#
 #     Kitchen Lights     #

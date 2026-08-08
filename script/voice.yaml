@@ -227,9 +227,10 @@ voice_operate_light:
             
             # For non-light domains, use specialized processing.
             # NOTE: There's only one of these for now; probably needs to be a choose in order to handle additional cases.
-            - action: script.operate_preferred_studio_lamps
+            - action: script.operate_preferred_studio_lights
               data:
                 operation: "{{ operation }}"
+                profile: normal
 
 #===============#
 #     Other     #
