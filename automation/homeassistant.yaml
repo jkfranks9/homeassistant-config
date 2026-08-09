@@ -197,7 +197,6 @@
     # Don't touch the few that are turned off most of the time, or for extended periods.
     - action: automation.turn_on
       entity_id:
-        - automation.determine_cpap_filter_target_day
         - automation.run_studio_motion_based_light
         - automation.update_last_alexa_device
     
