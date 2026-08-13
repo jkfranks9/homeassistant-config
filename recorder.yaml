@@ -69,7 +69,6 @@ include:
     - binary_sensor.children_home
     - binary_sensor.jon_devices_charging
     - binary_sensor.jon_sleeping
-    - binary_sensor.office_human_sensor_presence
     - binary_sensor.master_bedroom_sleep_sensor_in_bed
     - input_boolean.office_occupied
     - input_boolean.washer_fabric_softener
@@ -99,6 +98,7 @@ include:
   entity_globs:
     
     - binary_sensor.*_occupancy
+    - binary_sensor.*_presence
     - binary_sensor.dryer_*_falling
     - binary_sensor.family_room_av_*
     - binary_sensor.*_driving
