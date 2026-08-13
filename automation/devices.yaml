@@ -62,16 +62,14 @@
       state: 'OB DISCHRG'
   
   actions:
-    - delay: 
-        seconds: "{{ range(2, 15) | random }}"
-       
     - variables:
         tag: power_out
         title: 'Warning:'
-        message: Power is out, shutting down PC.
+        message: Power is out at 29 AA Drive.
         channel: critical
         tag_registry_value: "{{ {'tag': tag, 'clear_type': 'auto', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
         notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'tag': tag} }}"
+        notify_people: ['Jon', 'Mike', 'Sarah']
     
     # Save a timestamp for this event.
     - action: input_datetime.set_datetime
@@ -84,9 +82,17 @@
     - action: script.register_mobile_notification
       data: "{{ tag_registry_value }}"
     
-    # Send a notification.    
-    - action: script.send_notification
-      data: "{{ notification_data }}"
+    # Repeat for all people to be notified.
+    - repeat:
+        for_each: "{{ notify_people }}"
+        
+        sequence:
+          - variables:
+              named_notification_data: "{{ notification_data | combine({'mobile_name': repeat.item}) }}"
+    
+          # Send a notification.    
+          - action: script.send_notification
+            data: "{{ named_notification_data }}"
     
     # The recorder database lives on the PC, so disable it before we shutdown.
     - action: recorder.disable
@@ -181,7 +187,7 @@
         # The message indicates power is restored, but also includes the original outage time. If the UPS battery went critical it includes that time as well.
         message: >
           {% set var = namespace(outage = '', critical = '') %}
-          {% set prefix = 'Power is restored, turning on the PC (' %}
+          {% set prefix = 'Power is restored at 29 AA Drive (' %}
           {% set keys = state_attr('sensor.mobile_tag_registry_keys', 'tags') %}
           {% set var.outage = 'outage: ' ~ state_attr('input_datetime.ups_power_out', 'timestamp') | timestamp_custom %}
           {% if 'ups_battery' in keys %}
@@ -193,14 +199,23 @@
         channel: standard
         tag_registry_value: "{{ {'tag': tag, 'clear_type': 'manual', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"
         notification_data: "{{ {'destination': ['mobile'], 'title': title, 'message': message, 'channel': channel, 'timeout': 0, 'tag': tag} }}"
+        notify_people: ['Jon', 'Mike', 'Sarah']
     
     # Register the tag.
     - action: script.register_mobile_notification
       data: "{{ tag_registry_value }}"
     
-    # Send a notification.    
-    - action: script.send_notification
-      data: "{{ notification_data }}"
+    # Repeat for all people to be notified.
+    - repeat:
+        for_each: "{{ notify_people }}"
+        
+        sequence:
+          - variables:
+              named_notification_data: "{{ notification_data | combine({'mobile_name': repeat.item}) }}"
+    
+          # Send a notification.    
+          - action: script.send_notification
+            data: "{{ named_notification_data }}"
       
     # Remove previous notifications and unregister the tags. We could have one or both of these but there's no need to check, since
     # nothing bad happens if a tag doesn't exist.
