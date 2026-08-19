@@ -826,16 +826,21 @@
 #     Bath Time     #
 #===================#
 
-# Prevent the bath light turning off while taking a bath. Script by the same name kicks off the timer used here.
-- alias: Stop Bath Time
-  id: 'stop_bath_time'
+# Prevent the studio bath light turning off while taking a bath.
+- alias: Control Bath Time Lighting
+  id: 'control_bath_time_lighting'
   
   triggers:
-    - trigger: event
-      event_type: timer.finished
-      event_data:
+    - trigger: timer.started
+      target:
         entity_id: timer.bath_time
+      id: 'off'
+    
+    - trigger: timer.finished
+      target:
+        entity_id: timer.bath_time
+      id: 'on'
   
   actions:
-    - action: automation.turn_on
+    - action: automation.turn_{{ trigger.id }}
       entity_id: automation.run_studio_motion_based_light
