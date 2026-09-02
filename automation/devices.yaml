@@ -326,6 +326,8 @@
                 entity_id:
                   - light.family_room_lamp
                   - light.studio_hall_ceiling
+              data:
+                brightness_pct: 100
           
           else:
             - action: script.turn_on_christmas_lights
@@ -706,6 +708,29 @@
       temperature_entity: sensor.theater_temperature
       fan_entity: fan.theater_fan
       automatic_entity: input_boolean.theater_fan_automatic
+
+# Turn off ceiling fan automatic control when a fan is turned off. This is normally done in the Set Fan To Speed
+# script, but fans can be turned off directly using dashboard controls.
+- alias: Reset Ceiling Fan Automatic Control
+  id: reset_ceiling_fan_automatic_control
+  
+  triggers:
+    - trigger: state
+      entity_id:
+        - fan.family_room_fan
+        - fan.office_fan
+        - fan.theater_fan
+      from: 'on'
+      to: 'off'
+  
+  actions:
+    - variables:
+        fan_name: "{{ trigger.entity_id.split('.')[1] }}"
+        automatic_toggle_entity: "{{ 'input_boolean.' ~ fan_name ~ '_automatic' }}"
+    
+    - action: input_boolean.turn_off
+      target:
+        entity_id: "{{ automatic_toggle_entity }}"
 
 # Turn off penthouse fan after a while.
 - alias: Turn Off Penthouse Fan
@@ -2051,13 +2076,18 @@
     # Implementation for all actions that just set variables above.
     - choose:
         
-        # Toggle a light.
+        # Toggle a light. Note that we specify full brightness. The only lights that are toggled here
+        # are the side window lamp (which doesn't support brightness), and the hall ceiling light. For the
+        # latter it makes sense to turn it fully on, because we have a mechanism (button 2 single push) to
+        # operate it as a night light. I don't really like this, but oh well.
         - conditions: "{{ operation == 'toggle' }}"
           
           sequence:
             - action: light.toggle
               target:
                 entity_id: "{{ domain ~ '.' ~ name }}"
+              data:
+                brightness_pct: 100
         
         # Select a lighting preference.
         - conditions: "{{ operation == 'select_preference' }}"
@@ -2094,5 +2124,180 @@
           sequence:
             - action: system_log.write
               data:
-                message: "{{ 'button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                message: "{{ 'Studio 4-way button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+
+# We have a 4-way button for the house that supports single, double, triple and long presses for each button. Handle those here.
+- alias: Handle Main 4 Way Button
+  id: handle_main_4_way_button
+  
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/Main 4 Way Button/action
+  
+  actions:
+    - variables:
+        payload: "{{ trigger.payload }}"
+        action: "{{ payload.split('_')[0] }}"
+        button: "{{ payload.split('_')[-1] }}"
+    
+    # Handle different button actions. Some actions set variables that are acted upon after this choose block.
+    # Others perform specific actions such as calling a script. Unused actions just write a log message.
+    - choose:
+      
+        #----- Button 1 -----#
+        
+        # Single push
+        - conditions: "{{ button == 1 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: family_room_fan
+                speed: 33
+      
+        # Double push
+        - conditions: "{{ button == 1 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: family_room_fan
+                speed: 66
+      
+        # Triple push
+        - conditions: "{{ button == 1 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: family_room_fan
+                speed: 99
+      
+        # Long push
+        - conditions: "{{ button == 1 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: family_room_fan
+                speed: 0
+      
+        #----- Button 2 -----#
+      
+        # Single push
+        - conditions: "{{ button == 2 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: office_fan
+                speed: 33
+      
+        # Double push
+        - conditions: "{{ button == 2 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: office_fan
+                speed: 66
+      
+        # Triple push
+        - conditions: "{{ button == 2 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: office_fan
+                speed: 99
+      
+        # Long push
+        - conditions: "{{ button == 2 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: office_fan
+                speed: 0
+      
+        #----- Button 3 -----#
+      
+        # Single push
+        - conditions: "{{ button == 3 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Double push
+        - conditions: "{{ button == 3 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Triple push
+        - conditions: "{{ button == 3 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Long push
+        - conditions: "{{ button == 3 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        #----- Button 4 -----#
+      
+        # Single push
+        - conditions: "{{ button == 4 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Double push
+        - conditions: "{{ button == 4 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Triple push
+        - conditions: "{{ button == 4 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Long push
+        - conditions: "{{ button == 4 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+    
+    # Implementation for all actions that just set variables above.
+    - choose:
+        
+        # Operate a ceiling fan.
+        - conditions: "{{ domain == 'fan' }}"
+          
+          sequence:
+            - action: script.set_fan_to_speed
+              data:
+                entity_id: "{{ domain ~ '.' ~ name }}"
+                speed: "{{ speed }}"
+        
+        # Log a message for an unused action.
+        - conditions: "{{ operation == 'log' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'Main 4-way button ' ~ button ~ ', ' ~ action ~ ' press' }}"
                 level: info

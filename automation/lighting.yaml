@@ -158,6 +158,7 @@
     input:
       lux_sensor: sensor.downstairs_sensor_ambient_light
       light_target: light.studio_hall_ceiling
+      light_data: {'brightness_pct': 100}
       min_lux_level: input_number.hallway_ambient_min
       max_lux_level: input_number.hallway_ambient_max
       check_theater: true

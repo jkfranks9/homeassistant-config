@@ -45,6 +45,12 @@ turn_on_lights_per_conditions:
     min_lux_value:
       description: The minimum ambient light level value.
     
+    light_data:
+      description: (Optional) Dictionary of data for turning on the light.
+      default: {}
+      selector:
+        object:
+    
   sequence: 
     
     # Turn on the light if the ambient light sensor is at or below the minimum.
@@ -52,9 +58,19 @@ turn_on_lights_per_conditions:
         - "{{ states(lux_entity) | float(0) <= min_lux_value | float(0) }}"
     
       then:
-        - action: light.turn_on
-          target:
-            entity_id: "{{ light_entity }}"
+        - if:
+            - "{{ light_data is defined }}"
+          
+          then:
+            - action: light.turn_on
+              target:
+                entity_id: "{{ light_entity }}"
+              data: "{{ light_data }}"
+          
+          else:
+            - action: light.turn_on
+              target:
+                entity_id: "{{ light_entity }}"
 
 #=====================#
 #     Smart Bulbs     #
@@ -342,6 +358,8 @@ operate_preferred_studio_lights:
             - action: light.turn_on
               target:
                 entity_id: light.studio_hall_ceiling
+              data:
+                brightness_pct: 25
           
             - action: light.turn_off
               target:

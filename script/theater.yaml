@@ -1063,6 +1063,13 @@ set_theater_idle:
           data:
             operation: break
         
+        # We only want to call Change Downstairs Lighting for a resume operation after a break;
+        # calling it for resumes during a theater session is useless. So we set a flag here to
+        # indicate that the next resume can make the call.
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.honor_theater_resume_operation
+        
       else:
         - action: script.change_downstairs_lighting
           data:
@@ -1140,6 +1147,7 @@ change_downstairs_lighting:
             - action: script.turn_on_lights_per_conditions
               data:
                 light_entity: "{{ non_activation_lights }}"
+                light_data: {'brightness_pct': 100}
                 lux_entity: sensor.downstairs_sensor_ambient_light
                 min_lux_value: "{{ states('input_number.family_room_ambient_min') | float(0) }}"
         
@@ -1239,10 +1247,20 @@ restore_lighting_on_resume:
     - action: script.turn_on
       entity_id: script.set_theater_dark
     
-    # Turn off some downstairs lights.
-    - action: script.change_downstairs_lighting
-      data:
-        operation: resume
+    # Turn off some downstairs lights, but only after a break operation.
+    - if:
+        - condition: state
+          entity_id: input_boolean.honor_theater_resume_operation
+          state: 'on'
+      
+      then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.honor_theater_resume_operation
+        
+        - action: script.change_downstairs_lighting
+          data:
+            operation: resume
 
 #=====================================#
 #     Kodi Video Playlist Control     #
@@ -1377,6 +1395,7 @@ process_kodi_videos_result:
         
         # Collect the relevant pieces of the results into separate lists.
         artists:  "{{ result['musicvideos'] | map(attribute='artist.0') | list }}"
+        titles:   "{{ result['musicvideos'] | map(attribute='label') | list }}"
         ids:      "{{ result['musicvideos'] | map(attribute='musicvideoid') | list }}"
         runtimes: "{{ result['musicvideos'] | map(attribute='streamdetails.video.0.duration') | list }}"
         
@@ -1386,7 +1405,7 @@ process_kodi_videos_result:
           {% set result = namespace(list = []) %}
           {% for artist in artists %}
             {% if artist != 'PreRoll' and runtimes[loop.index0] < max_video_time %}
-              {% set result.list = result.list + [[artists[loop.index0], ids[loop.index0], runtimes[loop.index0]]] %}
+              {% set result.list = result.list + [[artists[loop.index0], titles[loop.index0], ids[loop.index0], runtimes[loop.index0]]] %}
             {% endif %}
           {% endfor %}
           
@@ -1399,7 +1418,7 @@ process_kodi_videos_result:
         minimum_runtime: >
           {% set min = namespace(time = max_time) %}
           {% for result in results %}
-            {% set rt = result[2] %}
+            {% set rt = result[3] %}
             {% if rt < min.time %}
               {% set min.time = rt %}
             {% endif %}
@@ -1469,13 +1488,14 @@ process_kodi_videos_result:
               
               # Data from the randomly selected video.
               artist:  "{{ results[index][0] }}"
-              videoid: "{{ results[index][1] }}"
-              runtime: "{{ results[index][2] }}"
+              title:   "{{ results[index][1] }}"
+              videoid: "{{ results[index][2] }}"
+              runtime: "{{ results[index][3] }}"
               
           # Debug logging.
           - action: system_log.write
             data:
-              message: "Checking video ({{ repeat.index }}): '{{ artist }}', {{ videoid }}, {{ runtime }}"
+              message: "Checking video ({{ repeat.index }}): '{{ artist }}', {{ title }}, {{ videoid }}, {{ runtime }}"
               level: debug
           
           # Skip this video if:
@@ -1540,6 +1560,36 @@ process_kodi_videos_result:
                   - action: input_number.increment
                     target:
                       entity_id: input_number.music_videos_selected
+                  
+                  # Update the video registry, which contains the number of plays all time for this video.
+                  - variables:
+                      
+                      # The video registry.
+                      registry: "{{ state_attr('sensor.music_video_registry', 'videos') }}"
+                      
+                      # Numeric keys don't work for some reason, so add a prefix.
+                      key: "{{ 'k' ~ videoid }}"
+                  
+                  # Determine if the registry already contains this video.
+                  - if:
+                      - "{{ registry | contains(key) }}"
+                    
+                    # The video exists, so bump the play count.
+                    then:
+                      - variables:
+                          curr_count: "{{ registry.key[2]  }}"
+                          value: "{{ artist, title, curr_count + 1 }}"
+                    
+                    # The video does not exist, so set the play count to 1.
+                    else:
+                      - variables:
+                          value: "{{ artist, title, 1 }}"
+          
+                  # Register the play count for this video.
+                  - event: register_music_video
+                    event_data:
+                      key: "{{ key }}"
+                      value: "{{ value }}"
                 
                 # Limits have been reached, we're done.
                 else:

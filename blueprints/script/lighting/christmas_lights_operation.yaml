@@ -94,3 +94,5 @@ sequence:
         - action: light.turn_{{ input_operation }}
           target:
             entity_id: "{{ additional_daytime_lights }}"
+          data:
+            brightness_pct: 100

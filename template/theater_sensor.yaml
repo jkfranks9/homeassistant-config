@@ -1,0 +1,32 @@
+#=========================#
+#     Theater Sensors     #
+#=========================#
+
+#---------- Trigger Sensors ----------#
+
+#--------------------------------#
+#   -- Music Video Registry --   #
+#--------------------------------#
+
+# ...
+- triggers:
+    - trigger: event
+      event_type: register_music_video
+  
+    - trigger: event
+      event_type: unregister_music_video
+  
+  sensor:
+    - name: Music Video Registry
+      unique_id: music_video_registry
+      state: Videos
+      
+      attributes:
+        videos: >
+          {% set current = this.attributes.get('videos', {}) %}
+          {% if trigger.event.event_type == 'register_music_video' %}
+            {% set new = {trigger.event.data.key: trigger.event.data.value} %}
+            {{ dict(current, **new) }}
+          {% elif trigger.event.event_type == 'unregister_music_video' %}
+            {{ dict(current.items() | rejectattr('0', 'eq', trigger.event.data.key)) }}
+          {% endif %}
