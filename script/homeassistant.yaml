@@ -130,6 +130,21 @@ initialize_global_variables:
         key: single_day_notification_tags
         value: ['account_balance', 'astronomy_friendly', 'dryer_done', 'next_canes_game', 'next_flyers_game', 'washer_done']
 
+# This allows us to remove unused/obsolete global variables without changing YAML, by using the Actions tab on the Tools panel.
+remove_global_variable:
+  alias: Remove Global Variable
+  
+  fields:
+    variable:
+      description: The name of the variable to be removed.
+      selector:
+        text:
+  
+  sequence:
+    - event: remove_variable
+      event_data:
+        key: "{{ variable }}"
+
 #========================#
 #     Mini ToDo List     #
 #========================#
