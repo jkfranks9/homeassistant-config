@@ -398,6 +398,25 @@
         # Backup the sleep data log.
         - action: shell_command.backup_sleep_log
 
+#======================#
+#     Snapshot Log     #
+#======================#
+
+# Occasionally there have been situations where HA restarts without shutting down, for example
+# the host has rebooted for some reason. We lose the previous log file when this happens because
+# the shutdown event doesn't occur. So here we simply take a snapshot of the log file every
+# few minutes, replacing the previous snapshot. At least we'll have a fairly recent log of
+# activity, even if perhaps the cause of the event might not be logged.
+- alias: Take Log Snapshot
+  id: take_log_snapshot
+  
+  triggers:
+    - trigger: time_pattern
+      minutes: '/5'
+  
+  actions:
+    - action: shell_command.snapshot_log
+
 #=========================#
 #     Automations Log     #
 #=========================#
