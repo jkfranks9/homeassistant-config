@@ -60,9 +60,9 @@
         # If sunset has already occurred, turn on some outdoor lights.
         # Also, start a timer to close the garage and turn off the lights after a short period of time.
         - if:
-            - condition: state
-              entity_id: sun.sun
-              state: 'below_horizon'
+            - condition: sun
+              after: sunset
+              before: sunrise
         
           then:
             - action: light.turn_on
