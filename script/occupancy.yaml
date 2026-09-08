@@ -325,12 +325,15 @@ bedtime:
     - action: input_boolean.turn_on
       entity_id: input_boolean.nighttime
     
-    # Initialize the accumulated sleep pause time.
+    # Initialize the sleep pause controls.
     - action: input_number.set_value
       target:
         entity_id: input_number.sleep_pause_total
       data:
         value: 0
+        
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.sleep_pause
 
     # Perform tasks if no studio guests are awake.
     - if:
