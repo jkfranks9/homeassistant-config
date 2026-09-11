@@ -42,7 +42,7 @@ intents:
   ResumeCinema:
     data:
       - sentences:
-          - "resume (theater | cinema)"
+          - "(continue | resume) [the] (theater | cinema | movie | show)"
   
   StartBluray:
     data:
