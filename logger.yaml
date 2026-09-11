@@ -24,6 +24,7 @@ logs:
   homeassistant.components.automation.set_minimum_garage_temperature:                     warning
   homeassistant.components.automation.set_minimum_outdoor_temperature:                    warning
   homeassistant.components.automation.set_washer_operation:                               warning
+  homeassistant.components.automation.take_log_snapshot:                                  warning
 
   # HA scripts
   # NOTE: Keep this in sync with the skip list in the Log Scripts automation.

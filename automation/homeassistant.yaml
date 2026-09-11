@@ -501,7 +501,8 @@
                             'set_theater_dark',
                             'set_theater_dark_delay',
                             'set_theater_dim',
-                            'set_theater_idle'
+                            'set_theater_idle',
+                            'take_log_snapshot'
                            ] %}
         {{ trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
