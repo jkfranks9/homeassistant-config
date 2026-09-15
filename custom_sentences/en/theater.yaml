@@ -67,47 +67,47 @@ intents:
   WatchAmazonPrime:
     data:
       - sentences:
-          - "[watch] Amazon [Prime]"
+          - "[(watch | open | start)] Amazon [Prime]"
   
   WatchAMCPlus:
     data:
       - sentences:
-          - "[watch] AMC [Plus]"
+          - "[(watch | open | start)] (AMC | Amy) [Plus]"
   
   WatchDisneyPlus:
     data:
       - sentences:
-          - "[watch] Disney [Plus]"
+          - "[(watch | open | start)] Disney [Plus]"
   
   WatchHulu:
     data:
       - sentences:
-          - "[watch] Hulu"
+          - "[(watch | open | start)] Hulu"
   
   WatchKodi:
     data:
       - sentences:
-          - "[watch] Kodi"
+          - "[(watch | open | start)] (Kodi | Cody)"
   
   WatchMax:
     data:
       - sentences:
-          - "[watch] (Max | HBO)"
+          - "[(watch | open | start)] (Max | HBO)"
   
   WatchNetflix:
     data:
       - sentences:
-          - "[watch] Netflix"
+          - "[(watch | open | start)] Netflix"
   
   WatchParamountPlus:
     data:
       - sentences:
-          - "[watch] Paramount [Plus]"
+          - "[(watch | open | start)] Paramount [Plus]"
   
   WatchPeacock:
     data:
       - sentences:
-          - "[watch] Peacock"
+          - "[(watch | open | start)] Peacock"
   
   WatchVideos:
     data:
