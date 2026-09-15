@@ -806,6 +806,9 @@
   id: respond_to_mobile_text
   mode: queued
   
+  trace:
+    stored_traces: 25
+  
   # Trigger on any state change to the last notification sensor.
   triggers:
     - trigger: state
