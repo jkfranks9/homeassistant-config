@@ -52,39 +52,39 @@ StartTurntable:
 
 WatchAmazonPrime:
   action:
-    - action: script.watch_amazon_prime
+    - action: script.open_amazon_prime
 
 WatchAMCPlus:
   action:
-    - action: script.watch_amc_plus
+    - action: script.open_amc_plus
 
 WatchDisneyPlus:
   action:
-    - action: script.watch_disney_plus
+    - action: script.open_disney_plus
 
 WatchHulu:
   action:
-    - action: script.watch_hulu
+    - action: script.open_hulu
 
 WatchKodi:
   action:
-    - action: script.watch_kodi
+    - action: script.open_kodi
 
 WatchMax:
   action:
-    - action: script.watch_max
+    - action: script.open_max
 
 WatchNetflix:
   action:
-    - action: script.watch_netflix
+    - action: script.open_netflix
 
 WatchParamountPlus:
   action:
-    - action: script.watch_paramount_plus
+    - action: script.open_paramount_plus
 
 WatchPeacock:
   action:
-    - action: script.watch_peacock
+    - action: script.open_peacock
 
 WatchVideos:
   action:

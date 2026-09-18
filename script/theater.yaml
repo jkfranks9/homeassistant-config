@@ -415,85 +415,93 @@ start_turntable:
 #=================================#
 
 # Amazon Prime
-watch_amazon_prime:
-  alias: Watch Amazon Prime
+open_amazon_prime:
+  alias: Open Amazon Prime
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Amazon Prime
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: "{{ states('input_text.shield_deep_link_amazon_prime') }}"
+        type: deep_link
 
 # AMC Plus
-watch_amc_plus:
-  alias: Watch AMC Plus
+open_amc_plus:
+  alias: Open AMC Plus
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: AMC+
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: AMC+
+        type: simple_name
 
 # Disney Plus
-watch_disney_plus:
-  alias: Watch Disney Plus
+open_disney_plus:
+  alias: Open Disney Plus
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Disney+
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: "{{ states('input_text.shield_deep_link_disney_plus') }}"
+        type: deep_link
 
 # Hulu
-watch_hulu:
-  alias: Watch Hulu
+open_hulu:
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Hulu
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: Hulu
+        type: simple_name
 
 # Kodi
-watch_kodi:
-  alias: Watch Kodi
+open_kodi:
+  alias: Open Kodi
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Kodi
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: Kodi
+        type: simple_name
 
 # Max
-watch_max:
-  alias: Watch Max
+open_max:
+  alias: Open Max
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: HBO Max
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: "{{ states('input_text.shield_deep_link_hbo_max') }}"
+        type: deep_link
 
 # Netflix
-watch_netflix:
-  alias: Watch Netflix
+open_netflix:
+  alias: Open Netflix
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Netflix
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: "{{ states('input_text.shield_deep_link_netflix') }}"
+        type: deep_link
 
 # Paramount Plus
-watch_paramount_plus:
-  alias: Watch Paramount Plus
+open_paramount_plus:
+  alias: Open Paramount Plus
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Paramount+
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: "{{ states('input_text.shield_deep_link_paramount_plus') }}"
+        type: deep_link
 
 # Peacock
-watch_peacock:
-  alias: Watch Peacock
+open_peacock:
+  alias: Open Peacock
   
-  use_blueprint:
-    path: theater/watch_shield_tv_app.yaml
-    input:
-      appl_name: Peacock
+  sequence:
+    - action: script.watch_shield_tv_app
+      data:
+        app_identifier: "{{ states('input_text.shield_deep_link_peacock') }}"
+        type: deep_link
 
 #=======================#
 #     Cinema Close      #
@@ -1357,7 +1365,7 @@ get_all_kodi_videos:
                     - "{{ retry_count >= max_retries }}"
                   
                   then:
-                    - stop: "{{{ 'Kodi call failed ' ~ retry_count ~ ' times' }}"
+                    - stop: "{{ 'Kodi call failed ' ~ retry_count ~ ' times' }}"
                       response_variable: result
                 
                 # Bump the retry count.
@@ -1842,3 +1850,298 @@ process_all_kodi_movies_result:
     - action: media_player.turn_off
       data:
         entity_id: media_player.shield_tv
+
+#==============================#
+#     Shield App Utilities     #
+#==============================#
+
+# Shield TV apps are launched in one of two ways. This is because Google removed the ability to launch
+# using the application ID.
+#
+# 1) If the app supports deep links, and we know the deep link value, we can directly launch the app.
+# 2) Otherwise, we can use the installer to install the app (using an installer deep link based on a simple name).
+#    Since the app is already installed that results in the installer providing a convenient, highlighted 'Open' 
+#    button that can then be selected to open the app.
+
+# Top level script for launching a Shield app.
+watch_shield_tv_app:
+  alias: Watch Shield TV App
+  
+  fields:
+    app_identifier:
+      description: The target app identifier, qualified by the input type.
+    
+    type:
+      description: The type of the app identifier.
+      selector:
+        select:
+          options:
+            - deep_link
+            - simple_name
+  
+  sequence:
+  
+    # Activate Shield TV streaming in the cinema.
+    # NOTE: We always specify need_kodi false here, even if the input application is Kodi. That's because Activate Cinema
+    # calls Activate Kodi, which in addition to starting Kodi on the Shield TV, ensures that we can send commands to Kodi
+    # and receive results. When we're just starting Kodi for no specific reason, we don't need or want that to happen.
+    - action: script.activate_cinema
+      data:
+        activity: Enable Streaming
+        need_kodi: false
+        
+    # Stop if cinema usage is denied.
+    - if:
+        - condition: state
+          entity_id: input_boolean.cinema_usage_allowed
+          state: 'off'
+          
+      then:
+        - stop: "Cinema usage is denied."
+        
+    # After a short delay, bring up the target application on the Shield TV.
+    - delay: '00:00:02'
+    
+    - if:
+        - "{{ type == 'deep_link' }}"
+      
+      then:
+        - action: script.launch_shield_app_via_deep_link
+          data:
+            deep_link: "{{ app_identifier }}"
+      
+      else:
+        - action: script.launch_shield_app_via_installer
+          data:
+            simple_name: "{{ app_identifier }}"
+      
+    # Now switch the receiver to the proper input so the application can be viewed on screen.
+    - action: remote.send_command
+      entity_id: remote.harmony_hub
+      data:
+        command: 'InputCbl/Sat'
+        device: Marantz Receiver
+    
+    # Some apps open directly to the main menu. Other apps have a user profile, and/or have an additional
+    # screen before actually opening. Navigate through the maze so we're showing the main menu for the app.
+    - action: script.select_shield_app_profile
+      data:
+        app_identifier: "{{ app_identifier }}"
+        type: "{{ type }}"
+      
+# Launch the app directly using a deep link.
+launch_shield_app_via_deep_link:
+  alias: Launch Shield App Via Deep Link
+  
+  fields:
+    deep_link:
+      description: Deep link for the Shield TV app, for example 'https://play.max.com' for HBO.
+  
+  sequence:
+    - action: remote.turn_on
+      target:
+        entity_id: remote.shield_android_tv
+      data:
+        activity: "{{ deep_link }}"
+
+# Lauch the app indirectly using the installer.
+launch_shield_app_via_installer:
+  alias: Launch Shield App Via Installer
+  
+  fields:
+    simple_name:
+      description: Simple name of the Shield TV app, for example 'Kodi'.
+  
+  sequence:
+    - variables:
+        
+        # Get the app installer details, based on the input name.
+        installer_details: >
+          {% if simple_name == 'AMC+' %}
+            com.amcplus.amcandroidtv
+          {% elif simple_name == 'Hulu' %}
+            com.hulu.livingroomplus
+          {% elif simple_name == 'Kodi' %}
+            org.xbmc.kodi
+          {% endif %}
+    
+    # Bring up the app installer. We expect this to have a highlighted 'Open' button because all the apps we
+    # use are already installed.
+    - action: remote.turn_on
+      target:
+        entity_id: remote.shield_android_tv
+      data:
+        activity: "{{ 'https://play.google.com/store/apps/details?id=' ~ installer_details }}"
+    
+    # Wait for the installer to come up.
+    - wait_template: "{{ state_attr('remote.shield_android_tv', 'current_activity') == 'com.android.vending' }}"
+      timeout:
+        seconds: 10
+    
+    # Whack the button.
+    - action: remote.send_command
+      target:
+        entity_id: remote.shield_android_tv
+      data:
+        command: DPAD_CENTER
+        hold_secs: 0.5
+
+# Navigate through profile selection or extra screens to get to the app main screen.
+select_shield_app_profile:
+  alias: Select Shield App Profile
+  
+  fields:
+    app_identifier:
+      description: The target app identifier, qualified by the input type.
+    
+    type:
+      description: The type of the app identifier.
+      selector:
+        select:
+          options:
+            - deep_link
+            - simple_name
+  
+  sequence:
+  
+    # We want to use simple app names for, uh, simplicity. So map deep links to simple names.
+    - if:
+        - "{{ type == 'deep_link' }}"
+      
+      then:
+        - action: script.map_deep_link_to_usable_name
+          data:
+            deep_link: "{{ app_identifier }}"
+          response_variable: result
+    
+    - variables:
+        
+        simple_name: >
+          {% if type == 'deep_link' %}
+            {{ result.simple_name }}
+          {% else %}
+            {{ app_identifier }}
+          {% endif %}
+          
+        # Some apps open directly to the main menu.
+        # NOTE: Peacock is a problem: it sometimes shows the profile menu but not always. It's listed
+        # here and in the section below in case I ever figure out how to tell the difference. Also,
+        # the final Select command is bypassed because if the profile menu shows up, my profile will
+        # not be the one selected.
+        apps_without_profile_menu: >
+          {% set apps = ['AMC+', 'Kodi', 'Peacock'] %}
+          {{ apps }}
+          
+        # Other apps do have a profile, and/or have an additional screen before actually opening. For such apps, this contains instructions
+        # for how to select my profile:
+        #
+        # - For most apps, my profile should already be selected, but we still need a startup delay.
+        # - Otherwise, we need to know how to get to my profile, by issuing various Shield TV commands.
+        #
+        # - Each entry below contains the following:
+        #   - App name
+        #   - Startup delay, in seconds
+        #   - Command count
+        #   - Delay time after command entered, in milliseconds
+        #   - Shield TV command to use
+        #
+        # NOTE: This will need work if an app requires multiple different commands.
+        apps_profile_select_details: >
+          {% set apps = [
+                         ['Amazon Prime', 5, 1, 5000, 'Select'],
+                         ['Disney+', 7, 0, 0, ''],
+                         ['Hulu', 8, 0, 0, ''],
+                         ['HBO Max', 5, 1, 6000, 'Select'],
+                         ['Netflix', 8, 0, 0, ''],
+                         ['Paramount+', 8, 0, 0, ''],
+                         ['Peacock', 8, 4, 500, 'DirectionRight']
+                        ] %}
+          {{ apps }}
+      
+    # Select my profile for apps with a profile menu.
+    - if:
+        - "{{ simple_name not in apps_without_profile_menu }}"
+        
+      then:
+        - variables:
+            skip_details: >
+              {% set ns = namespace(startup_delay = 10, command_count = 0, post_command_delay = 0, command = '') %}
+              {% for app in apps_profile_select_details %}
+                {% if simple_name == app[0] %}
+                  {% set ns.startup_delay = app[1] %}
+                  {% set ns.command_count = app[2] %}
+                  {% set ns.post_command_delay = app[3] %}
+                  {% set ns.command = app[4] %}
+                {% endif %}
+              {% endfor %}
+              {{ [ns.startup_delay, ns.command_count, ns.post_command_delay, ns.command] }}
+              
+            startup_delay: "{{ skip_details[0] }}"
+            command_count: "{{ skip_details[1] }}"
+            post_command_delay: "{{ skip_details[2] }}"
+            command: "{{ skip_details[3] }}"
+          
+        # Wait for the app to start. I don't know any way to automatically detect this.
+        - delay:
+            seconds: "{{ startup_delay }}"
+        
+        # Issue necessary commands if any exist.
+        - if:
+            - "{{ command_count > 0 }}"
+            
+          then:
+            - repeat:
+                count: "{{ command_count }}"
+                
+                sequence:
+                  - action: remote.send_command
+                    entity_id: remote.harmony_hub
+                    data:
+                      command: "{{ command }}"
+                      device: NVIDIA Shield TV
+                  
+                  - delay:
+                      milliseconds: "{{ post_command_delay }}"
+          
+        # Hopefully, my profile is the one selected, so whack the select key. As noted above, bypass this for
+        # Peacock.
+        - if:
+            - "{{ simple_name != 'Peacock' }}"
+          
+          then:        
+            - action: remote.send_command
+              entity_id: remote.harmony_hub
+              data:
+                command: 'Select'
+                device: NVIDIA Shield TV
+
+# Map a deep link to a simple name.
+map_deep_link_to_usable_name:
+  alias: Map Deep Link To Usable Name
+  
+  fields:
+    deep_link:
+      description: The deep link to be mapped.
+  
+  sequence:
+    - variables:
+        simple_app_name: >
+          {% if deep_link == states('input_text.shield_deep_link_amazon_prime') %}
+            Amazon Prime
+          {% elif deep_link == states('input_text.shield_deep_link_disney_plus') %}
+            Disney+
+          {% elif deep_link == states('input_text.shield_deep_link_hbo_max') %}
+            HBO Max
+          {% elif deep_link == states('input_text.shield_deep_link_netflix') %}
+            Netflix
+          {% elif deep_link == states('input_text.shield_deep_link_paramount_plus') %}
+            Paramount+
+          {% elif deep_link == states('input_text.shield_deep_link_peacock') %}
+            Peacock
+          {% endif %}
+        
+        # Response variable.
+        result: "{{ {'simple_name': simple_app_name} }}"
+        
+    - stop: 'Returning simple app name'
+      response_variable: result
