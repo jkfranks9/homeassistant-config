@@ -71,3 +71,18 @@ ReportHouseStatus:
     - action: script.voice_report_house_status
       data:
         caller: nabu
+
+# Tower fans ...
+TowerFanOn:
+  action:
+    - action: script.voice_operate_tower_fan
+      data:
+        caller: nabu
+        operation: 'on'
+
+TowerFanOff:
+  action:
+    - action: script.voice_operate_tower_fan
+      data:
+        caller: nabu
+        operation: 'off'

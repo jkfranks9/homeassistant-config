@@ -32,6 +32,12 @@ initialize_global_variables:
         key: fan_rooms
         value: ['family_room', 'office', 'theater']
     
+    # Same as above, but for rooms with tower fans.
+    - event: set_variable
+      event_data:
+        key: tower_fan_rooms
+        value: ['penthouse']
+    
     # Calorie values for simple exercise types.
     - event: set_variable
       event_data:

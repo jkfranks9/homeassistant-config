@@ -67,6 +67,25 @@ alexa_turn_light_off:
         caller: alexa
         operation: 'off'
 
+# Tower fans ...
+alexa_turn_tower_fan_on:
+  alias: Alexa Turn Tower Fan On
+  
+  sequence:
+    - action: script.voice_operate_tower_fan
+      data:
+        caller: alexa
+        operation: 'on'
+
+alexa_turn_tower_fan_off:
+  alias: Alexa Turn Tower Fan Off
+  
+  sequence:
+    - action: script.voice_operate_tower_fan
+      data:
+        caller: alexa
+        operation: 'off'
+
 # Other ...
 alexa_remove_notification:
   alias: Alexa Remove Notification
@@ -231,6 +250,61 @@ voice_operate_light:
               data:
                 operation: "{{ operation }}"
                 profile: normal
+
+#=========================#
+#     Room Tower Fans     #
+#=========================#
+
+# Toggle a tower fan that lives in a room with a voice assistant device. This uses the last set of
+# settings for the fan. We use buttons to choose a new set of settings, not voice control.
+voice_operate_tower_fan:
+  alias: Voice Operate Tower Fan
+  
+  fields:
+    caller:
+      name: Caller
+      description: The family of the voice device that was spoken to.
+      selector:
+        select:
+          options:
+            - alexa
+            - nabu
+    
+    operation:
+      name: Operation
+      description: Whether to turn the tower fan on or off.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+  
+  sequence:
+    
+    # Get the room containing the voice assistant device that was used.
+    - action: script.get_voice_device_data
+      data:
+        caller: "{{ caller }}"
+      response_variable: result
+    
+    - variables:
+        
+        # Extract the room from the response variable.
+        room: "{{ result.room }}"
+        
+        # This defines the rooms with tower fans.
+        tower_fan_rooms: "{{ state_attr('sensor.variables', 'variables').tower_fan_rooms }}"
+    
+    # Silently ignore any rooms we don't know about.
+    - if:
+        - "{{ room in tower_fan_rooms }}"
+      
+      then:
+        
+        # Operate the tower fan.
+        - action: fan.turn_{{ operation }}
+          target:
+            entity_id: "{{ 'fan.' ~ room ~ '_tower_fan' }}"
 
 #===============#
 #     Other     #

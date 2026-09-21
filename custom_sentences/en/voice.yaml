@@ -51,3 +51,15 @@ intents:
     data:
       - sentences:
           - "status report"
+
+  TowerFanOn:
+    data:
+      - sentences:
+          - "[(turn the | turn)] tower fan on"
+          - "turn on [the] tower fan"
+
+  TowerFanOff:
+    data:
+      - sentences:
+          - "[(turn the | turn)] tower fan off"
+          - "turn off [the] tower fan"

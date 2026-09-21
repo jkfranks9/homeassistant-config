@@ -261,6 +261,183 @@ close_hvac_vents:
         - cover.master_bedroom_vent_2
       position: 0
 
+#====================#
+#     Tower Fans     #
+#====================#
+
+set_penthouse_tower_fan_to_fixed_low:
+  alias: Set Penthouse Tower Fan To Fixed Low
+  
+  sequence:
+    - action: script.set_dreo_tower_fan_to_preset
+      data:
+        fan_entity: fan.penthouse_tower_fan
+        mode: fixed
+        speed: low
+
+set_penthouse_tower_fan_to_fixed_medium:
+  alias: Set Penthouse Tower Fan To Fixed Medium
+  
+  sequence:
+    - action: script.set_dreo_tower_fan_to_preset
+      data:
+        fan_entity: fan.penthouse_tower_fan
+        mode: fixed
+        speed: medium
+
+set_penthouse_tower_fan_to_fixed_high:
+  alias: Set Penthouse Tower Fan To Fixed High
+  
+  sequence:
+    - action: script.set_dreo_tower_fan_to_preset
+      data:
+        fan_entity: fan.penthouse_tower_fan
+        mode: fixed
+        speed: high
+
+set_penthouse_tower_fan_to_horizontal_low:
+  alias: Set Penthouse Tower Fan To Horizontal Low
+  
+  sequence:
+    - action: script.set_dreo_tower_fan_to_preset
+      data:
+        fan_entity: fan.penthouse_tower_fan
+        mode: horizontal
+        speed: low
+
+set_penthouse_tower_fan_to_horizontal_medium:
+  alias: Set Penthouse Tower Fan To Horizontal Medium
+  
+  sequence:
+    - action: script.set_dreo_tower_fan_to_preset
+      data:
+        fan_entity: fan.penthouse_tower_fan
+        mode: horizontal
+        speed: medium
+
+set_penthouse_tower_fan_to_horizontal_high:
+  alias: Set Penthouse Tower Fan To Horizontal High
+  
+  sequence:
+    - action: script.set_dreo_tower_fan_to_preset
+      data:
+        fan_entity: fan.penthouse_tower_fan
+        mode: horizontal
+        speed: high
+
+# Turn on a Dreo tower fan using a preset mode. The preset is not integral to the fan, but a collection
+# of values determined by me.
+#
+# NOTE: We have per fan preferences for the values used here, but there are hardcoded defaults in this script
+# in the unlikely event that any of the preference entity states are not valid.
+set_dreo_tower_fan_to_preset:
+  alias: Set Dreo Tower Fan To Preset
+  
+  fields:
+    fan_entity:
+      description: The target tower fan.
+      selector:
+        entity:
+          domain: fan
+    
+    mode:
+      description: The desired fan preset mode.
+      selector:
+        select:
+          options:
+            - fixed
+            - horizontal
+    
+    speed:
+      description: The desired fan preset speed.
+      selector:
+        select:
+          options:
+            - low
+            - medium
+            - high
+    
+  variables:
+      
+    # Fan name. We require all entities we use to have the fan entity name as part of their
+    # own entity name. For example:
+    #
+    # Input fan entity: fan.penthouse_tower_fan
+    # Fan entity containing the horizontal angle: number.penthouse_tower_fan_fan_angle_horizontal
+    # Our configured value for the horizontal angle: input_number.penthouse_tower_fan_horizontal_angle
+    fan_name: "{{ fan_entity.split('.')[1] }}"
+    
+    # Default speed integer, in case the preference entity state is not valid.
+    default_speed_number: "{{ iif(speed == 'low', 3, iif(speed == 'high', 8, 5)) }}"
+      
+    # The speed range of the fans is 1-9, so we need to multiply by 11 to get the proper percentage.
+    speed_percentage: "{{ (states('input_number.' ~ fan_name ~ '_speed_' ~ speed) | int(default_speed_number)) * 11 }}"
+    
+  sequence:
+      
+    # For some reason most of the fan entities we set here are unavailable when the fan is off, so turn it on first.
+    - action: fan.turn_on
+      target:
+        entity_id: "{{ fan_entity }}"
+      
+    # Always use the normal preset mode.
+    - action: fan.set_preset_mode
+      target:
+        entity_id: "{{ fan_entity }}"
+      data:
+        preset_mode: Normal
+      
+    # Set the speed.
+    - action: fan.set_percentage
+      target:
+        entity_id: "{{ fan_entity }}"
+      data:
+        percentage: "{{ speed_percentage }}"
+      
+    # Set the oscillation mode, either fixed or horizontal.
+    - action: select.select_option
+      target:
+        entity_id: "{{ 'select.' ~ fan_name ~ '_oscillation_direction' }}"
+      data:
+        option: "{{ mode | title }}"
+      
+    # We seem to need a short delay.
+    - delay: 1
+    
+    # Set options per the oscillation mode.
+    - choose:
+      - conditions: "{{ mode == 'fixed' }}"
+        
+        # For fixed mode we set the horizontal and vertical angles.
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: "{{ 'number.' ~ fan_name ~ '_fan_angle_horizontal' }}"
+            data:
+              value: "{{ states('input_number.' ~ fan_name ~ '_horizontal_angle') | int(15) }}"
+        
+          - action: number.set_value
+            target:
+              entity_id: "{{ 'number.' ~ fan_name ~ '_fan_angle_vertical' }}"
+            data:
+              value: "{{ states('input_number.' ~ fan_name ~ '_vertical_angle') | int(-10) }}"
+        
+      - conditions: "{{ mode == 'horizontal' }}"
+        
+        # For horizontal mode we set the left and right oscillation range.
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: "{{ 'number.' ~ fan_name ~ '_fan_osc_range_left' }}"
+            data:
+              value: "{{ states('input_number.' ~ fan_name ~ '_osc_range_left') | int(-20) }}"
+        
+          - action: number.set_value
+            target:
+              entity_id: "{{ 'number.' ~ fan_name ~ '_fan_osc_range_right' }}"
+            data:
+              value: "{{ states('input_number.' ~ fan_name ~ '_osc_range_right') | int(20) }}"
+
 #======================#
 #     Ceiling Fans     #
 #======================#
