@@ -545,6 +545,7 @@
 - alias: Save Notifications On Create
   id: save_notifications_on_create  
   mode: queued
+  max: 50
   
   triggers:
     - trigger: persistent_notification
