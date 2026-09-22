@@ -91,6 +91,9 @@ filters:
     - ".*AlexapyTooManyRequestsError.*"
     - ".*Too Many Requests.*"
   
+  custom_components.dreo.light:
+    - "No light entity support for model DR-HPF004S"
+  
   custom_components.epson_projector_link.projector.projector:
     - "_handle_imevent: imevent warning=\"No signal\""
   
