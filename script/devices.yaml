@@ -375,10 +375,14 @@ set_dreo_tower_fan_to_preset:
     
   sequence:
       
-    # For some reason most of the fan entities we set here are unavailable when the fan is off, so turn it on first.
-    - action: fan.turn_on
-      target:
-        entity_id: "{{ fan_entity }}"
+    # For some reason most of the fan entities we set here are unavailable when the fan is off, so make sure it's on first.
+    - if:
+        - "{{ is_state(fan_entity, 'off') }}"
+      
+      then:    
+        - action: fan.turn_on
+          target:
+            entity_id: "{{ fan_entity }}"
       
     # Always use the normal preset mode.
     - action: fan.set_preset_mode
@@ -430,13 +434,13 @@ set_dreo_tower_fan_to_preset:
             target:
               entity_id: "{{ 'number.' ~ fan_name ~ '_fan_osc_range_left' }}"
             data:
-              value: "{{ states('input_number.' ~ fan_name ~ '_osc_range_left') | int(-20) }}"
+              value: "{{ states('input_number.' ~ fan_name ~ '_osc_range_left') | int(-15) }}"
         
           - action: number.set_value
             target:
               entity_id: "{{ 'number.' ~ fan_name ~ '_fan_osc_range_right' }}"
             data:
-              value: "{{ states('input_number.' ~ fan_name ~ '_osc_range_right') | int(20) }}"
+              value: "{{ states('input_number.' ~ fan_name ~ '_osc_range_right') | int(15) }}"
 
 #======================#
 #     Ceiling Fans     #

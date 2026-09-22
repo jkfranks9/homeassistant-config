@@ -2127,7 +2127,7 @@
                 message: "{{ 'Studio 4-way button ' ~ button ~ ', ' ~ action ~ ' press' }}"
                 level: info
 
-# We have a 4-way button for the house that supports single, double, triple and long presses for each button. Handle those here.
+# We have a 4-way button for the main floor that supports single, double, triple and long presses for each button. Handle those here.
 - alias: Handle Main 4 Way Button
   id: handle_main_4_way_button
   
@@ -2300,4 +2300,198 @@
             - action: system_log.write
               data:
                 message: "{{ 'Main 4-way button ' ~ button ~ ', ' ~ action ~ ' press' }}"
+                level: info
+
+# We have a 4-way button for the penthouse that supports single, double, triple and long presses for each button. Handle those here.
+- alias: Handle Penthouse 4 Way Button
+  id: handle_penthouse_4_way_button
+  
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/Penthouse 4 Way Button/action
+  
+  actions:
+    - variables:
+        payload: "{{ trigger.payload }}"
+        action: "{{ payload.split('_')[0] }}"
+        button: "{{ payload.split('_')[-1] }}"
+    
+    # Handle different button actions. Some actions set variables that are acted upon after this choose block.
+    # Others perform specific actions such as calling a script. Unused actions just write a log message.
+    - choose:
+      
+        #----- Button 1 -----#
+        
+        # Single push
+        - conditions: "{{ button == 1 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: fixed
+                speed: low
+      
+        # Double push
+        - conditions: "{{ button == 1 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: fixed
+                speed: medium
+      
+        # Triple push
+        - conditions: "{{ button == 1 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: fixed
+                speed: high
+      
+        # Long push
+        - conditions: "{{ button == 1 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: 'off'
+      
+        #----- Button 2 -----#
+        
+        # Single push
+        - conditions: "{{ button == 2 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: horizontal
+                speed: low
+      
+        # Double push
+        - conditions: "{{ button == 2 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: horizontal
+                speed: medium
+      
+        # Triple push
+        - conditions: "{{ button == 2 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: horizontal
+                speed: high
+      
+        # Long push
+        - conditions: "{{ button == 2 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                domain: fan
+                name: penthouse_tower_fan
+                mode: 'off'
+      
+        #----- Button 3 -----#
+      
+        # Single push
+        - conditions: "{{ button == 3 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Double push
+        - conditions: "{{ button == 3 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Triple push
+        - conditions: "{{ button == 3 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Long push
+        - conditions: "{{ button == 3 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        #----- Button 4 -----#
+      
+        # Single push
+        - conditions: "{{ button == 4 and action == 'single' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Double push
+        - conditions: "{{ button == 4 and action == 'double' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Triple push
+        - conditions: "{{ button == 4 and action == 'triple' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+      
+        # Long push
+        - conditions: "{{ button == 4 and action == 'long' }}"
+        
+          sequence:
+            - variables:
+                operation: log
+    
+    # Implementation for all actions that just set variables above.
+    - choose:
+        
+        # Operate a tower fan.
+        - conditions: "{{ domain == 'fan' }}"
+          
+          sequence:
+            - variables:
+                fan_entity: "{{ domain ~ '.' ~ name }}"
+            
+            - if:
+                - "{{ mode != 'off' }}"
+              
+              then:
+                - action: script.set_dreo_tower_fan_to_preset
+                  data:
+                    fan_entity: "{{ fan_entity }}"
+                    mode: "{{ mode }}"
+                    speed: "{{ speed }}"
+              
+              else:
+                - action: fan.turn_off
+                  target:
+                    entity_id: "{{ fan_entity }}"
+        
+        # Log a message for an unused action.
+        - conditions: "{{ operation == 'log' }}"
+        
+          sequence:
+            - action: system_log.write
+              data:
+                message: "{{ 'Penthouse 4-way button ' ~ button ~ ', ' ~ action ~ ' press' }}"
                 level: info
