@@ -845,3 +845,29 @@
   actions:
     - action: automation.turn_{{ trigger.id }}
       entity_id: automation.run_studio_motion_based_light
+
+#========================#
+#     Tag Reader LED     #
+#========================#
+
+# Sometimes, the tag reader LED gets turned on in bright white mode. Not sure why, but
+# turn it off immediately if so. Actually, the tag reader configuration only uses pure
+# red, green or blue, each of which has an RGB value of 255 only. So we can test for any
+# combination of the RGB codes, and turn off anything that is not 255.
+- alias: Turn Off Tag Reader LED
+  id: 'turn_off_tag_reader_led'
+  
+  triggers:
+    - trigger: template
+      value_template: >
+        {% set color = state_attr('light.tag_reader_led', 'rgb_color') %}
+        {% if not color is none %}
+        {{ (state_attr('light.tag_reader_led', 'rgb_color') | sum) != 255 }}
+        {% else %}
+        false
+        {% endif %}
+  
+  actions:
+    - action: light.turn_off
+      target:
+        entity_id: light.tag_reader_led
