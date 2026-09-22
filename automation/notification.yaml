@@ -1290,15 +1290,28 @@
       data:
         value: 0
 
-# For some notifications, I don't need them anymore once I've gone to sleep.
+# For some notifications, I don't need them anymore at the end of the day.
 - alias: Unregister Single Day Notifications
   id: unregister_single_day_notifications
   
   triggers:
+    
+    # Trigger upon sleeptime (can only happen when I'm home).
     - trigger: state
       entity_id: input_boolean.sleeptime
       from: 'off'
       to: 'on'
+      id: sleepy
+    
+    # Trigger at midnight (used in the condition below to detect an extended away).
+    - trigger: state
+      entity_id: sun.sun
+      attribute: rising
+      from: 'false'
+      to: 'true'
+      id: midnight
+  
+  conditions: "{{ trigger.id == 'sleepy' or is_state('input_boolean.extended_away_mode', 'on') }}"
   
   actions:
     - repeat:
