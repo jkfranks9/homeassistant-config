@@ -291,7 +291,7 @@ sensor:
       unit_of_measurement: kWh
       device_class: energy
       state_class: total_increasing
-      time_unit: d
+      time_unit: h
       integration_method: left
   
   - platform: integration
