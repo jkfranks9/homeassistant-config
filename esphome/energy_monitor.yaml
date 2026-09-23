@@ -143,7 +143,8 @@ sensor:
   - platform: template
     #name: Total Watts
     id: totalWatts
-    lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
+    lambda: return id(ct4Watts).state + id(ct5Watts).state ;
+    #lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
     accuracy_decimals: 1
     unit_of_measurement: W
     device_class: power
@@ -282,8 +283,8 @@ sensor:
 #=============================#
   
   - platform: integration
-    name: Bed & Bath Energy
-    sensor: bed_bath_corrected_power
+    name: Air Handler Energy
+    sensor: ct4Watts
     <<: &energy_dashboard
       filters:
         - multiply: 0.001
@@ -294,29 +295,29 @@ sensor:
       integration_method: left
   
   - platform: integration
-    name: Theater & Hall Energy
-    sensor: theater_hall_corrected_power
-    <<: *energy_dashboard
-  
-  - platform: integration
-    name: Snack Bar Energy
-    sensor: ct3Watts
-    <<: *energy_dashboard
-  
-  - platform: integration
-    name: Air Handler Energy
-    sensor: ct4Watts
-    <<: *energy_dashboard
-  
-  - platform: integration
     name: Utility Rack Energy
-    sensor: utility_rack_corrected_power
+    sensor: ct5Watts
     <<: *energy_dashboard
   
-  - platform: integration
-    name: Utility Misc Energy
-    sensor: utility_misc_corrected_power
-    <<: *energy_dashboard
+  # - platform: integration
+    # name: Bed & Bath Energy
+    # sensor: bed_bath_corrected_power
+    # <<: *energy_dashboard
+  
+  # - platform: integration
+    # name: Theater & Hall Energy
+    # sensor: theater_hall_corrected_power
+    # <<: *energy_dashboard
+  
+  # - platform: integration
+    # name: Snack Bar Energy
+    # sensor: ct3Watts
+    # <<: *energy_dashboard
+  
+  # - platform: integration
+    # name: Utility Misc Energy
+    # sensor: utility_misc_corrected_power
+    # <<: *energy_dashboard
   
   - platform: integration
     name: Total Energy
