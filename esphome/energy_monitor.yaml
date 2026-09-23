@@ -75,7 +75,7 @@ sensor:
       #        filters:
       #          - multiply: 2
       power:
-        name: CT1 Watts
+        #name: CT1 Watts
         id: ct1Watts
       #        filters:
       #          - multiply: 2
@@ -84,14 +84,14 @@ sensor:
     
     phase_b:
       power:
-        name: CT2 Watts
+        #name: CT2 Watts
         id: ct2Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_006_cal}
     
     phase_c:
       power:
-        name: CT3 Watts
+        #name: CT3 Watts
         id: ct3Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
@@ -114,7 +114,7 @@ sensor:
       # This is the upstairs air handler. I currently only have one CT clamp, so am doubling the 
       # values to compensate, as per Circuit Setup instructions.
       power:
-        name: CT4 Watts
+        #name: CT4 Watts
         id: ct4Watts
         filters:
           - multiply: 2
@@ -123,14 +123,14 @@ sensor:
     
     phase_b:
       power:
-        name: CT5 Watts
+        #name: CT5 Watts
         id: ct5Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
     
     phase_c:
       power:
-        name: CT6 Watts
+        #name: CT6 Watts
         id: ct6Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
@@ -141,7 +141,7 @@ sensor:
 
   # Total Watts
   - platform: template
-    name: Total Watts
+    #name: Total Watts
     id: totalWatts
     lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
     accuracy_decimals: 1
@@ -281,44 +281,46 @@ sensor:
 #     HA Energy Dashboard     #
 #=============================#
   
-  - platform: total_daily_energy
+  - platform: integration
     name: Bed & Bath Energy
-    power_id: bed_bath_corrected_power
+    sensor: bed_bath_corrected_power
     <<: &energy_dashboard
       filters:
         - multiply: 0.001
       unit_of_measurement: kWh
       device_class: energy
       state_class: total_increasing
+      time_unit: d
+      integration_method: left
   
-  - platform: total_daily_energy
+  - platform: integration
     name: Theater & Hall Energy
-    power_id: theater_hall_corrected_power
+    sensor: theater_hall_corrected_power
     <<: *energy_dashboard
   
-  - platform: total_daily_energy
+  - platform: integration
     name: Snack Bar Energy
-    power_id: ct3Watts
+    sensor: ct3Watts
     <<: *energy_dashboard
   
-  - platform: total_daily_energy
+  - platform: integration
     name: Air Handler Energy
-    power_id: ct4Watts
+    sensor: ct4Watts
     <<: *energy_dashboard
   
-  - platform: total_daily_energy
+  - platform: integration
     name: Utility Rack Energy
-    power_id: utility_rack_corrected_power
+    sensor: utility_rack_corrected_power
     <<: *energy_dashboard
   
-  - platform: total_daily_energy
+  - platform: integration
     name: Utility Misc Energy
-    power_id: utility_misc_corrected_power
+    sensor: utility_misc_corrected_power
     <<: *energy_dashboard
   
-  - platform: total_daily_energy
+  - platform: integration
     name: Total Energy
-    power_id: totalWatts
+    sensor: totalWatts
     <<: *energy_dashboard
 
 # This is needed for the Home Assistant energy dashboard.
