@@ -229,10 +229,10 @@
     
       entity_id:
         - sensor.ego_battery_charger_energy
-        - sensor.energy_mon_2_bed_bath_energy
-        - sensor.energy_mon_2_snack_bar_energy
-        - sensor.energy_mon_2_theater_hall_energy
-        - sensor.energy_mon_2_utility_misc_energy
+        #- sensor.energy_mon_2_bed_bath_energy
+        #- sensor.energy_mon_2_snack_bar_energy
+        #- sensor.energy_mon_2_theater_hall_energy
+        #- sensor.energy_mon_2_utility_misc_energy
         - sensor.energy_mon_2_utility_rack_energy
         - sensor.office_plug_energy
         - sensor.toro_135_battery_charger_energy
