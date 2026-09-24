@@ -2408,15 +2408,43 @@
         - conditions: "{{ button == 3 and action == 'single' }}"
         
           sequence:
-            - variables:
-                operation: log
+            
+            # The bedroom lamp doubles as a normal light or a night light. This action is to toggle the normal light,
+            # so we need to turn it on (as normal) if it's currently off or if it's currently in night mode. If it's currently
+            # in normal mode, we want to turn it off.
+            - if:
+                - "{{ is_state('light.penthouse_bedroom_lamp', 'off') or state_attr('light.penthouse_bedroom_lamp', 'brightness') | int(0) < 100 }}"
+              
+              then:
+                - action: script.turn_on_penthouse_bedroom_lamp
+                  data:
+                    profile: normal
+              
+              else:
+                - action: light.turn_off
+                  target:
+                    entity_id: light.penthouse_bedroom_lamp
       
         # Double push
         - conditions: "{{ button == 3 and action == 'double' }}"
         
           sequence:
-            - variables:
-                operation: log
+            
+            # The bedroom lamp doubles as a normal light or a night light. This action is to toggle the night light,
+            # so we need to turn it on (as night) if it's currently off or if it's currently in normal mode. If it's currently
+            # in night mode, we want to turn it off.
+            - if:
+                - "{{ is_state('light.penthouse_bedroom_lamp', 'off') or state_attr('light.penthouse_bedroom_lamp', 'brightness') | int(0) > 100 }}"
+              
+              then:
+                - action: script.turn_on_penthouse_bedroom_lamp
+                  data:
+                    profile: night
+              
+              else:
+                - action: light.turn_off
+                  target:
+                    entity_id: light.penthouse_bedroom_lamp
       
         # Triple push
         - conditions: "{{ button == 3 and action == 'triple' }}"

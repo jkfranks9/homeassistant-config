@@ -655,6 +655,48 @@
         profile: "{{ trigger.id }}"
 
 #==========================#
+#     Penthouse Lights     #
+#==========================#
+
+# We have a wall switch in the penthouse bedroom to control the one lamp in the room. This was fine for a dumb bulb, but
+# it's been replaced with a smart bulb, which of course requires constant power. So the lamp has been moved to an always-on
+# outlet. The wall switch now drives this automation to actually control the lamp. See how clever I am?
+#
+# The lamp is also controlled by the penthouse 4-way button.
+- alias: Toggle Penthouse Bedroom Lamp
+  id: toggle_penthouse_bedroom_lamp
+  
+  triggers:
+    - trigger: state
+      entity_id: switch.penthouse_bedroom_lamp_switch
+      to:
+  
+  actions:
+    - variables:
+        operation: "{{ states('switch.penthouse_bedroom_lamp_switch') }}"
+    
+    - action: light.turn_{{ operation }}
+      target:
+        entity_id: light.penthouse_bedroom_lamp
+
+# Converseley, I want to keep the wall switch in sync with the lamp, since the lamp is also controlled by the 4-way button.
+- alias: Sync Penthouse Bedroom Lamp Wall Switch
+  id: sync_penthouse_bedroom_lamp_wall_switch
+  
+  triggers:
+    - trigger: state
+      entity_id: light.penthouse_bedroom_lamp
+      to:
+  
+  actions:
+    - variables:
+        operation: "{{ states('light.penthouse_bedroom_lamp') }}"
+    
+    - action: switch.turn_{{ operation }}
+      target:
+        entity_id: switch.penthouse_bedroom_lamp_switch
+
+#==========================#
 #     Christmas Lights     #
 #==========================#
 

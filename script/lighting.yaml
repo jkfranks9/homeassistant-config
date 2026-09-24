@@ -194,9 +194,13 @@ start_bath_time:
       data:
         entity_id: timer.bath_time
 
-#=========================#
-#     Studio Lighting     #
-#=========================#
+#===============================#
+#     Dual-Purpose Lighting     #
+#===============================#
+
+# We have a few smart bulbs that are used as normal and night lights.
+
+# Studio front window lamp.
 turn_on_studio_front_window_lamp:
   alias: Turn On Studio Front Window Lamp
   
@@ -211,12 +215,38 @@ turn_on_studio_front_window_lamp:
   
   sequence:
     - variables:
-        light_data: "{{ iif(profile == 'normal', {'color_temp_kelvin': 2202, 'brightness_pct': 75}, {'rgb_color': [255, 148, 144], 'brightness_pct': 10}) }}"
+        light_data: "{{ iif(profile == 'normal', {'color_temp_kelvin': 2200, 'brightness_pct': 75}, {'rgb_color': [255, 148, 144], 'brightness_pct': 10}) }}"
     
     - action: light.turn_on
       target:
         entity_id: light.studio_front_window_lamp
       data: "{{ light_data }}"
+
+# Penthouse bedroom lamp.
+turn_on_penthouse_bedroom_lamp:
+  alias: Turn On Penthouse Bedroom Lamp
+  
+  fields:
+    profile:
+      description: The color/brightness profile to use.
+      selector:
+        select:
+          options:
+            - 'normal'
+            - 'night'
+  
+  sequence:
+    - variables:
+        light_data: "{{ iif(profile == 'normal', {'color_temp_kelvin': 3750, 'brightness_pct': 100}, {'rgb_color': [255, 148, 144], 'brightness_pct': 10}) }}"
+    
+    - action: light.turn_on
+      target:
+        entity_id: light.penthouse_bedroom_lamp
+      data: "{{ light_data }}"
+
+#=========================#
+#     Studio Lighting     #
+#=========================#
 
 # Turn the preferred studio lights on or off.
 operate_preferred_studio_lights:
