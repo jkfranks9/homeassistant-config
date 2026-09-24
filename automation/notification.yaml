@@ -410,6 +410,40 @@
       channel: standard
       tag: 'studio_4_way_button_battery'
 
+# Main 4-way button battery is too low.
+- alias: Notify Main 4-way Button Battery Low
+  id: 'notify_main_4_way_button_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.main_4_way_button_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      message: 'Main 4-way button battery needs replacing.'
+      channel: standard
+      tag: 'main_4_way_button_battery'
+
+# Penthouse 4-way button battery is too low.
+- alias: Notify Penthouse 4-way Button Battery Low
+  id: 'notify_penthouse_4_way_button_battery_low'
+  
+  use_blueprint:
+    path: notification/mobile_notify.yaml
+    input:
+      trigger_type: numeric_state_below
+      entity: sensor.penthouse_4_way_button_battery
+      numeric_notify_threshold: 15
+      numeric_clear_threshold: 50
+      enable_clear_trigger: true
+      clear_type: auto
+      message: 'Penthouse 4-way button battery needs replacing.'
+      channel: standard
+      tag: 'penthouse_4_way_button_battery'
+
 # Family room motion sensor 1 battery is too low.
 - alias: Notify Family Room 1 Motion Battery Low
   id: 'notify_family_room_1_motion_battery_low'
