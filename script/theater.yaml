@@ -445,6 +445,7 @@ open_disney_plus:
         type: deep_link
 
 # Hulu
+  alias: Open Hulu
 open_hulu:
   
   sequence:
