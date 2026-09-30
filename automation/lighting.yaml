@@ -686,13 +686,18 @@
   triggers:
     - trigger: state
       entity_id: light.penthouse_bedroom_lamp
-      to:
+      from: 'off'
+      to: 'on'
+      id: 'on'
+  
+    - trigger: state
+      entity_id: light.penthouse_bedroom_lamp
+      from: 'on'
+      to: 'off'
+      id: 'off'
   
   actions:
-    - variables:
-        operation: "{{ states('light.penthouse_bedroom_lamp') }}"
-    
-    - action: switch.turn_{{ operation }}
+    - action: switch.turn_{{ trigger.id }}
       target:
         entity_id: switch.penthouse_bedroom_lamp_switch
 
