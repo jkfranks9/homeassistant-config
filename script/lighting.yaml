@@ -76,8 +76,9 @@ turn_on_lights_per_conditions:
 #     Smart Bulbs     #
 #=====================#
     
-# We have power glitches occasionally, which cause smart bulbs to turn on. Here we attempt to turn them off 
-# if they're not supposed to be on at the moment. This is intended to be called by a voice assistant.
+# We have power glitches occasionally, which cause some smart bulbs to turn on. Here we attempt to turn them off 
+# if they're not supposed to be on at the moment. This is intended to be called by a voice assistant or a 
+# dashboard button.
 reset_smart_bulbs:
   alias: Reset Smart Bulbs
   
@@ -91,12 +92,6 @@ reset_smart_bulbs:
         light_entity: light.office_lamp
         lux_entity: sensor.office_sensor_ambient_light
         lux_value: "{{ states('input_number.office_ambient_max') | int(0) }}"
-
-    - action: script.reset_smart_bulb_lux_sensor
-      data:
-        light_entity: light.family_room_lamp
-        lux_entity: sensor.downstairs_sensor_ambient_light
-        lux_value: "{{ states('input_number.family_room_ambient_max') | int(0) }}"
           
 # Reset a smart bulb based on various sleep/wake modes.
 reset_smart_bulb_nighttime:
