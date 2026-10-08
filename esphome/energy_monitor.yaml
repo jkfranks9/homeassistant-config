@@ -42,9 +42,6 @@ wifi:
   ssid:     !secret wifi_ssid
   password: !secret wifi_password
 
-#web_server:
-#  port: 80
-
 # SPI is needed for the 6 channel energy monitor
 spi:
   clk_pin: 18
@@ -143,148 +140,19 @@ sensor:
   - platform: template
     #name: Total Watts
     id: totalWatts
-    lambda: return id(ct4Watts).state + id(ct5Watts).state ;
-    #lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
+    lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
     accuracy_decimals: 1
     unit_of_measurement: W
     device_class: power
     update_interval: ${update_interval}
 
-  # Some circuits include AV equipment, which I want to track separately from miscellaneous stuff. The AV equipment uses power
-  # monitoring plugs, so we can pull in the plug power from HA and subtract it from the total power on each circuit.
-  #
-  # The same is true for lights and fans (calculated using Powercalc), which are tracked in their own groups.
-
-  # First, pull in power measurements from HA:
-
-  # CT1 includes 5 lights and a fan.
-  - platform: homeassistant
-    name: Penthouse Light Power
-    id: ph_light
-    entity_id: sensor.penthouse_bedroom_ceiling_power
-    <<: &import_power
-      state_class: measurement
-      device_class: power
-      unit_of_measurement: W
-  
-  - platform: homeassistant
-    name: Penthouse Lamp Power
-    id: ph_lamp
-    entity_id: sensor.penthouse_bedroom_lamp_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Penthouse Tub Light Power
-    id: ph_tub
-    entity_id: sensor.penthouse_bath_shower_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Penthouse Vanity Light Power
-    id: ph_vanity
-    entity_id: sensor.penthouse_bath_vanity_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Utility Light Power
-    id: util_light
-    entity_id: sensor.theater_utility_ceiling_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Penthouse Fan Power
-    id: ph_fan
-    entity_id: sensor.penthouse_fan_power
-    <<: *import_power
-
-  # CT2 includes 3 lights, a fan and 2 subwoofers.
-  - platform: homeassistant
-    name: Theater Ceiling Power
-    id: th_ceiling
-    entity_id: sensor.theater_recessed_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Theater Sconces Power
-    id: th_sconces
-    entity_id: sensor.theater_sconces_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Theater Fan Light Power
-    id: th_fan_light
-    entity_id: sensor.theater_fan_light_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Theater Fan Power
-    id: th_fan
-    entity_id: sensor.theater_fan_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Subwoofer Front Power
-    id: sub_front
-    entity_id: sensor.subwoofer_front_power
-    <<: *import_power
-  
-  - platform: homeassistant
-    name: Subwoofer Back Power
-    id: sub_back
-    entity_id: sensor.subwoofer_back_power
-    <<: *import_power
-
-  # CT5 includes the equipment rack, aka theater AV.
-  - platform: homeassistant
-    name: Theater AV Power
-    id: th_av
-    entity_id: sensor.theater_av_current_consumption
-    <<: *import_power
-  
-  # CT6 includes the projector.
-  - platform: homeassistant
-    name: Projector Power
-    id: projector
-    entity_id: sensor.projector_power
-    <<: *import_power
-  
-  # Next, calculate the corrected power for the above circuits:
-  - platform: template
-    name: Bed & Bath Corrected Power
-    id: bed_bath_corrected_power
-    lambda: return id(ct1Watts).state - id(ph_light).state - id(ph_lamp).state - id(ph_tub).state - id(ph_vanity).state - id(util_light).state - id(ph_fan).state;
-    <<: &corrected_power
-      accuracy_decimals: 2
-      unit_of_measurement: W
-      device_class: power
-      update_interval: ${update_interval}
-      internal: true
-  
-  - platform: template
-    name: Theater & Hall Corrected Power
-    id: theater_hall_corrected_power
-    lambda: return id(ct2Watts).state - id(th_ceiling).state - id(th_sconces).state - id(th_fan_light).state - id(th_fan).state - id(sub_front).state - id(sub_back).state;
-    <<: *corrected_power
-  
-  - platform: template
-    name: Utility Rack Corrected Power
-    id: utility_rack_corrected_power
-    lambda: return id(ct5Watts).state - id(th_av).state ;
-    <<: *corrected_power
-  
-  - platform: template
-    name: Utility Misc Corrected Power
-    id: utility_misc_corrected_power
-    lambda: return id(ct6Watts).state - id(projector).state ;
-    <<: *corrected_power
-
-#=============================#
-#     HA Energy Dashboard     #
-#=============================#
+#=================================#
+#     Returned Energy Sensors     #
+#=================================#
   
   - platform: integration
-    name: Air Handler Energy
-    sensor: ct4Watts
+    name: Theater & Hall Energy
+    sensor: ct2Watts
     <<: &energy_dashboard
       filters:
         - multiply: 0.001
@@ -295,29 +163,19 @@ sensor:
       integration_method: left
   
   - platform: integration
-    name: Utility Rack Energy
+    name: Air Handler Energy
+    sensor: ct4Watts
+    <<: *energy_dashboard
+  
+  - platform: integration
+    name: Utility 1 Energy
     sensor: ct5Watts
     <<: *energy_dashboard
   
-  # - platform: integration
-    # name: Bed & Bath Energy
-    # sensor: bed_bath_corrected_power
-    # <<: *energy_dashboard
-  
-  # - platform: integration
-    # name: Theater & Hall Energy
-    # sensor: theater_hall_corrected_power
-    # <<: *energy_dashboard
-  
-  # - platform: integration
-    # name: Snack Bar Energy
-    # sensor: ct3Watts
-    # <<: *energy_dashboard
-  
-  # - platform: integration
-    # name: Utility Misc Energy
-    # sensor: utility_misc_corrected_power
-    # <<: *energy_dashboard
+  - platform: integration
+    name: Utility 2 Energy
+    sensor: ct6Watts
+    <<: *energy_dashboard
   
   - platform: integration
     name: Total Energy
