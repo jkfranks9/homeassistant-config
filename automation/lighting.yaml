@@ -671,6 +671,8 @@
       entity_id: switch.penthouse_bedroom_lamp_switch
       to:
   
+  conditions: "{{ has_value(trigger.entity_id) }}"
+  
   actions:
     - variables:
         operation: "{{ states('switch.penthouse_bedroom_lamp_switch') }}"
