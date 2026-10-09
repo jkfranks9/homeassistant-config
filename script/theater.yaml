@@ -829,8 +829,9 @@ perform_post_open_tasks:
 
 # Set the receiver media player volume. This is called by:
 #
-# 1) The Initialize <app/device> Volume automations, when using the theater.
-# 2) The Set Application Volume script, if the theater is in use.
+# 1) The Initialize Turn On Volume automation, when the theater is opened.
+# 2) The Initialize <app/device> Volume automations.
+# 3) The Set Application Volume script, if the theater is in use.
 set_receiver_volume:
   alias: Set Receiver Volume
   
@@ -850,6 +851,11 @@ set_receiver_volume:
           max: 0.64
   
   sequence:
+    
+    # Make sure the receiver is on before setting the volume. We don't expect this to time out.
+    - wait_template: "{{ is_state('media_player.marantz_receiver', 'on') }}"
+      timeout:
+        seconds: 10
     
     # Special case: If the target name is 'Initial' make sure the current volume is zero before proceeding. This is
     # because the Marantz receiver turns on muted, but can be set to a valid value by one of the Initialize <app> Volume
