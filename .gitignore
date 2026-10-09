@@ -41,7 +41,7 @@
 
 # Ensure these files are ignored.
 automation/test.yaml
-custom_templates/easy_time.jinja
+esphome/secrets.yaml
 google_calendars.yaml
 ip_bans.yaml
 known_devices.yaml
