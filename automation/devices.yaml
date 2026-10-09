@@ -640,7 +640,7 @@
     input:
       sensor_entity: sensor.harmony_hub
       sensor_off_state: 'PowerOff'
-      temperature_entity: sensor.theater_temperature
+      temperature_entity: sensor.upstairs_temperature
       fan_entity: fan.theater_fan
 
 # Periodically check if the office fan speed needs to be changed.
@@ -705,7 +705,7 @@
     path: devices/handle_ceiling_fan_evaluation_timer_expiration.yaml
     input:
       timer_entity: timer.theater_fan_evaluation
-      temperature_entity: sensor.theater_temperature
+      temperature_entity: sensor.upstairs_temperature
       fan_entity: fan.theater_fan
       automatic_entity: input_boolean.theater_fan_automatic
 
