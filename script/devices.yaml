@@ -627,3 +627,674 @@ turn_off_ceiling_fans:
                   data:
                     entity_id: "{{ repeat.item }}"
                     speed: 0
+
+#=========================#
+#     Generic Buttons     #
+#=========================#
+
+# Process a Sonoff 4-way button press.
+process_4_way_button_actions:
+  alias: Process 4-Way Button Actions
+  
+  fields:
+    device_name:
+      description: The button device name, used to identify the unique processing required.
+      
+    button:
+      description: The button number that was pressed.
+      selector:
+        number:
+          min: 1
+          max: 4
+      
+    action:
+      description: The button action.
+      selector:
+        select:
+          options:
+            - single
+            - double
+            - triple
+            - long
+  
+  sequence:
+    
+    # Process according to the device name. The response variable indicates whether or not the button & action
+    # were recognized and handled. If not, we just log the button press for posterity.
+    - choose:
+        
+      # Main downstairs button.
+      - conditions: "{{ device_name == 'Main 4 Way Button' }}"
+        
+        sequence:
+          - action: script.process_main_4_way_button_actions
+            data:
+              button: "{{ button }}"
+              action: "{{ action }}"
+            response_variable: result
+        
+      # Penthouse button.
+      - conditions: "{{ device_name == 'Penthouse 4 Way Button' }}"
+        
+        sequence:
+          - action: script.process_penthouse_4_way_button_actions
+            data:
+              button: "{{ button }}"
+              action: "{{ action }}"
+            response_variable: result
+        
+      # Studio button.
+      - conditions: "{{ device_name == 'Studio 4 Way Button' }}"
+        
+        sequence:
+          - action: script.process_studio_4_way_button_actions
+            data:
+              button: "{{ button }}"
+              action: "{{ action }}"
+            response_variable: result
+        
+    # Pick up the handled result, and log if it's false.
+    - variables:
+        handled: "{{ result.handled }}"
+    
+    - if:
+        - "{{ handled == false }}"
+      
+      then:
+        - action: system_log.write
+          data:
+            message: "{{ device_name ~ ' ' ~ button ~ ', ' ~ action ~ ' press' }}"
+            level: info
+
+# Process the main downstairs button actions.
+process_main_4_way_button_actions:
+  alias: Process Main 4-Way Button Actions
+  
+  fields:
+    button:
+      description: The button number that was pressed.
+      selector:
+        number:
+          min: 1
+          max: 4
+      
+    action:
+      description: The button action.
+      selector:
+        select:
+          options:
+            - single
+            - double
+            - triple
+            - long
+  
+  sequence:
+    
+    # Assume we're going to handle the input. If not, we set this false in the default clause.
+    - variables:
+        handled: true
+    
+    # Process the input.
+    - choose:
+      
+      #----- Button 1 -----#
+        
+      # Single push
+      - conditions: "{{ button == 1 and action == 'single' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: family_room_fan
+              speed: 33
+      
+      # Double push
+      - conditions: "{{ button == 1 and action == 'double' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: family_room_fan
+              speed: 66
+      
+      # Triple push
+      - conditions: "{{ button == 1 and action == 'triple' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: family_room_fan
+              speed: 99
+      
+      # Long push
+      - conditions: "{{ button == 1 and action == 'long' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: family_room_fan
+              speed: 0
+      
+      #----- Button 2 -----#
+      
+      # Single push
+      - conditions: "{{ button == 2 and action == 'single' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: office_fan
+              speed: 33
+      
+      # Double push
+      - conditions: "{{ button == 2 and action == 'double' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: office_fan
+              speed: 66
+      
+      # Triple push
+      - conditions: "{{ button == 2 and action == 'triple' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: office_fan
+              speed: 99
+      
+      # Long push
+      - conditions: "{{ button == 2 and action == 'long' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: office_fan
+              speed: 0
+        
+      default:
+        - variables:
+            handled: false
+    
+    # Pick up the result.
+    - variables:
+        result: "{{ {'handled': handled} }}"
+    
+    # Perform the required implementation if we recognized the input.
+    - if:
+        - "{{ handled == true }}"
+      
+      then:
+    
+        # Implementation for all actions that just set variables above.
+        - choose:
+            
+          # Operate a ceiling fan.
+          - conditions: "{{ domain == 'fan' }}"
+              
+            sequence:
+              - action: script.set_fan_to_speed
+                data:
+                  entity_id: "{{ domain ~ '.' ~ name }}"
+                  speed: "{{ speed }}"
+        
+    # Return the result.
+    - stop: "Returning result"
+      response_variable: result
+
+# Process the penthouse button actions.
+process_penthouse_4_way_button_actions:
+  alias: Process Penthouse 4-Way Button Actions
+  
+  fields:
+    button:
+      description: The button number that was pressed.
+      selector:
+        number:
+          min: 1
+          max: 4
+      
+    action:
+      description: The button action.
+      selector:
+        select:
+          options:
+            - single
+            - double
+            - triple
+            - long
+  
+  sequence:
+    
+    # Assume we're going to handle the input. If not, we set this false in the default clause.
+    - variables:
+        handled: true
+    
+    # Process the input.
+    - choose:
+      
+      #----- Button 1 -----#
+        
+      # Single push
+      - conditions: "{{ button == 1 and action == 'single' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: fixed
+              speed: low
+      
+      # Double push
+      - conditions: "{{ button == 1 and action == 'double' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: fixed
+              speed: medium
+      
+      # Triple push
+      - conditions: "{{ button == 1 and action == 'triple' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: fixed
+              speed: high
+      
+      # Long push
+      - conditions: "{{ button == 1 and action == 'long' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: 'off'
+      
+      #----- Button 2 -----#
+        
+      # Single push
+      - conditions: "{{ button == 2 and action == 'single' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: horizontal
+              speed: low
+      
+      # Double push
+      - conditions: "{{ button == 2 and action == 'double' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: horizontal
+              speed: medium
+      
+      # Triple push
+      - conditions: "{{ button == 2 and action == 'triple' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: horizontal
+              speed: high
+      
+      # Long push
+      - conditions: "{{ button == 2 and action == 'long' }}"
+        
+        sequence:
+          - variables:
+              domain: fan
+              name: penthouse_tower_fan
+              mode: 'off'
+      
+      #----- Button 3 -----#
+      
+      # Single push
+      - conditions: "{{ button == 3 and action == 'single' }}"
+        
+        sequence:
+            
+          # The bedroom lamp doubles as a normal light or a night light. This action is to toggle the normal light,
+          # so we need to turn it on (as normal) if it's currently off or if it's currently in night mode. If it's currently
+          # in normal mode, we want to turn it off.
+          - if:
+              - "{{ is_state('light.penthouse_bedroom_lamp', 'off') or state_attr('light.penthouse_bedroom_lamp', 'brightness') | int(0) < 100 }}"
+              
+            then:
+              - action: script.turn_on_penthouse_bedroom_lamp
+                data:
+                  profile: normal
+              
+            else:
+              - action: light.turn_off
+                target:
+                  entity_id: light.penthouse_bedroom_lamp
+      
+      # Double push
+      - conditions: "{{ button == 3 and action == 'double' }}"
+        
+        sequence:
+            
+          # The bedroom lamp doubles as a normal light or a night light. This action is to toggle the night light,
+          # so we need to turn it on (as night) if it's currently off or if it's currently in normal mode. If it's currently
+          # in night mode, we want to turn it off.
+          - if:
+              - "{{ is_state('light.penthouse_bedroom_lamp', 'off') or state_attr('light.penthouse_bedroom_lamp', 'brightness') | int(0) > 100 }}"
+              
+            then:
+              - action: script.turn_on_penthouse_bedroom_lamp
+                data:
+                  profile: night
+              
+            else:
+              - action: light.turn_off
+                target:
+                  entity_id: light.penthouse_bedroom_lamp
+        
+      default:
+        - variables:
+            handled: false
+    
+    # Pick up the result.
+    - variables:
+        result: "{{ {'handled': handled} }}"
+    
+    # Perform the required implementation if we recognized the input.
+    - if:
+        - "{{ handled == true }}"
+      
+      then:
+    
+        # Implementation for all actions that just set variables above.
+        - choose:
+        
+          # Operate a tower fan.
+          - conditions: "{{ domain == 'fan' }}"
+              
+            sequence:
+              - variables:
+                  fan_entity: "{{ domain ~ '.' ~ name }}"
+                
+              - if:
+                  - "{{ mode != 'off' }}"
+                  
+                then:
+                  - action: script.set_dreo_tower_fan_to_preset
+                    data:
+                      fan_entity: "{{ fan_entity }}"
+                      mode: "{{ mode }}"
+                      speed: "{{ speed }}"
+                  
+                else:
+                  - action: fan.turn_off
+                    target:
+                      entity_id: "{{ fan_entity }}"
+        
+    # Return the result.
+    - stop: "Returning result"
+      response_variable: result
+
+# Process the studio button actions.
+process_studio_4_way_button_actions:
+  alias: Process Studio 4-Way Button Actions
+  
+  fields:
+    button:
+      description: The button number that was pressed.
+      selector:
+        number:
+          min: 1
+          max: 4
+      
+    action:
+      description: The button action.
+      selector:
+        select:
+          options:
+            - single
+            - double
+            - triple
+            - long
+  
+  sequence:
+    
+    # Assume we're going to handle the input. If not, we set this false in the default clause.
+    - variables:
+        handled: true
+    
+    # Process the input.
+    - choose:
+      
+      #----- Button 1 -----#
+        
+      # Single push
+      - conditions: "{{ button == 1 and action == 'single' }}"
+        
+        sequence:
+          - variables:
+              domain: light
+              name: studio_side_window_lamp
+              operation: toggle
+      
+      # Double push
+      - conditions: "{{ button == 1 and action == 'double' }}"
+        
+        sequence:
+            
+          # The front window lamp doubles as a normal light or a night light. This action is to toggle the normal light,
+          # so we need to turn it on (as normal) if it's currently off or if it's currently in night mode. If it's currently
+          # in normal mode, we want to turn it off.
+          - if:
+              - "{{ is_state('light.studio_front_window_lamp', 'off') or state_attr('light.studio_front_window_lamp', 'brightness') | int(0) < 100 }}"
+              
+            then:
+              - action: script.turn_on_studio_front_window_lamp
+                data:
+                  profile: normal
+              
+            else:
+              - action: light.turn_off
+                target:
+                  entity_id: light.studio_front_window_lamp
+      
+      # Triple push
+      - conditions: "{{ button == 1 and action == 'triple' }}"
+        
+        sequence:
+            
+          # The front window lamp doubles as a normal light or a night light. This action is to toggle the night light,
+          # so we need to turn it on (as night) if it's currently off or if it's currently in normal mode. If it's currently
+          # in night mode, we want to turn it off.
+          - if:
+              - "{{ is_state('light.studio_front_window_lamp', 'off') or state_attr('light.studio_front_window_lamp', 'brightness') | int(0) > 100 }}"
+              
+            then:
+              - action: script.turn_on_studio_front_window_lamp
+                data:
+                  profile: night
+              
+            else:
+              - action: light.turn_off
+                target:
+                  entity_id: light.studio_front_window_lamp
+      
+      # Long push
+      - conditions: "{{ button == 1 and action == 'long' }}"
+        
+        sequence:
+          - variables:
+              domain: light
+              name: studio_hall_ceiling
+              operation: toggle
+      
+      #----- Button 2 -----#
+      
+      # Single push
+      - conditions: "{{ button == 2 and action == 'single' }}"
+        
+        sequence:
+            
+          # Turn on the preferred studio night lights.
+          - action: script.operate_preferred_studio_lights
+            data:
+              operation: 'on'
+              profile: night
+      
+      # Double push
+      - conditions: "{{ button == 2 and action == 'double' }}"
+        
+        sequence:
+            
+          # Turn off the preferred studio night lights.
+          - action: script.operate_preferred_studio_lights
+            data:
+              operation: 'off'
+              profile: night
+      
+      #----- Button 3 -----#
+      
+      # Single push
+      - conditions: "{{ button == 3 and action == 'single' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_normal_lights'
+              option: 'Side Window'
+      
+      # Double push
+      - conditions: "{{ button == 3 and action == 'double' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_normal_lights'
+              option: 'Front Window'
+      
+      # Triple push
+      - conditions: "{{ button == 3 and action == 'triple' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_normal_lights'
+              option: 'Both'
+      
+      # Long push
+      - conditions: "{{ button == 3 and action == 'long' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_normal_lights'
+              option: 'Neither'
+      
+      #----- Button 4 -----#
+      
+      # Single push
+      - conditions: "{{ button == 4 and action == 'single' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_night_lights'
+              option: 'Front Window'
+      
+      # Double push
+      - conditions: "{{ button == 4 and action == 'double' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_night_lights'
+              option: 'Hall Ceiling'
+      
+      # Triple push
+      - conditions: "{{ button == 4 and action == 'triple' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_night_lights'
+              option: 'Both'
+      
+      # Long push
+      - conditions: "{{ button == 4 and action == 'long' }}"
+        
+        sequence:
+          - variables:
+              operation: select_preference
+              pref_entity: 'input_select.preferred_studio_night_lights'
+              option: 'Neither'
+        
+      default:
+        - variables:
+            handled: false
+    
+    # Pick up the result.
+    - variables:
+        result: "{{ {'handled': handled} }}"
+    
+    # Perform the required implementation if we recognized the input.
+    - if:
+        - "{{ handled == true }}"
+      
+      then:
+    
+        # Implementation for all actions that just set variables above.
+        - choose:
+        
+          # Toggle a light. Note that we specify full brightness. The only lights that are toggled here
+          # are the side window lamp (which doesn't support brightness), and the hall ceiling light. For the
+          # latter it makes sense to turn it fully on, because we have a mechanism (button 2 single push) to
+          # operate it as a night light. I don't really like this, but oh well.
+          - conditions: "{{ operation == 'toggle' }}"
+              
+            sequence:
+              - action: light.toggle
+                target:
+                  entity_id: "{{ domain ~ '.' ~ name }}"
+                data:
+                  brightness_pct: 100
+            
+          # Select a lighting preference.
+          - conditions: "{{ operation == 'select_preference' }}"
+            
+            sequence:
+              - variables:
+                  current_state: "{{ states(pref_entity) }}"
+                  msg_subject: "{{ iif('normal' in pref_entity.split('.')[1].split('_'), 'Normal', 'Night') }}"
+                  msg_verbage: "{{ iif(current_state == option, 'already set', 'changed') }}"
+                
+              # No need to change anything if the current option is the one we want.
+              - if:
+                  - "{{ current_state != option }}"
+                  
+                then:
+                  - action: input_select.select_option
+                    target:
+                      entity_id: "{{ pref_entity }}"
+                    data:
+                      option: "{{ option }}"
+                
+              # Tell the user what happened.
+              - action: script.send_notification
+                data:
+                  destination:
+                    - voice_assistant
+                  message: "{{ msg_subject ~ ' light preference ' ~ msg_verbage ~ ' to ' ~ option }}"
+                  room: ['studio']
+                  voice_type: announce
+        
+    # Return the result.
+    - stop: "Returning result"
+      response_variable: result
