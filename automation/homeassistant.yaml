@@ -53,18 +53,6 @@
     - action: input_boolean.turn_off
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
-    
-    # Reload integrations that seem to have startup problems.
-    - delay:
-        seconds: 30
-    
-    # - action: homeassistant.reload_config_entry
-      # target:
-        # entity_id: media_player.office_echo    
-    
-    - action: homeassistant.reload_config_entry
-      target:
-        entity_id: vacuum.ecovacs_deebot
 
 #=====================#
 #     MQTT Chores     #
@@ -1252,8 +1240,8 @@
       
       then:     
         - action: homeassistant.reload_config_entry
-          target:
-            entity_id: sensor.udm_state
+          data:
+            entry_id: 01J4VXSHWK79EW7A8B9G8VBXR4
         
         - action: counter.reset
           target:
@@ -1276,5 +1264,5 @@
   
   actions:    
     - action: homeassistant.reload_config_entry
-      target:
-        entity_id: vacuum.ecovacs_deebot
+      data:
+        entry_id: 01KKYJDRQPPRE5Z0JWQS11SEW1
