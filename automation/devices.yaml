@@ -732,21 +732,6 @@
       target:
         entity_id: "{{ automatic_toggle_entity }}"
 
-# Turn off penthouse fan after a while.
-- alias: Turn Off Penthouse Fan
-  id: turn_off_penthouse_fan
-  
-  triggers:
-    - trigger: state
-      entity_id: switch.penthouse_fan
-      from: 'off'
-      to: 'on'
-      for: '00:40:00'
-  
-  actions:
-    - action: switch.turn_off
-      entity_id: switch.penthouse_fan
-
 #===================#
 #     Treadmill     #
 #===================#

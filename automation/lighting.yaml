@@ -454,7 +454,8 @@
     path: lighting/motion_light_with_fan.yaml
     input:
       motion_entity: binary_sensor.studio_motion_detector_occupancy
-      light_entity: light.studio_bath
+      light_entity:
+        - light.studio_bath
       fan_entity: switch.studio_fan
       no_motion_wait_fan_off: 120
       no_motion_wait_fan_on:  420
@@ -484,7 +485,8 @@
     path: lighting/motion_light_with_fan.yaml
     input:
       motion_entity: binary_sensor.master_bath_motion_detector_occupancy
-      light_entity: light.master_bath_vanity
+      light_entity:
+        - light.master_bath_vanity
       fan_entity: switch.master_bath_fan
       no_motion_wait_fan_off: 300
       no_motion_wait_fan_on:  420
@@ -492,8 +494,26 @@
       lux_entity: sensor.downstairs_sensor_ambient_light
       min_lux_value: "{{ states('input_number.master_suite_ambient_min') | float(0) }}"
 
-- alias: Run Theater Motion Based Light
-  id: run_theater_motion_based_light
+- alias: Run Penthouse Bath Motion Based Light
+  id: 'run_penthouse_bath_motion_based_light'
+  
+  trace:
+    stored_traces: 20
+
+  use_blueprint:
+    path: lighting/motion_light_with_fan.yaml
+    input:
+      motion_entity: binary_sensor.penthouse_bath_motion_sensor_occupancy
+      light_entity:
+        - light.penthouse_bath_vanity
+        - light.penthouse_bath_shower
+      fan_entity: fan.penthouse_fan
+      no_motion_wait_fan_off: 120
+      no_motion_wait_fan_on:  420
+      additional_fan_wait:    300
+
+- alias: Run Utility Motion Based Light
+  id: 'run_utility_motion_based_light'
   
   trace:
     stored_traces: 20
@@ -501,15 +521,10 @@
   use_blueprint:
     path: lighting/motion_light.yaml
     input:
-      motion_entity: binary_sensor.theater_1_motion_sensor_occupancy
+      motion_entity: binary_sensor.utility_motion_sensor_occupancy
       light_target: 
-        entity_id: light.theater_recessed
-      light_data: {'transition': 4, 'brightness_pct': 50}
-      conditions:
-        - condition: state
-          entity_id: input_boolean.theater_open
-          state: 'off'
-      no_motion_wait: 180
+        entity_id: light.theater_utility_ceiling
+      no_motion_wait: 120
 
 #=======================#
 #     Door Sensors      #

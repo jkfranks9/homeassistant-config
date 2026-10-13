@@ -15,8 +15,8 @@ blueprint:
           device_class: motion
     
     light_entity:
-      name: Light Entity
-      description: The target light to be controlled.
+      name: Light Entity List
+      description: The target light(s) to be controlled.
       selector:
         entity:
           domain: light
@@ -26,7 +26,9 @@ blueprint:
       description: The bathroom fan that determines the turn off wait time.
       selector:
         entity:
-          domain: switch
+          domain:
+            - fan
+            - switch
     
     no_motion_wait_fan_off:
       name: Fan Off Delay Time
