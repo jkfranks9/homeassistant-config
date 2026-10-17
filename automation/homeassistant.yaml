@@ -439,7 +439,8 @@
                             'set_minimum_attic_temperature', 
                             'set_minimum_garage_temperature', 
                             'set_minimum_outdoor_temperature',
-                            'set_washer_operation'
+                            'set_washer_operation',
+                            'take_log_snapshot'
                            ] %}
         {{ trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
@@ -489,8 +490,7 @@
                             'set_theater_dark',
                             'set_theater_dark_delay',
                             'set_theater_dim',
-                            'set_theater_idle',
-                            'take_log_snapshot'
+                            'set_theater_idle'
                            ] %}
         {{ trigger.event.data.entity_id.split('.')[1] not in skip_list }}
   
