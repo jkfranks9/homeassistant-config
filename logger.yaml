@@ -121,6 +121,10 @@ filters:
   custom_components.watchman:
     - "Watchman sensors updated"
   
+  denonavr.api:
+    - "Keep alive failed, disconnecting and reconnecting"
+    - "Telnet reconnected"
+  
   homeassistant.bootstrap:
     - "Waiting for integrations to complete setup"
 
