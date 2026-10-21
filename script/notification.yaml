@@ -225,9 +225,9 @@ remove_mobile_notification:
           tag: "{{ tag }}"
     
     # Unregister the tag.
-    - action: script.unregister_mobile_notification
-      data:
-        tag: "{{ tag }}"
+    - event: unregister_mobile_tag
+      event_data:
+        key: "{{ tag }}"
 
 #===================================#
 #     Notification Tag Registry     #
@@ -321,21 +321,6 @@ register_mobile_notification:
             entity_id: input_number.vacuum_problems
           data:
             value: "{{ states('input_number.vacuum_problems') | int(0) + problem }}"
-
-# A tag is unregistered when the notification is cleared by an automation.
-unregister_mobile_notification:
-  alias: Unregister Mobile Notification
-  
-  fields:
-    tag:
-      description: The tag value.
-  
-  sequence:
-    
-    # Remove the tag from the registry.
-    - event: unregister_mobile_tag
-      event_data:
-        key: "{{ tag }}"
 
 # Remove one or more mobile notifications that can only be cleared manually. This is intended to be called using a voice assistant.
 remove_manual_mobile_notification:
