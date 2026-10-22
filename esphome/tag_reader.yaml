@@ -117,13 +117,12 @@ pn532_i2c:
   id: pn532_board
   on_tag:
     then:
+    - delay: 150ms
     - homeassistant.tag_scanned: !lambda |
         if (!tag.has_ndef_message()) {
           return x;
         }
-        auto message = tag.get_ndef_message();
-        auto records = message->get_records();
-        for (auto &record : records) {
+        for (const auto &record : tag.get_ndef_message()->get_records()) {
           std::string payload = record->get_payload();
           size_t pos = payload.find("https://www.home-assistant.io/tag/");
           if (pos != std::string::npos) {
