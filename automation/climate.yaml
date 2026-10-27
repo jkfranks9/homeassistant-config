@@ -200,9 +200,11 @@
 #================================#
 
 # The astronomical condition is whether or not it's worthwhile to head outside for some stargazing.
-
+#
 # We want to calculate the astronomical condition an hour or two before the end of astronomical twilight, so I
 # have time to prepare. Sunset is a reasonable offset.
+#
+# The weather metrics we obtain are input to the Astronomy Friendly binary sensor.
 - alias: Calculate Astronomical Condition
   id: calculate_astronomical_condition
   
@@ -211,6 +213,17 @@
       event: sunset
 
   actions:   
+    
+    # Astroweather is configured for manual refresh only. The only place I use the data is here, so fetch
+    # current data now.
+    - action: astroweather.refresh
+      target:
+        entity_id: weather.astroweather_white_rabbit_gardens
+    
+    # I don't know how long it takes to get new data, but time is not critical here, so use a fairly long delay.
+    - delay:
+        minutes: 1
+    
     - variables:
         
         # The first hour of the target time span is the end of astronomical twilight. The last hour is hardcoded as 11 PM.
