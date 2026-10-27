@@ -628,9 +628,9 @@ turn_off_ceiling_fans:
                     entity_id: "{{ repeat.item }}"
                     speed: 0
 
-#=========================#
-#     Generic Buttons     #
-#=========================#
+#==============================#
+#     Sonoff 4-Way Buttons     #
+#==============================#
 
 # Process a Sonoff 4-way button press.
 process_4_way_button_actions:
@@ -1294,6 +1294,220 @@ process_studio_4_way_button_actions:
                   message: "{{ msg_subject ~ ' light preference ' ~ msg_verbage ~ ' to ' ~ option }}"
                   room: ['studio']
                   voice_type: announce
+        
+    # Return the result.
+    - stop: "Returning result"
+      response_variable: result
+
+#====================================#
+#     Lutron Caseta Pico Remotes     #
+#====================================#
+
+# Process a Lutron Caseta Pico remote button press.
+process_pico_remote_actions:
+  alias: Process Pico Remote Actions
+  
+  fields:
+    device_name:
+      description: The remote device name, used to identify which remote was used.
+      
+    button:
+      description: The button name that was pressed.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+            - 'raise'
+            - 'lower'
+            - 'stop'
+  
+  sequence:
+    
+    # Process according to the device name. The response variable indicates whether or not the button & action
+    # were recognized and handled. If not, we just log the button press for posterity.
+    - choose:
+        
+      # Master bedroom remote.
+      - conditions: "{{ device_name == 'Master Bedroom' }}"
+        
+        sequence:
+          - action: script.process_master_bedroom_pico_remote_actions
+            data:
+              button: "{{ button }}"
+            response_variable: result
+        
+      # Studio bedroom remote.
+      - conditions: "{{ device_name == 'Studio' }}"
+        
+        sequence:
+          - action: script.process_studio_pico_remote_actions
+            data:
+              button: "{{ button }}"
+            response_variable: result
+        
+    # Pick up the handled result, and log if it's false.
+    - variables:
+        handled: "{{ result.handled }}"
+    
+    - if:
+        - "{{ handled == false }}"
+      
+      then:
+        - action: system_log.write
+          data:
+            message: "{{ device_name ~ ' Pico remote button ' ~ button ~ ', press' }}"
+            level: info
+
+# Process the master bedroom button actions.
+process_master_bedroom_pico_remote_actions:
+  alias: Process Master Bedroom Pico Remote Actions
+  
+  fields:
+    device_name:
+      description: The remote device name, used to identify which remote was used.
+      
+    button:
+      description: The button name that was pressed.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+            - 'raise'
+            - 'lower'
+            - 'stop'
+  
+  sequence:
+    
+    # Assume we're going to handle the input. If not, we set this false in the default clause.
+    - variables:
+        handled: true
+    
+    # Process the input.
+    - choose:
+      
+      #----- On button -----#
+        
+      - conditions: "{{ button == 'on' }}"
+        
+        sequence:
+          - variables:
+              domain: light
+              name: master_bedroom_lamp
+              operation: toggle
+      
+      #----- Off button -----#
+      
+      #----- Raise button -----#
+      
+      #----- Lower button -----#
+      
+      #----- Stop button -----#
+        
+      default:
+        - variables:
+            handled: false
+    
+    # Pick up the result.
+    - variables:
+        result: "{{ {'handled': handled} }}"
+    
+    # Perform the required implementation if we recognized the input.
+    - if:
+        - "{{ handled == true }}"
+      
+      then:
+    
+        # Implementation for all actions that just set variables above.
+        - choose:
+        
+          # Toggle a light.
+          - conditions: "{{ operation == 'toggle' }}"
+              
+            sequence:
+              - action: light.toggle
+                target:
+                  entity_id: "{{ domain ~ '.' ~ name }}"
+                # data:
+                  # brightness_pct: 100
+        
+    # Return the result.
+    - stop: "Returning result"
+      response_variable: result
+
+# Process the studio button actions.
+process_studio_pico_remote_actions:
+  alias: Process Studio Pico Remote Actions
+  
+  fields:
+    device_name:
+      description: The remote device name, used to identify which remote was used.
+      
+    button:
+      description: The button name that was pressed.
+      selector:
+        select:
+          options:
+            - 'on'
+            - 'off'
+            - 'raise'
+            - 'lower'
+            - 'stop'
+  
+  sequence:
+    
+    # Assume we're going to handle the input. If not, we set this false in the default clause.
+    - variables:
+        handled: true
+    
+    # Process the input.
+    - choose:
+      
+      #----- On button -----#
+        
+      - conditions: "{{ button == 'dummy' }}"
+        
+        sequence:
+          - variables:
+              domain: light
+              name: master_bedroom_lamp
+              operation: toggle
+      
+      #----- Off button -----#
+      
+      #----- Raise button -----#
+      
+      #----- Lower button -----#
+      
+      #----- Stop button -----#
+        
+      default:
+        - variables:
+            handled: false
+    
+    # Pick up the result.
+    - variables:
+        result: "{{ {'handled': handled} }}"
+    
+    # Perform the required implementation if we recognized the input.
+    - if:
+        - "{{ handled == true }}"
+      
+      then:
+    
+        # Implementation for all actions that just set variables above.
+        - choose:
+        
+          # Toggle a light.
+          - conditions: "{{ operation == 'toggle' }}"
+              
+            sequence:
+              - action: light.toggle
+                target:
+                  entity_id: "{{ domain ~ '.' ~ name }}"
+                # data:
+                  # brightness_pct: 100
         
     # Return the result.
     - stop: "Returning result"

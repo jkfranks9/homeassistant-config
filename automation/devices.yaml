@@ -1780,9 +1780,9 @@
       data:
         timestamp: "{{ as_timestamp(states('sensor.legion_t530_lastboot')) }}"
 
-#=========================#
-#     Generic Buttons     #
-#=========================#
+#=============================#
+#     Aqara Single Button     #
+#=============================#
   
 # We have a laundry room button that supports single, double and long presses. Handle those here.
 - alias: Handle Laundry Room Button Action
@@ -1794,6 +1794,8 @@
   
   actions:
     - variables:
+        
+        # The MQTT payload is the button action.
         action: "{{ trigger.payload }}"
     
     # Handle different button actions.
@@ -1854,7 +1856,12 @@
                   
                   environment(button): indoor ({{ intemp }}°, {{ inhum }} %); outdoor ({{ outtemp }}°, {{ outhum }} %); dryer ({{ drytemp }}°, {{ dryhum }} %)
 
+#==============================#
+#     Sonoff 4-Way Buttons     #
+#==============================#
+
 # We have several Sonoff 4-way buttons for various parts of the house. This is a front end to a script that handles the details.
+# Each button supports single, double, triple and long actions.
 - alias: Handle 4 Way Button Actions
   id: handle_4_way_button_actions
   
@@ -1870,7 +1877,11 @@
   
   actions:
     - variables:
+        
+        # Get the device name from the MQTT topic.
         device_name: "{{ trigger.topic.split('/')[1] }}"
+        
+        # The MQTT payload contains the button number and action.
         payload: "{{ trigger.payload }}"
         action: "{{ payload.split('_')[0] }}"
         button: "{{ payload.split('_')[-1] }}"
@@ -1880,3 +1891,35 @@
         device_name: "{{ device_name }}"
         button: "{{ button }}"
         action: "{{ action }}"
+
+#====================================#
+#     Lutron Caseta Pico Remotes     #
+#====================================#
+
+# We have a few Lutron Caseta Pico remotes for various parts of the house. This is a front end to a script that handles the details.
+# The remotes have 5 buttons, but just a single action for each.
+- alias: Handle Pico Remote Button Actions
+  id: handle_pico_remote_button_actions
+  
+  triggers:
+    
+    # This trigger is generic for all Pico remotes.
+    - trigger: event
+      event_type: lutron_caseta_button_event
+  
+  # We get triggers for both button push and release, so ignore the former to avoid duplication.
+  conditions: "{{ trigger.event.data.action == 'release' }}"
+  
+  actions:
+    - variables:
+        
+        # Get the button name from the event data.
+        button: "{{ trigger.event.data.button_type }}"
+        
+        # Get the area assigned to the button. This is how we identify the device used.
+        area: "{{ trigger.event.data.area_name }}"
+    
+    - action: script.process_pico_remote_actions
+      data:
+        device_name: "{{ area }}"
+        button: "{{ button }}"
