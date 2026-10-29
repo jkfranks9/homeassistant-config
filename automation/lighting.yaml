@@ -609,7 +609,7 @@
     
     # Trigger when the ambient light level is low, but only in the evening.
     - trigger: template
-      value_template: "{{ is_state_attr('sun.sun', 'rising', false) and is_state('binary_sensor.studio_arrival_darkness', 'on') }}"
+      value_template: "{{ is_state_attr('sun.sun', 'rising', false) and is_state('binary_sensor.studio_dark', 'on') }}"
     
     - trigger: homeassistant
       event: start
@@ -628,7 +628,7 @@
       state: 'off'
     
     - condition: template
-      value_template: "{{ is_state_attr('sun.sun', 'rising', false) and is_state('binary_sensor.studio_arrival_darkness', 'on') }}"
+      value_template: "{{ is_state_attr('sun.sun', 'rising', false) and is_state('binary_sensor.studio_dark', 'on') }}"
     
   actions:
     - delay: 

@@ -423,7 +423,50 @@ sleeptime:
     
     # Wait until all devices are charging. The Jon Devices Charging binary sensor uses delay_on for a short time so as not to 
     # respond to glitches. However, if this wait doesn't complete fairly quickly, something is wrong with the charging mechanism.
+    # We use a timeout that's 10 seconds longer than the delay time in the binary sensor, so coordinate.
     - wait_template: "{{ is_state('binary_sensor.jon_devices_charging', 'on') }}"
+      timeout: 40
+    
+    # Interrogate the situation.
+    - if:
+        - "{{ not wait.completed }}"
+      
+      then:
+        
+        # Temporarily disable DND.
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.master_bedroom_do_not_disturb
+        
+        # Ask the user to check if all devices are charging.
+        - action: script.ask_user_question
+          data:
+            question: 'Are all devices charging?'
+            room: master_bedroom
+          response_variable: result
+        
+        - variables:
+            
+            # Extract the answer from the response variable.
+            devices_charging: "{{ result.answer }}"
+        
+        # Announce a negative result.
+        - if:
+            - "{{ not devices_charging }}"
+          
+          then:
+            - action: script.send_notification
+              data:
+                destination:
+                  - voice_assistant
+                message: "OK, sounds like a you problem. Continuing."
+                room: ['master_bedroom']
+                voice_type: announce
+            
+        # Enable DND.
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.master_bedroom_do_not_disturb
         
     # Turn off the master suite lights.
     - action: light.turn_off
@@ -625,7 +668,7 @@ modify_master_suite:
         # Dim the master bedroom nabu screen.
         - action: light.turn_on
           target:
-            entity_id: light.master_bedroom_nabu_screen
+            entity_id: light.penthouse_nabu_screen
           data:
             brightness_pct: 3
                     
@@ -660,7 +703,7 @@ modify_master_suite:
         # Brighten the master bedroom nabu screen.
         - action: light.turn_on
           target:
-            entity_id: light.master_bedroom_nabu_screen
+            entity_id: light.penthouse_nabu_screen
           data:
             brightness_pct: 50
 
@@ -690,7 +733,7 @@ modify_studio:
             # Turn on the preferred lamp(s) if it's dark.
             - if:
                 - condition: state
-                  entity_id: binary_sensor.studio_arrival_darkness
+                  entity_id: binary_sensor.studio_dark
                   state: 'on'
               
               then:

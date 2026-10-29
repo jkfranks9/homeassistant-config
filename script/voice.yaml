@@ -379,22 +379,17 @@ bedtime_front_end:
             # Extract the room from the response variable.
             room: "{{ result.room }}"
         
-        # Set up the question.
-        - action: input_text.set_value
-          target:
-            entity_id: input_text.ask_question
+        # Ask the user if any studio guests are awake.
+        - action: script.ask_user_question
           data:
-            value: 'Are studio guests still awake?'
+            question: 'Are studio guests still awake?'
+            room: "{{ room }}"
+          response_variable: result
         
-        # Ask the question.
-        - action: script.ask_question
-          data:
-            voice_assistant: assist_satellite.{{ room }}_nabu_assist_satellite
-            preannounce: true
-        
-        # Pick up the result.
         - variables:
-            studio_guests_awake: "{{ iif(is_state('input_boolean.ask_question', 'on'), true, false) }}"
+            
+            # Extract the answer from the response variable.
+            studio_guests_awake: "{{ result.answer }}"
     
     # Call the bedtime script with the result.
     - action: script.Bedtime
@@ -460,6 +455,50 @@ voice_report_house_status:
 #=======================#
 #     Conversations     #
 #=======================#
+
+ask_user_question:
+  alias: Ask User Question
+  
+  fields:
+    question:
+      name: Question
+      description: The question to be asked of the user, which requires an affirmative or negative reply.
+      selector:
+        text:
+    
+    room:
+      name: Room
+      description: The room containing the voice assistant device to be used.
+      selector:
+        select:
+          options:
+            - family_room
+            - master_bedroom
+            - office
+            - studio
+            - theater
+  
+  sequence:
+        
+    # Set up the question.
+    - action: input_text.set_value
+      target:
+        entity_id: input_text.ask_question
+      data:
+        value: "{{ question }}"
+    
+    # Ask the question using the blueprint (not one that I own).
+    - action: script.ask_question
+      data:
+        voice_assistant: assist_satellite.{{ room }}_nabu_assist_satellite
+        preannounce: true
+    
+    # Return the result.
+    - variables:
+        data: "{{ {'answer': iif(is_state('input_boolean.ask_question', 'on'), true, false)} }}"  
+        
+    - stop: "Returning answer"
+      response_variable: data
 
 # Generic script to ask a question. The question is supplied in a text, and the response is provided in a toggle. One retry is allowed.
 ask_question:
