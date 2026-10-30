@@ -55,7 +55,7 @@
           {{ var.keys }}
 
     # This sensor contains all mobile notifications that can only be cleared manually. It is intended to be used by
-    # the Remove Manual Mobile Notification script, which in turn is intended to be called by an Alexa routine.
+    # the Remove Manual Mobile Notification script, which in turn is intended to be called by a voice assistant.
     - name: Mobile Tag Registry Manual Clear
       unique_id: mobile_tag_registry_manual_clear
       state: "{{ this.attributes.tags | length }}"
@@ -77,23 +77,6 @@
     #-----------------------------------#
     #   -- Voice Assistant Devices --   #
     #-----------------------------------#
-    
-    # List of all rooms containing an Amazon echo device.
-    - name: Voice Echo Rooms
-      unique_id: voice_echo_rooms
-      state: "{{ this.attributes.rooms | length }}"
-      
-      attributes:
-        rooms: >
-          {% set var = namespace(list = []) %}
-          {% for state in states.media_player %}
-            {% set entity = state.entity_id %}
-            {% if '_echo' in entity and '_with_' not in entity %}
-              {% set var.list = var.list + [entity.split('.')[1].replace('_echo', '')] %}
-            {% endif %}
-          {% endfor %}
-          
-          {{ var.list | sort }}
     
     # List of all rooms containing a Home Assistant (nabu) device.
     - name: Voice Nabu Rooms

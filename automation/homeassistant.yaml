@@ -179,25 +179,6 @@
       data:
         timestamp: "{{ now().timestamp() }}"
     
-    # Turn on most automations that may have been turned off. This is normally not needed, but some can be left off
-    # if certain automations or scripts do not finish normally.
-    #
-    # Don't touch the few that are turned off most of the time, or for extended periods.
-    - action: automation.turn_on
-      entity_id:
-        - automation.run_studio_motion_based_light
-        - automation.update_last_alexa_device
-    
-    # Some automations that could be off should only be turned back on conditionally.
-    - if:
-        - condition: state
-          entity_id: update.zigbee2mqtt_update
-          state: 'off'
-      
-      then:
-        - action: automation.turn_on
-          entity_id: automation.notify_zigbee_device_unavailable
-    
     # Backup automations and scripts log files.
     - action: shell_command.backup_auto_scripts_log
 
@@ -278,6 +259,20 @@
     - action: input_boolean.turn_off
       target:
         entity_id: input_boolean.salt_system_low_temperature
+    
+    # Reset any automations that get turned on/off by other automations/scripts. If such automations/scripts do not
+    # finish normally we could leave things in a bad state.
+    
+    # The zigbee unavailable device notification is sometimes off to avoid false notifications. Turn it back on if
+    # appropriate.
+    - if:
+        - condition: state
+          entity_id: update.zigbee2mqtt_update
+          state: 'off'
+      
+      then:
+        - action: automation.turn_on
+          entity_id: automation.notify_zigbee_device_unavailable
     
     # Reset the automations that control family room lighting, so that the family room lamp will be
     # used at wakeup time. Control Family Room Light Automations will flip them back to Christmas lights

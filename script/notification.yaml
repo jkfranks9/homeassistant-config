@@ -127,7 +127,7 @@ send_notification:
       description: The tag to use for replacing a notification.
     
     room:
-      description: For the voice assistant destination, a list of one or more rooms containing voice devices, or 'everywhere'.
+      description: For the voice assistant destination, a list of one or more rooms containing voice devices.
     
     speak:
       description: (Optional) How to speak the message, for example using an emotion.
@@ -479,24 +479,15 @@ extract_notification_tag_from_entity:
       response_variable: return_tag
 
 # Send a notification message destined for a voice assistant device to the correct device, for the given room(s).
-# NOTE: The Voice {Nabu | Echo} Rooms sensors contain a list of rooms that contain each type of device.
 send_message_to_room_voice_device:
   alias: Send Message To Room Voice Device
   
   fields:
     message:
       description: The message to be sent.
-    
-    speak:
-      description: How to speak the message, for example using an emotion.
-      selector:
-        select:
-          options:
-            - normal
-            - excited
   
     room:
-      description: A list of one or more rooms containing voice devices, or 'everywhere'.
+      description: A list of one or more rooms containing voice devices.
     
     voice_type:
       description: The type of voice assistant device output.
@@ -507,22 +498,10 @@ send_message_to_room_voice_device:
             - announce
   
   sequence:
-    - variables:
-        
-        # For the special case of the 'everywhere' room, we combine all rooms with an echo or nabu device.
-        room_list: >
-          {% set var = namespace(list = []) %}
-          {% if room[0] == 'everywhere' %}
-            {% set var.list = union(state_attr('sensor.voice_echo_rooms', 'rooms'), state_attr('sensor.voice_nabu_rooms', 'rooms')) | sort %}
-          {% else %}
-            {% set var.list = room %}
-          {% endif %}
-          
-          {{ var.list }}
     
     # Loop through all specified rooms.
     - repeat:
-        for_each: "{{ room_list }}"
+        for_each: "{{ room }}"
       
         sequence:
           - variables:
@@ -535,60 +514,17 @@ send_message_to_room_voice_device:
               - "{{ dnd_state == 'off' }}"
             
             then:
-          
-              # Pick the right type of device.
-              - choose:
+              - variables:
+                  voice_entity: "{{ 'assist_satellite.' ~ repeat.item ~ '_nabu_assist_satellite' }}"
                 
-                # First priority is an HA Assist (Nabu) device.
-                - conditions: "{{ repeat.item in state_attr('sensor.voice_nabu_rooms', 'rooms') }}"
-                
-                  sequence:
-                    - variables:
-                        voice_entity: "{{ 'assist_satellite.' ~ repeat.item ~ '_nabu_assist_satellite' }}"
-                    
-                    - action: script.turn_on
-                      target:
-                        entity_id: script.send_voice_message
-                      data:
-                        variables:
-                          message: "{{ message }}"
-                          voice_entity: "{{ voice_entity }}"
-                          voice_type: "{{ voice_type }}"
-                          family: nabu
-                
-                # Second priority is an Amazon Echo device.
-                - conditions: "{{ repeat.item in state_attr('sensor.voice_echo_rooms', 'rooms') }}"
-                
-                  sequence:
-                    - variables:
-                        voice_entity: "{{ 'media_player.' ~ repeat.item ~ '_echo' }}"
-                        speak_message: >
-                          {% if speak == 'excited' %}
-                          <speak>
-                            <amazon:emotion name="excited" intensity="medium">
-                              {{ message }}
-                            </amazon:emotion>
-                          </speak>
-                          {% else %}
-                            {{ message }}
-                          {% endif %}
-                    
-                    - action: script.turn_on
-                      target:
-                        entity_id: script.send_voice_message
-                      data:
-                        variables:
-                          message: "{{ speak_message }}"
-                          voice_entity: "{{ voice_entity }}"
-                          voice_type: "{{ voice_type }}"
-                          family: echo
-                  
-                # We should never get here.
-                default:
-                  - action: system_log.write
-                    data:
-                      message: "Did not find any voice assistant device for: {{ repeat.item }} ."
-                      level: warning
+              - action: script.turn_on
+                target:
+                  entity_id: script.send_voice_message
+                data:
+                  variables:
+                    message: "{{ message }}"
+                    voice_entity: "{{ voice_entity }}"
+                    voice_type: "{{ voice_type }}"
 
 # I've had problems sending multiple messages to multiple devices. So here we queue all messages.
 # I'm taking a wild quess at the maximum that can be queued, but erring on the side of not missing any.
@@ -612,32 +548,10 @@ send_voice_message:
           options:
             - tts
             - announce
-    
-    family:
-      description: The voice device family.
-      selector:
-        select:
-          options:
-            - nabu
-            - echo
   
   sequence:
-    - choose:
-      - conditions: "{{ family == 'nabu' }}"
-      
-        sequence:
-          - action: assist_satellite.announce
-            target:
-              entity_id: "{{ voice_entity }}"
-            data:
-              message: "{{ message }}"
-      
-      - conditions: "{{ family == 'echo' }}"
-      
-        sequence:
-          - action: notify.alexa_media
-            data:
-              target: "{{ voice_entity }}"
-              data:
-                type: "{{ voice_type }}"
-              message: "{{ message }}"
+    - action: assist_satellite.announce
+      target:
+        entity_id: "{{ voice_entity }}"
+      data:
+        message: "{{ message }}"

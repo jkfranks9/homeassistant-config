@@ -464,10 +464,6 @@
         
         # Total sleep time in fractional hours.
         sleep_total: "{{ ((duration - sleep_pause) / 60) | round(2) }}"
-        
-        # List of echo devices.
-        echo_list: "{{ expand(integration_entities('alexa_media') | select('search', 'media_player')) |
-                       rejectattr('attributes.friendly_name', 'in', ['This Device', 'Everywhere']) | map(attribute = 'entity_id') | list }}"
     
     # Reset the Nighttime and Sleeptime flags.
     - action: input_boolean.turn_off
@@ -493,23 +489,37 @@
     - delay:
         milliseconds: 500
     
-    # Normalize the volume on all echoes in case they were modified yesterday or during the night.
+    # Normalize the volume on all voice assistants in case they were modified yesterday or during the night.
     - variables:
-        volume: 0.5
+        echo_volume: 0.5
+        nabu_volume: 0.75        
     
     - repeat:
-        for_each: "{{ echo_list }}"
+        for_each: "{{ state_attr('sensor.voice_nabu_rooms', 'rooms') }}"
         
         sequence:
-          - if:
-              - "{{ not is_state_attr(repeat.item, 'volume_level', volume) }}"
-            
-            then:
-              - action: media_player.volume_set
-                target:
-                  entity_id: "{{ repeat.item }}"
-                data:
-                  volume_level: "{{ volume }}"
+          - variables:
+              echo_device: "{{ 'media_player.' ~ repeat.item ~ '_echo' }}"
+              nabu_device: "{{ 'media_player.' ~ repeat.item ~ '_nabu_media_player' }}"
+          
+          # Handle echo devices first, then nabu devices, for each room.
+          - repeat:
+              count: 2
+              
+              sequence:
+                - variables:
+                    device: "{{ iif(repeat.first == true, echo_device, nabu_device) }}"
+                    volume: "{{ iif(repeat.first == true, echo_volume, nabu_volume) }}"
+          
+                - if:
+                    - "{{ not is_state_attr(device, 'volume_level', volume) }}"
+                
+                  then:
+                    - action: media_player.volume_set
+                      target:
+                        entity_id: "{{ device }}"
+                      data:
+                        volume_level: "{{ volume }}"
     
     # Set the various notification data.
     - variables:

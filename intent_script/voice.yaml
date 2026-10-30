@@ -11,37 +11,30 @@ Bedtime:
     - action: script.turn_on
       target:
         entity_id: script.bedtime_front_end
-      data:
-        variables:
-          caller: nabu
 
 # Fans ...
 FanHigh:
   action:
     - action: script.voice_modify_fan
       data:
-        caller: nabu
         speed: 'high'
 
 FanLow:
   action:
     - action: script.voice_modify_fan
       data:
-        caller: nabu
         speed: 'low'
 
 FanMedium:
   action:
     - action: script.voice_modify_fan
       data:
-        caller: nabu
         speed: 'medium'
 
 FanOff:
   action:
     - action: script.voice_modify_fan
       data:
-        caller: nabu
         speed: 'off'
 
 # Lights ...
@@ -49,40 +42,32 @@ LightOn:
   action:
     - action: script.voice_operate_light
       data:
-        caller: nabu
         operation: 'on'
 
 LightOff:
   action:
     - action: script.voice_operate_light
       data:
-        caller: nabu
         operation: 'off'
 
 # Other ...
 RemoveNotification:
   action:
     - action: script.voice_mobile_notification
-      data:
-        caller: nabu
 
 ReportHouseStatus:
   action:
     - action: script.voice_report_house_status
-      data:
-        caller: nabu
 
 # Tower fans ...
 TowerFanOn:
   action:
     - action: script.voice_operate_tower_fan
       data:
-        caller: nabu
         operation: 'on'
 
 TowerFanOff:
   action:
     - action: script.voice_operate_tower_fan
       data:
-        caller: nabu
         operation: 'off'

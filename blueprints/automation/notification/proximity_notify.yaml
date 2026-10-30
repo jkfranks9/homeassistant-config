@@ -56,7 +56,7 @@ conditions:
   # And is traveling towards home.
   - "{{ direction == 'towards' }}"
 
-# Write a log message, and announce using all Alexa media players.
+# Write a log message, and announce using all voice assistants.
 actions:
   - action: system_log.write
     data:
