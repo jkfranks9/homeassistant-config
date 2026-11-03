@@ -860,7 +860,7 @@ modify_penthouse:
             # Turn on the penthouse lamp if it's dark.
             - if:
                 - condition: state
-                  entity_id: binary_sensor.penthouse_arrival_darkness
+                  entity_id: binary_sensor.penthouse_dark
                   state: 'on'
               
               then:
