@@ -853,7 +853,8 @@
       mobile_name: Jon
       trigger_type: template
       template: >
-        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
+        {% if has_value('sensor.next_canes_game') and state_attr('sensor.next_canes_game', 'startTimeUTC') != None and 
+              has_value('sensor.canes_game_status') and state_attr('sensor.canes_game_status', 'tv_networks') | length > 0 %}
           {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), utcnow()) %}
           {% set now =  as_timestamp(utcnow()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600)) <= 13, false) }}
@@ -864,7 +865,7 @@
       title: attention
       message: >
         {% set vars = namespace(tv = '') %}
-        {% if states.sensor.canes_game_status.attributes.tv_networks is defined %}
+        {% if state_attr('sensor.canes_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.canes_game_status', 'tv_networks') %}
             {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
           {% endfor %}
@@ -886,7 +887,8 @@
       mobile_name: Sarah
       trigger_type: template
       template: >
-        {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.startTimeUTC is defined %}
+        {% if has_value('sensor.next_canes_game') and state_attr('sensor.next_canes_game', 'startTimeUTC') != None and 
+              has_value('sensor.canes_game_status') and state_attr('sensor.canes_game_status', 'tv_networks') | length > 0 %}
           {% set next = as_timestamp(state_attr('sensor.next_canes_game', 'startTimeUTC'), utcnow()) %}
           {% set now =  as_timestamp(utcnow()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600)) <= 1, false) }}
@@ -897,7 +899,7 @@
       title: attention
       message: >
         {% set vars = namespace(tv = '') %}
-        {% if states.sensor.canes_game_status.attributes.tv_networks is defined %}
+        {% if state_attr('sensor.canes_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.canes_game_status', 'tv_networks') %}
             {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
           {% endfor %}
@@ -920,7 +922,8 @@
       mobile_name: Jon
       trigger_type: template
       template: >
-        {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.startTimeUTC is defined %}
+        {% if has_value('sensor.next_flyers_game') and state_attr('sensor.next_flyers_game', 'startTimeUTC') != None and 
+              has_value('sensor.flyers_game_status') and state_attr('sensor.flyers_game_status', 'tv_networks') | length > 0 %}
           {% set next = as_timestamp(state_attr('sensor.next_flyers_game', 'startTimeUTC'), utcnow()) %}
           {% set now =  as_timestamp(utcnow()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600)) <= 13, false) }}
@@ -932,7 +935,7 @@
       title: attention
       message: >
         {% set vars = namespace(tv = '') %}
-        {% if states.sensor.flyers_game_status.attributes.tv_networks is defined %}
+        {% if state_attr('sensor.flyers_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.flyers_game_status', 'tv_networks') %}
             {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
           {% endfor %}
@@ -954,7 +957,8 @@
       mobile_name: Sarah
       trigger_type: template
       template: >
-        {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.startTimeUTC is defined %}
+        {% if has_value('sensor.next_flyers_game') and state_attr('sensor.next_flyers_game', 'startTimeUTC') != None and 
+              has_value('sensor.flyers_game_status') and state_attr('sensor.flyers_game_status', 'tv_networks') | length > 0 %}
           {% set next = as_timestamp(state_attr('sensor.next_flyers_game', 'startTimeUTC'), utcnow()) %}
           {% set now =  as_timestamp(utcnow()) %}
           {{ iif((next - now) > 0, (((next - now) / 3600)) <= 1, false) }}
@@ -966,7 +970,7 @@
       title: attention
       message: >
         {% set vars = namespace(tv = '') %}
-        {% if states.sensor.flyers_game_status.attributes.tv_networks is defined %}
+        {% if state_attr('sensor.flyers_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.flyers_game_status', 'tv_networks') %}
             {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
           {% endfor %}
