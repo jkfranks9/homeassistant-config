@@ -88,6 +88,43 @@
         entity_id: climate.upstairs
         fan_min_on_time: "{{ run_time }}"
 
+# Toggle thermostat fan minimum on time for both thermostats, since I don't need the fans running for a portion
+# of every single hour.
+- alias: Toggle Thermostat Fan Run Times
+  id: toggle_thermostat_fan_run_times
+  
+  triggers:
+    - trigger: time_pattern
+      hours: '/4'
+  
+  actions:
+    - variables:
+        
+        # Minimum run time. This takes into account theater usage, as per Control Upstairs Thermostat Fan Run Time.
+        # We also use a toggle to control the on/off cycles.
+        # NOTE: The non-zero time amount should be coordinated with the ecobee system settings, using the app or the thermostat.
+        run_time: >
+          {% set theater_open = iif(is_state('input_boolean.theater_open', 'on'), true, false) %}
+          {% set fan_off = iif(is_state('input_boolean.thermostat_fan_state', 'off'), true, false) %}
+          
+          {{ iif(theater_open or fan_off, 0, 5) }}
+    
+    # Set fan run time for both thermostats.
+    - action: ecobee.set_fan_min_on_time
+      data:
+        entity_id: climate.downstairs
+        fan_min_on_time: "{{ run_time }}"
+    
+    - action: ecobee.set_fan_min_on_time
+      data:
+        entity_id: climate.upstairs
+        fan_min_on_time: "{{ run_time }}"
+    
+    # Flip the switch for the next cycle.
+    - action: input_boolean.toggle
+      target:
+        entity_id: input_boolean.thermostat_fan_state
+
 #============================================#
 #     Temperature High / Low Water Marks     #
 #============================================#
