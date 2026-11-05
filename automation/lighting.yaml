@@ -718,6 +718,114 @@
       target:
         entity_id: switch.penthouse_bedroom_lamp_switch
 
+#=====================#
+#     Smart Bulbs     #
+#=====================#
+
+# Some smart bulbs can be configured for what to do when power is first applied, such as after
+# a power outage or glitch. Normally, I want the bulbs to be off for these events. But for occupied
+# bedrooms during darkness it makes more sense to have them turn on.
+
+# Studio front window lamp.
+- alias: Modify Studio Lamp Power On Behavior
+  id: 'modify_studio_lamp_power_on_behavior'
+  
+  # Any of the triggers could happen almost simultaneously, so we don't want to miss any.
+  mode: queued
+  
+  # Trigger on all of the possible conditions, to cover all potential cases.
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.studio_occupied
+      to:
+  
+    - trigger: state
+      entity_id: binary_sensor.studio_dark
+      to:
+    
+    - trigger: state
+      entity_id: light.studio_front_window_lamp
+      to:
+  
+  actions:
+    
+    # Only set the power state to 'on' for the following conditions:
+    #
+    # 1) The studio is currently occupied.
+    # 2) It's dark.
+    # 3) The lamp is currently on.
+    #
+    # If any of the above become false, set the power state to 'off'.
+    - variables:
+        occupied: "{{ iif(is_state('binary_sensor.studio_occupied', 'on'), true, false) }}"
+        dark: "{{ iif(is_state('binary_sensor.studio_dark', 'on'), true, false) }}"
+        lamp_is_on: "{{ iif(is_state('light.studio_front_window_lamp', 'on'), true, false) }}"
+    
+    - if:
+        - "{{ occupied and dark and lamp_is_on }}"
+      
+      then:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Studio Front Window Lamp/set
+            payload: '{"power_on_behavior": "on"}'
+      
+      else:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Studio Front Window Lamp/set
+            payload: '{"power_on_behavior": "off"}'
+
+# Penthouse lamp.
+- alias: Modify Penthouse Lamp Power On Behavior
+  id: 'modify_penthouse_lamp_power_on_behavior'
+  
+  # Any of the triggers could happen almost simultaneously, so we don't want to miss any.
+  mode: queued
+  
+  # Trigger on all of the possible conditions, to cover all potential cases.
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.penthouse_occupied
+      to:
+  
+    - trigger: state
+      entity_id: binary_sensor.penthouse_dark
+      to:
+    
+    - trigger: state
+      entity_id: light.penthouse_bedroom_lamp
+      to:
+  
+  actions:
+    
+    # Only set the power state to 'on' for the following conditions:
+    #
+    # 1) The penthouse is currently occupied.
+    # 2) It's dark.
+    # 3) The lamp is currently on.
+    #
+    # If any of the above become false, set the power state to 'off'.
+    - variables:
+        occupied: "{{ iif(is_state('binary_sensor.penthouse_occupied', 'on'), true, false) }}"
+        dark: "{{ iif(is_state('binary_sensor.penthouse_dark', 'on'), true, false) }}"
+        lamp_is_on: "{{ iif(is_state('light.penthouse_bedroom_lamp', 'on'), true, false) }}"
+    
+    - if:
+        - "{{ occupied and dark and lamp_is_on }}"
+      
+      then:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Penthouse Bedroom Lamp/set
+            payload: '{"power_on_behavior": "on"}'
+      
+      else:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Penthouse Bedroom Lamp/set
+            payload: '{"power_on_behavior": "off"}'
+
 #==========================#
 #     Christmas Lights     #
 #==========================#
