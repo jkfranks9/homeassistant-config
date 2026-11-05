@@ -801,6 +801,28 @@ perform_post_open_tasks:
             thermostat_entity: climate.upstairs
             preset: 'home'
     
+    # If the Shield TV is needed, make sure it's powered on. For some reason it turns off about 10 seconds
+    # after it turns on. Dunno why, this used to work fine. 
+    - if:
+        - "{{ states('sensor.harmony_hub') in ['Enable Streaming', 'Stream Player'] }}"
+      
+      then:
+      
+        # Wait a few seconds for the Shield to turn off. That might have already happened, in which case the
+        # template is already true.
+        - wait_template: "{{ is_state('media_player.shield_tv_adb', 'off') }}"
+          timeout:
+            seconds: 10
+        
+        # If we timed out, then it appears the Shield never turned off. Otherwise, take action.
+        - if:
+            - "{{ wait.completed == true }}"
+          
+          then:
+            - action: media_player.turn_on
+              target:
+                entity_id: media_player.shield_tv_adb
+    
     # Turn off some downstairs lights after a delay, if appropriate.
     - delay: '00:05:00'
     
@@ -921,7 +943,7 @@ set_application_volume:
     # Also set the live volume if the target app/device is currently in use.
     - if:
         - "{{ states('input_boolean.theater_open') == 'on' and 
-              ('Stream' in activity and state_attr('media_player.shield_android_tv', 'app_name') == target_name) or
+              ('Stream' in activity and state_attr('media_player.shield_tv_android', 'app_name') == target_name) or
               (activity == 'BD Player' or activity == 'LD Player') }}"
       
       then:
@@ -963,7 +985,7 @@ change_theater_volume:
   sequence:
     - variables:
         activity: "{{ states('sensor.harmony_hub') }}"
-        app_name: "{{ iif('Stream' in activity, state_attr('media_player.shield_android_tv', 'app_name') | replace('+', ' Plus') | replace(' ', '_') | lower, 'none') }}"
+        app_name: "{{ iif('Stream' in activity, state_attr('media_player.shield_tv_android', 'app_name') | replace('+', ' Plus') | replace(' ', '_') | lower, 'none') }}"
         volume_entity: >
           {% if 'Stream' in activity %}
             {{ 'input_number.' ~ app_name ~ '_volume' }}
@@ -1735,13 +1757,13 @@ activate_kodi:
     # Turn on the Shield TV if needed so we can host the Kodi application.
     - if:
         - condition: state
-          entity_id: media_player.shield_android_tv
+          entity_id: media_player.shield_tv_android
           state: 'off'
       
       then:    
         - action: media_player.turn_on
           data:
-            entity_id: media_player.shield_android_tv
+            entity_id: media_player.shield_tv_android
         
     # Wait until the Shield media player is on.
     # NOTES:
@@ -1749,7 +1771,7 @@ activate_kodi:
     #    but I don't trust that will always be true.
     # 2) We can't use wait_for_trigger because of timing between the state we want and the associated trigger being initialized.
     - repeat:
-        while: "{{ not is_state('media_player.shield_android_tv', 'on') }}"
+        while: "{{ not is_state('media_player.shield_tv_android', 'on') }}"
         
         sequence:
           - event: unused_event
@@ -1765,7 +1787,7 @@ activate_kodi:
     # Start Kodi on the Shield TV.
     - action: remote.turn_on
       target:
-        entity_id: remote.shield_android_tv
+        entity_id: remote.shield_tv_android
       data:
         activity: Kodi
     
@@ -1856,7 +1878,7 @@ process_all_kodi_movies_result:
     # Turn the Shield TV off again.
     - action: media_player.turn_off
       data:
-        entity_id: media_player.shield_tv
+        entity_id: media_player.shield_tv_adb
 
 #==============================#
 #     Shield App Utilities     #
@@ -1921,6 +1943,11 @@ watch_shield_tv_app:
         - action: script.launch_shield_app_via_installer
           data:
             simple_name: "{{ app_identifier }}"
+    
+    # Make sure the receiver is on before changing the input. We don't expect this to time out.
+    - wait_template: "{{ is_state('media_player.marantz_receiver', 'on') }}"
+      timeout:
+        seconds: 10
       
     # Now switch the receiver to the proper input so the application can be viewed on screen.
     - action: remote.send_command
@@ -1947,7 +1974,7 @@ launch_shield_app_via_deep_link:
   sequence:
     - action: remote.turn_on
       target:
-        entity_id: remote.shield_android_tv
+        entity_id: remote.shield_tv_android
       data:
         activity: "{{ deep_link }}"
 
@@ -1976,19 +2003,19 @@ launch_shield_app_via_installer:
     # use are already installed.
     - action: remote.turn_on
       target:
-        entity_id: remote.shield_android_tv
+        entity_id: remote.shield_tv_android
       data:
         activity: "{{ 'https://play.google.com/store/apps/details?id=' ~ installer_details }}"
     
     # Wait for the installer to come up.
-    - wait_template: "{{ state_attr('remote.shield_android_tv', 'current_activity') == 'com.android.vending' }}"
+    - wait_template: "{{ state_attr('remote.shield_tv_android', 'current_activity') == 'com.android.vending' }}"
       timeout:
         seconds: 10
     
     # Whack the button.
     - action: remote.send_command
       target:
-        entity_id: remote.shield_android_tv
+        entity_id: remote.shield_tv_android
       data:
         command: DPAD_CENTER
         hold_secs: 0.5

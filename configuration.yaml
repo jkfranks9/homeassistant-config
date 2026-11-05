@@ -123,22 +123,22 @@ wake_on_lan:
 
 media_player:
   - platform: universal
-    name: Theater Shield
-    unique_id: theater_shield
+    name: Shield TV Universal
+    unique_id: shield_tv_universal
     device_class: tv
     children:
-      - media_player.shield_android_tv
+      - media_player.shield_tv_android
       - media_player.shield_tv_cast
     browse_media_entity: media_player.shield_tv_cast
     commands:
       turn_off:
         action: media_player.turn_off
         data:
-          entity_id: media_player.shield_android_tv
+          entity_id: media_player.shield_tv_android
       turn_on:
         action: media_player.turn_on
         data:
-          entity_id: media_player.shield_android_tv
+          entity_id: media_player.shield_tv_android
 
 #=================#
 #     Devices     #

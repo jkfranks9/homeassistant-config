@@ -13,18 +13,24 @@
     
     # We have 4 integrations related to the Shield TV box:
     #
-    # 1) Android Debug Bridge (media_player.shield_tv); this represents the physical box.
-    # 3) Universal media player (media_player.theater_shield); this assists with showing the correct information on the dashboard.
-    # 2) Google Cast (media_player.shield_tv_cast); this is a child of the universal media player, used as the media browser for that entity.
-    # 4) Android TV Remote (media_player.shield_android_tv); this makes starting and detecting apps much easier.
+    # 1) Android TV Remote (media_player.shield_tv_android); this is used for controlling power and running apps.
+    # 2) Google Cast (media_player.shield_tv_cast); this is used to display media for the active app.
+    # 3) Universal media player (media_player.shield_tv_universal); this packages the android and cast media players into a single player
+    #    that can be used for both power, control and media display. It is shown on the theater dashboard tab.
+    # 4) Android Debug Bridge (media_player.shield_tv_adb); this is used to communicate directly with ADB running on the Shield.
     #
-    # We need to trigger on the first 2 of these, since the Shield apps seem to behave very differently,
-    # causing some of the entities to switch between 'playing' and 'paused' states, while others remain in 
-    # 'on' (or even 'off') state.
+    # Notes:
+    # 
+    # 1) The android media player shows a state of on or off, while the ADB and universal players can show more descriptive states, 
+    #    such as idle, playing or paused. The state of the cast player is always off.
+    # 2) We use the android and ADB players interchangeably to control power to the device.
+    # 3) We need to trigger on the ADB and universal players here, since the Shield apps seem to behave very differently,
+    #    causing some of the entities to switch between 'playing' and 'paused' states, while others remain in 
+    #    'on' (or even 'off') state.
     - trigger: state
       entity_id:
-        - media_player.shield_tv
-        - media_player.theater_shield
+        - media_player.shield_tv_adb
+        - media_player.shield_tv_universal
       from:
         - 'paused'
         - 'idle'
