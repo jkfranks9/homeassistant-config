@@ -34,7 +34,7 @@ variables:
   prev_unavail_devices: "{{ states(prev_unavail_entity) | int(0) }}"
   
   # Device type.
-  device_type_friendly: "{{ state_attr(input_current_sensor_entity, 'friendly_name').split(' ')[1] }}"
+  device_type_friendly: "{{ entity_name(input_current_sensor_entity).split(' ')[1] }}"
   device_type_lower: "{{ device_type_friendly | lower }}"
   
   # Static titles and IDs.

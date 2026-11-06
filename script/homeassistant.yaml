@@ -79,49 +79,49 @@ initialize_global_variables:
     - event: set_variable
       event_data:
         key: mini_todo_cleaning_times
-        value: { "{{ state_attr('input_datetime.periodic_cleaning_dining_foyer', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45, 
-                 "{{ state_attr('input_datetime.periodic_cleaning_family_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
-                 "{{ state_attr('input_datetime.periodic_cleaning_kitchen', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
-                 "{{ state_attr('input_datetime.periodic_cleaning_laundry_room', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
-                 "{{ state_attr('input_datetime.periodic_cleaning_master_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
-                 "{{ state_attr('input_datetime.periodic_cleaning_master_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 45,
-                 "{{ state_attr('input_datetime.periodic_cleaning_office', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 30,
-                 "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
-                 "{{ state_attr('input_datetime.periodic_cleaning_penthouse_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
-                 "{{ state_attr('input_datetime.periodic_cleaning_snack_bar', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
-                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bath', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 20,
-                 "{{ state_attr('input_datetime.periodic_cleaning_studio_bedroom', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15,
-                 "{{ state_attr('input_datetime.periodic_cleaning_theater', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 25,
-                 "{{ state_attr('input_datetime.periodic_cleaning_utility', 'friendly_name').split('Periodic Cleaning ')[-1] }}": 15
+        value: { "{{ entity_name('input_datetime.periodic_cleaning_dining_foyer').split('Periodic Cleaning ')[-1] }}": 45, 
+                 "{{ entity_name('input_datetime.periodic_cleaning_family_room').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ entity_name('input_datetime.periodic_cleaning_kitchen').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ entity_name('input_datetime.periodic_cleaning_laundry_room').split('Periodic Cleaning ')[-1] }}": 15,
+                 "{{ entity_name('input_datetime.periodic_cleaning_master_bath').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ entity_name('input_datetime.periodic_cleaning_master_bedroom').split('Periodic Cleaning ')[-1] }}": 45,
+                 "{{ entity_name('input_datetime.periodic_cleaning_office').split('Periodic Cleaning ')[-1] }}": 30,
+                 "{{ entity_name('input_datetime.periodic_cleaning_penthouse_bath').split('Periodic Cleaning ')[-1] }}": 15,
+                 "{{ entity_name('input_datetime.periodic_cleaning_penthouse_bedroom').split('Periodic Cleaning ')[-1] }}": 25,
+                 "{{ entity_name('input_datetime.periodic_cleaning_snack_bar').split('Periodic Cleaning ')[-1] }}": 15,
+                 "{{ entity_name('input_datetime.periodic_cleaning_studio_bath').split('Periodic Cleaning ')[-1] }}": 20,
+                 "{{ entity_name('input_datetime.periodic_cleaning_studio_bedroom').split('Periodic Cleaning ')[-1] }}": 15,
+                 "{{ entity_name('input_datetime.periodic_cleaning_theater').split('Periodic Cleaning ')[-1] }}": 25,
+                 "{{ entity_name('input_datetime.periodic_cleaning_utility').split('Periodic Cleaning ')[-1] }}": 15
                }
     
     # Mini todo list periodic yard work time estimates.
     - event: set_variable
       event_data:
         key: mini_todo_yard_work_times
-        value: { "{{ state_attr('input_datetime.periodic_yard_mow_area_1', 'friendly_name').split('Periodic Yard ')[-1] }}": 100,
-                 "{{ state_attr('input_datetime.periodic_yard_mow_area_2', 'friendly_name').split('Periodic Yard ')[-1] }}": 30, 
-                 "{{ state_attr('input_datetime.periodic_yard_spray_area_1', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
-                 "{{ state_attr('input_datetime.periodic_yard_spray_area_2', 'friendly_name').split('Periodic Yard ')[-1] }}": 35,
-                 "{{ state_attr('input_datetime.periodic_yard_spray_area_3', 'friendly_name').split('Periodic Yard ')[-1] }}": 30,
-                 #"{{ state_attr('input_datetime.periodic_yard_spray_area_4', 'friendly_name').split('Periodic Yard ')[-1] }}": 20,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_1', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_2', 'friendly_name').split('Periodic Yard ')[-1] }}": 45,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_3', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_4', 'friendly_name').split('Periodic Yard ')[-1] }}": 120,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_5', 'friendly_name').split('Periodic Yard ')[-1] }}": 50,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_6', 'friendly_name').split('Periodic Yard ')[-1] }}": 40,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_7', 'friendly_name').split('Periodic Yard ')[-1] }}": 20,
-                 "{{ state_attr('input_datetime.periodic_yard_trim_area_8', 'friendly_name').split('Periodic Yard ')[-1] }}": 50
+        value: { "{{ entity_name('input_datetime.periodic_yard_mow_area_1').split('Periodic Yard ')[-1] }}": 100,
+                 "{{ entity_name('input_datetime.periodic_yard_mow_area_2').split('Periodic Yard ')[-1] }}": 30, 
+                 "{{ entity_name('input_datetime.periodic_yard_spray_area_1').split('Periodic Yard ')[-1] }}": 40,
+                 "{{ entity_name('input_datetime.periodic_yard_spray_area_2').split('Periodic Yard ')[-1] }}": 35,
+                 "{{ entity_name('input_datetime.periodic_yard_spray_area_3').split('Periodic Yard ')[-1] }}": 30,
+                 #"{{ entity_name('input_datetime.periodic_yard_spray_area_4').split('Periodic Yard ')[-1] }}": 20,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_1').split('Periodic Yard ')[-1] }}": 50,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_2').split('Periodic Yard ')[-1] }}": 45,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_3').split('Periodic Yard ')[-1] }}": 40,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_4').split('Periodic Yard ')[-1] }}": 120,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_5').split('Periodic Yard ')[-1] }}": 50,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_6').split('Periodic Yard ')[-1] }}": 40,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_7').split('Periodic Yard ')[-1] }}": 20,
+                 "{{ entity_name('input_datetime.periodic_yard_trim_area_8').split('Periodic Yard ')[-1] }}": 50
                }
     
     # Mini todo list periodic other time estimates.
     - event: set_variable
       event_data:
         key: mini_todo_other_times
-        value: { "{{ state_attr('input_datetime.periodic_other_ear_drops', 'friendly_name').split('Periodic Other ')[-1] }}": 10, 
-                 "{{ state_attr('input_datetime.periodic_other_haircut', 'friendly_name').split('Periodic Other ')[-1] }}": 15,
-                 "{{ state_attr('input_datetime.periodic_other_trash', 'friendly_name').split('Periodic Other ')[-1] }}": 40
+        value: { "{{ entity_name('input_datetime.periodic_other_ear_drops').split('Periodic Other ')[-1] }}": 10, 
+                 "{{ entity_name('input_datetime.periodic_other_haircut').split('Periodic Other ')[-1] }}": 15,
+                 "{{ entity_name('input_datetime.periodic_other_trash').split('Periodic Other ')[-1] }}": 40
                }
     
     # Mini todo list special days - treated as free time.
@@ -372,7 +372,7 @@ generate_weekly_periodic_list:
             
             {# Refactor into timestamps & names. #}
             {% set ts = state_attr(date, 'timestamp') %}
-            {% set name = state_attr(date, 'friendly_name') %}
+            {% set name = entity_name(date) %}
             {% set var.list = var.list + [{'day': ts, 'name': name.split(split_text)[-1] | trim}] %}
           {% endfor %}
           
@@ -1067,7 +1067,7 @@ handle_completed_reminder_or_periodic_item:
     - variables:
         normalized_period: "{{ iif(period[-1] != 's', period ~ 's', period) }}"
         domain: "{{ states[entity].domain }}"
-        entity_name: "{{ entity.split('.')[-1] }}"
+        ent_name: "{{ entity.split('.')[-1] }}"
         
         # This is the input to the datetime offset script. For days and weeks offsets it includes just the datetime entity
         # and the amount. But for months offset it also includes a target day. This allows us to set the next interval
@@ -1104,13 +1104,13 @@ handle_completed_reminder_or_periodic_item:
     
     # If the input is a periodic item, remove it from the appropriate weekly sensor if it exists.
     - if:
-        - "{{ iif(entity_name.split('_')[0] == 'periodic', true, false) }}"
+        - "{{ iif(ent_name.split('_')[0] == 'periodic', true, false) }}"
       
       then:
         - variables:
-            name_type: "{{ entity_name.split('_')[1] }}"
+            name_type: "{{ ent_name.split('_')[1] }}"
             type: "{{ iif(name_type == 'yard', 'yard_work', name_type) }}"
-            category: "{{ entity_name.split('_')[2] }}"
+            category: "{{ ent_name.split('_')[2] }}"
             list_entity: "{{ 'sensor.mini_todo_weekly_' ~ type ~ '_list' }}"
             icon_tag: >
               {% if name_type == 'cleaning' %}
@@ -1120,7 +1120,7 @@ handle_completed_reminder_or_periodic_item:
               {% else %}
                 ot:
               {% endif %}
-            item_name: "{{ icon_tag ~ state_attr(entity, 'friendly_name') | replace('Periodic ' ~ name_type | title ~ ' ', '') }}"
+            item_name: "{{ icon_tag ~ entity_name(entity) | replace('Periodic ' ~ name_type | title ~ ' ', '') }}"
         
         # Remove the item from the weekly sensor.
         - if:
@@ -1444,7 +1444,7 @@ log_laundry_event:
             target:
               entity_id: notify.laundry_events
             data:
-              message: "{{ timestamp }} {{ prefix }} {{ message }}: {{ state_attr(entity_id_1, 'friendly_name') }}"
+              message: "{{ timestamp }} {{ prefix }} {{ message }}: {{ entity_name(entity_id_1) }}"
             
       # Should not occur.
       default:
@@ -1491,7 +1491,7 @@ gather_upcoming_reminders:
           {% if num_days > 0 %}
             {% for date in reminder_dates %}
               {% if (start_date + timedelta(days = num_days)) >= as_datetime(states(date)) %}
-                {% set ns.items = ns.items + [ state_attr(date, 'friendly_name') ]  %}
+                {% set ns.items = ns.items + [ entity_name(date) ]  %}
               {% endif %}
             {% endfor %}
           

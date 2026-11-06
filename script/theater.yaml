@@ -930,7 +930,7 @@ set_application_volume:
     # For example Disney Plus is named Disney+. But we can't use '+' in entity IDs, so the application volume number
     # entity is named input_number.disney_plus_volume. In order to check against the Shield TV app name, convert 'Plus' to '+'.
     - variables:
-        target_name: "{{ state_attr(volume_entity, 'friendly_name') | replace('Volume', '') | replace(' Plus', '+') | trim }}"
+        target_name: "{{ entity_name(volume_entity) | replace('Volume', '') | replace(' Plus', '+') | trim }}"
         activity: "{{ states('sensor.harmony_hub') }}"
     
     # Set the app-specific number, so the app will get set to this volume the next time it is opened/used.

@@ -117,7 +117,7 @@
           
             {# --Add a device to the list if the device timestamp is not 0-- #}
             {% if states(timestamp_entity) | int(0) > 0 %}
-              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(timestamp_entity, 'friendly_name')] %}
+              {% set unavail_device_list.list = unavail_device_list.list + [entity_name(timestamp_entity)] %}
             {% endif %}
           {% endfor %}
           
@@ -153,7 +153,7 @@
               
             {# --Add a device to the list if the device entity is unavailable-- #}
             {% if states(device_entity) in ['unknown', 'unavailable'] %}
-              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(device_entity, 'friendly_name')] %}
+              {% set unavail_device_list.list = unavail_device_list.list + [device_name(device_entity)] %}
             {% endif %}
           {% endfor %}
               
@@ -185,7 +185,7 @@
           
             {# --Add a device to the list if the device timestamp is not 0-- #}
             {% if states(timestamp_entity) | int(0) > 0 %}
-              {% set unavail_device_list.list = unavail_device_list.list + [state_attr(timestamp_entity, 'friendly_name')] %}
+              {% set unavail_device_list.list = unavail_device_list.list + [entity_name(timestamp_entity)] %}
             {% endif %}
           {% endfor %}
           

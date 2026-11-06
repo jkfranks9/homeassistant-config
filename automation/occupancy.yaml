@@ -28,7 +28,7 @@
   
   actions:
     - variables:
-        guest: "{{ trigger.to_state.attributes.friendly_name }}"
+        guest: "{{ entity_name(trigger.entity_id) }}"
         suite: "{{ states('input_select.' ~ guest | lower ~ '_guest_suite') }}"
     
     # Special case for Mike: only add if he arrives after 4:00 PM.
@@ -102,7 +102,7 @@
   
   actions:
     - variables:
-        guest: "{{ trigger.to_state.attributes.friendly_name }}"
+        guest: "{{ entity_name(trigger.entity_id) }}"
         suite: "{{ iif(guest in states('input_select.studio_guests'), 'Studio', 'Penthouse') }}"
     
     # Remove the triggering guest from the appropriate suite.

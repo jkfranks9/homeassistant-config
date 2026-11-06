@@ -460,7 +460,7 @@ set_fan_to_speed:
   variables:
     fan_name: "{{ entity_id.split('.')[1] }}"
     automatic_toggle_entity: "{{ 'input_boolean.' ~ fan_name ~ '_automatic' }}"
-    fan_speed_entity: "{{ 'input_number.' ~ (state_attr(entity_id, 'friendly_name') | replace(' ', '_') | lower) ~ '_speed' }}"
+    fan_speed_entity: "{{ 'input_number.' ~ (device_name(entity_id) | replace(' ', '_') | lower) ~ '_speed' }}"
     speed_name: "{{ iif(speed == 0, 'off', iif(speed == 33, 'low', iif(speed == 66, 'medium', iif(speed == 99, 'high', speed)))) }}"
   
   sequence:

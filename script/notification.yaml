@@ -468,7 +468,7 @@ extract_notification_tag_from_entity:
     - variables:
         tag: >
           {% if type == 'delivery' %}
-            {{ state_attr(entity, 'friendly_name') | replace('imap.gmail.com ', '') | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | replace('USPS', 'mail') | lower ~ '_package_delivered' }}
+            {{ entity_name(entity) | replace('Mail ', '') | replace(' Packages', '') | replace(' Delivered', '') | replace('USPS', 'mail') | lower ~ '_package_delivered' }}
           {% else %}
             unknown
           {% endif %}

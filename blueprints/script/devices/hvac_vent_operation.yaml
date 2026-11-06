@@ -31,7 +31,7 @@ sequence:
       
       sequence:
         - variables:
-            vent_name: "{{ state_attr(repeat.item, 'friendly_name') }}"
+            vent_name: "{{ device_name(repeat.item) }}"
         
         - action: mqtt.publish
           data_template:
