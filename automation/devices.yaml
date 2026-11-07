@@ -973,16 +973,6 @@
 #====================#
 
 # Check if certain devices are somehow off.
-- alias: Check Refrigerator Off
-  id: check_refrigerator_off
-  
-  use_blueprint:
-    path: devices/monitor_device.yaml
-    input:
-      device_entity: switch.refrigerator
-      component_name: tplink
-      device_name: Refrigerator
-
 - alias: Check Microwave Off
   id: check_microwave_off
   

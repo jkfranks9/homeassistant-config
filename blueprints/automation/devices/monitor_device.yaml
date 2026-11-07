@@ -25,7 +25,7 @@ blueprint:
     
     device_name:
       name: Device Name
-      description: Name of the device, for example "Refrigerator".
+      description: Name of the device, for example "Microwave".
 
 # The !input tag cannot be used in templates, so assign variables to the necessary inputs.
 variables:
