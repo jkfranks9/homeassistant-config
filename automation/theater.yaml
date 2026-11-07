@@ -319,6 +319,12 @@
         entity_id: timer.projector_status
       id: failure
   
+  # If for some reason we turned the projector on by itself we don't want to do anything.
+  conditions:
+    - condition: state
+      entity_id: input_boolean.theater_open
+      state: 'on'
+  
   actions:
     
     # Success trigger.
