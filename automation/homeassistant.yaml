@@ -73,14 +73,14 @@
     # Reinitialize virtual and NFC tag device trackers.
     - variables:
         vtrack_entities: >
-          {% set var = namespace(vtrack = []) %}
+          {% set ns = namespace(vtrack = []) %}
           {% for state in states.input_boolean %}
             {% if state.name | contains('Virtual') or state.name | contains('NFC Tag') %}
-              {% set var.vtrack = var.vtrack + [state.entity_id] %}
+              {% set ns.vtrack = ns.vtrack + [state.entity_id] %}
             {% endif %}
           {% endfor %}
           
-          {{ var.vtrack }}
+          {{ ns.vtrack }}
     
     - repeat:
         for_each: "{{ vtrack_entities }}"
@@ -814,24 +814,24 @@
         
         # This could be a group text, so create a list.
         persons: >
-          {% set var = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           {% if 'Michael' in title or 'Michael' in text %}
-            {% set var.list = var.list + ['Michael'] %}
+            {% set ns.list = ns.list + ['Michael'] %}
           {% endif %}
           {% if 'Maryam' in title or 'Maryam' in text %}
-            {% set var.list = var.list + ['Maryam'] %}
+            {% set ns.list = ns.list + ['Maryam'] %}
           {% endif %}
           {% if 'Sarah' in title or 'Sarah' in text %}
-            {% set var.list = var.list + ['Sarah'] %}
+            {% set ns.list = ns.list + ['Sarah'] %}
           {% endif %}
           {% if 'David' in title or 'David' in text %}
-            {% set var.list = var.list + ['David'] %}
+            {% set ns.list = ns.list + ['David'] %}
           {% endif %}
-          {% if var.list | length == 0 %}
-            {% set var.list = var.list + ['Stranger'] %}
+          {% if ns.list | length == 0 %}
+            {% set ns.list = ns.list + ['Stranger'] %}
           {% endif %}
           
-          {{ var.list }}
+          {{ ns.list }}
         
         # Possible reasons to respond.
         on_treadmill: "{{ is_state('input_boolean.treadmill_triggered', 'on') }}"

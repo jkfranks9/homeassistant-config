@@ -24,14 +24,14 @@
                              'binary_sensor.office_human_sensor_presence'
                            ] %}
           
-          {% set vars = namespace(motion = []) %}
+          {% set ns = namespace(motion = []) %}
             {% for device in devices %}
               {% if is_state(device, 'on') %}
-                {% set vars.motion = vars.motion + [device] %}
+                {% set ns.motion = ns.motion + [device] %}
               {% endif %}
             {% endfor %}
           
-          {{ vars.motion }}
+          {{ ns.motion }}
     
     # Upstairs motion detection.
     - name: Upstairs Motion
@@ -47,14 +47,14 @@
                              'binary_sensor.utility_motion_sensor_occupancy'
                            ] %}
           
-          {% set vars = namespace(motion = []) %}
+          {% set ns = namespace(motion = []) %}
             {% for device in devices %}
               {% if is_state(device, 'on') %}
-                {% set vars.motion = vars.motion + [device] %}
+                {% set ns.motion = ns.motion + [device] %}
               {% endif %}
             {% endfor %}
           
-          {{ vars.motion }}
+          {{ ns.motion }}
 
     #-------------------#
     #   -- Driving --   #

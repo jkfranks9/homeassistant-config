@@ -78,13 +78,13 @@ variables:
   
   title_text: "{{ iif(input_title == 'action', 'Action required:', iif(input_title == 'attention', 'Attention:', 'Warning:')) }}"  
   actionable_entities: >
-    {% set actionable_list = namespace(list = []) %}
+    {% set ns = namespace(list = []) %}
     {% for entity in input_date_entities %}
       {% if states(entity) <= states('sensor.date') %}
-        {% set actionable_list.list = actionable_list.list + [entity] %}
+        {% set ns.list = ns.list + [entity] %}
       {% endif %}
     {% endfor %}    
-    {{ actionable_list.list }}
+    {{ ns.list }}
   
 conditions:
   

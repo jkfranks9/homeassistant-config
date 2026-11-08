@@ -198,25 +198,25 @@ switch_guest_suites:
         # Current suite guest lists. We need these because we'll be changing the actual dropdowns for suite occupancy as we progress.
         studio_guest_list: >
           {% set curr_studio_guests = states('input_select.studio_guests') %}
-          {% set var = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           {% if '+' in curr_studio_guests %}
-            {% set var.list = [curr_studio_guests.split(' + ')[0]] %}
-            {% set var.list = var.list + [curr_studio_guests.split(' + ')[1]] %}
+            {% set ns.list = [curr_studio_guests.split(' + ')[0]] %}
+            {% set ns.list = ns.list + [curr_studio_guests.split(' + ')[1]] %}
           {% else %}
-            {% set var.list = [curr_studio_guests] %}
+            {% set ns.list = [curr_studio_guests] %}
           {% endif %}
-          {{ var.list }}
+          {{ ns.list }}
         
         penthouse_guest_list: >
           {% set curr_penthouse_guests = states('input_select.penthouse_guests') %}
-          {% set var = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           {% if '+' in curr_penthouse_guests %}
-            {% set var.list = [curr_penthouse_guests.split(' + ')[0]] %}
-            {% set var.list = var.list + [curr_penthouse_guests.split(' + ')[1]] %}
+            {% set ns.list = [curr_penthouse_guests.split(' + ')[0]] %}
+            {% set ns.list = ns.list + [curr_penthouse_guests.split(' + ')[1]] %}
           {% else %}
-            {% set var.list = [curr_penthouse_guests] %}
+            {% set ns.list = [curr_penthouse_guests] %}
           {% endif %}
-          {{ var.list }}
+          {{ ns.list }}
     
     # To perform the switch, the following happens for each guest in each suite:
     # 
@@ -554,12 +554,12 @@ establish_bedtime_environment:
     
     - variables:
         fan_light_entities: >
-          {% set var = namespace(lights = ['light.office_fan']) %}
+          {% set ns = namespace(lights = ['light.office_fan']) %}
           {% if studio_guests_awake == false %}
-            {% set var.lights = var.lights + ['light.family_room_fan'] %}
+            {% set ns.lights = ns.lights + ['light.family_room_fan'] %}
           {% endif %}
           
-          {{ var.lights }}
+          {{ ns.lights }}
         
     # Turn off non-bedroom lights, but leave some on if studio guests are still awake or a child is home alone. 
     # Individual suite lights are handled by the suite-specific scripts directly above.

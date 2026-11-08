@@ -104,13 +104,13 @@ activate_cinema:
     
     # Wait a bit for the plugs to turn on before starting the Harmony activity. Quit if they don't.
     - wait_template: >
-        {% set var = namespace(results = []) %}
+        {% set ns = namespace(results = []) %}
         {% for plug in plugs %}
         {% if states(plug) == 'on' %}
-        {% set var.results = var.results + [true] %}
+        {% set ns.results = ns.results + [true] %}
         {% endif %}
         {% endfor %}
-        {{ var.results | length == num_plugs }}
+        {{ ns.results | length == num_plugs }}
     
       timeout: '00:01:00'
     
@@ -1439,29 +1439,29 @@ process_kodi_videos_result:
         # Then refactor those lists into a list of [artist, ID, runtime] for each video, weeding out long videos and
         # 'PreRoll' artist (such videos are movie prerolls, not music videos).
         results: >
-          {% set result = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           {% for artist in artists %}
             {% if artist != 'PreRoll' and runtimes[loop.index0] < max_video_time %}
-              {% set result.list = result.list + [[artists[loop.index0], titles[loop.index0], ids[loop.index0], runtimes[loop.index0]]] %}
+              {% set ns.list = ns.list + [[artists[loop.index0], titles[loop.index0], ids[loop.index0], runtimes[loop.index0]]] %}
             {% endif %}
           {% endfor %}
           
-          {{ result.list }}
+          {{ ns.list }}
         
         # Number of videos available.
         number_of_videos: "{{ results | length() }}"
         
         # Minimum runtime ... we use this to determine if no possible video can fit into the remaining total time, meaning we're done.
         minimum_runtime: >
-          {% set min = namespace(time = max_time) %}
+          {% set ns = namespace(time = max_time) %}
           {% for result in results %}
             {% set rt = result[3] %}
-            {% if rt < min.time %}
-              {% set min.time = rt %}
+            {% if rt < ns.time %}
+              {% set ns.time = rt %}
             {% endif %}
           {% endfor %}
           
-          {{ min.time }}
+          {{ ns.time }}
     
     # Initialize variables...
     

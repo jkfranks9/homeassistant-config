@@ -53,7 +53,7 @@
                                ] %}
                                
           {# --Create an empty list to start-- #}
-          {% set unavail_device_list = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           
           {# --Walk through all devices-- #}
           {% for device in device_list %}
@@ -67,11 +67,11 @@
             {# --We use the device name in the list-- #}
             {% if states(device_entity) in ['unknown', 'unavailable']
                   or (device_entity not in skip_time_check_entities and as_timestamp(now(), 0) - as_timestamp(states(sensor_entity), 0) > (timeout_minutes * 60)) %}
-              {% set unavail_device_list.list = unavail_device_list.list + [device_name(device_entity)] %}
+              {% set ns.list = ns.list + [device_name(device_entity)] %}
             {% endif %}
           {% endfor %}
           
-          {{ unavail_device_list.list }}
+          {{ ns.list }}
     
     # Previous list of unavailable zigbee device friendly names. This allows us to detect which of a list of unavailable devices is new when the 
     # Notify Zigbee Device Unavailable automation runs. The state is a count of all such devices.
@@ -110,18 +110,18 @@
                                ] %}
                                
           {# --Create an empty list to start-- #}
-          {% set unavail_device_list = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           
           {# --Walk through all devices-- #}
           {% for timestamp_entity in device_list %}
           
             {# --Add a device to the list if the device timestamp is not 0-- #}
             {% if states(timestamp_entity) | int(0) > 0 %}
-              {% set unavail_device_list.list = unavail_device_list.list + [entity_name(timestamp_entity)] %}
+              {% set ns.list = ns.list + [entity_name(timestamp_entity)] %}
             {% endif %}
           {% endfor %}
           
-          {{ unavail_device_list.list }}
+          {{ ns.list }}
 
     #------------------------------------#
     #   -- Echo Unavailable Devices --   #
@@ -146,18 +146,18 @@
                                ] %}
                                
           {# --Create an empty list to start-- #}
-          {% set unavail_device_list = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
               
           {# --Walk through all devices-- #}
           {% for device_entity in device_list %}
               
             {# --Add a device to the list if the device entity is unavailable-- #}
             {% if states(device_entity) in ['unknown', 'unavailable'] %}
-              {% set unavail_device_list.list = unavail_device_list.list + [device_name(device_entity)] %}
+              {% set ns.list = ns.list + [device_name(device_entity)] %}
             {% endif %}
           {% endfor %}
               
-          {{ unavail_device_list.list }}
+          {{ ns.list }}
     
     # Previous list of unavailable echo device friendly names. This allows us to detect which of a list of unavailable devices is new when the 
     # Notify Echo Device Unavailable automation runs. The state is a count of all such devices.
@@ -178,15 +178,15 @@
                                ] %}
                                
           {# --Create an empty list to start-- #}
-          {% set unavail_device_list = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           
           {# --Walk through all devices-- #}
           {% for timestamp_entity in device_list %}
           
             {# --Add a device to the list if the device timestamp is not 0-- #}
             {% if states(timestamp_entity) | int(0) > 0 %}
-              {% set unavail_device_list.list = unavail_device_list.list + [entity_name(timestamp_entity)] %}
+              {% set ns.list = ns.list + [entity_name(timestamp_entity)] %}
             {% endif %}
           {% endfor %}
           
-          {{ unavail_device_list.list }}
+          {{ ns.list }}

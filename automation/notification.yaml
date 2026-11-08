@@ -864,16 +864,16 @@
       clear_type: assisted
       title: attention
       message: >
-        {% set vars = namespace(tv = '') %}
+        {% set ns = namespace(tv = '') %}
         {% if state_attr('sensor.canes_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.canes_game_status', 'tv_networks') %}
-            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+            {% set ns.tv = iif(ns.tv | length == 0, network, ns.tv ~ ', ' ~ network) %}
           {% endfor %}
         {% endif %}
         {% if states('sensor.canes_game_status') == 'Home' %}
-          {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% else %}
-          Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% endif %}
       channel: standard
       tag: 'next_canes_game'
@@ -898,16 +898,16 @@
       clear_type: assisted
       title: attention
       message: >
-        {% set vars = namespace(tv = '') %}
+        {% set ns = namespace(tv = '') %}
         {% if state_attr('sensor.canes_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.canes_game_status', 'tv_networks') %}
-            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+            {% set ns.tv = iif(ns.tv | length == 0, network, ns.tv ~ ', ' ~ network) %}
           {% endfor %}
         {% endif %}
         {% if states('sensor.canes_game_status') == 'Home' %}
-          {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }} at Hurricanes, {{ states('sensor.next_canes_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% else %}
-          Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          Hurricanes at {{ state_attr('sensor.canes_opponent', 'friendly_opponent') }}, {{ states('sensor.next_canes_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% endif %}
       channel: standard
       tag: 'next_canes_game'
@@ -934,16 +934,16 @@
       clear_type: assisted
       title: attention
       message: >
-        {% set vars = namespace(tv = '') %}
+        {% set ns = namespace(tv = '') %}
         {% if state_attr('sensor.flyers_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.flyers_game_status', 'tv_networks') %}
-            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+            {% set ns.tv = iif(ns.tv | length == 0, network, ns.tv ~ ', ' ~ network) %}
           {% endfor %}
         {% endif %}
         {% if states('sensor.flyers_game_status') == 'Home' %}
-          {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% else %}
-          Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% endif %}
       channel: standard
       tag: 'next_flyers_game'
@@ -969,16 +969,16 @@
       clear_type: assisted
       title: attention
       message: >
-        {% set vars = namespace(tv = '') %}
+        {% set ns = namespace(tv = '') %}
         {% if state_attr('sensor.flyers_game_status', 'tv_networks') | length > 0 %}
           {% for network in state_attr('sensor.flyers_game_status', 'tv_networks') %}
-            {% set vars.tv = iif(vars.tv | length == 0, network, vars.tv ~ ', ' ~ network) %}
+            {% set ns.tv = iif(ns.tv | length == 0, network, ns.tv ~ ', ' ~ network) %}
           {% endfor %}
         {% endif %}
         {% if states('sensor.flyers_game_status') == 'Home' %}
-          {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }} at Flyers, {{ states('sensor.next_flyers_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% else %}
-          Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }} {{ iif(vars.tv | length > 0, 'on ' ~ vars.tv, '') }}
+          Flyers at {{ state_attr('sensor.flyers_opponent', 'friendly_opponent') }}, {{ states('sensor.next_flyers_game') }} {{ iif(ns.tv | length > 0, 'on ' ~ ns.tv, '') }}
         {% endif %}
       channel: standard
       tag: 'next_flyers_game'

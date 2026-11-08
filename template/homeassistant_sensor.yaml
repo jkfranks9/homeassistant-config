@@ -302,30 +302,30 @@
       
       attributes:
         tv_networks: >
-          {% set vars = namespace(tv = []) %}
+          {% set ns = namespace(tv = []) %}
           {% if states.sensor.next_canes_game is defined and states.sensor.next_canes_game.attributes is defined and states.sensor.next_canes_game.attributes.tvBroadcasts is defined %}
             {% for network in state_attr('sensor.next_canes_game', 'tvBroadcasts') %}
               {% if network['countryCode'] == 'US' and network['network'] == 'CARNHL' %}
-                {% set vars.tv = vars.tv + ['HHN'] %}
+                {% set ns.tv = ns.tv + ['HHN'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'HBO MAX' %}
-                {% set vars.tv = vars.tv + ['HBO'] %}
+                {% set ns.tv = ns.tv + ['HBO'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ESPN' %}
-                {% set vars.tv = vars.tv + ['ESPN'] %}
+                {% set ns.tv = ns.tv + ['ESPN'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ESPN+' %}
-                {% set vars.tv = vars.tv + ['ESPN+'] %}
+                {% set ns.tv = ns.tv + ['ESPN+'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'TNT' %}
-                {% set vars.tv = vars.tv + ['TNT'] %}
+                {% set ns.tv = ns.tv + ['TNT'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'HULU' %}
-                {% set vars.tv = vars.tv + ['Hulu'] %}
+                {% set ns.tv = ns.tv + ['Hulu'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ABC' %}
-                {% set vars.tv = vars.tv + ['ABC'] %}
+                {% set ns.tv = ns.tv + ['ABC'] %}
               {% endif %}
             {% endfor %}
           {% else %}
-            {% set vars.tv = ['Unknown'] %}
+            {% set ns.tv = ['Unknown'] %}
           {% endif %}
           
-          {{ vars.tv }}
+          {{ ns.tv }}
 
     - name: 'Canes Opponent'
       unique_id: canes_opponent
@@ -340,17 +340,17 @@
       
       attributes:
         friendly_opponent: >
-          {% set vars = namespace(name = 'Unknown') %}
+          {% set ns = namespace(name = 'Unknown') %}
           
           {% set abbrev = this.state %}
           {% for team in state_attr('sensor.nhl_team_abbrev', 'abbrev') %}
             {% if team == abbrev %}
-              {% set vars.name = state_attr('sensor.nhl_team_names', 'names')[loop.index0] %}
+              {% set ns.name = state_attr('sensor.nhl_team_names', 'names')[loop.index0] %}
               {% break %}
             {% endif %}
           {% endfor %}
           
-          {{ vars.name }}
+          {{ ns.name }}
 
     - name: 'Flyers Game Status'
       unique_id: flyers_game_status
@@ -363,30 +363,30 @@
       
       attributes:
         tv_networks: >
-          {% set vars = namespace(tv = []) %}
+          {% set ns = namespace(tv = []) %}
           {% if states.sensor.next_flyers_game is defined and states.sensor.next_flyers_game.attributes is defined and states.sensor.next_flyers_game.attributes.tvBroadcasts is defined %}
             {% for network in state_attr('sensor.next_flyers_game', 'tvBroadcasts') %}
               {% if network['countryCode'] == 'US' and network['network'] == 'CARNHL' %}
-                {% set vars.tv = vars.tv + ['HHN'] %}
+                {% set ns.tv = ns.tv + ['HHN'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'HBO MAX' %}
-                {% set vars.tv = vars.tv + ['HBO'] %}
+                {% set ns.tv = ns.tv + ['HBO'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ESPN' %}
-                {% set vars.tv = vars.tv + ['ESPN'] %}
+                {% set ns.tv = ns.tv + ['ESPN'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ESPN+' %}
-                {% set vars.tv = vars.tv + ['ESPN+'] %}
+                {% set ns.tv = ns.tv + ['ESPN+'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'TNT' %}
-                {% set vars.tv = vars.tv + ['TNT'] %}
+                {% set ns.tv = ns.tv + ['TNT'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'HULU' %}
-                {% set vars.tv = vars.tv + ['Hulu'] %}
+                {% set ns.tv = ns.tv + ['Hulu'] %}
               {% elif network['countryCode'] == 'US' and network['network'] == 'ABC' %}
-                {% set vars.tv = vars.tv + ['ABC'] %}
+                {% set ns.tv = ns.tv + ['ABC'] %}
               {% endif %}
             {% endfor %}
           {% else %}
-            {% set vars.tv = ['Unknown'] %}
+            {% set ns.tv = ['Unknown'] %}
           {% endif %}
           
-          {{ vars.tv }}
+          {{ ns.tv }}
 
     - name: 'Flyers Opponent'
       unique_id: flyers_opponent
@@ -401,17 +401,17 @@
       
       attributes:
         friendly_opponent: >
-          {% set vars = namespace(name = 'Unknown') %}
+          {% set ns = namespace(name = 'Unknown') %}
           
           {% set abbrev = this.state %}
           {% for team in state_attr('sensor.nhl_team_abbrev', 'abbrev') %}
             {% if team == abbrev %}
-              {% set vars.name = state_attr('sensor.nhl_team_names', 'names')[loop.index0] %}
+              {% set ns.name = state_attr('sensor.nhl_team_names', 'names')[loop.index0] %}
               {% break %}
             {% endif %}
           {% endfor %}
           
-          {{ vars.name }}
+          {{ ns.name }}
 
 #---------- Miscellaneous ----------#
 

@@ -277,8 +277,8 @@ register_mobile_notification:
     # Create the value from the specified inputs.
     - variables:
         value: >
-          {% set val = namespace(value = [clear_type, title, message, channel, timeout]) %}          
-          {{ val.value }}
+          {% set ns = namespace(value = [clear_type, title, message, channel, timeout]) %}          
+          {{ ns.value }}
     
     # Add the tag to the registry.
     - event: register_mobile_tag

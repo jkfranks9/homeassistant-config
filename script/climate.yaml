@@ -203,40 +203,40 @@ calculate_weather_metrics:
         # The list of hourly weather data for the input time span.
         forecast_list_hourly: >
           {% if forecast_type == 'hourly' %}
-            {% set var = namespace(list = [], day = 0) %}
+            {% set ns = namespace(list = [], day = 0) %}
             {% for i in result[weather_entity].forecast %}
               {% set hour = as_local(as_datetime(i.datetime)).strftime('%H') | int(0) %}
               {% set day = as_local(as_datetime(i.datetime)).strftime('%d') | int(0) %}
               {% if loop.first %}
-                {% set var.day = day %}
+                {% set ns.day = day %}
               {% endif %}
-              {% if day == var.day %}
+              {% if day == ns.day %}
                 {% if first_hour <= hour <= (iif(midnight_cross == false, last_hour, last_hour + 24)) %}
-                  {% set var.list = var.list + [i] %}
+                  {% set ns.list = ns.list + [i] %}
                 {% endif %}
               {% else %}
                 {% if (iif(midnight_cross == false, first_hour, first_hour - 24)) <= hour <= last_hour %}
-                  {% set var.list = var.list + [i] %}
+                  {% set ns.list = ns.list + [i] %}
                 {% endif %}
               {% endif %}
-              {% if var.list | length == num_hours %}
+              {% if ns.list | length == num_hours %}
                 {% break %}
               {% endif %}
             {% endfor %}
-            {{ var.list }}
+            {{ ns.list }}
           {% endif %}
         
         # The list of daily weather data for the input number of days.
         forecast_list_daily: >
           {% if forecast_type == 'daily' %}
-            {% set var = namespace(list = []) %}
+            {% set ns = namespace(list = []) %}
             {% for i in result[weather_entity].forecast %}
-              {% set var.list = var.list + [i] %}
-              {% if var.list | length == num_days %}
+              {% set ns.list = ns.list + [i] %}
+              {% if ns.list | length == num_days %}
                 {% break %}
               {% endif %}
             {% endfor %}
-            {{ var.list }}
+            {{ ns.list }}
           {% endif %}
     
     # Initialize the metrics we're about to collect during the loop.

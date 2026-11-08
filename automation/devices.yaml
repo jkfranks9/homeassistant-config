@@ -186,15 +186,15 @@
         
         # The message indicates power is restored, but also includes the original outage time. If the UPS battery went critical it includes that time as well.
         message: >
-          {% set var = namespace(outage = '', critical = '') %}
+          {% set ns = namespace(outage = '', critical = '') %}
           {% set prefix = 'Power is restored at 29 AA Drive (' %}
           {% set keys = state_attr('sensor.mobile_tag_registry_keys', 'tags') %}
-          {% set var.outage = 'outage: ' ~ state_attr('input_datetime.ups_power_out', 'timestamp') | timestamp_custom %}
+          {% set ns.outage = 'outage: ' ~ state_attr('input_datetime.ups_power_out', 'timestamp') | timestamp_custom %}
           {% if 'ups_battery' in keys %}
-            {% set var.critical = ', critical: ' ~ state_attr('input_datetime.ups_battery_critical', 'timestamp') | timestamp_custom %}
+            {% set ns.critical = ', critical: ' ~ state_attr('input_datetime.ups_battery_critical', 'timestamp') | timestamp_custom %}
           {% endif %}
           
-          {{ prefix ~ var.outage ~ var.critical ~ ')' }}
+          {{ prefix ~ ns.outage ~ ns.critical ~ ')' }}
         
         channel: standard
         tag_registry_value: "{{ {'tag': tag, 'clear_type': 'manual', 'title': title, 'message': message, 'channel': channel, 'timeout': 0} }}"

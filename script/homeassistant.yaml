@@ -365,7 +365,7 @@ generate_weekly_periodic_list:
         # pick the oldest items to work on.
         sorted_dates: >
           {# Start with an empty list. #}
-          {% set var = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           
           {# Walk through the date entities. #}
           {% for date in date_entities %}
@@ -373,27 +373,27 @@ generate_weekly_periodic_list:
             {# Refactor into timestamps & names. #}
             {% set ts = state_attr(date, 'timestamp') %}
             {% set name = entity_name(date) %}
-            {% set var.list = var.list + [{'day': ts, 'name': name.split(split_text)[-1] | trim}] %}
+            {% set ns.list = ns.list + [{'day': ts, 'name': name.split(split_text)[-1] | trim}] %}
           {% endfor %}
           
           {# Sort by the timestamp. #}
-          {{ var.list | sort(attribute = 'day')}}
+          {{ ns.list | sort(attribute = 'day')}}
         
         # List of actionable items (those overdue or due within a few days).
         actionable_items: >
           {# Start with an empty list. #}
-          {% set var = namespace(list = []) %}
+          {% set ns = namespace(list = []) %}
           
           {# Walk through the sorted dates. #}
           {% for item in sorted_dates %}
             
             {# Add to the list if the item is overdue or due within a few days. #}
             {% if item.day <= as_timestamp(as_datetime(start_date) + timedelta(days = 3), 0) %}
-              {% set var.list = var.list + [item.name] %}
+              {% set ns.list = ns.list + [item.name] %}
             {% endif %}
           {% endfor %}
           
-          {{ var.list }}
+          {{ ns.list }}
         
     # Walk through the actionable items.
     - repeat:
@@ -626,20 +626,20 @@ add_mini_todo_calendar_items:
                     cal_tag: "{{ iif('(home)' in summary, '(home)', '(appt') }}"
                     current_minutes: "{{ states('input_number.mini_todo_available_minutes') | int(0) }}"
                     calculated_minutes: >
-                      {% set var = namespace(minutes = (end - start) / 60) %}
+                      {% set ns = namespace(minutes = (end - start) / 60) %}
                       
                       {# Only count time that falls within the lower bound of the normal hours. #}
                       {% if as_datetime(start) < today_at('10:00:00') %}
                         {% set delta = ((as_timestamp(today_at(window_lower_bound)) - start) / 60) | int(0) %}
-                        {% set var.minutes = var.minutes - delta %}
+                        {% set ns.minutes = ns.minutes - delta %}
                       
                       {# Only count time that falls within the upper bound of the normal hours. #}
                       {% elif as_datetime(end) > today_at('16:00:00') %}
                         {% set delta = (end - (as_timestamp(today_at(window_upper_bound)))) / 60 | int(0) %}
-                        {% set var.minutes = var.minutes - delta %}
+                        {% set ns.minutes = ns.minutes - delta %}
                       {% endif %}
                       
-                      {{ var.minutes }}
+                      {{ ns.minutes }}
                 
                 # Subtract the calculated time for this event from the current available time.
                 - action: input_number.set_value
@@ -692,7 +692,7 @@ add_mini_todo_project_item:
         project: >
           
           {# Initialize variables. #}
-          {% set var = namespace(item = '', wtime = 0, time = 0, list = [], in_count = 0, ex_count = 0) %}
+          {% set ns = namespace(item = '', wtime = 0, time = 0, list = [], in_count = 0, ex_count = 0) %}
           
           {# Loop through the project todo list. #}
           {% for item in mylist[project_todo_list]['items'] %}
@@ -706,37 +706,37 @@ add_mini_todo_project_item:
             {% set prefix = time[:((time | length) - 1)] %}
             {% set suffix = time[((time | length) - 1):] %}
             {% if suffix == 'd' %}
-              {% set var.wtime = prefix | int(0) * 24 * 60 %}
+              {% set ns.wtime = prefix | int(0) * 24 * 60 %}
             {% elif suffix == 'h' %}
-              {% set var.wtime = prefix | int(0) * 60 %}
+              {% set ns.wtime = prefix | int(0) * 60 %}
             {% else %}
-              {% set var.wtime = prefix %}
+              {% set ns.wtime = prefix %}
             {% endif %}
             
             {# Grab up to 2 external items, but only if it seems OK to work outside. #}
-            {% if type == 'external' and states('binary_sensor.outdoor_work_friendly') == 'on' and var.ex_count <= 1 %}
-              {% set var.list = var.list + [item.summary ~ ':' ~ var.wtime] %}
-              {% set var.ex_count = var.ex_count + 1 %}
+            {% if type == 'external' and states('binary_sensor.outdoor_work_friendly') == 'on' and ns.ex_count <= 1 %}
+              {% set ns.list = ns.list + [item.summary ~ ':' ~ ns.wtime] %}
+              {% set ns.ex_count = ns.ex_count + 1 %}
             
             {# Grab up to 2 internal items. #}
-            {% elif type == 'internal' and var.in_count <= 1 %}
-              {% set var.list = var.list + [item.summary ~ ':' ~ var.wtime] %}
-              {% set var.in_count = var.in_count + 1 %}
+            {% elif type == 'internal' and ns.in_count <= 1 %}
+              {% set ns.list = ns.list + [item.summary ~ ':' ~ ns.wtime] %}
+              {% set ns.in_count = ns.in_count + 1 %}
             {% endif %}
             
             {# Quit once we've grabbed 4 items. #}
-            {% if var.ex_count + var.in_count >= 4 %}
+            {% if ns.ex_count + ns.in_count >= 4 %}
               {% break %}
             {% endif %}
           {% endfor %}
           
           {# If we found any items to choose from, pick one at random. #}
-          {% set len = var.list | length %}
+          {% set len = ns.list | length %}
           {% if len > 0 %}
-            {% set var.item = var.list[range(len) | random] %}
+            {% set ns.item = ns.list[range(len) | random] %}
           {% endif %}
           
-          {{ var.item }}
+          {{ ns.item }}
           
     # Did we find anything?
     - if:
@@ -836,15 +836,15 @@ insert_mini_todo_item:
         major_item: "{{ states('input_boolean.mini_todo_major_item_added') == 'off' and major == true and current_minutes >= 30 }}"
         tag: "{{ value.split(':')[0] }}"
         tag_allowed: >
-          {% set var = namespace(allowed = true) %}
+          {% set ns = namespace(allowed = true) %}
           {% set single_tags = ['yt', 'ys'] %}
           {% for item in state_attr('sensor.daily_mini_todo_list', 'items') %}
             {% set item_tag = item.split(':')[0] %}
             {% if(item_tag in single_tags and tag == item_tag) %}
-              {% set var.allowed = false %}
+              {% set ns.allowed = false %}
             {% endif %}
           {% endfor %}
-          {{ var.allowed }}
+          {{ ns.allowed }}
           
     - action: system_log.write
       data:
