@@ -1063,7 +1063,7 @@
       title: attention
       message: >
         {% set num = states(trigger.entity_id) | int(0) %}
-        {{ num }} {{ entity_name(entity).split(' ')[1] | replace('USPS', 'mail') }} {{ iif(num == 1, 'package', 'packages') }} delivered.
+        {{ num }} {{ entity_name(trigger.entity_id).split(' ')[1] | replace('USPS', 'mail') }} {{ iif(num == 1, 'package', 'packages') }} delivered.
       channel: standard
 
 #===============================#
