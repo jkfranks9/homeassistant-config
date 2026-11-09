@@ -228,12 +228,20 @@
                 entity_id: sensor.next_flyers_game
               continue_on_error: true
     
-    # Bump the F150 mileage. We use this to notify when the next service is due.
-    - action: input_number.set_value
-      target:
-        entity_id: input_number.f150_mileage
-      data:
-        value: "{{ states('input_number.f150_mileage') | int(0) + 32 }}"
+    # Bump the F150 mileage. We use this to notify when the next service is due. Bypass this during
+    # a long extended away, such as vacation, since it's unlikely I'll be using my own vehicle.
+    - variables:
+        long_away: "{{ is_state('input_boolean.extended_away_mode', 'on') and is_state('input_select.extended_away_type', 'Long') }}"
+    
+    - if:
+        - "{{ long_away == false }}"
+      
+      then:    
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.f150_mileage
+          data:
+            value: "{{ states('input_number.f150_mileage') | int(0) + 32 }}"
     
     # In rare situations the theater open toggle can be left on. Reset it if adults are not home and the Harmony remote
     # is in power off state.
