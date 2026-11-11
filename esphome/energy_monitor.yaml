@@ -48,11 +48,52 @@ spi:
   miso_pin: 19
   mosi_pin: 23
 
+# Create persistent global variables in flash memory to survive reboots.
+globals:
+  - id: bed_bath_energy_total
+    type: float
+    restore_value: true
+    initial_value: '0.0'
+  
+  - id: theater_hall_energy_total
+    type: float
+    restore_value: true
+    initial_value: '0.0'
+  
+  - id: snack_bar_energy_total
+    type: float
+    restore_value: true
+    initial_value: '0.0'
+  
+  - id: air_handler_energy_total
+    type: float
+    restore_value: true
+    initial_value: '0.0'
+  
+  - id: utility_1_energy_total
+    type: float
+    restore_value: true
+    initial_value: '0.0'
+  
+  - id: utility_2_energy_total
+    type: float
+    restore_value: true
+    initial_value: '0.0'
+  
+  - id: total_energy_total
+    type: float
+    restore_value: true
+    initial_value: '0.0'
+
 # Sensors
 sensor:
 
-# There are 2 ICs on the energy monitor. Each one handles 3 of the 6 energy monitoring channels.
-# They are referred to as "phases".
+  #===============================#
+  #     Energy Monitor Device     #
+  #===============================#
+
+  # There are 2 ICs on the energy monitor. Each one handles 3 of the 6 energy monitoring channels.
+  # They are referred to as "phases".
 
   # IC1 ... the board allows for two separate voltages to be measured, but we only need one. It's configured
   # on the first phase of IC1.
@@ -72,7 +113,6 @@ sensor:
       #        filters:
       #          - multiply: 2
       power:
-        #name: CT1 Watts
         id: ct1Watts
       #        filters:
       #          - multiply: 2
@@ -81,14 +121,12 @@ sensor:
     
     phase_b:
       power:
-        #name: CT2 Watts
         id: ct2Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_006_cal}
     
     phase_c:
       power:
-        #name: CT3 Watts
         id: ct3Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
@@ -111,7 +149,6 @@ sensor:
       # This is the upstairs air handler. I currently only have one CT clamp, so am doubling the 
       # values to compensate, as per Circuit Setup instructions.
       power:
-        #name: CT4 Watts
         id: ct4Watts
         filters:
           - multiply: 2
@@ -120,14 +157,12 @@ sensor:
     
     phase_b:
       power:
-        #name: CT5 Watts
         id: ct5Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
     
     phase_c:
       power:
-        #name: CT6 Watts
         id: ct6Watts
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
@@ -138,7 +173,6 @@ sensor:
 
   # Total Watts
   - platform: template
-    #name: Total Watts
     id: totalWatts
     lambda: return id(ct1Watts).state + id(ct2Watts).state + id(ct3Watts).state + id(ct4Watts).state + id(ct5Watts).state + id(ct6Watts).state ;
     accuracy_decimals: 1
@@ -146,41 +180,206 @@ sensor:
     device_class: power
     update_interval: ${update_interval}
 
-#=================================#
-#     Returned Energy Sensors     #
-#=================================#
-  
+  #=================================#
+  #     Raw Integration Sensors     #
+  #=================================#
+
+  # These are hidden from Home Assistant by having an id instead of a name.
   - platform: integration
-    name: Theater & Hall Energy
+    id: bed_bath_energy_raw
+    sensor: ct1Watts
+    time_unit: h
+    integration_method: left
+    filters:
+      - multiply: 0.001
+
+  - platform: integration
+    id: theater_hall_energy_raw
     sensor: ct2Watts
-    <<: &energy_dashboard
-      filters:
-        - multiply: 0.001
-      unit_of_measurement: kWh
-      device_class: energy
-      state_class: total_increasing
-      time_unit: h
-      integration_method: left
-  
+    time_unit: h
+    integration_method: left
+    filters:
+      - multiply: 0.001
+
   - platform: integration
-    name: Air Handler Energy
+    id: snack_bar_energy_raw
+    sensor: ct3Watts
+    time_unit: h
+    integration_method: left
+    filters:
+      - multiply: 0.001
+
+  - platform: integration
+    id: air_handler_energy_raw
     sensor: ct4Watts
-    <<: *energy_dashboard
-  
+    time_unit: h
+    integration_method: left
+    filters:
+      - multiply: 0.001
+
   - platform: integration
-    name: Utility 1 Energy
+    id: utility_1_energy_raw
     sensor: ct5Watts
-    <<: *energy_dashboard
-  
+    time_unit: h
+    integration_method: left
+    filters:
+      - multiply: 0.001
+
   - platform: integration
-    name: Utility 2 Energy
+    id: utility_2_energy_raw
     sensor: ct6Watts
-    <<: *energy_dashboard
-  
+    time_unit: h
+    integration_method: left
+    filters:
+      - multiply: 0.001
+
   - platform: integration
-    name: Total Energy
+    id: total_energy_raw
     sensor: totalWatts
-    <<: *energy_dashboard
+    time_unit: h
+    integration_method: left
+    filters:
+      - multiply: 0.001
+
+  # Expose persistent template sensors to Home Assistant that absorb reboots safely.
+  - platform: template
+    name: "Bed & Bath Energy"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    lambda: |-
+      static float last_raw = 0.0;
+      float current_raw = id(bed_bath_energy_raw).state;
+      if (std::isnan(current_raw)) return id(bed_bath_energy_total);
+      
+      if (current_raw >= last_raw) {
+        id(bed_bath_energy_total) += (current_raw - last_raw);
+      } else {
+        // Device rebooted; raw integration dropped back to 0. 
+        // Add the new raw total directly since it started from 0.
+        id(bed_bath_energy_total) += current_raw;
+      }
+      last_raw = current_raw;
+      return id(bed_bath_energy_total);
+
+  - platform: template
+    name: "Theater & Hall Energy"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    lambda: |-
+      static float last_raw = 0.0;
+      float current_raw = id(theater_hall_energy_raw).state;
+      if (std::isnan(current_raw)) return id(theater_hall_energy_total);
+      
+      if (current_raw >= last_raw) {
+        id(theater_hall_energy_total) += (current_raw - last_raw);
+      } else {
+        // Device rebooted; raw integration dropped back to 0. 
+        // Add the new raw total directly since it started from 0.
+        id(theater_hall_energy_total) += current_raw;
+      }
+      last_raw = current_raw;
+      return id(theater_hall_energy_total);
+
+  - platform: template
+    name: "Snack Bar Energy"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    lambda: |-
+      static float last_raw = 0.0;
+      float current_raw = id(snack_bar_energy_raw).state;
+      if (std::isnan(current_raw)) return id(snack_bar_energy_total);
+      
+      if (current_raw >= last_raw) {
+        id(snack_bar_energy_total) += (current_raw - last_raw);
+      } else {
+        // Device rebooted; raw integration dropped back to 0. 
+        // Add the new raw total directly since it started from 0.
+        id(snack_bar_energy_total) += current_raw;
+      }
+      last_raw = current_raw;
+      return id(snack_bar_energy_total);
+
+  - platform: template
+    name: "Air Handler Energy"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    lambda: |-
+      static float last_raw = 0.0;
+      float current_raw = id(air_handler_energy_raw).state;
+      if (std::isnan(current_raw)) return id(air_handler_energy_total);
+      
+      if (current_raw >= last_raw) {
+        id(air_handler_energy_total) += (current_raw - last_raw);
+      } else {
+        id(air_handler_energy_total) += current_raw;
+      }
+      last_raw = current_raw;
+      return id(air_handler_energy_total);
+
+  - platform: template
+    name: "Utility 1 Energy"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    lambda: |-
+      static float last_raw = 0.0;
+      float current_raw = id(utility_1_energy_raw).state;
+      if (std::isnan(current_raw)) return id(utility_1_energy_total);
+      
+      if (current_raw >= last_raw) {
+        id(utility_1_energy_total) += (current_raw - last_raw);
+      } else {
+        id(utility_1_energy_total) += current_raw;
+      }
+      last_raw = current_raw;
+      return id(utility_1_energy_total);
+
+  - platform: template
+    name: "Utility 2 Energy"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    lambda: |-
+      static float last_raw = 0.0;
+      float current_raw = id(utility_2_energy_raw).state;
+      if (std::isnan(current_raw)) return id(utility_2_energy_total);
+      
+      if (current_raw >= last_raw) {
+        id(utility_2_energy_total) += (current_raw - last_raw);
+      } else {
+        id(utility_2_energy_total) += current_raw;
+      }
+      last_raw = current_raw;
+      return id(utility_2_energy_total);
+
+  - platform: template
+    name: "Total Energy"
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 3
+    lambda: |-
+      static float last_raw = 0.0;
+      float current_raw = id(total_energy_raw).state;
+      if (std::isnan(current_raw)) return id(total_energy_total);
+      
+      if (current_raw >= last_raw) {
+        id(total_energy_total) += (current_raw - last_raw);
+      } else {
+        id(total_energy_total) += current_raw;
+      }
+      last_raw = current_raw;
+      return id(total_energy_total);
 
 # This is needed for the Home Assistant energy dashboard.
 time:
