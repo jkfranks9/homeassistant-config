@@ -819,9 +819,47 @@ perform_post_open_tasks:
             - "{{ wait.completed == true }}"
           
           then:
+            
+            # First, try turning the Shield on, using both media players that control power.
             - action: media_player.turn_on
               target:
-                entity_id: media_player.shield_tv_adb
+                entity_id:
+                  - media_player.shield_tv_adb
+                  - media_player.shield_tv_android
+        
+            # Wait a bit.
+            - wait_template: "{{ is_state('media_player.shield_tv_adb', 'on') }}"
+              timeout:
+                seconds: 3
+        
+            # If we timed out, try one more thing: sending the 'Home' command to the box.
+            - if:
+                - "{{ wait.completed == false }}"
+              
+              then:
+                - action: remote.send_command
+                  entity_id: remote.harmony_hub
+                  data:
+                    command: 'Home'
+                    device: NVIDIA Shield TV
+        
+            # Wait again.
+            - wait_template: "{{ is_state('media_player.shield_tv_adb', 'on') }}"
+              timeout:
+                seconds: 3
+        
+            # If we timed out, give up and send a notification.
+            - if:
+                - "{{ wait.completed == false }}"
+              
+              then:
+                - action: script.send_notification
+                  data:
+                    destination:
+                      - voice_assistant
+                    message: "Sorry, I'm unable to turn on the Shield TV"
+                    room: ['theater']
+                    voice_type: announce
     
     # Turn off some downstairs lights after a delay, if appropriate.
     - delay: '00:05:00'
