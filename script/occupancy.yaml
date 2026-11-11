@@ -528,7 +528,7 @@ establish_bedtime_environment:
     # Modify the master suite for bedtime.
     - action: script.turn_on
       target:
-        entity_id: script.modify_master_suite
+        entity_id: script.modify_master
       data:
         variables:
           reason: bedtime
@@ -602,7 +602,7 @@ reset_bedtime_environment:
     # Modify the master suite for bedtime.
     - action: script.turn_on
       target:
-        entity_id: script.modify_master_suite
+        entity_id: script.modify_master
       data:
         variables:
           reason: wakeup
@@ -628,7 +628,7 @@ reset_bedtime_environment:
 #==========================#
 
 # Perform tasks for the master suite for certain events.
-modify_master_suite:
+modify_master:
   alias: Modify Master Suite
   
   fields:

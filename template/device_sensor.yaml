@@ -138,7 +138,7 @@
           {# --List of device entities-- #}
           {% set device_list = [
                                 'media_player.family_room_echo',
-                                'media_player.master_bedroom_echo',
+                                'media_player.master_echo',
                                 'media_player.office_echo',
                                 'media_player.penthouse_echo',
                                 'media_player.studio_echo',
