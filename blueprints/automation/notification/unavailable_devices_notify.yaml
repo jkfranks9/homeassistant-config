@@ -14,9 +14,10 @@ blueprint:
           domain: sensor
 
 mode: queued
-  
+
+# This should be equal to or greater than the number of the largest group of devices.
 trace:
-  stored_traces: 20
+  stored_traces: 25
 
 variables:
   
@@ -60,13 +61,27 @@ conditions:
   # Ensure the state matches the number of devices in the list. Just call me paranoid.
   - condition: template
     value_template: "{{ trigger.to_state.state | int(0) == curr_device_list | count }}"
-    
-  # Ignore spurious nonsense during HA startup.
-  - condition: state
-    entity_id: input_boolean.device_initialization_catch_22
-    state: 'off'
   
 actions:
+
+# There is a catch-22 during HA startup:
+#
+# 1) As zigbee or echo devices are initialized they change from 'unavailable' state
+# 2) In parallel, the Current Zigbee/Echo Unavailable Devices sensor gets initialized
+# 3) As a result, some zigbee/echo devices might still be unavailable when the sensor is ready, resulting in a bogus numerical state for the sensor
+# 4) As the rest of the zigbee/echo devices come up, the state of the above sensor continues to change toward 0
+# 5) About the same time, the Notify Zigbee/Echo Device Unavailable automation gets initialized and starts running, triggered by one of the above sensor changes
+# 
+# At this point, the automation may fail due to templates not resolving correctly, but even if there are no failures, the automation should not
+# be running at all at this point, since it's just churn during startup.
+#
+# So stop all runs that occur within a few minutes of HA initialization. I think the uptime minutes sensor should always have
+# a good value by the time we start running, but the template here also checks for that.
+  - if:
+      - "{{ not has_value('sensor.ha_uptime_minutes') or states('sensor.ha_uptime_minutes') | int(0) < 3 }}"
+    
+    then:
+      - stop: initialization churn
     
   # DEBUG messages
   - action: system_log.write
