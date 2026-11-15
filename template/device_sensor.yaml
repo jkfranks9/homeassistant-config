@@ -170,7 +170,7 @@
           {# --List of timestamp entities-- #}
           {% set device_list = [
                                 'input_number.family_room_echo',
-                                'input_number.master_bedroom_echo',
+                                'input_number.master_echo',
                                 'input_number.office_echo',
                                 'input_number.penthouse_echo',
                                 'input_number.studio_echo',
