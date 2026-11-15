@@ -599,8 +599,8 @@
   actions:
     - action: system_log.write
       data:
-        message: "feature movie name: '{{ trigger.to_state.state }}'"
-        level: debug
+        message: "Feature movie name changed to: '{{ trigger.to_state.state }}'"
+        level: info
     
     - action: input_text.set_value
       data_template:

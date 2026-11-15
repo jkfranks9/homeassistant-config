@@ -830,7 +830,7 @@ perform_post_open_tasks:
             # Wait a bit.
             - wait_template: "{{ is_state('media_player.shield_tv_adb', 'on') }}"
               timeout:
-                seconds: 3
+                seconds: 10
         
             # If we timed out, try one more thing: sending the 'Home' command to the box.
             - if:
@@ -846,7 +846,7 @@ perform_post_open_tasks:
             # Wait again.
             - wait_template: "{{ is_state('media_player.shield_tv_adb', 'on') }}"
               timeout:
-                seconds: 3
+                seconds: 10
         
             # If we timed out, give up and send a notification.
             - if:
@@ -930,7 +930,7 @@ set_receiver_volume:
         - action: system_log.write
           data:
             message: "Setting volume for {{ target_name }} to {{ volume }}"
-            level: debug
+            level: info
       
         - action: media_player.volume_set
           data:
