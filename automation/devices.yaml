@@ -1722,7 +1722,14 @@
       entity_id: sensor.legion_t530_lastboot
       to:
   
-  conditions: "{{ has_value(trigger.to_state.entity_id) }}"
+  conditions:
+    
+    # Ignore changes to a bad value.
+    - "{{ has_value(trigger.to_state.entity_id) }}"
+    
+    # For some reason, there's some jitter in the timestamp value. I've only seen 1 second so far. Ignore jitter
+    # values of a few seconds.
+    - "{{ (as_timestamp(trigger.from_state.state) - as_timestamp(trigger.to_state.state)) | abs > 5 }}"
   
   actions:
     - action: input_datetime.set_datetime
