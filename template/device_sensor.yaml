@@ -21,7 +21,7 @@
       attributes:
         device_list: >
           {# --List of devices that don't make contact for many hours-- #}
-          {% set skip_time_check_entities = [] %}
+          {% set skip_time_check_entities = ['switch.dining_room_table', 'switch.master_closet_ceiling'] %}
           
           {# --List of device entities, associated last seen sensors-- #}
           {# --Device entities are the most obvious ones, or any other entity for the device-- #}
