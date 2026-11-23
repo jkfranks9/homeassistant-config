@@ -212,7 +212,7 @@
         INNER JOIN statistics s ON 
           s.metadata_id = sm.id 
         WHERE 
-          sm.statistic_id='sensor.dishwasher_monitor_energy' 
+          sm.statistic_id='sensor.kitchen_dishwasher_energy' 
         AND
           s.created_ts >= UNIX_TIMESTAMP() - (1*60*60*24*90)
         LIMIT 1)

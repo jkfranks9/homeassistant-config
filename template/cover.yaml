@@ -10,28 +10,28 @@
     
     - name: Garage Door North
       unique_id: garage_door_north
-      state: "{{ iif(is_state('binary_sensor.shelly1_garage_north_contact', 'on'), 'closed', 'open') }}"
+      state: "{{ iif(is_state('binary_sensor.storage_garage_door_north_input', 'on'), 'closed', 'open') }}"
       device_class: garage
       open_cover:
         action: switch.turn_on
-        entity_id: switch.shelly1_garage_north
+        entity_id: switch.storage_garage_door_north
       close_cover:
         action: switch.turn_on
-        entity_id: switch.shelly1_garage_north
+        entity_id: switch.storage_garage_door_north
       stop_cover:
         action: switch.turn_on
-        entity_id: switch.shelly1_garage_north
+        entity_id: switch.storage_garage_door_north
     
     - name: Garage Door South
       unique_id: garage_door_south
-      state: "{{ iif(is_state('binary_sensor.shelly1_garage_south_contact', 'on'), 'closed', 'open') }}"
+      state: "{{ iif(is_state('binary_sensor.storage_garage_door_south_input', 'on'), 'closed', 'open') }}"
       device_class: garage
       open_cover:
         action: switch.turn_on
-        entity_id: switch.shelly1_garage_south
+        entity_id: switch.storage_garage_door_south
       close_cover:
         action: switch.turn_on
-        entity_id: switch.shelly1_garage_south
+        entity_id: switch.storage_garage_door_south
       stop_cover:
         action: switch.turn_on
-        entity_id: switch.shelly1_garage_south
+        entity_id: switch.storage_garage_door_south

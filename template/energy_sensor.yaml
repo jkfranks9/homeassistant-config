@@ -75,7 +75,7 @@
     - <<: *cumulator_trigger
     
       entity_id:
-        - sensor.dishwasher_monitor_energy
+        - sensor.kitchen_dishwasher_energy
         - sensor.washer_energy
   
   sensor:
