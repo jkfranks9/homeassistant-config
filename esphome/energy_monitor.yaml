@@ -116,18 +116,27 @@ sensor:
         id: ct1Watts
       #        filters:
       #          - multiply: 2
+        filters:
+          - clamp:
+              min_value: 0.0
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_006_cal}
     
     phase_b:
       power:
         id: ct2Watts
+        filters:
+          - clamp:
+              min_value: 0.0
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_006_cal}
     
     phase_c:
       power:
         id: ct3Watts
+        filters:
+          - clamp:
+              min_value: 0.0
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
     
@@ -152,18 +161,26 @@ sensor:
         id: ct4Watts
         filters:
           - multiply: 2
+          - clamp:
+              min_value: 0.0
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_013_cal}
     
     phase_b:
       power:
         id: ct5Watts
+        filters:
+          - clamp:
+              min_value: 0.0
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
     
     phase_c:
       power:
         id: ct6Watts
+        filters:
+          - clamp:
+              min_value: 0.0
       gain_voltage: ${voltage_cal}
       gain_ct: ${SCT_010_cal}
     
@@ -253,14 +270,15 @@ sensor:
       float current_raw = id(bed_bath_energy_raw).state;
       if (std::isnan(current_raw)) return id(bed_bath_energy_total);
       
-      if (current_raw >= last_raw) {
-        id(bed_bath_energy_total) += (current_raw - last_raw);
-      } else {
-        // Device rebooted; raw integration dropped back to 0. 
-        // Add the new raw total directly since it started from 0.
-        id(bed_bath_energy_total) += current_raw;
-      }
+      float delta = (current_raw >= last_raw) ? (current_raw - last_raw) : current_raw;
       last_raw = current_raw;
+
+      if (delta > 0.0f) {
+        float next_total = id(bed_bath_energy_total) + delta;
+        if (next_total > id(bed_bath_energy_total)) {
+          id(bed_bath_energy_total) = next_total;
+        }
+      }
       return id(bed_bath_energy_total);
 
   - platform: template
@@ -274,14 +292,15 @@ sensor:
       float current_raw = id(theater_hall_energy_raw).state;
       if (std::isnan(current_raw)) return id(theater_hall_energy_total);
       
-      if (current_raw >= last_raw) {
-        id(theater_hall_energy_total) += (current_raw - last_raw);
-      } else {
-        // Device rebooted; raw integration dropped back to 0. 
-        // Add the new raw total directly since it started from 0.
-        id(theater_hall_energy_total) += current_raw;
-      }
+      float delta = (current_raw >= last_raw) ? (current_raw - last_raw) : current_raw;
       last_raw = current_raw;
+
+      if (delta > 0.0f) {
+        float next_total = id(theater_hall_energy_total) + delta;
+        if (next_total > id(theater_hall_energy_total)) {
+          id(theater_hall_energy_total) = next_total;
+        }
+      }
       return id(theater_hall_energy_total);
 
   - platform: template
@@ -295,14 +314,15 @@ sensor:
       float current_raw = id(snack_bar_energy_raw).state;
       if (std::isnan(current_raw)) return id(snack_bar_energy_total);
       
-      if (current_raw >= last_raw) {
-        id(snack_bar_energy_total) += (current_raw - last_raw);
-      } else {
-        // Device rebooted; raw integration dropped back to 0. 
-        // Add the new raw total directly since it started from 0.
-        id(snack_bar_energy_total) += current_raw;
-      }
+      float delta = (current_raw >= last_raw) ? (current_raw - last_raw) : current_raw;
       last_raw = current_raw;
+
+      if (delta > 0.0f) {
+        float next_total = id(snack_bar_energy_total) + delta;
+        if (next_total > id(snack_bar_energy_total)) {
+          id(snack_bar_energy_total) = next_total;
+        }
+      }
       return id(snack_bar_energy_total);
 
   - platform: template
@@ -316,12 +336,15 @@ sensor:
       float current_raw = id(air_handler_energy_raw).state;
       if (std::isnan(current_raw)) return id(air_handler_energy_total);
       
-      if (current_raw >= last_raw) {
-        id(air_handler_energy_total) += (current_raw - last_raw);
-      } else {
-        id(air_handler_energy_total) += current_raw;
-      }
+      float delta = (current_raw >= last_raw) ? (current_raw - last_raw) : current_raw;
       last_raw = current_raw;
+
+      if (delta > 0.0f) {
+        float next_total = id(air_handler_energy_total) + delta;
+        if (next_total > id(air_handler_energy_total)) {
+          id(air_handler_energy_total) = next_total;
+        }
+      }
       return id(air_handler_energy_total);
 
   - platform: template
@@ -335,12 +358,15 @@ sensor:
       float current_raw = id(utility_1_energy_raw).state;
       if (std::isnan(current_raw)) return id(utility_1_energy_total);
       
-      if (current_raw >= last_raw) {
-        id(utility_1_energy_total) += (current_raw - last_raw);
-      } else {
-        id(utility_1_energy_total) += current_raw;
-      }
+      float delta = (current_raw >= last_raw) ? (current_raw - last_raw) : current_raw;
       last_raw = current_raw;
+
+      if (delta > 0.0f) {
+        float next_total = id(utility_1_energy_total) + delta;
+        if (next_total > id(utility_1_energy_total)) {
+          id(utility_1_energy_total) = next_total;
+        }
+      }
       return id(utility_1_energy_total);
 
   - platform: template
@@ -354,12 +380,15 @@ sensor:
       float current_raw = id(utility_2_energy_raw).state;
       if (std::isnan(current_raw)) return id(utility_2_energy_total);
       
-      if (current_raw >= last_raw) {
-        id(utility_2_energy_total) += (current_raw - last_raw);
-      } else {
-        id(utility_2_energy_total) += current_raw;
-      }
+      float delta = (current_raw >= last_raw) ? (current_raw - last_raw) : current_raw;
       last_raw = current_raw;
+
+      if (delta > 0.0f) {
+        float next_total = id(utility_2_energy_total) + delta;
+        if (next_total > id(utility_2_energy_total)) {
+          id(utility_2_energy_total) = next_total;
+        }
+      }
       return id(utility_2_energy_total);
 
   - platform: template
@@ -373,12 +402,15 @@ sensor:
       float current_raw = id(total_energy_raw).state;
       if (std::isnan(current_raw)) return id(total_energy_total);
       
-      if (current_raw >= last_raw) {
-        id(total_energy_total) += (current_raw - last_raw);
-      } else {
-        id(total_energy_total) += current_raw;
-      }
+      float delta = (current_raw >= last_raw) ? (current_raw - last_raw) : current_raw;
       last_raw = current_raw;
+
+      if (delta > 0.0f) {
+        float next_total = id(total_energy_total) + delta;
+        if (next_total > id(total_energy_total)) {
+          id(total_energy_total) = next_total;
+        }
+      }
       return id(total_energy_total);
 
 # This is needed for the Home Assistant energy dashboard.
