@@ -26,6 +26,7 @@ christmas_plugs:
     - input_boolean.christmas_outdoor
     - input_boolean.christmas_stair_railing
     - input_boolean.christmas_village
+    - input_boolean.christmas_village_2
     - input_boolean.christmas_family_room_lamp
   
 # Virtual device trackers
