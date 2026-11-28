@@ -87,7 +87,7 @@ include:
     - sensor.dryer_sensor_humidity
     - sensor.jon_s25_detected_activity
     - sensor.memory_use_percent
-    - sensor.porch_sensor_humidity
+    - sensor.outdoor_porch_sensor_humidity
     - sensor.processor_use_percent
     - sensor.sleep_average
     - sensor.sleep_duration

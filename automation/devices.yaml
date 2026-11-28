@@ -69,7 +69,7 @@
       
       then:        
         - action: vacuum.stop
-          entity_id: vacuum.ecovacs_deebot 
+          entity_id: vacuum.penthouse_deebot 
 
 # Shut down the host if UPS runtime reaches critical level.
 - alias: Handle UPS Critical
@@ -199,7 +199,7 @@
     
     # Instruct the vacuum to return home.
     - action: vacuum.return_to_base
-      entity_id: vacuum.ecovacs_deebot
+      entity_id: vacuum.penthouse_deebot
     
     # The theater might have been on when power went out; reset the flag so it will open the next time.
     - action: input_boolean.turn_off
@@ -881,7 +881,7 @@
     #   - My cooldown period is always 1 minute at 2.0 MPH (ctime and ckph variables).
     - variables:
         daily_calories: >
-          {% set weight  = states('sensor.master_bath_smart_scale_p1_weight') | float(0) %}
+          {% set weight  = states('sensor.master_bathroom_scale_weight') | float(0) %}
           {% set speed   = states('input_number.treadmill_speed') | float(0) %}
           {% set incline = states('input_number.treadmill_incline') | int(0) %}
           {% set time    = states('input_number.treadmill_daily_time') | int(0) / 60 %}
@@ -981,20 +981,20 @@
     # Sometimes the Ecovacs integration needs to be reloaded to function properly. If the vacuum state isn't docked, try
     # reloading it, then wait for the state to change to docked.
     - if:
-        - "{{ states('vacuum.ecovacs_deebot') != 'docked' }}"
+        - "{{ states('vacuum.penthouse_deebot') != 'docked' }}"
       
       then:    
         - action: homeassistant.reload_config_entry
           data:
             entry_id: 01KKYJDRQPPRE5Z0JWQS11SEW1
         
-        - wait_template: "{{ is_state('vacuum.ecovacs_deebot', 'docked') }}"
+        - wait_template: "{{ is_state('vacuum.penthouse_deebot', 'docked') }}"
           timeout:
             seconds: 10
         
         # Still no good? We're done.
         - if:
-            - "{{ states('vacuum.ecovacs_deebot') != 'docked' }}"
+            - "{{ states('vacuum.penthouse_deebot') != 'docked' }}"
           
           then:
             - action: script.send_notification
@@ -1023,7 +1023,7 @@
         milliseconds: 100
     
     - action: vacuum.start
-      entity_id: vacuum.ecovacs_deebot
+      entity_id: vacuum.penthouse_deebot
 
 # Land the vacuum.
 - alias: Stop Vacuum
@@ -1036,7 +1036,7 @@
         entity_id: timer.vacuum
     
     - trigger: numeric_state
-      entity_id: sensor.ecovacs_deebot_battery
+      entity_id: sensor.penthouse_deebot_battery
       below: 20
   
   conditions:
@@ -1046,7 +1046,7 @@
   
   actions:
     - action: vacuum.return_to_base
-      entity_id: vacuum.ecovacs_deebot
+      entity_id: vacuum.penthouse_deebot
 
 # Detect the vacuum running.
 - alias: Detect Vacuum Running
@@ -1054,7 +1054,7 @@
   
   triggers:
     - trigger: state
-      entity_id: vacuum.ecovacs_deebot
+      entity_id: vacuum.penthouse_deebot
       to: 'cleaning'
   
   conditions:
@@ -1076,7 +1076,7 @@
   
   triggers:
     - trigger: state
-      entity_id: vacuum.ecovacs_deebot
+      entity_id: vacuum.penthouse_deebot
       to: 'docked'
   
   conditions:
@@ -1440,8 +1440,8 @@
             message: >
               {% set intemp  = states('sensor.downstairs_temperature') | round(2) %}
               {% set inhum   = states('sensor.downstairs_humidity') | round(2) %}
-              {% set outtemp = states('sensor.porch_sensor_temperature') | round(2) %}
-              {% set outhum  = states('sensor.porch_sensor_humidity') | round(2) %}
+              {% set outtemp = states('sensor.outdoor_porch_sensor_temperature') | round(2) %}
+              {% set outhum  = states('sensor.outdoor_porch_sensor_humidity') | round(2) %}
               {% set drytemp = states('sensor.dryer_sensor_temperature') | round(2) %}
               {% set dryhum  = states('sensor.dryer_sensor_humidity') | round(2) %}
               
@@ -1807,8 +1807,8 @@
                 message: >
                   {% set intemp  = states('sensor.downstairs_temperature') | round(2) %}
                   {% set inhum   = states('sensor.downstairs_humidity') | round(2) %}
-                  {% set outtemp = states('sensor.porch_sensor_temperature') | round(2) %}
-                  {% set outhum  = states('sensor.porch_sensor_humidity') | round(2) %}
+                  {% set outtemp = states('sensor.outdoor_porch_sensor_temperature') | round(2) %}
+                  {% set outhum  = states('sensor.outdoor_porch_sensor_humidity') | round(2) %}
                   {% set drytemp = states('sensor.dryer_sensor_temperature') | round(2) %}
                   {% set dryhum  = states('sensor.dryer_sensor_humidity') | round(2) %}
                   

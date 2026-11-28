@@ -53,6 +53,28 @@
     - action: input_boolean.turn_off
       data:
         entity_id: input_boolean.kodi_movie_list_restoration
+    
+    # We may have set a specific YAML log level prior to restarting. The YAML log level defaults to 'info'
+    # on restart. So reset the prior log level here.
+    - variables:
+        yaml_log_level: "{{ states('input_select.yaml_log_level') }}"
+    
+    - if:
+        - "{{ yaml_log_level != 'info' }}"
+      
+      then:
+        - action: logger.set_level
+          data:
+            homeassistant.components.system_log.external: "{{ yaml_log_level }}"
+        
+    # Send a persistent notification as a reminder.
+    - action: script.send_notification
+      data:
+        destination:
+          - persistent
+        title: "Attention"
+        message: "{{ 'YAML log level restored to prior value: ' ~ yaml_log_level }}"
+        notification_id: yaml_log_level
 
 #=====================#
 #     MQTT Chores     #
@@ -435,6 +457,7 @@
                             'handle_office_fan_evaluation_timer_expiration',
                             'handle_theater_fan_evaluation_timer_expiration',
                             'log_automations',
+                            'log_shield_states',
                             'log_scripts',
                             'set_maximum_attic_temperature', 
                             'set_maximum_garage_temperature', 
@@ -812,13 +835,13 @@
     - variables:
         title: >
           {% set n_title = state_attr('sensor.jon_s25_last_notification', 'android.title') %}
-          {{ iif(n_title != None, n_title, 'empty') }}
+          {{ iif(n_title != None and not is_number(n_title), n_title, 'empty') }}
         text: >
           {% set n_text = state_attr('sensor.jon_s25_last_notification', 'android.text') %}
-          {{ iif(n_text != None, n_text, 'empty') }}
+          {{ iif(n_text != None and not is_number(n_text), n_text, 'empty') }}
         category: >
           {% set n_category = state_attr('sensor.jon_s25_last_notification', 'category') %}
-          {{ iif(n_category != None, n_category, 'empty') }}
+          {{ iif(n_category != None and not is_number(n_category), n_category, 'empty') }}
         
         # This could be a group text, so create a list.
         persons: >
@@ -1157,15 +1180,74 @@
   triggers:
     - trigger: state
       entity_id:
-        - vacuum.ecovacs_deebot
-        - sensor.ecovacs_deebot_filter_lifespan
-        - sensor.ecovacs_deebot_main_brush_lifespan
-        - sensor.ecovacs_deebot_side_brush_lifespan
+        - vacuum.penthouse_deebot
+        - sensor.penthouse_deebot_filter_lifespan
+        - sensor.penthouse_deebot_main_brush_lifespan
+        - sensor.penthouse_deebot_side_brush_lifespan
       to: unavailable
       for:
         seconds: 30
   
-  actions:    
+  actions:
     - action: homeassistant.reload_config_entry
       data:
         entry_id: 01KKYJDRQPPRE5Z0JWQS11SEW1
+
+#=====================#
+#     ISP Outages     #
+#=====================#
+
+# We have occasional ISP outages. I want to know the start and duration of these events so they can be displayed
+# as a persistent notification.
+- alias: Detect ISP Outage Duration
+  id: detect_isp_outage_duration
+  
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.isp_default_gateway
+      from: 'on'
+      to: 'off'
+      for:
+        seconds: 30
+      id: outage_start
+    
+    - trigger: state
+      entity_id: binary_sensor.isp_default_gateway
+      from: 'off'
+      to: 'on'
+      for:
+        seconds: 30
+      id: outage_end
+  
+  actions:
+    - if:
+        - "{{ trigger.id == 'outage_start' }}"
+      
+      then:
+        - action: input_datetime.set_datetime
+          target:
+            entity_id: input_datetime.isp_outage_start
+          data:
+            datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+        
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.isp_outage_duration
+          data:
+            value: 0
+      
+      else:
+        - variables:
+            
+            # Outage duration in minutes.
+            duration_minutes: "{{ ((as_timestamp(now().strftime('%Y-%m-%d %H:%M:%S')) - as_timestamp(states('input_datetime.isp_outage_start'))) / 60) | round(0) }}"
+        
+            # Total duration in fractional hours.
+            duration_hh_mm: "{{ (duration_minutes / 60) | round(2) }}"
+        
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.isp_outage_duration
+          data:
+            value: "{{ duration_hh_mm }}"
+  

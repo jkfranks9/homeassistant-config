@@ -16,6 +16,7 @@ logs:
   homeassistant.components.automation.handle_office_fan_evaluation_timer_expiration:      warning
   homeassistant.components.automation.handle_theater_fan_evaluation_timer_expiration:     warning
   homeassistant.components.automation.log_automations:                                    warning
+  homeassistant.components.automation.log_shield_states:                                  warning
   homeassistant.components.automation.log_scripts:                                        warning
   homeassistant.components.automation.set_maximum_attic_temperature:                      warning
   homeassistant.components.automation.set_maximum_garage_temperature:                     warning
@@ -225,6 +226,8 @@ filters:
   
   py.warnings:
     - "InsecureRequestWarning"
+    - "SyntaxWarning: .* is an invalid escape sequence"
+    - "SyntaxWarning: 'return' in a 'finally' block"
   
   sleekxmppfs.basexmpp:
     - "fulljid property deprecated. Use boundjid.resource"

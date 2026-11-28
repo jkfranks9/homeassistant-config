@@ -307,7 +307,7 @@
     - trigger: numeric_state
       entity_id:
         - sensor.openweathermap_temperature
-        - sensor.porch_sensor_temperature
+        - sensor.outdoor_porch_sensor_temperature
       below: 30
       id: awake
     
@@ -362,7 +362,7 @@
     - trigger: numeric_state
       entity_id:
         - sensor.openweathermap_temperature
-        - sensor.porch_sensor_temperature
+        - sensor.outdoor_porch_sensor_temperature
       above: 33
   
   actions:

@@ -528,11 +528,9 @@
         friendly_date: "{{ states('sensor.friendly_date') }}"
         
         # Time slept.
-        time: "{{ states('sensor.sleep_duration_display') }}"
-        hours: "{{ time.split(':')[0] | int(0) }}"
-        minutes: "{{ time.split(':')[1] | int(0) }}"
-        hours_str: "{{ iif(hours == 1, 'hour', 'hours') }}"
-        minutes_str: "{{ iif(minutes == 1, 'minute', 'minutes') }}"
+        duration_msg: >
+          {% from 'friendly_strings.jinja' import format_duration_string %}
+          {{ format_duration_string(states('sensor.sleep_duration_display')) }}
         
         # Calendar events.
         events: "{{ state_attr('sensor.upcoming_events', 'events') }}"
@@ -599,13 +597,13 @@
         destination:
           - voice_assistant
         message: >
-          {% set msg = 'Good morning, today is ' ~ friendly_date ~ '. You slept ' ~ hours ~ ' ' ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' ' ~ minutes_str ~ '.', '.') %}
+          {% set msg = 'Good morning, today is ' ~ friendly_date ~ '. You slept ' ~ duration_msg %}
           {% if calendar_msg | length > 0 %}
             {% set msg = msg ~ ' ' ~ calendar_msg %}
           {% endif %}
           
           {{ msg }}
-        room: ['master_bedroom']
+        room: ['master']
         voice_type: tts
     
     # I might stay in bed for a while before actually getting up, so wait until motion is detected somewhere downstairs.

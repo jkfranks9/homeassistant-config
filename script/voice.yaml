@@ -291,7 +291,7 @@ ask_user_question:
         select:
           options:
             - family_room
-            - master_bedroom
+            - master
             - office
             - studio
             - theater

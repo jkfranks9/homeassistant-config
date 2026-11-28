@@ -24,7 +24,7 @@ history_dryer_debug:
     - binary_sensor.dryer_temperature_falling
     - sensor.downstairs_humidity
     - sensor.dryer_sensor_humidity
-    - sensor.porch_sensor_humidity
+    - sensor.outdoor_porch_sensor_humidity
     - sensor.downstairs_temperature
     - sensor.dryer_sensor_temperature
-    - sensor.porch_sensor_temperature
+    - sensor.outdoor_porch_sensor_temperature

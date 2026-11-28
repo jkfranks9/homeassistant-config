@@ -61,3 +61,37 @@
     {{ timestamp | timestamp_custom('%H:%M on %a') }} {{ date }} {{ timestamp | timestamp_custom('%b %Y') }}
 
 {% endmacro %}
+
+{# Convert a fractional duration (1 or 2 decimal places) into HH:MM format, for example:
+   
+   "5.88 h" -> "5:53"
+#}
+
+{% macro format_fractional_duration(duration) %}
+
+{% if is_number(duration) and '.' in duration %}
+  {% set hours = duration.split('.')[0] | int(0) | round %}
+  {% set fraction = duration.split('.')[1] %}
+  {% set exponent = fraction | length | int(0) %}
+  {% set mins = ((fraction | int(0) / 10 ** exponent) * 60) | round %}
+  {{ hours ~ ':' ~ iif(mins > 9, mins, '0' ~ mins) }}
+{% else %}
+  unknown
+{% endif %}
+
+{% endmacro %}
+
+{# Convert a duration in HH:MM format into a friendly string, for example:
+   
+   "7:19" -> "7 hours and 19 minutes."
+#}
+
+{% macro format_duration_string(duration) %}
+
+{%- set hours = duration.split(':')[0] | int(0) -%}
+{%- set minutes = duration.split(':')[1] | int(0) -%}
+{%- set hours_str = iif(hours == 1, 'hour', 'hours') -%}
+{%- set minutes_str = iif(minutes == 1, 'minute', 'minutes') -%}
+{{ hours ~ ' ' ~ hours_str ~ iif(minutes | int(0) > 0, ' and ' ~ minutes ~ ' ' ~ minutes_str ~ '.', '.') }}
+
+{% endmacro %}

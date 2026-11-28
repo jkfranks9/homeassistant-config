@@ -442,7 +442,7 @@ sleeptime:
         - action: script.ask_user_question
           data:
             question: 'Are all devices charging?'
-            room: master_bedroom
+            room: master
           response_variable: result
         
         - variables:
@@ -460,7 +460,7 @@ sleeptime:
                 destination:
                   - voice_assistant
                 message: "OK, sounds like a you problem. Continuing."
-                room: ['master_bedroom']
+                room: ['master']
                 voice_type: announce
             
         # Enable DND.
