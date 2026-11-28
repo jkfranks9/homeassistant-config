@@ -338,6 +338,13 @@
           target:
             entity_id: timer.projector_status
         
+        # Wait for the post-open minimum delay timer to expire. This is started (if needed) in the Activate Cinema script.
+        # See comments in that script for the gory details.
+        # NOTE: The delay is in seconds, so the timeout template below works. If we ever need to increase the delay above 59
+        # the template will need to be improved.
+        - wait_template: "{{ is_state('timer.post_open_min_delay', 'idle') }}"
+          timeout: "{{ state_attr('timer.post_open_min_delay', 'duration').split(':')[-1] | int(30) }}"
+        
         # Perform post-open tasks.
         - action: script.turn_on
           entity_id: script.perform_post_open_tasks
@@ -735,3 +742,36 @@
     - action: input_boolean.turn_on
       data:
         entity_id: input_boolean.kodi_video_call_error
+
+#==========================#
+#     Shield Debugging     #
+#==========================#
+
+# Log Shield TV media player states for debugging and educational purposes.
+- alias: Log Shield States
+  id: log_shield_states
+  
+  mode: queued
+  
+  triggers:
+    - trigger: state
+      entity_id:
+        - media_player.shield_tv_adb
+        - media_player.shield_tv_android
+        - media_player.shield_tv_cast
+        - media_player.shield_tv_universal
+      to:
+
+  conditions: 
+  
+    # Weed out junk.
+    - "{{ has_value(trigger.from_state.entity_id) and has_value(trigger.to_state.entity_id) }}"
+  
+  actions:
+    - variables:
+        mp_name: "{{ trigger.from_state.entity_id.split('_')[-1] }}"
+    
+    - action: system_log.write
+      data:
+        message: "{{ 'JKF: ' ~ mp_name ~ ' media player state changed from ' ~ trigger.from_state.state ~ ' to ' ~ trigger.to_state.state }}"
+        level: debug
