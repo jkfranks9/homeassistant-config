@@ -153,7 +153,7 @@
               
             {# --Add a device to the list if the device entity is unavailable-- #}
             {% if states(device_entity) in ['unknown', 'unavailable'] %}
-              {% set ns.list = ns.list + [device_name(device_entity)] %}
+              {% set ns.list = ns.list + [area_name(device_entity) ~ ' ' ~ device_name(device_entity)] %}
             {% endif %}
           {% endfor %}
               
